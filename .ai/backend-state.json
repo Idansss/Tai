@@ -23,7 +23,7 @@
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "identity-foundation-verified-unmerged",
-  "lastUpdated": "2026-07-14T15:14:23Z",
+  "lastUpdated": "2026-07-14T15:20:21Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -32,6 +32,13 @@
     "mainCiRun": 29339734452,
     "mainCiStatus": "passed",
     "filesVerified": true,
+    "concerns": []
+  },
+  "identityFoundation": {
+    "task": "TMS-B1-001",
+    "pullRequest": 3,
+    "commit": "2d6f140",
+    "status": "verified-open",
     "concerns": []
   }
 }

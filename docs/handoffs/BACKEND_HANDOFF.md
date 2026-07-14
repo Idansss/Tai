@@ -18,6 +18,8 @@ TMS-B0-001 through TMS-B0-011 and TMS-B1-001.
 
 PR #1 was squash-merged at `2026-07-14T14:11:22Z` as `88a00912d8e5a0f5c05c07e9269add663f1c4fdf`. Main-branch GitHub Actions run 29339734452 passed. Required foundation files and frontend placeholders were verified after the merge with no file loss.
 
+The focused TMS-B1-001 implementation is open as PR #3 from `codex/b1-identity` at commit `2d6f140`.
+
 ## Next task
 
 TMS-B1-002 — implement customer registration, login, logout, email verification, password reset, and session invalidation. It is not started.

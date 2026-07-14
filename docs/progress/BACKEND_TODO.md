@@ -102,7 +102,7 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Acceptance criteria: Reviewed migration with constraints/indexes; seed roles/permissions; database tests pass.
   - Implementation evidence: `packages/database/prisma/schema.prisma`, migration `20260714142500_identity_foundation`, the idempotent role/permission seed in `packages/database/prisma/seed.ts`, and `packages/database/src/identity-foundation.integration.spec.ts`.
   - Tests: A fresh PostgreSQL 17 container applies the migration twice, runs the seed twice, verifies 7 roles/12 permissions/34 grants and required indexes, exercises identity/session/token constraints, and proves audit update/delete and actor deletion are rejected. `pnpm check`, Prisma validation, production builds, Compose validation, and the production dependency audit pass.
-  - Notes: Verified on 2026-07-14. This persistence-only slice adds no public API contract; TMS-B1-002 owns the authentication endpoints.
+  - Notes: Verified on 2026-07-14 and opened as PR #3. This persistence-only slice adds no public API contract; TMS-B1-002 owns the authentication endpoints.
 - [ ] TMS-B1-002 Implement customer registration, login, logout, verification, password reset, and session invalidation
   - Status: Not started
   - Owner: Codex
