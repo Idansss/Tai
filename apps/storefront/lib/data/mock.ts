@@ -3,9 +3,35 @@ import { artworkMatchesQuery } from '../search';
 import type {
   ArtworkDetail,
   ArtworkSummary,
+  CollectionDetail,
+  CollectionSummary,
   ListArtworksParams,
   StorefrontDataProvider,
 } from './types';
+
+/** Collection metadata keyed by the collection name used on artworks. */
+const collectionMeta: { slug: string; name: string; description: string }[] = [
+  {
+    slug: 'night-studies',
+    name: 'Night Studies',
+    description: 'Ink and neon drawn after dark, when the city is at its most honest.',
+  },
+  {
+    slug: 'comic-line',
+    name: 'Comic Line',
+    description: 'Comic-panel storytelling, told one bold, uninterrupted line at a time.',
+  },
+  {
+    slug: 'season-sketches',
+    name: 'Season Sketches',
+    description: 'Quiet studies that follow the turning of the seasons.',
+  },
+  {
+    slug: 'city-portraits',
+    name: 'City Portraits',
+    description: 'Street-level scenes rendered in confident, tangled linework.',
+  },
+];
 
 const artworks: ArtworkSummary[] = [
   {
@@ -147,5 +173,21 @@ export const mockProvider: StorefrontDataProvider = {
 
   async searchArtworks(query: string, limit = 24): Promise<ArtworkSummary[]> {
     return delay(artworks.filter((a) => artworkMatchesQuery(a, query)).slice(0, limit));
+  },
+
+  async listCollectionSummaries(): Promise<CollectionSummary[]> {
+    return delay(
+      collectionMeta.map((c) => ({
+        ...c,
+        artworkCount: artworks.filter((a) => a.collection === c.name).length,
+      })),
+    );
+  },
+
+  async getCollection(slug: string): Promise<CollectionDetail | null> {
+    const meta = collectionMeta.find((c) => c.slug === slug);
+    if (!meta) return delay(null);
+    const members = artworks.filter((a) => a.collection === meta.name);
+    return delay({ ...meta, artworkCount: members.length, artworks: members });
   },
 };

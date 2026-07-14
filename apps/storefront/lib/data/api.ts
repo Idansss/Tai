@@ -26,4 +26,10 @@ export const apiProvider: StorefrontDataProvider = {
   searchArtworks() {
     return notImplemented('searchArtworks');
   },
+  listCollectionSummaries() {
+    return notImplemented('listCollectionSummaries');
+  },
+  getCollection() {
+    return notImplemented('getCollection');
+  },
 };

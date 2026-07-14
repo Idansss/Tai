@@ -35,6 +35,17 @@ export interface ArtworkDetail extends ArtworkSummary {
   related: ArtworkSummary[];
 }
 
+export interface CollectionSummary {
+  slug: string;
+  name: string;
+  description: string;
+  artworkCount: number;
+}
+
+export interface CollectionDetail extends CollectionSummary {
+  artworks: ArtworkSummary[];
+}
+
 export interface ListArtworksParams {
   cursor?: string;
   limit?: number;
@@ -50,4 +61,8 @@ export interface StorefrontDataProvider {
   listCollections(): Promise<string[]>;
   /** Free-text search across the catalogue. Empty query returns no results. */
   searchArtworks(query: string, limit?: number): Promise<ArtworkSummary[]>;
+  /** Collections for the collections index. */
+  listCollectionSummaries(): Promise<CollectionSummary[]>;
+  /** A collection and its artworks, or null if the slug is unknown. */
+  getCollection(slug: string): Promise<CollectionDetail | null>;
 }

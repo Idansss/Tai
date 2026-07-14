@@ -126,6 +126,15 @@ lint, build, visual evidence, docs updated).
     Full `pnpm check` green.
   - Follow-up: extend search to products/collections once those contracts land (TMS-FBR-001).
 
+- [x] **TMS-F1-008** Collections
+  - Status: Verified
+  - Evidence: `/collections` index (real listing via `CollectionCard`) and `/collections/[slug]`
+    detail (breadcrumb, description, member artworks, `generateMetadata`, segment `not-found`),
+    loading skeletons, empty state. Provider gained `listCollectionSummaries()` +
+    `getCollection()` (+ api stubs); provider unit-tested (5 tests). Verified live: index shows
+    4 collections; `night-studies` detail shows exactly its 2 artworks; unknown slug → not-found
+    UI. Browser screenshot confirms rendering. Full `pnpm check` green (21 storefront tests).
+
 ### Known defects
 
 - **TMS-F1-DEF-001** — `/artworks/[slug]` renders the correct not-found UI for unknown slugs but
