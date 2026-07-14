@@ -1,0 +1,24 @@
+{
+  "name": "@tms/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist generated tsconfig.tsbuildinfo",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "lint": "eslint src prisma.config.ts --max-warnings=0",
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "7.8.0"
+  },
+  "devDependencies": {
+    "prisma": "7.8.0"
+  }
+}
