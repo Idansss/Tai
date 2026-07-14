@@ -11,9 +11,11 @@ F1 — Public storefront (in progress). F0 foundation complete (PR #4, CI green)
   backdrop close, scroll lock, `aria-current`) + `SiteFooter` (labelled nav landmarks +
   newsletter form), wired into the root layout as the shared shell.
 - Homepage refactored into editorial sections using the shared shell + reusable `ArtworkCard`.
-- `/artworks` gallery listing (mock, loading skeletons, empty state) and `/artworks/[slug]`
-  gallery-style detail (breadcrumb, story, edition, related, Design Studio CTA, generateMetadata,
-  segment not-found).
+- `/artworks` gallery listing (mock, loading skeletons, empty state) with **collection /
+  availability / sort filters carried in the URL** (shareable, SSR), a desktop filter bar and an
+  accessible mobile `<dialog>` filter drawer + active-filter chips; pure param parse/build is
+  unit-tested (7 tests, first storefront Vitest suite). `/artworks/[slug]` gallery-style detail
+  (breadcrumb, story, edition, related, Design Studio CTA, generateMetadata, segment not-found).
 - 15 editorial/policy route scaffolds (real accessible placeholder pages) so nav never 404s.
 - **Known defect TMS-F1-DEF-001:** `/artworks/[slug]` returns HTTP 200 (soft 404) for unknown
   slugs under Turbopack prod though the not-found UI renders correctly.

@@ -43,6 +43,66 @@ const artworks: ArtworkSummary[] = [
     compatibleGarments: ['Classic T-shirt'],
     limitedEdition: false,
   },
+  {
+    id: 'a4',
+    slug: 'lantern-keeper',
+    title: 'Lantern Keeper',
+    collection: 'Night Studies',
+    shortStory: 'A quiet figure holding the only warm light on the street.',
+    availability: 'available',
+    startingPriceMinor: 1300000,
+    currency: 'NGN',
+    compatibleGarments: ['Classic T-shirt', 'Long-sleeve shirt'],
+    limitedEdition: false,
+  },
+  {
+    id: 'a5',
+    slug: 'the-getaway',
+    title: 'The Getaway',
+    collection: 'Comic Line',
+    shortStory: 'Three panels, one bad decision, and a very fast bicycle.',
+    availability: 'sold_out',
+    startingPriceMinor: 1600000,
+    currency: 'NGN',
+    compatibleGarments: ['Oversized T-shirt'],
+    limitedEdition: true,
+  },
+  {
+    id: 'a6',
+    slug: 'rainy-season',
+    title: 'Rainy Season',
+    collection: 'Season Sketches',
+    shortStory: 'Umbrellas as punctuation across a grey afternoon.',
+    availability: 'available',
+    startingPriceMinor: 1150000,
+    currency: 'NGN',
+    compatibleGarments: ['Classic T-shirt', 'Oversized T-shirt'],
+    limitedEdition: false,
+  },
+  {
+    id: 'a7',
+    slug: 'market-day',
+    title: 'Market Day',
+    collection: 'City Portraits',
+    shortStory: 'A crowded stall rendered in confident, tangled linework.',
+    availability: 'limited',
+    startingPriceMinor: 1400000,
+    currency: 'NGN',
+    compatibleGarments: ['Classic T-shirt', 'Oversized T-shirt', 'Long-sleeve shirt'],
+    limitedEdition: true,
+  },
+  {
+    id: 'a8',
+    slug: 'okada-run',
+    title: 'Okada Run',
+    collection: 'City Portraits',
+    shortStory: 'Motion blur on two wheels, told entirely in ink.',
+    availability: 'available',
+    startingPriceMinor: 1250000,
+    currency: 'NGN',
+    compatibleGarments: ['Oversized T-shirt'],
+    limitedEdition: false,
+  },
 ];
 
 function delay<T>(value: T): Promise<T> {
@@ -59,6 +119,7 @@ export const mockProvider: StorefrontDataProvider = {
     if (params.availability) {
       items = items.filter((a) => a.availability === params.availability);
     }
+    // "newest" keeps insertion order; "popular" is a stable deterministic reordering.
     if (params.sort === 'popular') {
       items = items.slice().reverse();
     }
@@ -75,7 +136,11 @@ export const mockProvider: StorefrontDataProvider = {
       inspiration: 'Street photography, comic inking, and West African textiles.',
       edition: summary.limitedEdition ? 'Limited edition of 100' : 'Open edition',
       release: '2026',
-      related: artworks.filter((a) => a.id !== summary.id).slice(0, 2),
+      related: artworks.filter((a) => a.id !== summary.id).slice(0, 3),
     });
+  },
+
+  async listCollections(): Promise<string[]> {
+    return delay([...new Set(artworks.map((a) => a.collection))].sort());
   },
 };

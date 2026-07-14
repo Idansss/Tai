@@ -92,14 +92,17 @@ lint, build, visual evidence, docs updated).
   - Evidence: `SiteFooter` with 4 labelled nav landmarks + accessible newsletter form (labelled
     input; submission wiring deferred to the newsletter endpoint).
 
-- [ ] **TMS-F1-004** Artwork gallery + detail
-  - Status: Implemented
-  - Acceptance met: `/artworks` listing (mock, empty state, loading skeletons) and
-    `/artworks/[slug]` gallery-style detail (breadcrumb, story, edition, related, Design Studio
-    CTA, `generateMetadata`, segment `not-found`). Served + verified (valid slug 200, content
-    renders).
-  - **Outstanding for Verified:** filters/sort with URL state + accessible mobile filter drawer
-    (master prompt §11); and defect TMS-F1-DEF-001 below.
+- [x] **TMS-F1-004** Artwork gallery + detail
+  - Status: Verified
+  - Evidence: `/artworks` listing with **collection / availability / sort filters carried in the
+    URL** (shareable, SSR — verified via query params: all=8, Comic Line=2, sold_out=1,
+    unknown=0 → empty-state recovery), desktop filter bar + accessible mobile `<dialog>` filter
+    drawer + active-filter chips, loading skeletons, empty state. `/artworks/[slug]`
+    gallery-style detail (breadcrumb, story, edition, related, CTA, `generateMetadata`, segment
+    `not-found`). Pure param parse/build unit-tested (7 tests). Full `pnpm check` green.
+  - **Follow-ups (separate):** additional facets (search, theme, mood, colour-family, garment
+    compatibility, limited-edition) need backend data fields (TMS-FBR-001); detail soft-404
+    tracked as TMS-F1-DEF-001.
 
 - [x] **TMS-F1-005** ArtworkCard component
   - Status: Verified

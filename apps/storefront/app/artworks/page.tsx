@@ -1,7 +1,10 @@
-import { Container, EmptyState, Eyebrow, Heading, Text } from '@tms/ui';
+import { buttonVariants, Container, EmptyState, Eyebrow, Heading, Text } from '@tms/ui';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { ArtworkFilters } from '@/components/gallery/artwork-filters';
 import { dataProvider } from '@/lib/data';
+import { hasActiveFilters, parseArtworkFilters } from '@/lib/gallery-params';
 
 export const metadata: Metadata = {
   title: 'Artworks',
@@ -9,8 +12,23 @@ export const metadata: Metadata = {
     'Browse original drawings and comic-line illustrations. The gallery leads; garments follow.',
 };
 
-export default async function ArtworksPage() {
-  const { items: artworks } = await dataProvider.listArtworks({ limit: 24 });
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function ArtworksPage({ searchParams }: PageProps) {
+  const filters = parseArtworkFilters(await searchParams);
+  const [{ items: artworks }, collections] = await Promise.all([
+    dataProvider.listArtworks({
+      collection: filters.collection,
+      availability: filters.availability,
+      sort: filters.sort,
+      limit: 24,
+    }),
+    dataProvider.listCollections(),
+  ]);
+
+  const active = hasActiveFilters(filters);
 
   return (
     <Container className="py-14">
@@ -20,16 +38,25 @@ export default async function ArtworksPage() {
           Artworks
         </Heading>
         <Text tone="secondary" className="mt-2">
-          {artworks.length} {artworks.length === 1 ? 'piece' : 'pieces'} in view. Filtering and
-          sorting arrive next in this phase.
+          {artworks.length} {artworks.length === 1 ? 'piece' : 'pieces'}
+          {active ? ' match your filters' : ' in view'}.
         </Text>
       </header>
 
+      <div className="mt-8">
+        <ArtworkFilters collections={collections} filters={filters} />
+      </div>
+
       {artworks.length === 0 ? (
-        <div className="mt-10">
+        <div className="mt-8">
           <EmptyState
-            title="No artworks yet"
-            description="New work is on its way. Check back soon."
+            title="No artworks match those filters"
+            description="Try a different collection or availability."
+            action={
+              <Link href="/artworks" className={buttonVariants({ variant: 'secondary' })}>
+                Clear filters
+              </Link>
+            }
           />
         </div>
       ) : (

@@ -9,6 +9,11 @@ import type { CursorPage } from '@tms/contracts';
 
 export type Availability = 'available' | 'limited' | 'sold_out';
 
+export type ArtworkSort = 'newest' | 'popular';
+
+export const ARTWORK_SORTS: ArtworkSort[] = ['newest', 'popular'];
+export const AVAILABILITIES: Availability[] = ['available', 'limited', 'sold_out'];
+
 export interface ArtworkSummary {
   id: string;
   slug: string;
@@ -35,10 +40,12 @@ export interface ListArtworksParams {
   limit?: number;
   collection?: string;
   availability?: Availability;
-  sort?: 'newest' | 'popular';
+  sort?: ArtworkSort;
 }
 
 export interface StorefrontDataProvider {
   listArtworks(params?: ListArtworksParams): Promise<CursorPage<ArtworkSummary>>;
   getArtwork(slug: string): Promise<ArtworkDetail | null>;
+  /** Distinct collection names available for filtering. */
+  listCollections(): Promise<string[]>;
 }

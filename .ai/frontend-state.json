@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F1",
-  "lastVerifiedTask": "TMS-F1-005",
-  "nextRecommendedTask": "TMS-F1-004",
+  "lastVerifiedTask": "TMS-F1-004",
+  "nextRecommendedTask": "TMS-F1-007",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -18,10 +18,11 @@
     "TMS-F1-001",
     "TMS-F1-002",
     "TMS-F1-003",
+    "TMS-F1-004",
     "TMS-F1-005"
   ],
   "inProgressTasks": [],
-  "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-004", "TMS-F1-006"],
+  "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
   "blockedTasks": [],
   "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
   "buildStatus": "passing",
