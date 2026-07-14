@@ -42,7 +42,7 @@ Initial repository foundation across root configuration, `apps`, `packages`, `do
 
 ## Test results
 
-Local formatting, linting, type checking, 13 unit tests, production builds, Prisma validation, dependency audit, Compose validation, API liveness, and runtime OpenAPI smoke checks passed before push. GitHub Actions is running on draft PR #1.
+Local formatting, linting, type checking, 13 unit tests, production builds, Prisma validation, dependency audit, Compose validation, API liveness, and runtime OpenAPI smoke checks passed before push. GitHub Actions passed on draft PR #1; the workflow uses current Node 24-based action runtimes.
 
 ## Known defects
 
