@@ -22,4 +22,4 @@ Status: Accepted. Node 22.18, pnpm 10.20, NestJS 11.1, Prisma 7.8, Turbo 2.10, E
 
 ## ADR-006 — Hashed identity artifacts and append-only audit history
 
-Status: Accepted. Persist only hashes of sessions, verification tokens, reset tokens, and IP addresses. Enforce identity lifecycle ordering with database checks, model permissions separately from roles, and prevent audit-log updates/deletes at the database layer. User deletion is a soft-delete/anonymisation workflow so historical actor references remain intact.
+Status: Accepted. Persist only hashes of sessions, verification tokens, reset tokens, and IP addresses. Enforce canonical email/permission values and identity lifecycle ordering with database checks, including required session revocation reasons and token consumption no later than expiry. Model permissions separately from roles and prevent audit-log updates/deletes at the database layer. User deletion is a soft-delete/anonymisation workflow so historical actor references remain intact. Verify these invariants against disposable PostgreSQL rather than mocks.

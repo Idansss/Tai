@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "prisma generate && tsc -p tsconfig.json",
+    "build": "rimraf dist && prisma generate && tsc -p tsconfig.build.json",
     "clean": "rimraf dist generated tsconfig.tsbuildinfo",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",

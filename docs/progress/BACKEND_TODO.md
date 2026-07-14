@@ -95,14 +95,14 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
 
 ## B1 — Identity and platform security
 
-- [ ] TMS-B1-001 Model users, customer/admin profiles, sessions, verification, reset tokens, roles, permissions, and audit logs
-  - Status: In progress
+- [x] TMS-B1-001 Model users, customer/admin profiles, sessions, verification, reset tokens, roles, permissions, and audit logs
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B0-011
   - Acceptance criteria: Reviewed migration with constraints/indexes; seed roles/permissions; database tests pass.
-  - Implementation evidence: `packages/database/prisma/schema.prisma`, migration `20260714142500_identity_foundation`, and the idempotent role/permission seed in `packages/database/prisma/seed.ts`.
-  - Tests: Prisma validation/client generation; migration deploy on isolated PostgreSQL 17; seed run twice with stable counts of 7 roles, 12 permissions, and 34 grants; normalized-email, session-expiry, and append-only-audit database constraints exercised successfully.
-  - Notes: Schema, first migration, and RBAC seed are implemented. Keep In progress until repeatable database integration coverage and final migration review are committed and the full branch gate is green.
+  - Implementation evidence: `packages/database/prisma/schema.prisma`, migration `20260714142500_identity_foundation`, the idempotent role/permission seed in `packages/database/prisma/seed.ts`, and `packages/database/src/identity-foundation.integration.spec.ts`.
+  - Tests: A fresh PostgreSQL 17 container applies the migration twice, runs the seed twice, verifies 7 roles/12 permissions/34 grants and required indexes, exercises identity/session/token constraints, and proves audit update/delete and actor deletion are rejected. `pnpm check`, Prisma validation, production builds, Compose validation, and the production dependency audit pass.
+  - Notes: Verified on 2026-07-14. This persistence-only slice adds no public API contract; TMS-B1-002 owns the authentication endpoints.
 - [ ] TMS-B1-002 Implement customer registration, login, logout, verification, password reset, and session invalidation
   - Status: Not started
   - Owner: Codex

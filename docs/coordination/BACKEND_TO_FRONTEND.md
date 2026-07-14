@@ -55,3 +55,9 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Added the OpenAPI baseline at `docs/contracts/openapi.yaml`.
 - Compatibility: additive; no previous contract existed.
 - Frontend action: create `claude/f0-visual-foundation` from the latest `main` and use typed mock adapters for unimplemented domain APIs.
+
+## 2026-07-14 — TMS-B1-001 identity persistence
+
+- Added backend-only persistence for users, profiles, sessions, verification/reset tokens, RBAC, and immutable audit records.
+- Compatibility: no public endpoint, OpenAPI, or `packages/contracts` change.
+- Frontend action: none. Continue using typed mock authentication adapters until TMS-B1-002 publishes the authentication contract.

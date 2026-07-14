@@ -267,7 +267,10 @@ ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_actor_user_id_fkey" FOREIGN 
 -- Add security and lifecycle invariants that Prisma cannot express.
 ALTER TABLE "users"
     ADD CONSTRAINT "users_normalized_email_format_check"
-    CHECK ("normalized_email" = lower(btrim("normalized_email")) AND "normalized_email" <> '');
+    CHECK (
+        "normalized_email" = lower(btrim("email"))
+        AND "normalized_email" <> ''
+    );
 
 ALTER TABLE "customer_profiles"
     ADD CONSTRAINT "customer_profiles_phone_e164_format_check"
@@ -279,7 +282,11 @@ ALTER TABLE "roles"
 
 ALTER TABLE "permissions"
     ADD CONSTRAINT "permissions_code_matches_resource_action_check"
-    CHECK ("code" = "resource" || '.' || "action");
+    CHECK (
+        "resource" ~ '^[a-z][a-z0-9_]*$'
+        AND "action" ~ '^[a-z][a-z0-9_]*$'
+        AND "code" = "resource" || '.' || "action"
+    );
 
 ALTER TABLE "user_roles"
     ADD CONSTRAINT "user_roles_expiry_check"
@@ -288,26 +295,43 @@ ALTER TABLE "user_roles"
 ALTER TABLE "sessions"
     ADD CONSTRAINT "sessions_expiry_check"
     CHECK ("expires_at" > "created_at"),
+    ADD CONSTRAINT "sessions_last_seen_time_check"
+    CHECK ("last_seen_at" >= "created_at"),
     ADD CONSTRAINT "sessions_revocation_time_check"
-    CHECK ("revoked_at" IS NULL OR "revoked_at" >= "created_at");
+    CHECK ("revoked_at" IS NULL OR "revoked_at" >= "created_at"),
+    ADD CONSTRAINT "sessions_revocation_reason_check"
+    CHECK (
+        ("revoked_at" IS NULL AND "revocation_reason" IS NULL)
+        OR (
+            "revoked_at" IS NOT NULL
+            AND "revocation_reason" IS NOT NULL
+            AND btrim("revocation_reason") <> ''
+        )
+    );
 
 ALTER TABLE "email_verification_tokens"
     ADD CONSTRAINT "email_verification_tokens_expiry_check"
     CHECK ("expires_at" > "created_at"),
     ADD CONSTRAINT "email_verification_tokens_consumed_time_check"
-    CHECK ("consumed_at" IS NULL OR "consumed_at" >= "created_at");
+    CHECK (
+        "consumed_at" IS NULL
+        OR ("consumed_at" >= "created_at" AND "consumed_at" <= "expires_at")
+    );
 
 ALTER TABLE "password_reset_tokens"
     ADD CONSTRAINT "password_reset_tokens_expiry_check"
     CHECK ("expires_at" > "created_at"),
     ADD CONSTRAINT "password_reset_tokens_consumed_time_check"
-    CHECK ("consumed_at" IS NULL OR "consumed_at" >= "created_at");
+    CHECK (
+        "consumed_at" IS NULL
+        OR ("consumed_at" >= "created_at" AND "consumed_at" <= "expires_at")
+    );
 
 ALTER TABLE "audit_logs"
     ADD CONSTRAINT "audit_logs_user_actor_check"
     CHECK ("actor_type" <> 'USER' OR "actor_user_id" IS NOT NULL);
 
-CREATE FUNCTION prevent_audit_log_mutation() RETURNS trigger
+CREATE FUNCTION tms_prevent_audit_log_mutation() RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -317,4 +341,4 @@ $$;
 
 CREATE TRIGGER "audit_logs_prevent_update_delete"
 BEFORE UPDATE OR DELETE ON "audit_logs"
-FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation();
+FOR EACH ROW EXECUTE FUNCTION tms_prevent_audit_log_mutation();

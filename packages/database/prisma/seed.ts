@@ -1,8 +1,9 @@
 import { PrismaPg } from '@prisma/adapter-pg';
+import { pathToFileURL } from 'node:url';
 
 import { PrismaClient } from '../generated/client/client.js';
 
-const permissions = [
+export const permissionSeeds = [
   ['system.manage', 'system', 'manage', 'Manage platform-wide settings and access.'],
   ['users.read', 'users', 'read', 'View customer and administrator accounts.'],
   ['users.write', 'users', 'write', 'Manage customer and administrator accounts.'],
@@ -17,9 +18,9 @@ const permissions = [
   ['analytics.read', 'analytics', 'read', 'View analytics and reporting data.'],
 ] as const;
 
-const allPermissionCodes = permissions.map(([code]) => code);
+const allPermissionCodes = permissionSeeds.map(([code]) => code);
 
-const roles = [
+export const roleSeeds = [
   {
     code: 'OWNER',
     name: 'Owner',
@@ -72,7 +73,7 @@ export async function seed(): Promise<void> {
 
   try {
     await prisma.$transaction(async (transaction) => {
-      for (const [code, resource, action, description] of permissions) {
+      for (const [code, resource, action, description] of permissionSeeds) {
         await transaction.permission.upsert({
           where: { code },
           update: { resource, action, description },
@@ -86,7 +87,7 @@ export async function seed(): Promise<void> {
       });
       const permissionIds = new Map(permissionRecords.map(({ code, id }) => [code, id]));
 
-      for (const roleSeed of roles) {
+      for (const roleSeed of roleSeeds) {
         const role = await transaction.role.upsert({
           where: { code: roleSeed.code },
           update: { name: roleSeed.name, description: roleSeed.description, isSystem: true },
@@ -111,4 +112,7 @@ export async function seed(): Promise<void> {
   }
 }
 
-await seed();
+const invokedScript = process.argv[1];
+if (invokedScript && import.meta.url === pathToFileURL(invokedScript).href) {
+  await seed();
+}

@@ -2,25 +2,25 @@
 
 ## Current backend phase
 
-B1 — Identity and platform security is active on `codex/b1-identity`. TMS-B1-001 is in progress.
+B1 — Identity and platform security is active on `codex/b1-identity`. TMS-B1-001 is Verified; TMS-B1-002 is next.
 
 ## Work completed
 
 Created the pnpm/Turborepo workspace, backend skeletons, shared packages, Prisma foundation, local infrastructure, CI, OpenAPI baseline, and persistent control/coordination documents.
 
-The first B1 persistence slice now defines users, customer/admin profiles, sessions, verification/reset tokens, roles, permissions, assignments, and immutable audit logs. Its migration and idempotent RBAC seed have been exercised on isolated PostgreSQL 17.
+The first B1 persistence slice defines users, customer/admin profiles, sessions, verification/reset tokens, roles, permissions, assignments, and immutable audit logs. A repeatable integration suite now applies its migration and idempotent RBAC seed against a fresh PostgreSQL 17 container and verifies lifecycle constraints, indexes, RBAC counts, and append-only audit behavior.
 
 ## Tasks verified
 
-TMS-B0-001 through TMS-B0-011.
+TMS-B0-001 through TMS-B0-011 and TMS-B1-001.
 
 ## Merge record
 
 PR #1 was squash-merged at `2026-07-14T14:11:22Z` as `88a00912d8e5a0f5c05c07e9269add663f1c4fdf`. Main-branch GitHub Actions run 29339734452 passed. Required foundation files and frontend placeholders were verified after the merge with no file loss.
 
-## In-progress task
+## Next task
 
-TMS-B1-001 — finish repeatable database integration coverage and final migration review before marking the identity persistence model Verified.
+TMS-B1-002 — implement customer registration, login, logout, email verification, password reset, and session invalidation. It is not started.
 
 ## API contracts added or changed
 
@@ -28,7 +28,7 @@ Initial additive v1 envelope, errors, pagination, order/payment/shipping statuse
 
 ## Database migrations
 
-Migration `20260714142500_identity_foundation` is implemented on `codex/b1-identity` but not yet merged. It adds the B1 identity/RBAC/audit model and database-only lifecycle constraints.
+Migration `20260714142500_identity_foundation` is Verified on `codex/b1-identity` but not yet merged. It adds the B1 identity/RBAC/audit model, lookup indexes, and database-only normalization, lifecycle, and append-only constraints.
 
 ## Environment variables added
 
@@ -36,15 +36,15 @@ NODE_ENV, API_PORT, DATABASE_URL, REDIS_URL, S3_ENDPOINT, S3_REGION, S3_BUCKET, 
 
 ## Files changed
 
-Initial repository foundation across root configuration, `apps`, `packages`, `docs`, `.ai`, `.github`, `infra`, and `scripts`.
+For TMS-B1-001: the Prisma identity schema/migration and seed, repeatable PostgreSQL integration tests, a test-free database production build configuration, and backend progress/coordination/state records.
 
 ## Commands run
 
-`pnpm install`, `pnpm format`, `pnpm check`, `docker compose -f infra/docker-compose.yml config`, Git/GitHub inspection, commit, push, and draft PR creation.
+`pnpm check`, `pnpm --filter @tms/database test`, `pnpm --filter @tms/database build`, `docker compose -f infra/docker-compose.yml config --quiet`, `pnpm audit --audit-level high --prod`, and Git/GitHub inspection.
 
 ## Test results
 
-Local frozen install, formatting, linting, type checking, 14 unit tests, production builds, Prisma validation, dependency audit, Compose validation, API liveness/readiness, and runtime OpenAPI smoke checks passed. GitHub Actions passed on PR #1 and again on its exact `main` merge commit using current Node 24-based action runtimes.
+The full local gate passes: formatting, linting, type checking, 18 automated tests, production builds, Prisma validation, Compose validation, and the high-severity production dependency audit. The four database integration tests use disposable PostgreSQL 17 and cover repeat migration deployment, idempotent seed counts, reviewed indexes, database invariants, append-only audit records, and preserved audit actors.
 
 ## Known defects
 
@@ -64,4 +64,4 @@ Do not recreate root workspace configuration, backend skeletons, initial contrac
 
 ## Exact continuation instruction
 
-Continue TMS-B1-001 on `codex/b1-identity`. Add repeatable PostgreSQL integration tests for migration/seed/constraints, complete the migration review, run the full gate, and only then mark the task Verified. Do not begin TMS-B1-002 early or modify frontend-owned areas.
+After the focused TMS-B1-001 pull request is reviewed and merged, create the next Codex backend branch from latest verified `main` and begin TMS-B1-002. Re-read backend state and coordination first; do not modify frontend-owned areas.
