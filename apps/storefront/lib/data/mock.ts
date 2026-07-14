@@ -1,4 +1,5 @@
 import type { CursorPage } from '@tms/contracts';
+import { artworkMatchesQuery } from '../search';
 import type {
   ArtworkDetail,
   ArtworkSummary,
@@ -142,5 +143,9 @@ export const mockProvider: StorefrontDataProvider = {
 
   async listCollections(): Promise<string[]> {
     return delay([...new Set(artworks.map((a) => a.collection))].sort());
+  },
+
+  async searchArtworks(query: string, limit = 24): Promise<ArtworkSummary[]> {
+    return delay(artworks.filter((a) => artworkMatchesQuery(a, query)).slice(0, limit));
   },
 };

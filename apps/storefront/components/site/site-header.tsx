@@ -81,7 +81,13 @@ export function SiteHeader() {
           </ul>
 
           <div className="flex items-center gap-1">
-            <IconButton label="Search" icon={<Search className="size-5" aria-hidden />} />
+            <Link
+              href="/search"
+              aria-label="Search"
+              className="inline-flex size-11 items-center justify-center rounded-[var(--radius-md)] text-ink outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            >
+              <Search className="size-5" aria-hidden />
+            </Link>
             <IconButton label="Cart" icon={<ShoppingBag className="size-5" aria-hidden />} />
             <IconButton
               className="md:hidden"

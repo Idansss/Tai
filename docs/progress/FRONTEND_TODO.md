@@ -116,6 +116,16 @@ lint, build, visual evidence, docs updated).
     size-guide, care, faq, contact, privacy, terms, cookies — so navigation never 404s.
   - **Outstanding for Verified:** real content/behaviour per route (later F1/F5).
 
+- [x] **TMS-F1-007** Site-wide search
+  - Status: Verified
+  - Evidence: `/search` route with an accessible SSR search form (GET, labelled, works without
+    JS, shareable URLs), results grid, no-match empty state with recovery, blank-query
+    suggestions, `noindex`; header search control wired as a real link. Pure matcher
+    (`normalizeQuery`/`queryTerms`/`artworkMatchesQuery`) unit-tested (9 tests). Verified live:
+    lagos=1, comic=2, zzz=0→no-match, blank→suggestions; browser screenshot confirms rendering.
+    Full `pnpm check` green.
+  - Follow-up: extend search to products/collections once those contracts land (TMS-FBR-001).
+
 ### Known defects
 
 - **TMS-F1-DEF-001** — `/artworks/[slug]` renders the correct not-found UI for unknown slugs but

@@ -48,4 +48,6 @@ export interface StorefrontDataProvider {
   getArtwork(slug: string): Promise<ArtworkDetail | null>;
   /** Distinct collection names available for filtering. */
   listCollections(): Promise<string[]>;
+  /** Free-text search across the catalogue. Empty query returns no results. */
+  searchArtworks(query: string, limit?: number): Promise<ArtworkSummary[]>;
 }
