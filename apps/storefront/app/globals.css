@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+@import '@tms/ui/tokens.css';
+@import '@tms/ui/theme.css';
+
+/* App files are auto-detected; explicitly scan the shared UI package source. */
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
