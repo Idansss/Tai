@@ -2,12 +2,27 @@
 
 ## Current frontend phase
 
-F3 — Commerce & account. TMS-F3-001 (cart) **Verified** (2026-07-15). Branch `claude/f3-commerce`
+F3 — Commerce & account. TMS-F3-001 (cart) + TMS-F3-002 (checkout) **Verified** (2026-07-15).
+Branch `claude/f3-commerce`
 is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`**
 — merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR with base
 `claude/f2-design-studio`. Nothing is merged to `main` yet.
 
 ### F3 progress this session
+
+- **Checkout (TMS-F3-002).** Single-page `CheckoutFlow` — contact, delivery address (Nigerian
+  states select), delivery-method radios (mock `getDeliveryOptions()`), payment-method radios
+  (Flutterwave card/transfer, clearly a preview), and a sticky itemised order summary (subtotal,
+  promo, delivery, **VAT 7.5%**, total). Pure domain in `lib/checkout.ts` (email/NG-phone
+  validation, section-namespaced errors, `computeOrderTotals`) + `lib/order.ts` (reference codec,
+  `tms.lastOrder.v1` persistence) with 12 unit tests. "Place order" snapshots the order, clears the
+  bag, and routes to `/checkout/success`, where `OrderConfirmation` renders items/totals/address/
+  contact + an honest "payment pending" notice. Empty-cart and no-order guards included. **No real
+  payment** — delivery/tax are mock and server-authoritative later (**TMS-FBR-004**); pairs with
+  the upcoming TMS-F3-003 payment states.
+- Verified: full `pnpm check` green; audit clean; browser pass (validation blocks empty submit,
+  live totals ₦39,000 → ₦42,732.50, order placed with reference, confirmation, empty/no-order
+  guards, mobile single-column). No console errors.
 
 - **Cart (TMS-F3-001).** Pure cart domain in `lib/cart.ts` (line-merge id, add/set/remove,
   subtotal, mock promotions `STUDIO10`/`WELCOME`, estimated total) with 16 unit tests. Client
@@ -79,7 +94,7 @@ is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude
 ## Tasks verified
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
--005, -007, -008, -009; TMS-F2-001; **TMS-F3-001**.
+-005, -007, -008, -009; TMS-F2-001; TMS-F3-001; **TMS-F3-002**.
 
 ## In-progress task
 
@@ -87,9 +102,10 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F3-002** (checkout: contact/delivery/payment steps, order review) — builds directly on the
-cart and the `/checkout` stub **or** **TMS-F3-004** (auth: registration/login mock session) **or**
-the tracked soft-404 defect TMS-F1-DEF-001.
+**TMS-F3-003** (payment states: processing / success / pending / failure — wires the `/checkout`
+"Place order" handoff and the confirmation into real Flutterwave-style states) **or**
+**TMS-F3-004** (auth: registration/login mock session) **or** the tracked soft-404 defect
+TMS-F1-DEF-001.
 
 ## Routes completed
 

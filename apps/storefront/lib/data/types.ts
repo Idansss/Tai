@@ -94,6 +94,17 @@ export interface StudioOptions {
   scalePresets: StudioScalePreset[];
 }
 
+export interface DeliveryOption {
+  id: string;
+  label: string;
+  description: string;
+  /** Delivery fee in minor units. Server-authoritative at checkout later. */
+  priceMinor: number;
+  currency: string;
+  /** Human ETA, e.g. "2–4 working days". */
+  eta: string;
+}
+
 export interface ProductDetail extends ProductSummary {
   description: string;
   fabric: string;
@@ -131,4 +142,6 @@ export interface StorefrontDataProvider {
   getProduct(slug: string): Promise<ProductDetail | null>;
   /** Approved Design Studio configuration options (colours, sizes, placements, scales). */
   getStudioOptions(): Promise<StudioOptions>;
+  /** Available delivery methods with fees + ETAs for checkout. */
+  getDeliveryOptions(): Promise<DeliveryOption[]>;
 }

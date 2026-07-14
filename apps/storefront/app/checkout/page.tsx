@@ -1,14 +1,17 @@
 import { Container, Eyebrow, Heading } from '@tms/ui';
 import type { Metadata } from 'next';
-import { CheckoutPlaceholder } from '@/components/cart/checkout-placeholder';
+import { CheckoutFlow } from '@/components/checkout/checkout-flow';
+import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Checkout',
-  description: 'Review your order and continue to secure payment.',
+  description: 'Enter your contact and delivery details and place your order.',
   robots: { index: false, follow: false },
 };
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const deliveryOptions = await dataProvider.getDeliveryOptions();
+
   return (
     <Container className="py-10">
       <header className="mb-8">
@@ -17,7 +20,7 @@ export default function CheckoutPage() {
           Checkout
         </Heading>
       </header>
-      <CheckoutPlaceholder />
+      <CheckoutFlow deliveryOptions={deliveryOptions} />
     </Container>
   );
 }

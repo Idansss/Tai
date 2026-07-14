@@ -200,7 +200,26 @@ lint, build, visual evidence, docs updated).
     (server-authoritative). Backend gap recorded as TMS-FBR-003.
   - Follow-ups: server cart/promotion/totals (TMS-FBR-003); persist across devices once auth lands.
 
-- [ ] **TMS-F3-002** Checkout — contact/delivery/payment steps, delivery options, order review.
+- [x] **TMS-F3-002** Checkout — contact / delivery / payment + order confirmation
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate, below threshold);
+    browser pass (desktop + mobile): validation blocks an empty submit (7 field errors, `aria-invalid`,
+    focus jumps to the first invalid field); live totals recompute (Subtotal ₦39,000 − ₦3,900 promo
+    + ₦5,000 express delivery + ₦2,632.50 VAT = ₦42,732.50); "Place order" snapshots the order,
+    clears the bag, and routes to `/checkout/success` with a reference (`TMS-DQXGCG`); confirmation
+    shows items/totals/address/contact + an honest "payment pending" notice; empty-cart and
+    no-order guards both render. No console errors.
+  - Scope delivered: single-page checkout (`CheckoutFlow`) — contact, delivery address (Nigerian
+    states select), delivery-method radios (from mock `getDeliveryOptions()`), payment-method
+    radios (Flutterwave card/transfer, clearly a preview), and a sticky itemised order summary
+    (subtotal, promo, delivery, VAT 7.5%, total). Pure domain in `lib/checkout.ts` (email/NG-phone
+    validation, section-namespaced errors, `computeOrderTotals`) + `lib/order.ts` (reference codec,
+    last-order persistence) with 12 unit tests. `/checkout/success` `OrderConfirmation` reads the
+    placed order; `/checkout` + `/checkout/success` + loading states. Provider gained
+    `getDeliveryOptions()` + api stub + 1 provider test. **No real payment** — delivery/tax are
+    mock and server-authoritative later (TMS-FBR-004).
+  - Follow-ups: server delivery quote + order + payment intent (TMS-FBR-004); wire into TMS-F3-003
+    payment states.
 - [ ] **TMS-F3-003** Payment states — processing / success / pending / failure surfaces.
 - [ ] **TMS-F3-004** Auth — registration + login (mock session).
 - [ ] **TMS-F3-005** Account — orders list, order detail + tracking, saved designs, wishlist.

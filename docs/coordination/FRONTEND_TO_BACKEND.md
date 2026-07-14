@@ -57,4 +57,28 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
 - Suggested fallback: keep `lib/cart.ts` pure helpers as the client model; replace the store's
   mutations with API calls and treat server totals as authoritative.
 
+## Request TMS-FBR-004 — Checkout / delivery quote / order
+
+- Frontend task: F3 checkout (`/checkout`) and order confirmation (`/checkout/success`).
+- Required endpoints (proposed): `GET /api/v1/checkout/delivery-options` (methods + fees + ETAs
+  for a destination), `POST /api/v1/checkout/quote` (authoritative subtotal, discount, delivery,
+  tax, total for the current cart + address + method), `POST /api/v1/orders` (place order →
+  returns order id/reference + payment intent for TMS-F3-003).
+- Required request fields: quote — cart id/lines, delivery address (state/city), delivery method
+  id, promotion code; place order — the quote id + contact + delivery + payment method.
+- Required response fields: delivery options (`id`, `label`, `description`, `priceMinor`,
+  `currency`, `eta`); quote (`subtotalMinor`, `discountMinor`, `deliveryMinor`, `taxMinor`,
+  `totalMinor`, `currency`); order (`reference`, `status` per `OrderStatusSchema`, `totals`,
+  snapshots of items/contact/delivery, `payment` handoff).
+- Reason: the checkout currently computes a **preview** total client-side — delivery fees are mock
+  (`getDeliveryOptions()`), **VAT is a mock 7.5%**, and "Place order" only snapshots the order to
+  `localStorage` (`tms.lastOrder.v1`); no payment is taken. Tax, shipping and totals must be
+  server-authoritative before checkout is real (spec §"server is authoritative for … tax,
+  shipping, and totals"), and inventory reservation + payment intents are server concerns.
+- Blocking: no (checkout builds on the typed mock + client store; swap to the API on delivery).
+- Suggested fallback: keep `lib/checkout.ts` (validation + total formula) and `lib/order.ts` as
+  the client model; replace the mock delivery source + local order snapshot with the endpoints and
+  treat the server quote/order as authoritative. Pairs with TMS-F3-003 (payment states) and
+  TMS-FBR-003 (cart).
+
 _No further requests yet. Add here as F1+ surfaces need contracts._
