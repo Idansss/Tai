@@ -2,10 +2,25 @@
 
 ## Current frontend phase
 
-F1 — Public storefront (in progress). F0 foundation complete (PR #4, CI green). This branch
-`claude/f1-storefront` is **stacked on `claude/f0-visual-foundation`** — merge F0 (#4) first.
+F2 — Design Studio. TMS-F2-001 **Verified** (2026-07-14). Branch `claude/f2-design-studio` is
+**stacked on `claude/f1-storefront` → `claude/f0-visual-foundation`** — merge F0 (#4) then F1 (#5)
+first. F2 opens as stacked PR #6 with base `claude/f1-storefront`.
 
-### F1 progress this session
+### F2 progress this session
+
+- `/design-studio`: guided flow (artwork → garment → colour → size → placement → scale) in a
+  dark-gallery `DesignStudio` client component; live 2D DOM preview (colour-tinted garment,
+  placement/scale-positioned artwork overlay, print-area guide, front/back toggle + "on the other
+  side" hint); price summary; honest add-to-bag status (no fake cart — F3); **shareable config**
+  via URL (`Copy share link` + resume from query params) backed by a pure, tested codec in
+  `lib/studio.ts` (`parseStudioParams`/`buildStudioQuery`/`isStudioConfigComplete`); loading state.
+- Data provider gained `getStudioOptions()` (colours/sizes/placements/scale presets) with an API
+  stub and a provider test. Still 100% on the typed mock adapter.
+- Verified: full `pnpm check` green; `pnpm audit --audit-level high --prod` clean (1 moderate,
+  below threshold); browser pass — retint, placement/scale overlay moves, front/back logic, share
+  URL round-trip/restore, keyboard + a11y (aria-pressed, live region, skip link), no console errors.
+
+### F1 progress (prior session)
 
 - Site chrome: accessible `SiteHeader` (native `<dialog>` mobile menu — focus trap, Esc,
   backdrop close, scroll lock, `aria-current`) + `SiteFooter` (labelled nav landmarks +
@@ -43,16 +58,18 @@ F1 — Public storefront (in progress). F0 foundation complete (PR #4, CI green)
 
 ## Tasks verified
 
-TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012.
+TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
+-005, -007, -008, -009; **TMS-F2-001**.
 
 ## In-progress task
 
-None active. Two F0 items are `Implemented` (not `Verified`) — see below.
+None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-TMS-F0-002 follow-up (capture Base44 PNG breakpoints) **or** TMS-F0-010 follow-up (generate
-Playwright baselines), then begin **TMS-F1-001** (global navigation + accessible mobile menu).
+F2 follow-ups (`/design-studio/[configurationId]` resume route; contrast warning + undo; promote
+ColourSwatch/SizeSelector/preview into `packages/ui`) **or** the tracked soft-404 defect
+TMS-F1-DEF-001 **or** begin **F3** (cart / checkout / account).
 
 ## Routes completed
 

@@ -71,6 +71,29 @@ export interface ProductSummary {
   colourCount: number;
 }
 
+export interface StudioPlacement {
+  id: string;
+  label: string;
+  area: 'front' | 'back';
+  /** Centre position of the artwork on the garment, as a percentage. */
+  x: number;
+  y: number;
+}
+
+export interface StudioScalePreset {
+  id: string;
+  label: string;
+  /** Artwork width as a percentage of the garment width. */
+  widthPct: number;
+}
+
+export interface StudioOptions {
+  colours: ProductColour[];
+  sizes: string[];
+  placements: StudioPlacement[];
+  scalePresets: StudioScalePreset[];
+}
+
 export interface ProductDetail extends ProductSummary {
   description: string;
   fabric: string;
@@ -106,4 +129,6 @@ export interface StorefrontDataProvider {
   listProducts(): Promise<ProductSummary[]>;
   /** A product and its configurable options, or null if the slug is unknown. */
   getProduct(slug: string): Promise<ProductDetail | null>;
+  /** Approved Design Studio configuration options (colours, sizes, placements, scales). */
+  getStudioOptions(): Promise<StudioOptions>;
 }
