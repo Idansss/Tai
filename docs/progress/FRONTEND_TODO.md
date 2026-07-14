@@ -74,15 +74,54 @@ lint, build, visual evidence, docs updated).
   - Evidence: `pnpm check` (format:check, lint, typecheck, test, build ×2 apps, db:validate) all
     pass; `pnpm audit --audit-level high --prod` passes (1 moderate only). PR opened.
 
+## Phase F1 — Public storefront (in progress)
+
+- [x] **TMS-F1-001** Global navigation + accessible mobile menu
+  - Status: Verified
+  - Evidence: `SiteHeader` (client) with desktop nav + `<dialog>`-based mobile menu (native
+    focus trap, Esc, backdrop-click close, body-scroll lock, `aria-current`, `aria-haspopup`);
+    served markup includes `aria-label="Site menu"`; builds + full `pnpm check` green.
+
+- [x] **TMS-F1-002** Homepage editorial sections
+  - Status: Verified
+  - Evidence: hero, featured gallery (mock adapter via `ArtworkCard`), design-system showcase
+    (both themes), studio invitation; real route links; served HTTP 200.
+
+- [x] **TMS-F1-003** Footer
+  - Status: Verified
+  - Evidence: `SiteFooter` with 4 labelled nav landmarks + accessible newsletter form (labelled
+    input; submission wiring deferred to the newsletter endpoint).
+
+- [ ] **TMS-F1-004** Artwork gallery + detail
+  - Status: Implemented
+  - Acceptance met: `/artworks` listing (mock, empty state, loading skeletons) and
+    `/artworks/[slug]` gallery-style detail (breadcrumb, story, edition, related, Design Studio
+    CTA, `generateMetadata`, segment `not-found`). Served + verified (valid slug 200, content
+    renders).
+  - **Outstanding for Verified:** filters/sort with URL state + accessible mobile filter drawer
+    (master prompt §11); and defect TMS-F1-DEF-001 below.
+
+- [x] **TMS-F1-005** ArtworkCard component
+  - Status: Verified
+  - Evidence: `components/artwork/artwork-card.tsx`; reused by homepage, gallery and related.
+    (ProductCard/CollectionCard follow with `/shop` + `/collections` build-out.)
+
+- [ ] **TMS-F1-006** Editorial & policy route scaffolds
+  - Status: Implemented
+  - Acceptance met: real accessible placeholder pages (single h1, metadata, landmarks, forward
+    links) for collections, shop, design-studio, about, artist, stories, delivery, returns,
+    size-guide, care, faq, contact, privacy, terms, cookies — so navigation never 404s.
+  - **Outstanding for Verified:** real content/behaviour per route (later F1/F5).
+
+### Known defects
+
+- **TMS-F1-DEF-001** — `/artworks/[slug]` renders the correct not-found UI for unknown slugs but
+  returns **HTTP 200 instead of 404** under the Next 16 Turbopack production server (soft 404).
+  `notFound()` is used correctly in both the page and `generateMetadata`; the streamed shell
+  commits a 200 before `notFound()` resolves. Impacts SEO (§25). Next step: confirm against a
+  Next patch / non-Turbopack build, or add a status workaround. UI/UX is unaffected.
+
 ## Later phases
 
-F1 Public storefront · F2 Design Studio · F3 Commerce & account · F4 Admin platform ·
-F5 Growth & AI · F6 Hardening. Expanded into tasks when each phase begins.
-
-### First F1 tasks (next session)
-
-- [ ] **TMS-F1-001** Global navigation + mobile menu (accessible drawer)
-- [ ] **TMS-F1-002** Homepage editorial sections (real structure, mock content adapter)
-- [ ] **TMS-F1-003** Footer
-- [ ] **TMS-F1-004** Artwork gallery with URL filter state + accessible mobile filter drawer
-- [ ] **TMS-F1-005** ArtworkCard / ProductCard / CollectionCard components
+F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·
+F2 Design Studio · F3 Commerce & account · F4 Admin platform · F5 Growth & AI · F6 Hardening.

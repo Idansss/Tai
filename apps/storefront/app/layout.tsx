@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, Space_Grotesk } from 'next/font/google';
+import { SiteFooter } from '@/components/site/site-footer';
+import { SiteHeader } from '@/components/site/site-header';
 import './globals.css';
 
 const display = Space_Grotesk({
@@ -50,7 +52,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        {children}
+        <div className="flex min-h-dvh flex-col">
+          <SiteHeader />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <SiteFooter />
+        </div>
       </body>
     </html>
   );
