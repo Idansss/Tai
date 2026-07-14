@@ -1,0 +1,15 @@
+node_modules/
+.turbo/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+packages/database/generated/
+packages/database/prisma/*.db
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

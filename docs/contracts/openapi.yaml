@@ -1,0 +1,80 @@
+openapi: 3.1.0
+info:
+  title: Tai Manic Studios API
+  version: 1.0.0
+  description: Versioned backend contract for storefront and administration clients.
+servers:
+  - url: http://localhost:4000
+    description: Local development
+tags:
+  - name: health
+paths:
+  /api/v1/health/liveness:
+    get:
+      operationId: getLiveness
+      tags: [health]
+      summary: Confirm that the API process is alive
+      responses:
+        '200':
+          description: The API process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/health/readiness:
+    get:
+      operationId: getReadiness
+      tags: [health]
+      summary: Confirm that the API is ready to accept traffic
+      responses:
+        '200':
+          description: The API process is ready. Dependency probes are added in B1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [status, service, timestamp]
+          properties:
+            status: { type: string, const: ok }
+            service: { type: string, const: api }
+            timestamp: { type: string, format: date-time }
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiMeta:
+      type: object
+      required: [correlationId]
+      properties:
+        correlationId: { type: string }
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, correlationId]
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  VALIDATION_FAILED,
+                  AUTHENTICATION_REQUIRED,
+                  PERMISSION_DENIED,
+                  RESOURCE_NOT_FOUND,
+                  CONFLICT,
+                  RATE_LIMITED,
+                  IDEMPOTENCY_CONFLICT,
+                  INVENTORY_UNAVAILABLE,
+                  INTEGRATION_UNAVAILABLE,
+                  INTERNAL_ERROR,
+                ]
+            message: { type: string }
+            correlationId: { type: string }

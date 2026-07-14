@@ -1,0 +1,318 @@
+# Backend TODO
+
+Only tasks with Status `Verified` are checked. Evidence and test results must be recorded before verification.
+
+## B0 — Shared repository foundation
+
+- [x] TMS-B0-001 Confirm repository baseline and create the B0 branch
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: None
+  - Acceptance criteria: Empty remote confirmed; work occurs on `codex/b0-shared-foundation`; no work is performed directly on `main`.
+  - Implementation evidence: GitHub remote inspected; required branch created from the unborn default branch.
+  - Tests: Git status and remote inspection.
+  - Notes: Repository contained no commits.
+- [x] TMS-B0-002 Configure pnpm and Turborepo workspace
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-001
+  - Acceptance criteria: Workspace discovers all apps/packages; shared build, lint, typecheck, test, format, and clean commands work.
+  - Implementation evidence: `package.json`, `pnpm-workspace.yaml`, `turbo.json`.
+  - Tests: `pnpm check`.
+  - Notes:
+- [x] TMS-B0-003 Add shared TypeScript, ESLint, Prettier, and editor configuration
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-002
+  - Acceptance criteria: Compatible pinned toolchain; formatting, linting, and strict type checks pass.
+  - Implementation evidence: Root configs and configuration packages.
+  - Tests: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`.
+  - Notes: TypeScript 6.0 selected for current typescript-eslint compatibility.
+- [x] TMS-B0-004 Create frontend-owned application placeholders
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-002
+  - Acceptance criteria: Storefront, admin, and UI package locations are valid workspaces and contain no competing frontend implementation.
+  - Implementation evidence: `apps/storefront`, `apps/admin`, `packages/ui` ownership READMEs and package manifests.
+  - Tests: Workspace discovery during install/build.
+  - Notes:
+- [x] TMS-B0-005 Create NestJS API skeleton
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-002, TMS-B0-003
+  - Acceptance criteria: Versioned API boots; Swagger baseline, correlation IDs, safe errors, validation, liveness, and readiness exist.
+  - Implementation evidence: `apps/api/src`.
+  - Tests: Health unit test, lint, typecheck, build.
+  - Notes: Dependency health probes are scheduled for B1.
+- [x] TMS-B0-006 Create background worker skeleton
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-002, TMS-B0-003
+  - Acceptance criteria: Worker builds, validates runtime configuration, and is ready for BullMQ registration without connecting during tests.
+  - Implementation evidence: `apps/worker/src`.
+  - Tests: Worker configuration unit tests, build.
+  - Notes:
+- [x] TMS-B0-007 Create contracts, validation, configuration, and platform packages
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-002
+  - Acceptance criteria: Shared envelopes, errors, pagination, statuses, and design input compile and have baseline tests.
+  - Implementation evidence: `packages/contracts`, `validation`, `configuration`, `integrations`, `email`, `analytics`, `testing`.
+  - Tests: Workspace unit tests and builds.
+  - Notes:
+- [x] TMS-B0-008 Create Prisma database foundation and local infrastructure
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-002
+  - Acceptance criteria: Prisma config/schema validate; local PostgreSQL, Redis, MinIO, and Mailpit are defined without production credentials.
+  - Implementation evidence: `packages/database`, `infra/docker-compose.yml`, `.env.example`.
+  - Tests: `pnpm db:validate`, Docker Compose configuration validation.
+  - Notes: Domain tables begin in B1.
+- [x] TMS-B0-009 Add continuous integration
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-002 through TMS-B0-008
+  - Acceptance criteria: Pull requests run frozen install, format, lint, typecheck, tests, build, Prisma validation, and dependency audit.
+  - Implementation evidence: `.github/workflows/ci.yml`.
+  - Tests: Local commands match CI commands; workflow syntax inspected.
+  - Notes:
+- [x] TMS-B0-010 Add persistent project control and coordination documents
+  - Status: Verified
+  - Owner: Codex
+  - Dependencies: TMS-B0-001
+  - Acceptance criteria: Required specs, ownership, architecture, security, testing, deployment, contract, coordination, decisions, traceability, TODO, handoff, and state files exist.
+  - Implementation evidence: `AGENTS.md`, `docs`, `.ai`.
+  - Tests: Required-file inspection.
+  - Notes:
+- [ ] TMS-B0-011 Merge the B0 draft pull request
+  - Status: In progress
+  - Owner: Repository maintainer
+  - Dependencies: TMS-B0-001 through TMS-B0-010
+  - Acceptance criteria: Draft PR is reviewed, CI passes, and the foundation is merged to `main` before B1 begins.
+  - Implementation evidence: Draft PR #1 — https://github.com/Lingz450/Tai/pull/1
+  - Tests: GitHub Actions.
+  - Notes: Codex must not begin large backend modules before merge. Merge remains maintainer-owned.
+
+## B1 — Identity and platform security
+
+- [ ] TMS-B1-001 Model users, customer/admin profiles, sessions, verification, reset tokens, roles, permissions, and audit logs
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B0-011
+  - Acceptance criteria: Reviewed migration with constraints/indexes; seed roles/permissions; database tests pass.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B1-002 Implement customer registration, login, logout, verification, password reset, and session invalidation
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B1-001
+  - Acceptance criteria: Secure cookies, hashing, throttling, safe recovery, OpenAPI, and positive/negative tests.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B1-003 Implement admin authentication, MFA-ready architecture, granular RBAC, and object-level authorization
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B1-001
+  - Acceptance criteria: Every protected admin endpoint has server-side permission tests and bypass attempts fail.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+
+## B2 — Artwork and catalogue
+
+- [ ] TMS-B2-001 Implement Artwork and immutable ArtworkVersion persistence and APIs
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B1-003
+  - Acceptance criteria: Draft/published/archived lifecycle; referenced versions cannot be mutated or deleted; OpenAPI/tests pass.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B2-002 Implement collections, drops, editions, stories, tags, and catalogue search
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B2-001
+  - Acceptance criteria: Admin CRUD plus paginated/filterable public catalogue endpoints with permission tests.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B2-003 Implement garment templates, colours, sizes, variants, size charts, placements, and compatibility
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B2-001
+  - Acceptance criteria: Only administrator-approved configurations are valid; stock remains garment-variant based.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B2-004 Implement media ingestion, validation, immutable originals, derivatives, mockups, and approval workflow
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B2-001
+  - Acceptance criteria: File/MIME/dimension/size checks, malware hook, worker jobs, failure states, and admin approval tests.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+
+## B3 — Design Studio services
+
+- [ ] TMS-B3-001 Implement versioned design configurations, compatibility, hashing, privacy, saves, and stable shares
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B2-003
+  - Acceptance criteria: Exact artwork/variant/placement/scale/view persisted; availability, ownership, and share security tested.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B3-002 Implement configuration pricing and availability services
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B3-001
+  - Acceptance criteria: Server-authoritative price and availability with explicit errors and contract tests.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B3-003 Implement idempotent server production renderer and render queue
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B2-004, TMS-B3-001
+  - Acceptance criteria: Original high-resolution inputs, physical dimensions/DPI, checksums, renderer version, retries, and historical assets.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+
+## B4 — Commerce core
+
+- [ ] TMS-B4-001 Implement garment inventory, append-only movements, alerts, and concurrent expiring reservations
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B2-003
+  - Acceptance criteria: Stock never goes negative; final-unit race and reservation expiry tests pass.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B4-002 Implement guest/authenticated carts, merge, pricing, promotions, currency, and recalculation
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B3-002, TMS-B4-001
+  - Acceptance criteria: Browser prices are ignored; invalid/out-of-stock configurations fail safely; contract tests pass.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B4-003 Implement checkout, guest orders, immutable order snapshots, and audited order state machine
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B4-001, TMS-B4-002
+  - Acceptance criteria: Transactional reservation/order flow; invalid transitions rejected; cross-customer access fails.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B4-004 Implement notifications and cart/order recovery jobs
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B4-003
+  - Acceptance criteria: Idempotent email/notification jobs, failure recording, retries, and preference enforcement.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+
+## B5 — Provider integrations
+
+- [ ] TMS-B5-001 Implement PaymentProvider contract and complete MockPaymentProvider
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B4-003
+  - Acceptance criteria: End-to-end mock checkout, verification, signed webhook simulation, refunds, duplicates, and reconciliation tests.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B5-002 Implement Flutterwave adapter architecture and sandbox handoff
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B5-001
+  - Acceptance criteria: Signature/amount/currency/reference verification, idempotent raw events, retries, refunds, and docs.
+  - Implementation evidence:
+  - Tests:
+  - Notes: Live verification remains Blocked until credentials are supplied.
+- [ ] TMS-B5-003 Implement ShippingProvider contract, mock shipping, GIGL adapter architecture, tracking, and returns
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B4-003
+  - Acceptance criteria: Rates, bookings, pickup, tracking, events, returns, retry/reconciliation, fallback, health, and contract tests.
+  - Implementation evidence:
+  - Tests:
+  - Notes: Never invent rates when unavailable; live verification requires credentials.
+
+## B6 — Administration and operations
+
+- [ ] TMS-B6-001 Implement production, print review, quality control, reprint, packing, and fulfilment APIs
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B3-003, TMS-B5-003
+  - Acceptance criteria: Paid orders generate audited tasks; permissions and invalid transitions are tested.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B6-002 Implement admin metrics, customer/order/payment/integration views, safe retries, reports, and CSV exports
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B6-001
+  - Acceptance criteria: Paginated permission-protected APIs, safe export escaping, and audit coverage.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+
+## B7 — Growth and AI
+
+- [ ] TMS-B7-001 Implement limited drops, waitlists, pre-orders, wishlists, reviews, and community moderation foundations
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B4-003
+  - Acceptance criteria: Core growth paths work without delaying store operations; future loyalty/gifting/passports remain separately tracked.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B7-002 Implement provider-neutral, feature-flagged AI services and approved Studio Guide tools
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B2-002, TMS-B4-002
+  - Acceptance criteria: Grounded stock/price/policy lookups, safe tools, limits, costs, logs, failures, and approval controls.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B7-003 Implement Brand Storyteller drafts and analytics event collection
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B7-002
+  - Acceptance criteria: Provider/model/template/input/output/edit/approval/cost metadata retained; public use requires approval.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+
+## B8 — Hardening and deployment
+
+- [ ] TMS-B8-001 Complete security, performance, load, dependency, and backup/restore reviews
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: B1 through B7 core tasks
+  - Acceptance criteria: Findings resolved or explicitly accepted; load and restore evidence recorded.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B8-002 Deploy production platform with monitoring, queues, health checks, reconciliation, and rollback runbooks
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B8-001
+  - Acceptance criteria: Production health verified; alerts, backups, secret management, and rollback tested.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
+- [ ] TMS-B8-003 Complete provider and documentation audit handoff
+  - Status: Not started
+  - Owner: Codex
+  - Dependencies: TMS-B8-002
+  - Acceptance criteria: OpenAPI, contracts, migrations, environment variables, operations, and live provider status are accurate.
+  - Implementation evidence:
+  - Tests:
+  - Notes:
