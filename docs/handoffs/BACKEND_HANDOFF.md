@@ -2,7 +2,7 @@
 
 ## Current backend phase
 
-B0 — Shared repository foundation. Implementation and local verification complete; draft PR creation is the active task.
+B0 — Shared repository foundation. Implementation and local verification complete; draft PR #1 is open at https://github.com/Lingz450/Tai/pull/1.
 
 ## Work completed
 
@@ -14,7 +14,7 @@ TMS-B0-001 through TMS-B0-010.
 
 ## In-progress task
 
-TMS-B0-011 — Merge the B0 draft pull request.
+TMS-B0-011 — Review and merge draft PR #1.
 
 ## First recommended next task
 
@@ -42,7 +42,7 @@ Initial repository foundation across root configuration, `apps`, `packages`, `do
 
 ## Test results
 
-See the draft PR checks and session report. Local formatting, linting, type checking, unit tests, builds, and Prisma validation passed before push.
+Local formatting, linting, type checking, 13 unit tests, production builds, Prisma validation, dependency audit, Compose validation, API liveness, and runtime OpenAPI smoke checks passed before push. GitHub Actions is running on draft PR #1.
 
 ## Known defects
 

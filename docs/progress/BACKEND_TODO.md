@@ -89,9 +89,9 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Owner: Repository maintainer
   - Dependencies: TMS-B0-001 through TMS-B0-010
   - Acceptance criteria: Draft PR is reviewed, CI passes, and the foundation is merged to `main` before B1 begins.
-  - Implementation evidence: Draft PR URL in backend handoff.
+  - Implementation evidence: Draft PR #1 — https://github.com/Lingz450/Tai/pull/1
   - Tests: GitHub Actions.
-  - Notes: Codex must not begin large backend modules before merge.
+  - Notes: Codex must not begin large backend modules before merge. Merge remains maintainer-owned.
 
 ## B1 — Identity and platform security
 
