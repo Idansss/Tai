@@ -2,11 +2,13 @@
 
 ## Current backend phase
 
-B0 — Shared repository foundation is complete and verified on `main`. B1 identity work may begin on `codex/b1-identity`.
+B1 — Identity and platform security is active on `codex/b1-identity`. TMS-B1-001 is in progress.
 
 ## Work completed
 
 Created the pnpm/Turborepo workspace, backend skeletons, shared packages, Prisma foundation, local infrastructure, CI, OpenAPI baseline, and persistent control/coordination documents.
+
+The first B1 persistence slice now defines users, customer/admin profiles, sessions, verification/reset tokens, roles, permissions, assignments, and immutable audit logs. Its migration and idempotent RBAC seed have been exercised on isolated PostgreSQL 17.
 
 ## Tasks verified
 
@@ -16,9 +18,9 @@ TMS-B0-001 through TMS-B0-011.
 
 PR #1 was squash-merged at `2026-07-14T14:11:22Z` as `88a00912d8e5a0f5c05c07e9269add663f1c4fdf`. Main-branch GitHub Actions run 29339734452 passed. Required foundation files and frontend placeholders were verified after the merge with no file loss.
 
-## First recommended next task
+## In-progress task
 
-Branch from the latest `main` and start TMS-B1-001.
+TMS-B1-001 — finish repeatable database integration coverage and final migration review before marking the identity persistence model Verified.
 
 ## API contracts added or changed
 
@@ -26,7 +28,7 @@ Initial additive v1 envelope, errors, pagination, order/payment/shipping statuse
 
 ## Database migrations
 
-None. B0 intentionally establishes an empty Prisma schema; B1 owns the first domain migration.
+Migration `20260714142500_identity_foundation` is implemented on `codex/b1-identity` but not yet merged. It adds the B1 identity/RBAC/audit model and database-only lifecycle constraints.
 
 ## Environment variables added
 
@@ -46,7 +48,7 @@ Local frozen install, formatting, linting, type checking, 14 unit tests, product
 
 ## Known defects
 
-Readiness currently reports process readiness only; dependency probes are scheduled for B1. No domain tables or endpoints are intentionally implemented in B0.
+Readiness currently reports process readiness only. TMS-B1-001 has no public API contract change; authentication endpoints remain owned by TMS-B1-002.
 
 ## Blockers
 
@@ -62,4 +64,4 @@ Do not recreate root workspace configuration, backend skeletons, initial contrac
 
 ## Exact continuation instruction
 
-Continue the Tai Manic Studios backend build on `codex/b1-identity`. Read the required project-control files and implement TMS-B1-001 without repeating Verified B0 tasks or modifying frontend-owned areas.
+Continue TMS-B1-001 on `codex/b1-identity`. Add repeatable PostgreSQL integration tests for migration/seed/constraints, complete the migration review, run the full gate, and only then mark the task Verified. Do not begin TMS-B1-002 early or modify frontend-owned areas.
