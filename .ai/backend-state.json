@@ -1,9 +1,9 @@
 {
   "agent": "Codex",
   "area": "backend",
-  "currentPhase": "B0",
-  "lastVerifiedTask": "TMS-B0-010",
-  "nextRecommendedTask": "TMS-B0-011",
+  "currentPhase": "B1-ready",
+  "lastVerifiedTask": "TMS-B0-011",
+  "nextRecommendedTask": "TMS-B1-001",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -14,12 +14,23 @@
     "TMS-B0-007",
     "TMS-B0-008",
     "TMS-B0-009",
-    "TMS-B0-010"
+    "TMS-B0-010",
+    "TMS-B0-011"
   ],
-  "inProgressTasks": ["TMS-B0-011"],
+  "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "validated-empty-schema",
-  "lastUpdated": "2026-07-14T13:56:51Z"
+  "lastUpdated": "2026-07-14T14:13:27Z",
+  "foundationMerge": {
+    "pullRequest": 1,
+    "method": "squash",
+    "commit": "88a00912d8e5a0f5c05c07e9269add663f1c4fdf",
+    "mergedAt": "2026-07-14T14:11:22Z",
+    "mainCiRun": 29339734452,
+    "mainCiStatus": "passed",
+    "filesVerified": true,
+    "concerns": []
+  }
 }

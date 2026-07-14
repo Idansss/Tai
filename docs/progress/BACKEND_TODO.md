@@ -84,14 +84,14 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Implementation evidence: `AGENTS.md`, `docs`, `.ai`.
   - Tests: Required-file inspection.
   - Notes:
-- [ ] TMS-B0-011 Merge the B0 draft pull request
-  - Status: In progress
-  - Owner: Repository maintainer
+- [x] TMS-B0-011 Merge the B0 draft pull request
+  - Status: Verified
+  - Owner: Codex and repository maintainer
   - Dependencies: TMS-B0-001 through TMS-B0-010
   - Acceptance criteria: Draft PR is reviewed, CI passes, and the foundation is merged to `main` before B1 begins.
-  - Implementation evidence: Draft PR #1 — https://github.com/Lingz450/Tai/pull/1
-  - Tests: GitHub Actions.
-  - Notes: Codex must not begin large backend modules before merge. Merge remains maintainer-owned.
+  - Implementation evidence: PR #1 was squash-merged into `main` as `88a00912d8e5a0f5c05c07e9269add663f1c4fdf` at `2026-07-14T14:11:22Z` — https://github.com/Lingz450/Tai/pull/1
+  - Tests: Main-branch GitHub Actions run 29339734452 passed; required-file inspection, frozen install, `pnpm check`, dependency audit, Compose validation, liveness/readiness, and runtime OpenAPI smoke checks passed.
+  - Notes: All 103 B0 files were retained on `main`; frontend-owned application areas remain implementation placeholders. Next backend task: TMS-B1-001.
 
 ## B1 — Identity and platform security
 
