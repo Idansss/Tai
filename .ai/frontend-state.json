@@ -1,9 +1,9 @@
 {
   "agent": "Claude Code",
   "area": "frontend",
-  "currentPhase": "F2",
-  "lastVerifiedTask": "TMS-F2-001",
-  "nextRecommendedTask": "TMS-F2-002 (design-studio follow-ups) or TMS-F1-DEF-001 or start F3",
+  "currentPhase": "F3",
+  "lastVerifiedTask": "TMS-F3-001",
+  "nextRecommendedTask": "TMS-F3-002 (checkout) or TMS-F3-004 (auth) or TMS-F1-DEF-001",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -23,11 +23,12 @@
     "TMS-F1-007",
     "TMS-F1-008",
     "TMS-F1-009",
-    "TMS-F2-001"
+    "TMS-F2-001",
+    "TMS-F3-001"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
-  "branch": "claude/f2-design-studio",
+  "branch": "claude/f3-commerce",
   "blockedTasks": [],
   "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
   "buildStatus": "passing",
@@ -39,8 +40,9 @@
     "storefront:/collections (TMS-FBR-001)",
     "storefront:/search (TMS-FBR-001)",
     "storefront:/shop + /products/[slug] (TMS-FBR-002)",
-    "storefront:/design-studio options (TMS-FBR-002 / studio config)"
+    "storefront:/design-studio options (TMS-FBR-002 / studio config)",
+    "storefront:cart/promotion/totals — client localStorage store, mock promos (TMS-FBR-003)"
   ],
-  "buildStatusNote": "F0/F1/F2 verified green (pnpm check + browser pass); TMS-F2-001 signed off 2026-07-14",
-  "lastUpdated": "2026-07-14"
+  "buildStatusNote": "F0/F1/F2 + TMS-F3-001 verified green (pnpm check + browser pass); cart signed off 2026-07-15",
+  "lastUpdated": "2026-07-15"
 }

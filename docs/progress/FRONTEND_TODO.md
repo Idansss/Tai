@@ -180,6 +180,31 @@ lint, build, visual evidence, docs updated).
   - Follow-ups: `/design-studio/[configurationId]` resume route; contrast warning + undo; promote
     ColourSwatch/SizeSelector/preview into `packages/ui`; real placement coords/imagery via backend.
 
+## Phase F3 — Commerce & account (in progress)
+
+- [x] **TMS-F3-001** Cart — drawer + page + promotion + add-to-bag wiring
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate, below threshold);
+    browser pass: product **and** Design Studio "Add to bag" both add lines (studio lines carry
+    placement/scale + link back to their share URL); drawer opens with a live header count badge;
+    promotion `STUDIO10` applies 10% (₦36,000 → ₦32,400) and persists; quantity steppers update
+    totals + badge live; `/cart` page, `/checkout` interim summary, and the empty state all render;
+    state survives navigation (localStorage) and reflows correctly on mobile. No console errors.
+  - Scope delivered: pure cart domain in `lib/cart.ts` (line-merge id, add/set/remove, subtotal,
+    mock promotions, estimated total) with 16 unit tests; client `CartProvider`
+    (localStorage-persisted, `ready` flag to avoid SSR badge mismatch, drawer open state);
+    `CartDrawer` (native `<dialog>` slide-over), shared `CartLineList` + `CartSummary`, `/cart`
+    page + loading, and an honest `/checkout` interim summary (no fake payment). Header bag button
+    wired to open the drawer with an accessible count badge. Product configurator + Design Studio
+    "Add to bag" now push real lines. **Delivery + tax are intentionally deferred to checkout**
+    (server-authoritative). Backend gap recorded as TMS-FBR-003.
+  - Follow-ups: server cart/promotion/totals (TMS-FBR-003); persist across devices once auth lands.
+
+- [ ] **TMS-F3-002** Checkout — contact/delivery/payment steps, delivery options, order review.
+- [ ] **TMS-F3-003** Payment states — processing / success / pending / failure surfaces.
+- [ ] **TMS-F3-004** Auth — registration + login (mock session).
+- [ ] **TMS-F3-005** Account — orders list, order detail + tracking, saved designs, wishlist.
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

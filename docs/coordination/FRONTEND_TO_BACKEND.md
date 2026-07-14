@@ -37,4 +37,24 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
 - Suggested fallback: typed `mockProvider` fixtures; swap to `apiProvider` on delivery. Prices
   and availability must come from the server and are authoritative at cart/checkout.
 
+## Request TMS-FBR-003 — Cart / promotion / totals
+
+- Frontend task: F3 cart (`/cart`, cart drawer) and the interim checkout summary.
+- Required endpoints (proposed): `POST /api/v1/cart/items` (add a configured line),
+  `PATCH /api/v1/cart/items/{lineId}` (quantity), `DELETE /api/v1/cart/items/{lineId}`,
+  `GET /api/v1/cart`, `POST /api/v1/cart/promotion` (apply/validate a code).
+- Required request fields (add line): product/garment-variant id, artwork-version id, colour,
+  size, placement id, scale preset, view, quantity; promotion apply: `code`.
+- Required response fields: cart `id`, `items[]` (`lineId`, config snapshot, `unitPriceMinor`,
+  `quantity`, `lineTotalMinor`, thumbnail), `subtotalMinor`, applied `promotion`
+  (`code`, `label`, `discountMinor`), `currency`. **Delivery + tax are intentionally excluded
+  here** — they belong to the checkout quote (server-authoritative per spec §"server is
+  authoritative for … shipping … and totals").
+- Reason: the cart currently runs on a client-only store (localStorage) with a **preview**
+  subtotal and **mock** promotion codes (`STUDIO10`, `WELCOME`). Pricing, promotion validity and
+  totals must move server-side before checkout is real.
+- Blocking: no (F3 cart builds on the typed client store; swap to the API on delivery).
+- Suggested fallback: keep `lib/cart.ts` pure helpers as the client model; replace the store's
+  mutations with API calls and treat server totals as authoritative.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

@@ -3,6 +3,7 @@
 import { Alert, cn, Eyebrow, Heading, Price, Text } from '@tms/ui';
 import { Check, Copy, RotateCcw, ShoppingBag } from 'lucide-react';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useCart } from '@/components/cart/cart-provider';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import {
   buildStudioQuery,
@@ -82,10 +83,13 @@ export function DesignStudio({
   }));
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
 
   const update = useCallback((patch: Partial<StudioConfig>) => {
     setCopied(false);
     setStatus(null);
+    setAdded(false);
     setConfig((c) => ({ ...c, ...patch }));
   }, []);
 
@@ -126,13 +130,28 @@ export function DesignStudio({
   }, [config]);
 
   const addToBag = () => {
-    if (!complete) {
+    if (!complete || !artwork || !config.garment || !config.colour || !config.size) {
       setStatus('Choose an artwork, garment, colour and size to continue.');
       return;
     }
+    addItem({
+      productSlug: `${artwork.slug}-studio`,
+      href: `/design-studio${buildStudioQuery(config)}`,
+      artworkTitle: artwork.title,
+      garment: config.garment,
+      colour: config.colour,
+      size: config.size,
+      priceMinor: artwork.startingPriceMinor,
+      currency: artwork.currency,
+      quantity: Math.max(1, config.quantity),
+      placement: placement?.label,
+      scale: scale?.label,
+      view: config.view,
+    });
+    setAdded(true);
     setStatus(
-      `Saved preview: ${artwork?.title} on ${config.garment}, ${config.colour}, size ${config.size}, ` +
-        `${placement?.label.toLowerCase()} · ${scale?.label.toLowerCase()}. Bag & checkout arrive in phase F3.`,
+      `Added to your bag: ${artwork.title} on ${config.garment}, ${config.colour}, size ${config.size}, ` +
+        `${placement?.label.toLowerCase()} · ${scale?.label.toLowerCase()}.`,
     );
   };
 
@@ -400,7 +419,10 @@ export function DesignStudio({
 
             <div aria-live="polite" className="mt-4 empty:hidden">
               {status ? (
-                <Alert tone="info" title="Preview build">
+                <Alert
+                  tone={added ? 'success' : 'info'}
+                  title={added ? 'Added to bag' : 'Design Studio'}
+                >
                   {status}
                 </Alert>
               ) : null}

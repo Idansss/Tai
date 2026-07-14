@@ -2,11 +2,31 @@
 
 ## Current frontend phase
 
-F2 — Design Studio. TMS-F2-001 **Verified** (2026-07-14). Branch `claude/f2-design-studio` is
-**stacked on `claude/f1-storefront` → `claude/f0-visual-foundation`** — merge F0 (#4) then F1 (#5)
-first. F2 opens as stacked PR #6 with base `claude/f1-storefront`.
+F3 — Commerce & account. TMS-F3-001 (cart) **Verified** (2026-07-15). Branch `claude/f3-commerce`
+is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`**
+— merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR with base
+`claude/f2-design-studio`. Nothing is merged to `main` yet.
 
-### F2 progress this session
+### F3 progress this session
+
+- **Cart (TMS-F3-001).** Pure cart domain in `lib/cart.ts` (line-merge id, add/set/remove,
+  subtotal, mock promotions `STUDIO10`/`WELCOME`, estimated total) with 16 unit tests. Client
+  `CartProvider` persists to `localStorage` (`tms.cart.v1`) with a `ready` flag so the SSR badge
+  never mismatches, and owns the drawer open state. `CartDrawer` is a native `<dialog>` slide-over;
+  `CartLineList` + `CartSummary` are shared by the drawer and the `/cart` page. Header bag button
+  opens the drawer and shows an accessible live count badge.
+- **Wiring.** Product configurator and Design Studio "Add to bag" now push real lines (studio
+  lines carry placement/scale and link back to their share URL). An honest `/checkout` interim
+  summary shows totals with no fake payment (full flow is TMS-F3-002).
+- **Deliberately deferred:** delivery + tax are computed at checkout (server-authoritative); the
+  cart shows a preview subtotal + preview promotion only. Backend gap = **TMS-FBR-003** in
+  FRONTEND_TO_BACKEND.md.
+- Verified: full `pnpm check` green; `pnpm audit --audit-level high --prod` clean (1 moderate);
+  browser pass — add from both entry points, drawer + badge, promo apply/persist (₦36,000 →
+  ₦32,400), quantity steppers update totals + badge live, `/cart` + `/checkout` + empty state,
+  localStorage survives navigation, mobile drawer reflow. No console errors.
+
+### F2 progress (prior session)
 
 - `/design-studio`: guided flow (artwork → garment → colour → size → placement → scale) in a
   dark-gallery `DesignStudio` client component; live 2D DOM preview (colour-tinted garment,
@@ -59,7 +79,7 @@ first. F2 opens as stacked PR #6 with base `claude/f1-storefront`.
 ## Tasks verified
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
--005, -007, -008, -009; **TMS-F2-001**.
+-005, -007, -008, -009; TMS-F2-001; **TMS-F3-001**.
 
 ## In-progress task
 
@@ -67,9 +87,9 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-F2 follow-ups (`/design-studio/[configurationId]` resume route; contrast warning + undo; promote
-ColourSwatch/SizeSelector/preview into `packages/ui`) **or** the tracked soft-404 defect
-TMS-F1-DEF-001 **or** begin **F3** (cart / checkout / account).
+**TMS-F3-002** (checkout: contact/delivery/payment steps, order review) — builds directly on the
+cart and the `/checkout` stub **or** **TMS-F3-004** (auth: registration/login mock session) **or**
+the tracked soft-404 defect TMS-F1-DEF-001.
 
 ## Routes completed
 

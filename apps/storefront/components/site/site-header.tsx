@@ -5,6 +5,7 @@ import { Menu, Search, ShoppingBag, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
+import { useCart } from '@/components/cart/cart-provider';
 import { primaryNav } from '@/lib/nav';
 
 /**
@@ -15,6 +16,7 @@ import { primaryNav } from '@/lib/nav';
 export function SiteHeader() {
   const pathname = usePathname();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const { count, ready, openCart } = useCart();
 
   const close = useCallback(() => {
     dialogRef.current?.close();
@@ -88,7 +90,22 @@ export function SiteHeader() {
             >
               <Search className="size-5" aria-hidden />
             </Link>
-            <IconButton label="Cart" icon={<ShoppingBag className="size-5" aria-hidden />} />
+            <div className="relative">
+              <IconButton
+                label={ready && count > 0 ? `Bag, ${count} item${count === 1 ? '' : 's'}` : 'Bag'}
+                icon={<ShoppingBag className="size-5" aria-hidden />}
+                onClick={openCart}
+                aria-haspopup="dialog"
+              />
+              {ready && count > 0 ? (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute right-1 top-1 grid min-w-[1.1rem] place-items-center rounded-full bg-accent px-1 text-[0.65rem] font-semibold leading-tight text-on-accent"
+                >
+                  {count > 9 ? '9+' : count}
+                </span>
+              ) : null}
+            </div>
             <IconButton
               className="md:hidden"
               label="Open menu"
