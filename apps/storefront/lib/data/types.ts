@@ -46,6 +46,43 @@ export interface CollectionDetail extends CollectionSummary {
   artworks: ArtworkSummary[];
 }
 
+export interface ProductColour {
+  name: string;
+  hex: string;
+  available: boolean;
+}
+
+export interface ProductSize {
+  label: string;
+  available: boolean;
+}
+
+export interface ProductSummary {
+  id: string;
+  slug: string;
+  title: string;
+  artworkSlug: string;
+  artworkTitle: string;
+  collection: string;
+  garment: string;
+  priceMinor: number;
+  currency: string;
+  availability: Availability;
+  colourCount: number;
+}
+
+export interface ProductDetail extends ProductSummary {
+  description: string;
+  fabric: string;
+  fit: string;
+  printMethod: string;
+  care: string;
+  deliveryEstimate: string;
+  returnSummary: string;
+  colours: ProductColour[];
+  sizes: ProductSize[];
+}
+
 export interface ListArtworksParams {
   cursor?: string;
   limit?: number;
@@ -65,4 +102,8 @@ export interface StorefrontDataProvider {
   listCollectionSummaries(): Promise<CollectionSummary[]>;
   /** A collection and its artworks, or null if the slug is unknown. */
   getCollection(slug: string): Promise<CollectionDetail | null>;
+  /** Purchasable products (artwork applied to a garment) for the shop index. */
+  listProducts(): Promise<ProductSummary[]>;
+  /** A product and its configurable options, or null if the slug is unknown. */
+  getProduct(slug: string): Promise<ProductDetail | null>;
 }

@@ -27,6 +27,31 @@ describe('mockProvider collections', () => {
   });
 });
 
+describe('mockProvider products', () => {
+  it('lists products with colour counts and a garment', async () => {
+    const products = await mockProvider.listProducts();
+    expect(products.length).toBeGreaterThan(0);
+    for (const p of products) {
+      expect(p.colourCount).toBeGreaterThan(0);
+      expect(p.garment).toBeTruthy();
+      expect(p.slug).toMatch(/^[a-z0-9-]+$/);
+    }
+  });
+
+  it('returns product detail with colours, sizes and care info', async () => {
+    const product = await mockProvider.getProduct('midnight-in-lagos-classic-tee');
+    expect(product).not.toBeNull();
+    expect(product?.colours.length).toBe(product?.colourCount);
+    expect(product?.sizes.length).toBeGreaterThan(0);
+    expect(product?.sizes.some((s) => !s.available)).toBe(true); // XS sold out
+    expect(product?.care).toBeTruthy();
+  });
+
+  it('returns null for an unknown product slug', async () => {
+    expect(await mockProvider.getProduct('nope')).toBeNull();
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

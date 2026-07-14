@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F1",
-  "lastVerifiedTask": "TMS-F1-008",
-  "nextRecommendedTask": "TMS-F1-009",
+  "lastVerifiedTask": "TMS-F1-009",
+  "nextRecommendedTask": "TMS-F1-010",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -21,7 +21,8 @@
     "TMS-F1-004",
     "TMS-F1-005",
     "TMS-F1-007",
-    "TMS-F1-008"
+    "TMS-F1-008",
+    "TMS-F1-009"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
@@ -32,7 +33,10 @@
   "visualRegressionStatus": "harness-scaffolded-baselines-pending",
   "mockDependencies": [
     "storefront:home:featuredArtworks (TMS-FBR-001)",
-    "storefront:/artworks listing + detail (TMS-FBR-001)"
+    "storefront:/artworks listing + detail (TMS-FBR-001)",
+    "storefront:/collections (TMS-FBR-001)",
+    "storefront:/search (TMS-FBR-001)",
+    "storefront:/shop + /products/[slug] (TMS-FBR-002)"
   ],
   "branch": "claude/f1-storefront",
   "lastUpdated": "2026-07-14"

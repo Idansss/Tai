@@ -32,4 +32,10 @@ export const apiProvider: StorefrontDataProvider = {
   getCollection() {
     return notImplemented('getCollection');
   },
+  listProducts() {
+    return notImplemented('listProducts');
+  },
+  getProduct() {
+    return notImplemented('getProduct');
+  },
 };

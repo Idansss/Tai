@@ -135,6 +135,21 @@ lint, build, visual evidence, docs updated).
     4 collections; `night-studies` detail shows exactly its 2 artworks; unknown slug → not-found
     UI. Browser screenshot confirms rendering. Full `pnpm check` green (21 storefront tests).
 
+- [x] **TMS-F1-009** Shop + product page
+  - Status: Verified
+  - Evidence: `/shop` listing via new `ProductCard`; `/products/[slug]` with an interactive
+    `ProductConfigurator` (client): colour swatches + size chips as accessible radio groups
+    (unavailable options disabled), live colour-tinted preview, front/back toggle, quantity
+    control, size-required validation (role=alert), fabric/fit/print/care/delivery/returns
+    details, and a **sticky mobile purchase bar**. Add-to-bag shows an honest "arrives in F3"
+    status — no fake cart. Provider gained `listProducts()`/`getProduct()` (+ api stubs);
+    3 provider tests. Verified live (shop=6, product 200, invalid→not-found) and in-browser
+    (colour Black→Bone retints preview; radio semantics confirmed via a11y tree). Logged
+    **TMS-FBR-002**. Full `pnpm check` green (24 storefront tests).
+  - Follow-up: per-colour×size availability matrix + real front/back artwork imagery need
+    backend data (TMS-FBR-002); ColourSwatch/SizeSelector/QuantityControl to be promoted into
+    `packages/ui`.
+
 ### Known defects
 
 - **TMS-F1-DEF-001** — `/artworks/[slug]` renders the correct not-found UI for unknown slugs but
