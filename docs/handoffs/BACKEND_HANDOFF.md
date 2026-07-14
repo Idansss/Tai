@@ -2,7 +2,7 @@
 
 ## Current backend phase
 
-B0 — Shared repository foundation. Implementation and local verification complete; draft PR #1 is open at https://github.com/Lingz450/Tai/pull/1.
+B0 — Shared repository foundation is complete and verified on `main`. B1 identity work may begin on `codex/b1-identity`.
 
 ## Work completed
 
@@ -10,15 +10,15 @@ Created the pnpm/Turborepo workspace, backend skeletons, shared packages, Prisma
 
 ## Tasks verified
 
-TMS-B0-001 through TMS-B0-010.
+TMS-B0-001 through TMS-B0-011.
 
-## In-progress task
+## Merge record
 
-TMS-B0-011 — Review and merge draft PR #1.
+PR #1 was squash-merged at `2026-07-14T14:11:22Z` as `88a00912d8e5a0f5c05c07e9269add663f1c4fdf`. Main-branch GitHub Actions run 29339734452 passed. Required foundation files and frontend placeholders were verified after the merge with no file loss.
 
 ## First recommended next task
 
-After the B0 PR merges, branch from the latest `main` and start TMS-B1-001.
+Branch from the latest `main` and start TMS-B1-001.
 
 ## API contracts added or changed
 
@@ -42,7 +42,7 @@ Initial repository foundation across root configuration, `apps`, `packages`, `do
 
 ## Test results
 
-Local formatting, linting, type checking, 13 unit tests, production builds, Prisma validation, dependency audit, Compose validation, API liveness, and runtime OpenAPI smoke checks passed before push. GitHub Actions passed on draft PR #1; the workflow uses current Node 24-based action runtimes.
+Local frozen install, formatting, linting, type checking, 14 unit tests, production builds, Prisma validation, dependency audit, Compose validation, API liveness/readiness, and runtime OpenAPI smoke checks passed. GitHub Actions passed on PR #1 and again on its exact `main` merge commit using current Node 24-based action runtimes.
 
 ## Known defects
 
@@ -50,11 +50,11 @@ Readiness currently reports process readiness only; dependency probes are schedu
 
 ## Blockers
 
-B1 is blocked until the B0 pull request is reviewed and merged. Live Flutterwave and GIGL verification will remain credential-blocked in B5.
+No B1 foundation blocker remains. Live Flutterwave and GIGL verification will remain credential-blocked in B5.
 
 ## Requests for Claude Code
 
-Review the workspace/contract baseline after merge. Continue to own `apps/storefront`, `apps/admin`, `packages/ui`, and frontend documentation; do not replace frontend mocks until corresponding APIs are documented as ready.
+Start from the latest `main`. Continue to own `apps/storefront`, `apps/admin`, `packages/ui`, and frontend documentation; use typed mock adapters until corresponding domain APIs are documented as ready.
 
 ## Do not redo
 
@@ -62,4 +62,4 @@ Do not recreate root workspace configuration, backend skeletons, initial contrac
 
 ## Exact continuation instruction
 
-Continue the Tai Manic Studios backend build. Read the required project-control files, confirm B0 is merged, pull the latest `main`, create `codex/b1-identity`, and begin TMS-B1-001 without repeating Verified B0 tasks.
+Continue the Tai Manic Studios backend build on `codex/b1-identity`. Read the required project-control files and implement TMS-B1-001 without repeating Verified B0 tasks or modifying frontend-owned areas.

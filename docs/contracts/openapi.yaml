@@ -21,11 +21,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /api/v1/health/live:
+    get:
+      operationId: getLive
+      tags: [health]
+      summary: Short alias for the API liveness check
+      responses:
+        '200':
+          description: The API process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
   /api/v1/health/readiness:
     get:
       operationId: getReadiness
       tags: [health]
       summary: Confirm that the API is ready to accept traffic
+      responses:
+        '200':
+          description: The API process is ready. Dependency probes are added in B1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/health/ready:
+    get:
+      operationId: getReady
+      tags: [health]
+      summary: Short alias for the API readiness check
       responses:
         '200':
           description: The API process is ready. Dependency probes are added in B1.

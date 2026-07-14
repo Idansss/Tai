@@ -14,4 +14,12 @@ describe('HealthController', () => {
       meta: { correlationId: 'health-test' },
     });
   });
+
+  it('keeps short health aliases contract-compatible', () => {
+    const controller = new HealthController(new HealthService());
+    const request = { correlationId: 'health-alias-test' } as Request;
+
+    expect(controller.live(request)).toEqual(controller.liveness(request));
+    expect(controller.ready(request)).toEqual(controller.readiness(request));
+  });
 });
