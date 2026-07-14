@@ -80,5 +80,12 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
   the client model; replace the mock delivery source + local order snapshot with the endpoints and
   treat the server quote/order as authoritative. Pairs with TMS-F3-003 (payment states) and
   TMS-FBR-003 (cart).
+- **Payment states (TMS-F3-003, delivered):** the frontend renders processing / success / pending
+  / failure at `/checkout/payment` and a status-aware confirmation at `/checkout/success`, driven
+  by a **mock** resolver (`lib/payment.ts`) that maps to the `OrderStatus`/`PaymentStatus` enums
+  from `@tms/contracts`. It needs: a payment-intent/redirect from `POST /api/v1/orders`, a way to
+  observe the resolved status (webhook-backed `GET /api/v1/orders/{ref}` or a return URL with a
+  verifiable token — never trust a client `?outcome=` param), and idempotent retry. No money is
+  moved client-side today.
 
 _No further requests yet. Add here as F1+ surfaces need contracts._

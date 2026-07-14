@@ -60,6 +60,7 @@ export function OrderConfirmation() {
   }
 
   const { totals, currency } = order;
+  const paid = order.status === 'PAID';
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -67,7 +68,7 @@ export function OrderConfirmation() {
         <CheckCircle2 className="mt-0.5 size-7 shrink-0 text-[var(--color-success)]" aria-hidden />
         <div>
           <Heading as={1} size="display-lg">
-            Order received
+            {paid ? 'Order confirmed' : 'Order received'}
           </Heading>
           <Text tone="secondary" className="mt-1">
             Thank you, {order.delivery.fullName.split(' ')[0] || 'friend'}. Your order reference is{' '}
@@ -77,10 +78,20 @@ export function OrderConfirmation() {
         </div>
       </div>
 
-      <Alert tone="info" title="Payment pending">
-        This preview records your order but does not take payment. Secure Flutterwave payment and
-        the live payment states arrive in the next release — nothing has been charged.
-      </Alert>
+      {paid ? (
+        <Alert tone="success" title="Payment received">
+          This is a preview build — payment is simulated, so no real charge was made. Your order is
+          recorded as paid and would now move into production.
+        </Alert>
+      ) : (
+        <Alert tone="info" title="Payment not completed">
+          This order hasn’t been paid yet.{' '}
+          <Link href="/checkout/payment" className="underline underline-offset-2">
+            Complete payment
+          </Link>
+          .
+        </Alert>
+      )}
 
       <section className="rounded-[var(--radius-lg)] border border-line bg-canvas-2 p-5">
         <Heading as={2} size="md" className="mb-4">

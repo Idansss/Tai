@@ -51,7 +51,7 @@ const inputClass =
   'h-11 w-full rounded-md border bg-canvas px-3 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]';
 
 export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOption[] }) {
-  const { items, ready, subtotalMinor, estimatedTotalMinor, promotion, clear } = useCart();
+  const { items, ready, subtotalMinor, estimatedTotalMinor, promotion } = useCart();
   const router = useRouter();
   const [form, setForm] = useState<CheckoutForm>(EMPTY_CHECKOUT_FORM);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -99,10 +99,13 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
       deliveryEta: selectedDelivery?.eta ?? '',
       paymentMethod: form.paymentMethod,
       totals,
+      status: 'AWAITING_PAYMENT',
+      paymentStatus: 'CREATED',
     };
+    // Persist the order and hand off to the (mock) payment step. The bag is
+    // kept until payment resolves so a failed payment can be retried.
     saveLastOrder(order);
-    clear();
-    router.push('/checkout/success');
+    router.push('/checkout/payment');
   }
 
   if (!ready) {

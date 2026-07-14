@@ -205,10 +205,10 @@ lint, build, visual evidence, docs updated).
     db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate, below threshold);
     browser pass (desktop + mobile): validation blocks an empty submit (7 field errors, `aria-invalid`,
     focus jumps to the first invalid field); live totals recompute (Subtotal ₦39,000 − ₦3,900 promo
-    + ₦5,000 express delivery + ₦2,632.50 VAT = ₦42,732.50); "Place order" snapshots the order,
-    clears the bag, and routes to `/checkout/success` with a reference (`TMS-DQXGCG`); confirmation
-    shows items/totals/address/contact + an honest "payment pending" notice; empty-cart and
-    no-order guards both render. No console errors.
+    - ₦5,000 express delivery + ₦2,632.50 VAT = ₦42,732.50); "Place order" snapshots the order,
+      clears the bag, and routes to `/checkout/success` with a reference (`TMS-DQXGCG`); confirmation
+      shows items/totals/address/contact + an honest "payment pending" notice; empty-cart and
+      no-order guards both render. No console errors.
   - Scope delivered: single-page checkout (`CheckoutFlow`) — contact, delivery address (Nigerian
     states select), delivery-method radios (from mock `getDeliveryOptions()`), payment-method
     radios (Flutterwave card/transfer, clearly a preview), and a sticky itemised order summary
@@ -220,7 +220,23 @@ lint, build, visual evidence, docs updated).
     mock and server-authoritative later (TMS-FBR-004).
   - Follow-ups: server delivery quote + order + payment intent (TMS-FBR-004); wire into TMS-F3-003
     payment states.
-- [ ] **TMS-F3-003** Payment states — processing / success / pending / failure surfaces.
+- [x] **TMS-F3-003** Payment states — processing / success / pending / failure
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate, below threshold);
+    browser pass on all outcomes: checkout "Place order" → `/checkout/payment` shows a processing
+    state, then resolves — **success** → order `PAID`/`SUCCEEDED`, bag cleared, status-aware
+    `/checkout/success` ("Order confirmed" + "Payment received"); **failure** → `PAYMENT_FAILED`,
+    **bag kept**, retry (clean URL) resolves to success; **pending** → `PAYMENT_PROCESSING`, bag
+    cleared, pending panel. No-order guard renders; no console errors.
+  - Scope delivered: `/checkout/payment` (`PaymentProcessing`, Suspense-wrapped for
+    `useSearchParams`) with a simulated provider round-trip and processing/pending/failure UIs;
+    `lib/payment.ts` (outcome parse + `OrderStatus`/`PaymentStatus` mapping from `@tms/contracts`,
+    cart-clear policy) with 4 unit tests; `PlacedOrder` gained `status` + `paymentStatus`;
+    `updateLastOrder()` helper. Checkout now hands off to payment (bag kept until resolved);
+    confirmation is status-aware. Natural flow resolves to success; `?outcome=pending|failure`
+    exercises the other states for review (server must own the real status — never a client param).
+  - Follow-ups: real payment intent + webhook-verified status + idempotent retry (TMS-FBR-004);
+    surface order status history once the orders API + account (TMS-F3-005) land.
 - [ ] **TMS-F3-004** Auth — registration + login (mock session).
 - [ ] **TMS-F3-005** Account — orders list, order detail + tracking, saved designs, wishlist.
 

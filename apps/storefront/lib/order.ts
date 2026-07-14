@@ -5,6 +5,7 @@
  * "awaiting payment"; Flutterwave + payment states arrive in TMS-F3-003.
  */
 
+import type { OrderStatus, PaymentStatus } from '@tms/contracts';
 import type { CartItem } from './cart';
 import type { ContactDetails, DeliveryDetails, OrderTotals, PaymentMethod } from './checkout';
 
@@ -19,6 +20,10 @@ export interface PlacedOrder {
   deliveryEta: string;
   paymentMethod: PaymentMethod;
   totals: OrderTotals;
+  /** Lifecycle status (subset used by the mock checkout). */
+  status: OrderStatus;
+  /** Payment lifecycle status from the (mock) provider. */
+  paymentStatus: PaymentStatus;
 }
 
 const LAST_ORDER_KEY = 'tms.lastOrder.v1';
@@ -50,6 +55,15 @@ export function readLastOrder(): PlacedOrder | null {
   } catch {
     return null;
   }
+}
+
+/** Merge a patch into the stored order (e.g. status after a payment result). */
+export function updateLastOrder(patch: Partial<PlacedOrder>): PlacedOrder | null {
+  const current = readLastOrder();
+  if (!current) return null;
+  const next = { ...current, ...patch };
+  saveLastOrder(next);
+  return next;
 }
 
 export function clearLastOrder(): void {
