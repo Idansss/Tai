@@ -91,7 +91,7 @@ const productSeeds: ProductSeed[] = [
     collection: 'City Portraits',
     garment: 'Oversized T-shirt',
     priceMinor: 1250000,
-    availability: 'available',
+    availability: 'sold_out',
     colours: ['Black', 'Bone'],
   },
   {

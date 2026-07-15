@@ -82,7 +82,7 @@ export default async function DropDetailPage({ params }: Params) {
             </div>
 
             <div className="mt-6">
-              <DropEarlyAccess status={status} />
+              <DropEarlyAccess status={status} slug={drop.slug} title={drop.title} />
             </div>
 
             <Text tone="secondary" className="mt-6">

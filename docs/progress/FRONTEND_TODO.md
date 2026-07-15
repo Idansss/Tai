@@ -516,7 +516,7 @@ customers + analytics.
     merged to `main`** (bottom-up, merge commits, branches deleted; `pnpm check` green on the
     integrated `main`, HEAD `e919e7e`). Active work continues on `claude/f5-post-merge`.
 
-## Phase F5 — Growth & AI (scoped 2026-07-15; TMS-F5-001 Verified)
+## Phase F5 — Growth & AI (scoped 2026-07-15; TMS-F5-001, -002 Verified)
 
 Scoped from the master prompt §19 (AI interfaces), §20 (editorial & growth) and §29 (phase
 definition). **Everything builds on the typed mock adapter** — no growth/AI backend exists yet
@@ -554,9 +554,27 @@ claims**, and **must never auto-publish or auto-act**.
   - Follow-ups: real drops API + server-authoritative timeline/inventory (TMS-FBR-008); wire the
     early-access gate + waitlist to real membership/notify (pairs with TMS-F5-002); promote the
     countdown into `packages/ui` if reused; real drop imagery.
-- [ ] **TMS-F5-002** Waitlist & back-in-stock — email-capture UI on sold-out artworks/products +
-      drop early-access signup, confirmation + already-registered states, honest "preview, not a real
-      signup" notice. Mock capture; **TMS-FBR-008** (waitlist/notify endpoint).
+- [x] **TMS-F5-002** Waitlist & back-in-stock
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **119 storefront tests**, up from 113: +6 waitlist). In-browser on the served build:
+    the **sold-out product** page (`okada-run-oversized-tee`, flipped to sold_out in the mock) shows
+    "Sold out" + a **back-in-stock** form; a valid submit → "You're on the list" and **persists** to
+    `localStorage` (`tms.waitlist.v1` → `product:okada-run-oversized-tee`); an invalid email →
+    "Enter a valid email address." (`role="alert"`, `aria-invalid`) with success blocked. The
+    **sold-out drop** (`comic-line-reprint`) shows "Notify me if it restocks" and the **upcoming
+    drop** (`harmattan-editions`) shows the sign-in CTA **plus** "Remind me when it opens" — both
+    client-rendered waitlist forms with the preview notice. No console/hydration errors.
+  - Scope delivered: pure `lib/waitlist.ts` (`waitlistKey`, `hasEmail`, `addEntry` — case-insensitive
+    dedupe, non-mutating; `joinWaitlist` validate + persist with an idempotent already-joined result;
+    SSR-guarded `localStorage` wrappers; reuses `isValidEmail`/`normalizeEmail`) with **6 unit tests**.
+    Reusable client `WaitlistForm` (labelled email input, `role="alert"` error, success/already-joined
+    states, session email prefill, honest "no notification sent" preview notice). Wired into the
+    product configurator (sold-out → back-in-stock) and `DropEarlyAccess` (sold-out/ended → restock/
+    next-drop; upcoming → "remind me when it opens", alongside the sign-in CTA). Backend gap under
+    **TMS-FBR-008** (waitlist/notify + back-in-stock).
+  - Follow-ups: real waitlist/notify endpoint + membership-scoped early access (TMS-FBR-008); an
+    account view of "things I'm waiting on"; artwork-level back-in-stock once artworks are directly
+    purchasable; double-opt-in + unsubscribe when real email lands.
 - [ ] **TMS-F5-003** Pre-order & made-to-order — pre-order badges/flow on eligible drop items,
       made-to-order lead-time messaging surfaced in product + cart + checkout, ships-by estimate. Mock.
 - [ ] **TMS-F5-004** Reviews & ratings — review display on product/artwork (rating summary +

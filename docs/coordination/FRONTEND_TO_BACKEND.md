@@ -250,4 +250,20 @@ email**. It needs, on top of the auth endpoints above:
   `force-dynamic` (time-sensitive), no build-time enumeration is needed. Membership/early-access
   enforcement + the waitlist/notify endpoint pair with TMS-F5-002.
 
+### TMS-FBR-008 addendum — waitlist / back-in-stock / notify [TMS-F5-002]
+
+The waitlist capture (delivered) currently runs on a **client-side `localStorage` store**
+(`tms.waitlist.v1`, keyed `product:{slug}` / `drop:{slug}` / `artwork:{slug}`) and sends **no real
+notification**. It needs:
+
+- `POST /api/v1/waitlist` (join) with `{ kind: 'product'|'drop'|'artwork', id, email }` →
+  idempotent (`alreadyJoined`), plus `DELETE` (unsubscribe) and, once real email lands, double
+  opt-in. Optionally `GET /api/v1/account/waitlist` for a signed-in "things I'm waiting on" view.
+- A **notify pipeline**: back-in-stock (inventory crosses 0→available), drop-opening (release time
+  reached), and drop-restock triggers, de-duplicated per email. The frontend maps the same three
+  `kind`s used above.
+- Reason: the capture is UI-only preview today. Blocking: no. Suggested fallback: keep
+  `lib/waitlist.ts` + `WaitlistForm` as the client model; replace `joinWaitlist`'s storage with the
+  endpoint and treat the server as the source of truth.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

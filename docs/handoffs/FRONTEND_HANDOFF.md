@@ -22,6 +22,18 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Waitlist & back-in-stock (TMS-F5-002) — Verified.** Pure `lib/waitlist.ts` (`waitlistKey`,
+  `hasEmail`, non-mutating case-insensitive `addEntry`, `joinWaitlist` validate + persist with an
+  idempotent already-joined result; SSR-guarded `localStorage`; reuses `isValidEmail`/`normalizeEmail`)
+  with **6 unit tests**. A reusable client `WaitlistForm` (labelled email input, `role="alert"` error,
+  success/already-joined states, session prefill, honest "no notification sent" preview) is wired into
+  the product configurator (sold-out → back-in-stock) and `DropEarlyAccess` (sold-out/ended → restock/
+  next-drop; upcoming → "remind me when it opens" beside the sign-in CTA). One mock product
+  (`okada-run-oversized-tee`) is now `sold_out` so the back-in-stock path is exercisable. Verified in
+  the browser: valid submit → success + `localStorage` persist; invalid email → error + blocked; the
+  drop forms render client-side; no console errors. Full `pnpm check` green (119 storefront tests). Gap
+  under **TMS-FBR-008** (waitlist/notify).
+
 - **Limited drops & countdown (TMS-F5-001) — Verified.** First F5 (growth) task, on the typed mock
   adapter. Pure `lib/drops.ts` derives drop status (upcoming / early access / live / ended / sold out)
   from timestamps + a `soldOut` flag relative to an explicit `now`, plus `nextMilestone` (the countdown
