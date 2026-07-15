@@ -35,6 +35,41 @@ export interface ArtworkDetail extends ArtworkSummary {
   related: ArtworkSummary[];
 }
 
+/**
+ * Artwork Passport (TMS-F5-006) — authenticity & provenance for a specific
+ * artwork *version*. The `versionId` is a deterministic, content-addressed id
+ * (see `lib/passport.ts`): same content → same id, and it is meant to be
+ * immutable for a given release. Today it is derived on the frontend from the
+ * stable artwork fields; TMS-FBR-001 will make it server-authoritative and add
+ * a real per-piece serial ledger + ownership record.
+ */
+export interface ProvenanceEvent {
+  label: string;
+  detail: string;
+  /** A year or human date — textual, not machine-parsed. */
+  date: string;
+}
+
+export interface ArtworkPassport {
+  artworkSlug: string;
+  title: string;
+  collection: string;
+  /** Immutable, content-addressed version id, e.g. "AP-1A2B-3C4D". */
+  versionId: string;
+  /** Human edition label, e.g. "Limited edition of 100" / "Open edition". */
+  edition: string;
+  /** Total run size for limited editions; null for open editions. */
+  editionSize: number | null;
+  /** Illustrative serial for the edition; null for open editions. Placeholder. */
+  serialExample: string | null;
+  /** When the artwork was released. */
+  releasedOn: string;
+  /** The studio/artist attribution that signs the passport. */
+  issuedBy: string;
+  /** Authenticity / provenance narrative, earliest first. */
+  provenance: ProvenanceEvent[];
+}
+
 export interface CollectionSummary {
   slug: string;
   name: string;
@@ -156,6 +191,8 @@ export interface DropDetail extends DropSummary {
 export interface StorefrontDataProvider {
   listArtworks(params?: ListArtworksParams): Promise<CursorPage<ArtworkSummary>>;
   getArtwork(slug: string): Promise<ArtworkDetail | null>;
+  /** Authenticity/provenance passport for an artwork version, or null if unknown. */
+  getArtworkPassport(slug: string): Promise<ArtworkPassport | null>;
   /** Distinct collection names available for filtering. */
   listCollections(): Promise<string[]>;
   /** Free-text search across the catalogue. Empty query returns no results. */

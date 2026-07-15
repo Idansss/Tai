@@ -103,6 +103,35 @@ describe('mockProvider drops', () => {
   });
 });
 
+describe('mockProvider artwork passport', () => {
+  it('issues a passport with a stable version id for a limited artwork', async () => {
+    const passport = await mockProvider.getArtworkPassport('paper-tigers');
+    expect(passport).not.toBeNull();
+    expect(passport?.versionId).toMatch(/^AP-[0-9A-F]{4}-[0-9A-F]{4}$/);
+    expect(passport?.editionSize).toBe(100);
+    expect(passport?.serialExample).toMatch(/^No\. \d+ \/ 100$/);
+    expect(passport?.provenance.length).toBeGreaterThan(0);
+    expect(passport?.issuedBy).toBe('Tai Manic Studios');
+  });
+
+  it('marks an open edition with no run size or serial', async () => {
+    const passport = await mockProvider.getArtworkPassport('midnight-in-lagos');
+    expect(passport?.editionSize).toBeNull();
+    expect(passport?.serialExample).toBeNull();
+    expect(passport?.edition).toBe('Open edition');
+  });
+
+  it('is deterministic — the version id does not change between reads', async () => {
+    const a = await mockProvider.getArtworkPassport('market-day');
+    const b = await mockProvider.getArtworkPassport('market-day');
+    expect(a?.versionId).toBe(b?.versionId);
+  });
+
+  it('returns null for an unknown artwork slug', async () => {
+    expect(await mockProvider.getArtworkPassport('does-not-exist')).toBeNull();
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

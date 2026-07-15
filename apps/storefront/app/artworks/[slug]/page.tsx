@@ -1,5 +1,5 @@
 import { Badge, buttonVariants, Container, Eyebrow, Heading, Price, Text } from '@tms/ui';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -103,9 +103,12 @@ export default async function ArtworkDetailPage({ params }: Params) {
                 Design with this artwork <ArrowRight className="size-4" aria-hidden />
               </Link>
               <Link
-                href="/artworks"
+                href={`/artworks/${artwork.slug}/passport`}
                 className={buttonVariants({ size: 'lg', variant: 'secondary' })}
               >
+                <ShieldCheck className="size-4" aria-hidden /> View passport
+              </Link>
+              <Link href="/artworks" className={buttonVariants({ size: 'lg', variant: 'ghost' })}>
                 Back to gallery
               </Link>
             </div>

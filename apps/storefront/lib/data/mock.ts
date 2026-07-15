@@ -1,7 +1,9 @@
 import type { CursorPage } from '@tms/contracts';
+import { artworkVersionId, passportSerial } from '../passport';
 import { artworkMatchesQuery } from '../search';
 import type {
   ArtworkDetail,
+  ArtworkPassport,
   ArtworkSummary,
   Availability,
   CollectionDetail,
@@ -12,6 +14,7 @@ import type {
   ListArtworksParams,
   ProductDetail,
   ProductSummary,
+  ProvenanceEvent,
   StorefrontDataProvider,
   StudioOptions,
 } from './types';
@@ -405,6 +408,54 @@ export const mockProvider: StorefrontDataProvider = {
       edition: summary.limitedEdition ? 'Limited edition of 100' : 'Open edition',
       release: '2026',
       related: artworks.filter((a) => a.id !== summary.id).slice(0, 3),
+    });
+  },
+
+  async getArtworkPassport(slug: string): Promise<ArtworkPassport | null> {
+    const detail = await this.getArtwork(slug);
+    if (!detail) return delay(null);
+
+    const editionSize = detail.limitedEdition ? 100 : null;
+    const edition = detail.edition ?? 'Open edition';
+    const release = detail.release ?? '2026';
+    const versionId = artworkVersionId({ slug: detail.slug, edition, release });
+
+    const provenance: ProvenanceEvent[] = [
+      {
+        label: 'Drawn in the studio',
+        detail: `${detail.title} — original linework by the Tai Manic Studios team.`,
+        date: release,
+      },
+      {
+        label: 'Published',
+        detail: `Released into the ${detail.collection} collection.`,
+        date: release,
+      },
+      editionSize
+        ? {
+            label: 'Edition opened',
+            detail: `A numbered run of ${editionSize} — each piece is serialised when it is purchased.`,
+            date: release,
+          }
+        : {
+            label: 'Open edition',
+            detail: 'Printed to order with no fixed run size; every piece shares this passport.',
+            date: release,
+          },
+    ];
+
+    return delay({
+      artworkSlug: detail.slug,
+      title: detail.title,
+      collection: detail.collection,
+      versionId,
+      edition,
+      editionSize,
+      // Illustrative only — a real serial is assigned to a piece at purchase.
+      serialExample: editionSize ? passportSerial(42, editionSize) : null,
+      releasedOn: release,
+      issuedBy: 'Tai Manic Studios',
+      provenance,
     });
   },
 

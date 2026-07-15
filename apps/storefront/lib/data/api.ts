@@ -20,6 +20,9 @@ export const apiProvider: StorefrontDataProvider = {
   getArtwork() {
     return notImplemented('getArtwork');
   },
+  getArtworkPassport() {
+    return notImplemented('getArtworkPassport');
+  },
   listCollections() {
     return notImplemented('listCollections');
   },

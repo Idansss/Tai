@@ -602,9 +602,31 @@ claims**, and **must never auto-publish or auto-act**.
       empty/loading/failure states. **TMS-FBR-008** (reviews read + write, moderation).
 - [ ] **TMS-F5-005** Community gallery — customer-photo gallery (moderation-aware display), submit-a-
       photo UI (mock), per-artwork "styled by the community" section. **TMS-FBR-008** (UGC + moderation).
-- [ ] **TMS-F5-006** Artwork Passport — per-artwork-version authenticity/provenance page (immutable
-      version id, edition/serial, story, release, ownership-record placeholder, share). Frontend on
-      existing artwork data; **TMS-FBR-001** (version + edition fields) extends it.
+- [x] **TMS-F5-006** Artwork Passport
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **140 storefront tests**, up from 129: +11 passport — 7 lib + 4 mock). In-browser on
+    the served build (`next start`): a new **per-artwork passport** at `/artworks/[slug]/passport`
+    renders a **certificate of authenticity** with an **immutable version id** (`AP-XXXX-XXXX`,
+    monospace — e.g. `paper-tigers` → `AP-48FC-BF2C`), edition, an **illustrative serial** for limited
+    editions (`No. 042 / 100`), release, and issuer (Tai Manic Studios); an **open edition**
+    (`midnight-in-lagos`) shows a different id, "Open edition", and **no** serial line. An **ownership-
+    record placeholder** ("No owner is on record yet"), a **provenance timeline**, and a **Share
+    passport** control (Web Share → clipboard fallback) all render. The artwork detail page links to it
+    ("View passport"). Unknown slugs are a **genuine 404** (SSG + `dynamicParams=false`, same DEF-001
+    fix as the detail route). No console/hydration errors.
+  - Scope delivered: pure `lib/passport.ts` — `artworkVersionId` (deterministic, content-addressed
+    FNV-1a id; same content → same id, any field change → a new version) + `passportSerial`
+    (width-padded serial) with **7 unit tests**. `ArtworkPassport`/`ProvenanceEvent` types +
+    `getArtworkPassport(slug)` on the provider (mock composes from artwork detail; api stub throws;
+    **4 mock tests**). New SSG route `app/artworks/[slug]/passport/page.tsx` (certificate / ownership
+    placeholder / share / provenance) + client `PassportShare`. "View passport" link on the artwork
+    detail page.
+  - **Note:** the version id + serial are a **frontend derivation** for the preview — the
+    server-authoritative version id, per-piece serial ledger, and ownership record are a backend
+    concern (**TMS-FBR-001** extends artwork data with version + edition fields).
+  - Follow-ups: server-authoritative version id + real per-piece serial/ownership ledger (TMS-FBR-001);
+    a scannable/verifiable proof (QR / signed link) once the ledger exists; per-purchase passport in
+    the account order detail.
 - [ ] **TMS-F5-007** Shoppable stories — editorial story pages with embedded shoppable artwork/
       product hotspots linking to gallery/studio/product; upgrades the `/stories` placeholder journal.
       Frontend + mock.

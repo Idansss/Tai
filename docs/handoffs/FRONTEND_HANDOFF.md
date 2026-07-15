@@ -22,6 +22,23 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Artwork Passport (TMS-F5-006) — Verified.** Pure `lib/passport.ts` derives an **immutable,
+  content-addressed version id** (`artworkVersionId` — deterministic FNV-1a over slug+edition+release,
+  formatted `AP-XXXX-XXXX`; same content → same id, any field change → a new version) plus a
+  width-padded `passportSerial` (`No. 042 / 100`), with **7 unit tests**. New provider method
+  `getArtworkPassport(slug)` returns an `ArtworkPassport` (version id, edition + run size, illustrative
+  serial for limited editions, released date, issuer, provenance timeline); the mock composes it from
+  artwork detail, the api stub throws loudly (**4 mock tests**). New **SSG** route
+  `/artworks/[slug]/passport` (`dynamicParams=false`, so unknown slugs are a genuine 404 — same
+  DEF-001 fix as the detail route) renders a certificate of authenticity, an **ownership-record
+  placeholder**, a provenance timeline, and a client `PassportShare` (Web Share API → clipboard
+  fallback). The artwork detail page links to it ("View passport"). Verified in the browser on the
+  served build: `paper-tigers` → `AP-48FC-BF2C` + "Limited edition of 100" + "No. 042 / 100";
+  `midnight-in-lagos` → a different id + "Open edition" with no serial line; unknown slug → 404; no
+  console/hydration errors. Full `pnpm check` green (**140 storefront tests**). The version id + serial
+  are a **frontend derivation** for the preview — the server-authoritative version id, per-piece serial
+  ledger, and ownership record are backend (**TMS-FBR-001**).
+
 - **Pre-order & made-to-order (TMS-F5-003) — Verified.** Pure `lib/fulfilment.ts` computes a
   made-to-order ship window from working-day production lead time (`addWorkingDays` in UTC,
   `madeToOrderWindow`, `preOrderWindow` — production starts when a drop opens, `isPreOrderStatus`,
