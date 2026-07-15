@@ -445,6 +445,42 @@ customers + analytics.
     access + per-line QC results (not just an order-level stage); packing slips + carrier booking;
     production notes.
 
+- [x] **TMS-F4-006** Error centre + customers + analytics — the last three admin sections
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **116 admin unit tests**, up from 88; **89 storefront**); `pnpm audit` not run (same
+    registry-side 410 outage; **no new dependencies added**). Served-route smoke test: `/errors`,
+    `/customers`, `/customers/[id]` (`ada.verify%40example.com`) and `/analytics` all return **200**
+    with the correct titles + `noindex`; `pnpm build` registers all four routes. Interactive
+    click-throughs (error resolution actions retry/investigate/resolve/ignore/reopen with the unresolved
+    count updating; customer search/status filter → profile with order history; analytics KPIs + daily
+    bar chart + status-mix bars + top lists) are covered by the pure-domain unit tests but were **not**
+    re-driven in-browser this session (the harness didn't expose the in-app browser tools).
+  - Scope delivered — three surfaces on the admin data provider:
+    - **Error centre** (`/errors`): `AdminErrorEntry` + `listErrors(params)` over a **safe-by-construction**
+      dataset (correlation ID + human summary only — **never** stack traces/payloads/secrets, spec §18),
+      across payment/webhook/shipping/image/email/AI/job sources. Pure `lib/errors.ts` (source/severity/
+      resolution labels + tones, `filterErrors`, `openCount`, the `errorActions`/`applyErrorAction`
+      resolution lifecycle gated on retryability). `ErrorCentreView` = unresolved-count banner, source +
+      resolution + search filters, and a card list with severity/source/resolution badges, correlation ID,
+      affected-order link and per-entry actions (local state, honest "not saved" notices).
+    - **Customers** (`/customers` + `/customers/[id]`): `AdminCustomerSummary`/`AdminCustomerProfile` +
+      `listCustomers(params)` + `getCustomer(id)` **derived from the order dataset** (reconciled by contact
+      email, mirroring the storefront's guest-order association). Pure `lib/customers.ts`
+      (`deriveCustomers`/`deriveCustomerProfile`, `customerStatus` new/active/dormant, paid-only spend,
+      `filterCustomers`). `CustomersView` = searchable/filterable directory table; `CustomerDetailView` =
+      order history (→ order detail) + contact + summary (spend/orders/saved designs); unknown id → not-found.
+    - **Analytics** (`/analytics`, new nav item): `AdminAnalytics` + `getAnalytics()` derived from orders.
+      Pure `lib/analytics.ts` (`buildDailySeries` 14-day zero-filled bucketing, `statusBreakdown`, bar
+      scaling). `AnalyticsView` = KPI cards, an accessible CSS **daily-orders bar chart** (with an sr-only
+      data table), an order-status-mix breakdown, and top artwork/garments lists.
+  - Nav gained an **Analytics** entry; all routes `noindex`. Still 100% mock — needs TMS-FBR-007 (admin
+    error/ops + customer + analytics endpoints).
+  - Follow-ups: real error-centre feed (retry/resolve as audited ops actions, correlation-id search across
+    systems); real customer records (account status, saved designs via TMS-FBR-005, lifetime value);
+    server-computed analytics (funnels, cohorts, date-range controls) once the reporting API lands.
+  - **F4 (admin platform) is complete** (001–006). Nothing is merged to `main` yet — the F0→F4 PR stack
+    (#4 → #5 → #6 → #7 → #8) still needs merging bottom-up.
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

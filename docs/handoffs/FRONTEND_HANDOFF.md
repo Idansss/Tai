@@ -2,9 +2,10 @@
 
 ## Current frontend phase
 
-F4 — Admin platform (in progress). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
+F4 — Admin platform (**complete**). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
 TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) + TMS-F4-005 (production +
-QC + fulfilment) Verified** (2026-07-15). Branch `claude/f4-admin` is **stacked on
+QC + fulfilment) + TMS-F4-006 (error centre + customers + analytics) Verified** (2026-07-15).
+Branch `claude/f4-admin` is **stacked on
 `claude/f3-commerce` → `claude/f2-design-studio` → `claude/f1-storefront` →
 `claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8).
 Nothing is merged to `main` yet.
@@ -13,6 +14,29 @@ F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (check
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
 
 ### F4 progress this session
+
+- **Error centre + customers + analytics (TMS-F4-006) — F4 complete.** The last three admin sections,
+  all on the typed mock provider. **Error centre** (`/errors`): `AdminErrorEntry` + `listErrors(params)`
+  over a **safe-by-construction** dataset — correlation ID + human summary only, **never** stack
+  traces/payloads/secrets (spec §18) — across payment/webhook/shipping/image/email/AI/job sources. Pure
+  `lib/errors.ts` (labels/tones, `filterErrors`, `openCount`, the `errorActions`/`applyErrorAction`
+  resolution lifecycle gated on retryability); `ErrorCentreView` = unresolved banner + source/resolution/
+  search filters + a card list with per-entry actions (local, honest notices). **Customers** (`/customers`
+  - `/customers/[id]`): `AdminCustomerSummary`/`AdminCustomerProfile` + `listCustomers`/`getCustomer`
+    **derived from the order dataset** (reconciled by contact email). Pure `lib/customers.ts`
+    (`deriveCustomers`/`deriveCustomerProfile`, `customerStatus`, paid-only spend, `filterCustomers`);
+    `CustomersView` directory + `CustomerDetailView` (order history → order detail, contact, summary;
+    unknown id → not-found). **Analytics** (`/analytics`, new nav item): `AdminAnalytics` + `getAnalytics()`
+    derived from orders. Pure `lib/analytics.ts` (`buildDailySeries` 14-day zero-filled, `statusBreakdown`,
+    bar scaling); `AnalyticsView` = KPI cards + an accessible CSS daily-orders bar chart (with an sr-only
+    data table) + status-mix bars + top artwork/garments. Admin Vitest suite now **116 tests**. Still 100%
+    mock — gaps under **TMS-FBR-007** (error/ops + customer + analytics endpoints).
+- Verified: full `pnpm check` green (116 admin + 89 storefront tests; build registers `/errors`,
+  `/customers`, `ƒ /customers/[id]`, `/analytics`; db:validate valid); served build smoke test — all four
+  return 200 with correct titles + `noindex`. The interactive click-throughs (error resolution actions +
+  unresolved count, customer filter → profile, analytics chart/breakdown) are covered by the pure-domain
+  unit tests; **not** re-driven in-browser here (the harness didn't expose the in-app browser tools).
+  (Audit skipped — 410 outage, no new deps.)
 
 - **Production + QC + fulfilment (TMS-F4-005).** Extended the admin data provider with a production
   board: `AdminProductionJob` + `ProductionStage`, and `listProductionJobs(params)` that **derives**
@@ -254,7 +278,8 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
 -005, -007, -008, -009; TMS-F2-001; TMS-F3-001, -002, -003, -004, -005 (F3 complete);
 **TMS-F4-001** (admin foundation); **TMS-F4-002** (order management); **TMS-F4-003** (artwork manager);
-**TMS-F4-004** (garment manager + inventory); **TMS-F4-005** (production + QC + fulfilment).
+**TMS-F4-004** (garment manager + inventory); **TMS-F4-005** (production + QC + fulfilment);
+**TMS-F4-006** (error centre + customers + analytics) — **F4 complete**.
 
 ## In-progress task
 
@@ -262,9 +287,9 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F4-006 — Error centre + customers + analytics** on the admin data provider (integration error
-centre — correlation IDs + resolution state, **never** stack traces/secrets per spec §18; customer
-list/detail; analytics). **Or** clear the tracked soft-404 defect **TMS-F1-DEF-001**.
+**F4 (admin platform) is complete.** Next: either (a) **merge the F0→F4 PR stack to `main`** bottom-up
+(#4 → #5 → #6 → #7 → #8) — nothing is merged yet; (b) clear the tracked soft-404 defect
+**TMS-F1-DEF-001**; or (c) begin **F5 (growth & AI)** / remaining F1 content. No F4 work outstanding.
 
 ## Routes completed
 

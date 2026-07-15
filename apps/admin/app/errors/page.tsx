@@ -1,15 +1,11 @@
 import type { Metadata } from 'next';
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { ErrorCentreView } from '@/components/error-centre-view';
 
-export const metadata: Metadata = { title: 'Error centre' };
+export const metadata: Metadata = {
+  title: 'Error centre',
+  robots: { index: false, follow: false, nocache: true },
+};
 
 export default function ErrorsPage() {
-  return (
-    <SectionPlaceholder
-      eyebrow="Operations"
-      title="Error centre"
-      description="Payment, webhook, shipping, image-processing, email, AI and background-job failures with correlation ID, affected order, retry action and resolution state. Never shows stack traces or secrets."
-      task="TMS-F4-006"
-    />
-  );
+  return <ErrorCentreView />;
 }

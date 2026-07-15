@@ -1,13 +1,26 @@
 import type { OrderStatus, PaymentStatus, ShippingStatus } from '@tms/contracts';
+import { buildDailySeries, statusBreakdown, type AnalyticsOrderInput } from '../analytics';
 import { filterArtworks } from '../artworks';
+import {
+  deriveCustomerProfile,
+  deriveCustomers,
+  filterCustomers,
+  type CustomerOrderInput,
+} from '../customers';
+import { filterErrors } from '../errors';
 import { countLowStock, filterGarments, totalStock } from '../garments';
 import { filterOrders, paginate } from '../orders';
 import { filterJobs, printStatusForOrderStatus, productionStageForStatus } from '../production';
 import type {
+  AdminAnalytics,
   AdminArtworkDetail,
   AdminArtworkListParams,
   AdminArtworkSummary,
+  AdminCustomerListParams,
+  AdminCustomerSummary,
   AdminDataProvider,
+  AdminErrorEntry,
+  AdminErrorListParams,
   AdminGarmentDetail,
   AdminGarmentListParams,
   AdminGarmentSummary,
@@ -23,6 +36,7 @@ import type {
   GarmentVariant,
   PlacementRule,
   PrintArea,
+  RankedList,
   SizeChartRow,
 } from './types';
 
@@ -988,6 +1002,201 @@ const GARMENT_SUMMARIES: AdminGarmentSummary[] = GARMENT_RECORDS.map(toGarmentSu
   (a, b) => b.updatedAt.localeCompare(a.updatedAt),
 );
 
+// --- Error centre (F4-006) -----------------------------------------------------
+
+/**
+ * Representative integration failures. **Safe by construction** — each carries a
+ * correlation ID + human summary only, never a stack trace, payload or secret.
+ */
+const ERRORS: AdminErrorEntry[] = [
+  {
+    id: 'err-01',
+    correlationId: 'req_9f2ac31b',
+    source: 'payment',
+    severity: 'critical',
+    resolution: 'open',
+    message: 'Payment verification callback did not arrive within the timeout window.',
+    occurredAt: '2026-07-15T09:20:00.000Z',
+    affectedOrder: 'TMS-LM49QP',
+    retryable: true,
+  },
+  {
+    id: 'err-02',
+    correlationId: 'whk_5c8de104',
+    source: 'webhook',
+    severity: 'error',
+    resolution: 'investigating',
+    message: 'Provider webhook signature could not be validated; event was rejected.',
+    occurredAt: '2026-07-15T08:05:00.000Z',
+    affectedOrder: 'TMS-QK83MN',
+    retryable: true,
+  },
+  {
+    id: 'err-03',
+    correlationId: 'img_71b0aa9e',
+    source: 'image_processing',
+    severity: 'error',
+    resolution: 'retrying',
+    message: 'Artwork print-file rasterisation failed on the first attempt; a retry is queued.',
+    occurredAt: '2026-07-14T17:42:00.000Z',
+    retryable: true,
+  },
+  {
+    id: 'err-04',
+    correlationId: 'shp_2ad9f6c0',
+    source: 'shipping',
+    severity: 'warning',
+    resolution: 'open',
+    message: 'Carrier rate quote was unavailable for the destination; a fallback rate was used.',
+    occurredAt: '2026-07-14T13:15:00.000Z',
+    affectedOrder: 'TMS-7P2XVR',
+    retryable: true,
+  },
+  {
+    id: 'err-05',
+    correlationId: 'eml_88c1247d',
+    source: 'email',
+    severity: 'warning',
+    resolution: 'resolved',
+    message: 'Order-confirmation email bounced once, then delivered on retry.',
+    occurredAt: '2026-07-14T10:02:00.000Z',
+    affectedOrder: 'TMS-33FKDR',
+    retryable: false,
+  },
+  {
+    id: 'err-06',
+    correlationId: 'aig_4e6f0b22',
+    source: 'ai',
+    severity: 'warning',
+    resolution: 'ignored',
+    message: 'AI mockup suggestion timed out; the manual mockup flow was used instead.',
+    occurredAt: '2026-07-13T15:48:00.000Z',
+    retryable: true,
+  },
+  {
+    id: 'err-07',
+    correlationId: 'job_1d7c9f55',
+    source: 'background_job',
+    severity: 'error',
+    resolution: 'open',
+    message: 'Nightly inventory reconciliation job exited before completing all garments.',
+    occurredAt: '2026-07-13T02:00:00.000Z',
+    retryable: true,
+  },
+  {
+    id: 'err-08',
+    correlationId: 'pay_6b3e1af7',
+    source: 'payment',
+    severity: 'error',
+    resolution: 'resolved',
+    message: 'A refund request was declined by the provider; it was re-submitted successfully.',
+    occurredAt: '2026-07-12T11:30:00.000Z',
+    affectedOrder: 'TMS-5HWEUR',
+    retryable: false,
+  },
+  {
+    id: 'err-09',
+    correlationId: 'whk_0aa4c7e9',
+    source: 'webhook',
+    severity: 'warning',
+    resolution: 'resolved',
+    message: 'A duplicate provider event was received and safely de-duplicated.',
+    occurredAt: '2026-07-11T19:12:00.000Z',
+    retryable: false,
+  },
+  {
+    id: 'err-10',
+    correlationId: 'shp_3f9b6d81',
+    source: 'shipping',
+    severity: 'critical',
+    resolution: 'investigating',
+    message: 'Dispatch booking was rejected by the carrier API; the shipment is on hold.',
+    occurredAt: '2026-07-11T09:55:00.000Z',
+    affectedOrder: 'TMS-7P2XVR',
+    retryable: true,
+  },
+];
+
+// --- Customers + analytics (F4-006, derived from orders) -----------------------
+
+/** The dataset's "today" — anchors derivations to the sample data, not the wall clock. */
+const DATASET_NOW = new Date(
+  ORDERS.reduce((latest, o) => (o.placedAt > latest ? o.placedAt : latest), ORDERS[0]!.placedAt),
+);
+
+function toCustomerOrder(o: AdminOrderDetail): CustomerOrderInput {
+  return {
+    reference: o.reference,
+    customerName: o.customerName,
+    customerEmail: o.customerEmail,
+    phone: o.customer.phone,
+    city: o.delivery.city,
+    state: o.delivery.state,
+    placedAt: o.placedAt,
+    status: o.status,
+    paid: o.paymentStatus === 'SUCCEEDED',
+    itemCount: o.itemCount,
+    totalMinor: o.totalMinor,
+    currency: o.currency,
+  };
+}
+
+const CUSTOMER_ORDERS: CustomerOrderInput[] = ORDERS.map(toCustomerOrder);
+const CUSTOMERS: AdminCustomerSummary[] = deriveCustomers(CUSTOMER_ORDERS, DATASET_NOW);
+
+const ANALYTICS_ORDERS: AnalyticsOrderInput[] = ORDERS.map((o) => ({
+  placedAt: o.placedAt,
+  status: o.status,
+  paid: o.paymentStatus === 'SUCCEEDED',
+  totalMinor: o.totalMinor,
+}));
+
+/** Build a top-N ranked list from order items by a chosen key. */
+function rankItems(
+  key: (item: AdminOrderItem) => string,
+  id: string,
+  title: string,
+  limit = 3,
+): RankedList {
+  const tally = new Map<string, number>();
+  for (const o of ORDERS) {
+    for (const item of o.items) {
+      tally.set(key(item), (tally.get(key(item)) ?? 0) + item.quantity);
+    }
+  }
+  const items = [...tally.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([label, count], i) => ({ id: `${id}-${i}`, label, value: `${count} sold` }));
+  return { id, title, items };
+}
+
+function buildAnalytics(): AdminAnalytics {
+  const paid = ANALYTICS_ORDERS.filter((o) => o.paid);
+  const revenueMinor = paid.reduce((sum, o) => sum + o.totalMinor, 0);
+  const aovMinor = paid.length > 0 ? Math.round(revenueMinor / paid.length) : 0;
+  return {
+    currency: 'NGN',
+    kpis: [
+      { id: 'revenue', label: 'Revenue', value: naira(revenueMinor), caption: 'Last 14 days' },
+      {
+        id: 'orders',
+        label: 'Orders',
+        value: String(ANALYTICS_ORDERS.length),
+        caption: 'Last 14 days',
+      },
+      { id: 'paid', label: 'Paid orders', value: String(paid.length), caption: 'Last 14 days' },
+      { id: 'aov', label: 'Average order value', value: naira(aovMinor), caption: 'Paid orders' },
+    ],
+    daily: buildDailySeries(ANALYTICS_ORDERS, 14, DATASET_NOW),
+    statusBreakdown: statusBreakdown(ANALYTICS_ORDERS),
+    topArtwork: rankItems((i) => i.artworkTitle, 'top-artwork', 'Top artwork'),
+    topGarments: rankItems((i) => i.garment, 'top-garments', 'Best garments'),
+  };
+}
+
+const ANALYTICS: AdminAnalytics = buildAnalytics();
+
 export const mockAdminProvider: AdminDataProvider = {
   getDashboard() {
     return Promise.resolve(DASHBOARD);
@@ -1015,5 +1224,17 @@ export const mockAdminProvider: AdminDataProvider = {
   },
   listProductionJobs(params: AdminProductionListParams = {}) {
     return Promise.resolve(filterJobs(PRODUCTION_JOBS, params));
+  },
+  listErrors(params: AdminErrorListParams = {}) {
+    return Promise.resolve(filterErrors(ERRORS, params));
+  },
+  listCustomers(params: AdminCustomerListParams = {}) {
+    return Promise.resolve(filterCustomers(CUSTOMERS, params));
+  },
+  getCustomer(id: string) {
+    return Promise.resolve(deriveCustomerProfile(CUSTOMER_ORDERS, id, DATASET_NOW));
+  },
+  getAnalytics() {
+    return Promise.resolve(ANALYTICS);
   },
 };

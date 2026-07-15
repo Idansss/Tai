@@ -2,6 +2,7 @@
 
 import { cn, IconButton } from '@tms/ui';
 import {
+  BarChart3,
   Boxes,
   Factory,
   LayoutDashboard,
@@ -24,6 +25,7 @@ const NAV = [
   { href: '/garments', label: 'Garments', icon: Boxes },
   { href: '/production', label: 'Production', icon: Factory },
   { href: '/customers', label: 'Customers', icon: Users },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/errors', label: 'Error centre', icon: TriangleAlert },
 ] as const;
 

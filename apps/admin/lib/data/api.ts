@@ -38,4 +38,16 @@ export const apiProvider: AdminDataProvider = {
   listProductionJobs() {
     return notImplemented('listProductionJobs');
   },
+  listErrors() {
+    return notImplemented('listErrors');
+  },
+  listCustomers() {
+    return notImplemented('listCustomers');
+  },
+  getCustomer() {
+    return notImplemented('getCustomer');
+  },
+  getAnalytics() {
+    return notImplemented('getAnalytics');
+  },
 };

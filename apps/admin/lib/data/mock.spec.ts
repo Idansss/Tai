@@ -162,3 +162,52 @@ describe('mockAdminProvider.listProductionJobs', () => {
     expect(stages.size).toBeGreaterThan(1);
   });
 });
+
+describe('mockAdminProvider.listErrors', () => {
+  it('lists safe error entries (no stack traces / secrets) and filters', async () => {
+    const all = await mockAdminProvider.listErrors();
+    expect(all.length).toBeGreaterThan(0);
+    for (const e of all) {
+      expect(e.correlationId).toBeTruthy();
+      expect(e.message).toBeTruthy();
+      expect(e.message.toLowerCase()).not.toContain('stack');
+      expect(e).not.toHaveProperty('stackTrace');
+    }
+    const open = await mockAdminProvider.listErrors({ resolution: 'open' });
+    expect(open.every((e) => e.resolution === 'open')).toBe(true);
+    const payment = await mockAdminProvider.listErrors({ source: 'payment' });
+    expect(payment.every((e) => e.source === 'payment')).toBe(true);
+  });
+});
+
+describe('mockAdminProvider customers', () => {
+  it('derives customers from orders and filters', async () => {
+    const list = await mockAdminProvider.listCustomers();
+    expect(list.length).toBeGreaterThan(0);
+    for (const c of list) {
+      expect(c.email).toContain('@');
+      expect(c.orderCount).toBeGreaterThan(0);
+      expect(c.totalSpentMinor).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('returns a profile with order history for a known customer, null otherwise', async () => {
+    const list = await mockAdminProvider.listCustomers();
+    const first = list[0]!;
+    const profile = await mockAdminProvider.getCustomer(first.id);
+    expect(profile).not.toBeNull();
+    expect(profile?.orders.length).toBeGreaterThan(0);
+    expect(await mockAdminProvider.getCustomer('nobody@nowhere.test')).toBeNull();
+  });
+});
+
+describe('mockAdminProvider.getAnalytics', () => {
+  it('returns KPIs, a daily series and a status breakdown', async () => {
+    const a = await mockAdminProvider.getAnalytics();
+    expect(a.kpis.length).toBeGreaterThan(0);
+    expect(a.daily).toHaveLength(14);
+    expect(a.statusBreakdown.length).toBeGreaterThan(0);
+    expect(a.topArtwork.items.length).toBeGreaterThan(0);
+    expect(a.daily.reduce((n, p) => n + p.orders, 0)).toBeGreaterThan(0);
+  });
+});

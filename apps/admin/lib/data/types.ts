@@ -1,4 +1,5 @@
 import type { OrderStatus, PaymentStatus, ShippingStatus } from '@tms/contracts';
+import type { StatusTone } from '../order-status';
 
 /**
  * Admin view models. These are the operational shapes the mock adapter produces
@@ -337,6 +338,113 @@ export interface AdminProductionListParams {
   query?: string;
 }
 
+// --- Error centre (F4-006) -----------------------------------------------------
+
+/** The integration/subsystem a failure came from. */
+export type ErrorSource =
+  'payment' | 'webhook' | 'shipping' | 'image_processing' | 'email' | 'ai' | 'background_job';
+
+export type ErrorSeverity = 'critical' | 'error' | 'warning';
+
+/** Where a failure sits in its resolution lifecycle. */
+export type ErrorResolution = 'open' | 'investigating' | 'retrying' | 'resolved' | 'ignored';
+
+/**
+ * A single integration failure. **Safe by construction** (spec §18): it carries a
+ * correlation ID and a human summary only — never a stack trace, payload or secret.
+ */
+export interface AdminErrorEntry {
+  id: string;
+  /** Correlation ID for cross-system tracing — safe to display, not a secret. */
+  correlationId: string;
+  source: ErrorSource;
+  severity: ErrorSeverity;
+  resolution: ErrorResolution;
+  /** A safe, human-readable summary — no stack traces or secrets. */
+  message: string;
+  occurredAt: string;
+  /** Order reference this failure affected, when applicable (links to the order). */
+  affectedOrder?: string;
+  /** Whether the underlying operation can be retried. */
+  retryable: boolean;
+}
+
+export interface AdminErrorListParams {
+  source?: ErrorSource | 'all';
+  resolution?: ErrorResolution | 'all';
+  /** Free-text over correlation ID / affected order / message. */
+  query?: string;
+}
+
+// --- Customers (F4-006) --------------------------------------------------------
+
+/** Lifecycle bucket derived from a customer's order history. */
+export type CustomerStatus = 'new' | 'active' | 'dormant';
+
+export interface AdminCustomerSummary {
+  /** Stable id (the contact email; orders reconcile on it). */
+  id: string;
+  name: string;
+  email: string;
+  orderCount: number;
+  /** Sum of paid orders, in minor units. */
+  totalSpentMinor: number;
+  currency: string;
+  lastOrderAt: string;
+  status: CustomerStatus;
+}
+
+export interface AdminCustomerOrderRow {
+  reference: string;
+  placedAt: string;
+  status: OrderStatus;
+  itemCount: number;
+  totalMinor: number;
+  currency: string;
+}
+
+export interface AdminCustomerProfile extends AdminCustomerSummary {
+  phone: string;
+  city: string;
+  state: string;
+  orders: AdminCustomerOrderRow[];
+  /** Count of saved studio designs (representative until the account API lands). */
+  savedDesigns: number;
+}
+
+export interface AdminCustomerListParams {
+  query?: string;
+  status?: CustomerStatus | 'all';
+}
+
+// --- Analytics (F4-006) --------------------------------------------------------
+
+/** One day on the sales trend. */
+export interface AnalyticsPoint {
+  date: string;
+  orders: number;
+  revenueMinor: number;
+}
+
+/** A labelled magnitude for a breakdown chart (status mix, etc.). */
+export interface AnalyticsBreakdownRow {
+  label: string;
+  value: number;
+  tone?: StatusTone;
+}
+
+export interface AdminAnalytics {
+  currency: string;
+  /** Headline KPIs (reuses the dashboard metric shape). */
+  kpis: DashboardMetric[];
+  /** Daily orders + revenue over the reporting window, oldest first. */
+  daily: AnalyticsPoint[];
+  /** Order-status distribution across the window. */
+  statusBreakdown: AnalyticsBreakdownRow[];
+  topArtwork: RankedList;
+  topGarments: RankedList;
+}
+
 /** The admin data access surface. Extended per F4 task (garments, production, …). */
 export interface AdminDataProvider {
   getDashboard(): Promise<DashboardData>;
@@ -347,4 +455,8 @@ export interface AdminDataProvider {
   listGarments(params?: AdminGarmentListParams): Promise<AdminGarmentSummary[]>;
   getGarment(id: string): Promise<AdminGarmentDetail | null>;
   listProductionJobs(params?: AdminProductionListParams): Promise<AdminProductionJob[]>;
+  listErrors(params?: AdminErrorListParams): Promise<AdminErrorEntry[]>;
+  listCustomers(params?: AdminCustomerListParams): Promise<AdminCustomerSummary[]>;
+  getCustomer(id: string): Promise<AdminCustomerProfile | null>;
+  getAnalytics(): Promise<AdminAnalytics>;
 }

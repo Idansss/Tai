@@ -196,6 +196,18 @@ email**. It needs, on top of the auth endpoints above:
   slips / carrier booking. Today jobs are derived from the sample order dataset and every transition is
   local state only (honest "not saved" notices) — no state machine, no audit trail, no production
   assets. The board reuses the shared `OrderStatus` enum so the mock and a real backend agree on stages.
+  **Error centre + customers + analytics (F4-006, delivered):** three read surfaces. **Error centre** —
+  `GET /api/v1/admin/errors` (integration failures with `source`/`resolution` filters) returning
+  **safe** entries only: a correlation ID, a human summary, severity, resolution state, affected order
+  and retryability — **never stack traces, payloads or secrets** (spec §18); plus resolution actions
+  (retry / investigate / resolve / ignore / reopen) as audited ops endpoints. **Customers** —
+  `GET /api/v1/admin/customers` (search + status) and `GET /api/v1/admin/customers/{id}` (contact, order
+  history, lifetime value, account status, saved-designs count); today these are **derived from the
+  order dataset by contact email** and saved-designs is representative (needs the account API,
+  TMS-FBR-005). **Analytics** — `GET /api/v1/admin/analytics` (date-range KPIs, a daily orders/revenue
+  series, order-status mix, top artwork/garments); today computed client-side from the sample orders
+  over a fixed 14-day window. All three are read-only mock derivations with local-only actions until the
+  endpoints land.
 - Required response fields: money in **minor units** + currency (formatted client-side); statuses
   as the shared `@tms/contracts` enums so the admin can present readable labels
   (`formatOrderStatus`) without inventing values.
