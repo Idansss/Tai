@@ -516,7 +516,84 @@ customers + analytics.
     merged to `main`** (bottom-up, merge commits, branches deleted; `pnpm check` green on the
     integrated `main`, HEAD `e919e7e`). Active work continues on `claude/f5-post-merge`.
 
-## Later phases
+## Phase F5 — Growth & AI (scoped 2026-07-15; not started)
 
-F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·
-F2 Design Studio · F3 Commerce & account · F4 Admin platform · F5 Growth & AI · F6 Hardening.
+Scoped from the master prompt §19 (AI interfaces), §20 (editorial & growth) and §29 (phase
+definition). **Everything builds on the typed mock adapter** — no growth/AI backend exists yet
+(Codex is at B0/B1). New backend gaps: **TMS-FBR-008** (growth/commerce-adjacent endpoints) and
+**TMS-FBR-009** (AI endpoints), to be logged in FRONTEND_TO_BACKEND.md as each task lands. Guiding
+rule (§20): **prioritise core commerce before future features** — core commerce (F1–F4) is done, so
+these are additive. AI surfaces must have a clear assistant identity, honest tool-failure/retry
+states, source/product references, a human-support route, **no invented stock/price/delivery
+claims**, and **must never auto-publish or auto-act**.
+
+- [ ] **TMS-F5-001** Limited drops & countdown — drop schedule surface (`/drops` + drop detail),
+  live countdown timers, upcoming / live / ended / sold-out states, early-access gating UI, drop
+  hero + on-brand motion (reduced-motion safe). Pure frontend + mock provider (`listDrops`/`getDrop`).
+- [ ] **TMS-F5-002** Waitlist & back-in-stock — email-capture UI on sold-out artworks/products +
+  drop early-access signup, confirmation + already-registered states, honest "preview, not a real
+  signup" notice. Mock capture; **TMS-FBR-008** (waitlist/notify endpoint).
+- [ ] **TMS-F5-003** Pre-order & made-to-order — pre-order badges/flow on eligible drop items,
+  made-to-order lead-time messaging surfaced in product + cart + checkout, ships-by estimate. Mock.
+- [ ] **TMS-F5-004** Reviews & ratings — review display on product/artwork (rating summary +
+  distribution + list, verified-purchase badge), write-a-review form (mock submit, honest notice),
+  empty/loading/failure states. **TMS-FBR-008** (reviews read + write, moderation).
+- [ ] **TMS-F5-005** Community gallery — customer-photo gallery (moderation-aware display), submit-a-
+  photo UI (mock), per-artwork "styled by the community" section. **TMS-FBR-008** (UGC + moderation).
+- [ ] **TMS-F5-006** Artwork Passport — per-artwork-version authenticity/provenance page (immutable
+  version id, edition/serial, story, release, ownership-record placeholder, share). Frontend on
+  existing artwork data; **TMS-FBR-001** (version + edition fields) extends it.
+- [ ] **TMS-F5-007** Shoppable stories — editorial story pages with embedded shoppable artwork/
+  product hotspots linking to gallery/studio/product; upgrades the `/stories` placeholder journal.
+  Frontend + mock.
+- [ ] **TMS-F5-008** Studio Guide (customer AI assistant) — chat UI shell: assistant identity,
+  suggested prompts, message list, typing/loading, tool-failure + retry, product/Design-Studio
+  reference cards, human-support route, and **guardrails** (no invented stock/price/delivery). Mock
+  responder only; **TMS-FBR-009** (assistant endpoint + tool results). No auto-actions.
+- [ ] **TMS-F5-009** Brand Storyteller (admin AI) — admin draft-generation UI (`apps/admin`): select
+  artwork/collection → content type → generate (mock) → compare variants → edit → approve/reject →
+  save draft, with generation metadata. **Never auto-publishes.** **TMS-FBR-009** (generation endpoint).
+- [ ] **TMS-F5-010** Loyalty & referrals — account loyalty tier/points display, referral link + share
+  UI, rewards list + how-it-works, honest "preview" notices. **TMS-FBR-008** (loyalty/referral data).
+- _Deferred (per "core commerce first"):_ gift cards, gifting flow, collaborations — add rows if
+  prioritised. Sequencing recommendation: **F5-001 → 002 → 003** (drops cluster) first (fully
+  mockable, high brand value), then **006/007** (passport/stories), then reviews/community
+  (004/005), then the AI shells (008/009) and loyalty (010) which lean hardest on absent backends.
+
+## Phase F6 — Hardening (scoped 2026-07-15; not started)
+
+Scoped from master prompt §29 (F6), §24 (performance), §25 (SEO), §21 (states), §27 (testing),
+§28 (visual regression). Largely audit-and-fix + real-API cutover; several tasks partly depend on
+Codex delivering endpoints.
+
+- [ ] **TMS-F6-001** Accessibility audit — route-level axe sweeps across all storefront + admin
+  routes; keyboard traversal, screen-reader labels, reduced-motion, focus management; fix findings.
+- [ ] **TMS-F6-002** Performance audit — measure LCP/INP/CLS against budgets (≤2.5s / ≤200ms / ≤0.1);
+  responsive images + modern formats + explicit dimensions + lazy/priority; route code-splitting;
+  isolate the Design Studio bundle; skeletons that preserve layout.
+- [ ] **TMS-F6-003** Visual review & regression coverage — extend Playwright baselines to gallery,
+  artwork detail, collection, shop, product, Design Studio, cart, checkout, account, admin dashboard,
+  artwork manager, order detail, production queue (§28); manual diff review; wire into CI once a
+  stable render env exists.
+- [ ] **TMS-F6-004** Mobile & responsive review — 360/390/430/768/1024/1280/1440; nav, galleries,
+  Design Studio, colour/size selectors, sticky actions, data tables, admin forms, modals/drawers,
+  image zoom. Mobile is a complete experience, not a reduced desktop.
+- [ ] **TMS-F6-005** Cross-browser testing — Chromium / WebKit / Firefox via Playwright on the
+  required journeys (§27).
+- [ ] **TMS-F6-006** Error-state audit — verify the §21 state matrix (loading/incremental/empty/
+  no-results/offline/slow/image-unavailable/API-failure/auth-expired/access-denied/validation/
+  inventory-changed/payment-failure/quote-failure/background/maintenance) across every important
+  feature; no raw JSON/HTML errors; every error says what happened, what to do, whether data was kept.
+- [ ] **TMS-F6-007** Real API replacement — as Codex ships endpoints, swap mock → api adapter per
+  surface, add integration tests, verify loading/failure/permission behaviour, remove dead mock
+  paths (§26). Depends on backend delivery (TMS-FBR-001…009).
+- [ ] **TMS-F6-008** SEO completion — sitemap.xml, robots, canonical + OG/social images, breadcrumbs,
+  product structured data + variant relationships, artwork/collection internal linking, slug-change
+  redirects, and a full `noindex` coverage audit (admin/account/checkout/private designs). **Includes
+  closing the TMS-F1-DEF-001 residual on the chosen production host** (confirm the `fallback: false`
+  404 on the real host, or add the self-hosted slug-guard).
+- [ ] **TMS-F6-009** Security-facing frontend review — no secrets in client bundles, safe error
+  surfaces (no stack traces/secrets, §18), auth/permission gating, admin RBAC readiness (TMS-FBR-006),
+  CSP/security-header recommendations.
+- [ ] **TMS-F6-010** Staging acceptance & launch checklist — run all required journeys (§27) on
+  staging, real-data smoke, sign-off, and a launch checklist.
