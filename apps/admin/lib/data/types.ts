@@ -158,9 +158,65 @@ export interface AdminOrderListResult {
   pageSize: number;
 }
 
-/** The admin data access surface. Extended per F4 task (artworks, garments, …). */
+// --- Artworks (F4-003) ---------------------------------------------------------
+
+export type ArtworkStatus =
+  'draft' | 'processing' | 'needs_review' | 'ready' | 'scheduled' | 'published' | 'archived';
+
+export type MockupApproval = 'pending' | 'approved' | 'rejected';
+export type VersionProcessing = 'processing' | 'ready' | 'failed';
+
+export interface AdminArtworkSummary {
+  id: string;
+  slug: string;
+  title: string;
+  collection: string;
+  status: ArtworkStatus;
+  versionCount: number;
+  mockupCount: number;
+  updatedAt: string;
+}
+
+export interface ArtworkVersion {
+  id: string;
+  label: string;
+  processing: VersionProcessing;
+  /** Validation problems the processor flagged (empty when clean). */
+  issues: string[];
+}
+
+export interface ArtworkMockup {
+  id: string;
+  label: string;
+  view: 'front' | 'back';
+  approval: MockupApproval;
+}
+
+export interface AdminArtworkDetail extends AdminArtworkSummary {
+  story: string;
+  tags: string[];
+  seoTitle: string;
+  seoDescription: string;
+  limitedEdition: boolean;
+  editionSize?: number;
+  compatibleGarments: string[];
+  placements: string[];
+  versions: ArtworkVersion[];
+  mockups: ArtworkMockup[];
+  /** ISO date a scheduled artwork goes live (when status is 'scheduled'). */
+  scheduledFor?: string;
+}
+
+export interface AdminArtworkListParams {
+  query?: string;
+  status?: ArtworkStatus | 'all';
+}
+
+/** The admin data access surface. Extended per F4 task (garments, …). */
 export interface AdminDataProvider {
   getDashboard(): Promise<DashboardData>;
   listOrders(params?: AdminOrderListParams): Promise<AdminOrderListResult>;
   getOrder(reference: string): Promise<AdminOrderDetail | null>;
+  listArtworks(params?: AdminArtworkListParams): Promise<AdminArtworkSummary[]>;
+  getArtwork(id: string): Promise<AdminArtworkDetail | null>;
 }

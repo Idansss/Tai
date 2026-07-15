@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F4",
-  "lastVerifiedTask": "TMS-F4-002",
-  "nextRecommendedTask": "TMS-F4-003 (admin artwork manager) or TMS-F1-DEF-001 (soft 404)",
+  "lastVerifiedTask": "TMS-F4-003",
+  "nextRecommendedTask": "TMS-F4-004 (admin garment manager + inventory) or TMS-F1-DEF-001 (soft 404)",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -30,7 +30,8 @@
     "TMS-F3-004",
     "TMS-F3-005",
     "TMS-F4-001",
-    "TMS-F4-002"
+    "TMS-F4-002",
+    "TMS-F4-003"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
@@ -54,9 +55,10 @@
     "storefront:account saved designs + wishlist — client localStorage per email; needs account-data API (TMS-FBR-005)",
     "admin:staff auth/session — mock localStorage staff session, no real auth/RBAC/passwords (TMS-FBR-006)",
     "admin:dashboard metrics/queues/recent orders/top lists — typed mock admin provider, no admin read API (TMS-FBR-007)",
-    "admin:orders list/detail + fulfilment actions + internal notes — typed mock provider + local notes, no admin order API (TMS-FBR-007)"
+    "admin:orders list/detail + fulfilment actions + internal notes — typed mock provider + local notes, no admin order API (TMS-FBR-007)",
+    "admin:artwork list/detail/versions/mockups + publishing lifecycle + upload — typed mock provider + local state, no admin catalogue write API (TMS-FBR-007)"
   ],
   "branch": "claude/f4-admin",
-  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + TMS-F4-001/002 verified green (pnpm check + browser pass). F3 complete; F4 in progress. Admin Vitest suite now 32 tests. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added on F3-004/005/F4-001/F4-002, so risk is unchanged from the last clean run.",
-  "lastUpdated": "2026-07-15T16:00:00Z"
+  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + TMS-F4-001/002/003 verified green (pnpm check + browser pass). F3 complete; F4 in progress. Admin Vitest suite now 46 tests. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added on F3-004/005/F4-001/002/003, so risk is unchanged from the last clean run.",
+  "lastUpdated": "2026-07-15T17:30:00Z"
 }

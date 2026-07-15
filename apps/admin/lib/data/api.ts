@@ -23,4 +23,10 @@ export const apiProvider: AdminDataProvider = {
   getOrder() {
     return notImplemented('getOrder');
   },
+  listArtworks() {
+    return notImplemented('listArtworks');
+  },
+  getArtwork() {
+    return notImplemented('getArtwork');
+  },
 };

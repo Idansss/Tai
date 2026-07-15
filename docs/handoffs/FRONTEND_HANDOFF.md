@@ -2,15 +2,35 @@
 
 ## Current frontend phase
 
-F4 — Admin platform (in progress). **TMS-F4-001 (admin foundation) + TMS-F4-002 (order management)
-Verified** (2026-07-15). Branch `claude/f4-admin` is **stacked on `claude/f3-commerce` →
-`claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`** — merge F0 (#4)
-→ F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8). Nothing is merged to `main` yet.
+F4 — Admin platform (in progress). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
+TMS-F4-003 (artwork manager) Verified** (2026-07-15). Branch `claude/f4-admin` is **stacked on
+`claude/f3-commerce` → `claude/f2-design-studio` → `claude/f1-storefront` →
+`claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8).
+Nothing is merged to `main` yet.
 
 F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
 
 ### F4 progress this session
+
+- **Artwork manager (TMS-F4-003).** Extended the admin data provider with artwork view models
+  (`AdminArtworkSummary`/`AdminArtworkDetail`, `ArtworkStatus`/`MockupApproval`/`VersionProcessing`),
+  `listArtworks(params)` (search + status filter) + `getArtwork(id)`, over a 7-artwork dataset
+  spanning the lifecycle. Pure `lib/artworks.ts` (status format/tone, search,
+  `artworkActions`/`applyArtworkAction` publishing lifecycle, `setMockupApproval`/`approvalTally`/
+  `canPublish`, `validateUpload`) is unit-tested. `ArtworksView` = searchable/filterable table +
+  "New artwork"; `ArtworkDetailView` = mockup **approval** (approve/reject + tally), versions with
+  **validation issues**, **lifecycle actions** (publish/schedule/archive/unpublish — gated so an
+  artwork can't publish until every mockup is approved) with honest "not persisted" notices, plus
+  story/tags/SEO/edition/compatibility panels; `ArtworkUpload` = a simulated
+  upload → processing → validation → draft flow (real file input + samples, honest "no file stored"
+  notice, reject/warn/pass paths). Routes `/artworks`, `/artworks/new`, `/artworks/[id]` (noindex).
+  Admin Vitest suite now 46 tests. Still 100% mock — gaps under **TMS-FBR-007** (catalogue write:
+  upload/processing/mockups/publish).
+- Verified: full `pnpm check` green (46 admin + 89 storefront tests); browser pass (desktop +
+  mobile) — list search/filter, needs_review detail (archive-only, failed version), publish blocked
+  → approve all mockups → published, upload reject/pass/warn paths; no console errors; screenshots
+  captured. (Audit skipped — 410 outage, no new deps.)
 
 - **Order management (TMS-F4-002).** Extended the admin data provider with order view models
   (`AdminOrderSummary`/`AdminOrderDetail`), `listOrders(params)` (search + status filter +
@@ -183,7 +203,7 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
 -005, -007, -008, -009; TMS-F2-001; TMS-F3-001, -002, -003, -004, -005 (F3 complete);
-**TMS-F4-001** (admin foundation); **TMS-F4-002** (order management).
+**TMS-F4-001** (admin foundation); **TMS-F4-002** (order management); **TMS-F4-003** (artwork manager).
 
 ## In-progress task
 
@@ -191,10 +211,11 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F4-003 — Admin artwork manager** (list, upload with progress/processing/validation states,
-mockup/preview approval, publish/schedule/archive, SEO + edition fields) on the admin data provider.
-Then F4-004 (garments + inventory), F4-005 (production + QC + fulfilment), F4-006 (error centre +
-customers + analytics). **Or** clear the tracked soft-404 defect **TMS-F1-DEF-001**.
+**TMS-F4-004 — Admin garment manager + inventory** (garment templates, colours, sizes, size charts,
+front/back media, fabric/fit/care, print-safe areas, placement rules, prices, stock/availability) on
+the admin data provider. Then F4-005 (production + QC + fulfilment), F4-006 (error centre + customers
+
+- analytics). **Or** clear the tracked soft-404 defect **TMS-F1-DEF-001**.
 
 ## Routes completed
 

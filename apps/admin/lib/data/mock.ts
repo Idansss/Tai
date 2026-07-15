@@ -1,6 +1,10 @@
 import type { OrderStatus, PaymentStatus, ShippingStatus } from '@tms/contracts';
+import { filterArtworks } from '../artworks';
 import { filterOrders, paginate } from '../orders';
 import type {
+  AdminArtworkDetail,
+  AdminArtworkListParams,
+  AdminArtworkSummary,
   AdminDataProvider,
   AdminOrderDetail,
   AdminOrderItem,
@@ -474,6 +478,192 @@ const DASHBOARD: DashboardData = {
   openIssues: 2,
 };
 
+// --- Artworks ------------------------------------------------------------------
+
+const GARMENTS = ['Classic T-shirt', 'Oversized T-shirt'];
+const PLACEMENTS = ['Left chest', 'Centre chest', 'Full front', 'Back'];
+
+const ARTWORKS: AdminArtworkDetail[] = [
+  {
+    id: 'aw-midnight-in-lagos',
+    slug: 'midnight-in-lagos',
+    title: 'Midnight in Lagos',
+    collection: 'Night Studies',
+    status: 'published',
+    versionCount: 2,
+    mockupCount: 2,
+    updatedAt: '2026-07-14T10:00:00.000Z',
+    story: 'A neon-soaked ode to Lagos after dark — okadas streaking past shuttered stalls.',
+    tags: ['lagos', 'night', 'comic-line'],
+    seoTitle: 'Midnight in Lagos — art-led apparel',
+    seoDescription: 'Original comic-line artwork of Lagos at night, printed on considered apparel.',
+    limitedEdition: true,
+    editionSize: 100,
+    compatibleGarments: GARMENTS,
+    placements: ['Centre chest', 'Full front', 'Back'],
+    versions: [
+      { id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] },
+      { id: 'v2', label: 'v2 — recolour', processing: 'ready', issues: [] },
+    ],
+    mockups: [
+      { id: 'm1', label: 'Black · front', view: 'front', approval: 'approved' },
+      { id: 'm2', label: 'Black · back', view: 'back', approval: 'approved' },
+    ],
+  },
+  {
+    id: 'aw-harmattan-bloom',
+    slug: 'harmattan-bloom',
+    title: 'Harmattan Bloom',
+    collection: 'Season Sketches',
+    status: 'ready',
+    versionCount: 1,
+    mockupCount: 2,
+    updatedAt: '2026-07-13T14:30:00.000Z',
+    story: 'Dust-hazed florals from the dry season, drawn in fine ink line.',
+    tags: ['harmattan', 'floral'],
+    seoTitle: 'Harmattan Bloom',
+    seoDescription: 'Fine-line floral artwork inspired by the harmattan season.',
+    limitedEdition: false,
+    compatibleGarments: GARMENTS,
+    placements: ['Centre chest', 'Full front'],
+    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    mockups: [
+      { id: 'm1', label: 'Bone · front', view: 'front', approval: 'approved' },
+      { id: 'm2', label: 'Bone · back', view: 'back', approval: 'pending' },
+    ],
+  },
+  {
+    id: 'aw-okada-run',
+    slug: 'okada-run',
+    title: 'Okada Run',
+    collection: 'Street',
+    status: 'needs_review',
+    versionCount: 1,
+    mockupCount: 1,
+    updatedAt: '2026-07-15T08:05:00.000Z',
+    story: 'A blur of motion — the everyday sprint of the okada rider.',
+    tags: ['okada', 'motion', 'street'],
+    seoTitle: 'Okada Run',
+    seoDescription: 'Motion-blur comic artwork of a Lagos okada rider.',
+    limitedEdition: false,
+    compatibleGarments: ['Classic T-shirt'],
+    placements: ['Left chest', 'Full front'],
+    versions: [
+      {
+        id: 'v1',
+        label: 'v1 — master',
+        processing: 'failed',
+        issues: ['Resolution below 300dpi at print size', 'Transparent background not detected'],
+      },
+    ],
+    mockups: [{ id: 'm1', label: 'Slate · front', view: 'front', approval: 'pending' }],
+  },
+  {
+    id: 'aw-lantern-keeper',
+    slug: 'lantern-keeper',
+    title: 'Lantern Keeper',
+    collection: 'Night Studies',
+    status: 'scheduled',
+    versionCount: 1,
+    mockupCount: 2,
+    updatedAt: '2026-07-12T09:00:00.000Z',
+    story: 'A quiet figure tending lanterns along the waterfront.',
+    tags: ['lantern', 'night'],
+    seoTitle: 'Lantern Keeper',
+    seoDescription: 'Nocturne artwork of a lantern keeper on the waterfront.',
+    limitedEdition: true,
+    editionSize: 50,
+    compatibleGarments: GARMENTS,
+    placements: PLACEMENTS,
+    scheduledFor: '2026-07-20T09:00:00.000Z',
+    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    mockups: [
+      { id: 'm1', label: 'Bone · front', view: 'front', approval: 'approved' },
+      { id: 'm2', label: 'Bone · back', view: 'back', approval: 'approved' },
+    ],
+  },
+  {
+    id: 'aw-paper-tigers',
+    slug: 'paper-tigers',
+    title: 'Paper Tigers',
+    collection: 'Street',
+    status: 'processing',
+    versionCount: 1,
+    mockupCount: 0,
+    updatedAt: '2026-07-15T09:40:00.000Z',
+    story: 'Bold poster-style tigers cut from newsprint textures.',
+    tags: ['tiger', 'poster'],
+    seoTitle: 'Paper Tigers',
+    seoDescription: 'Poster-style tiger artwork with newsprint texture.',
+    limitedEdition: false,
+    compatibleGarments: ['Oversized T-shirt'],
+    placements: ['Full front'],
+    versions: [{ id: 'v1', label: 'v1 — master', processing: 'processing', issues: [] }],
+    mockups: [],
+  },
+  {
+    id: 'aw-market-day',
+    slug: 'market-day',
+    title: 'Market Day',
+    collection: 'Season Sketches',
+    status: 'draft',
+    versionCount: 1,
+    mockupCount: 2,
+    updatedAt: '2026-07-11T16:20:00.000Z',
+    story: 'The choreography of a busy market morning.',
+    tags: ['market', 'crowd'],
+    seoTitle: 'Market Day',
+    seoDescription: 'Line artwork capturing a Lagos market morning.',
+    limitedEdition: false,
+    compatibleGarments: GARMENTS,
+    placements: ['Centre chest', 'Full front'],
+    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    mockups: [
+      { id: 'm1', label: 'Sand · front', view: 'front', approval: 'pending' },
+      { id: 'm2', label: 'Sand · back', view: 'back', approval: 'pending' },
+    ],
+  },
+  {
+    id: 'aw-rainy-season',
+    slug: 'rainy-season',
+    title: 'Rainy Season',
+    collection: 'Season Sketches',
+    status: 'archived',
+    versionCount: 1,
+    mockupCount: 2,
+    updatedAt: '2026-06-30T12:00:00.000Z',
+    story: 'Umbrellas and puddles under a heavy sky.',
+    tags: ['rain', 'season'],
+    seoTitle: 'Rainy Season',
+    seoDescription: 'Rainy-season street artwork.',
+    limitedEdition: false,
+    compatibleGarments: GARMENTS,
+    placements: ['Centre chest'],
+    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    mockups: [
+      { id: 'm1', label: 'Black · front', view: 'front', approval: 'approved' },
+      { id: 'm2', label: 'Black · back', view: 'back', approval: 'approved' },
+    ],
+  },
+];
+
+function toArtworkSummary(a: AdminArtworkDetail): AdminArtworkSummary {
+  return {
+    id: a.id,
+    slug: a.slug,
+    title: a.title,
+    collection: a.collection,
+    status: a.status,
+    versionCount: a.versionCount,
+    mockupCount: a.mockupCount,
+    updatedAt: a.updatedAt,
+  };
+}
+
+const ARTWORK_SUMMARIES: AdminArtworkSummary[] = ARTWORKS.map(toArtworkSummary).sort((a, b) =>
+  b.updatedAt.localeCompare(a.updatedAt),
+);
+
 export const mockAdminProvider: AdminDataProvider = {
   getDashboard() {
     return Promise.resolve(DASHBOARD);
@@ -486,5 +676,11 @@ export const mockAdminProvider: AdminDataProvider = {
   },
   getOrder(reference: string) {
     return Promise.resolve(ORDERS.find((o) => o.reference === reference) ?? null);
+  },
+  listArtworks(params: AdminArtworkListParams = {}) {
+    return Promise.resolve(filterArtworks(ARTWORK_SUMMARIES, params));
+  },
+  getArtwork(id: string) {
+    return Promise.resolve(ARTWORKS.find((a) => a.id === id) ?? null);
   },
 };

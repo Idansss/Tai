@@ -354,6 +354,34 @@ customers + analytics.
     return, notification resend) + notes via the admin API (TMS-FBR-007); URL-synced filters for
     shareable views; server-side pagination.
 
+- [x] **TMS-F4-003** Artwork manager — list + detail (versions/mockups/lifecycle) + upload
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **46 admin unit tests**, up from 32); `pnpm audit` not run (same registry-side 410
+    outage; **no new dependencies added**). Browser pass (desktop + mobile): `/artworks` lists 7
+    sample artworks (search title/collection + status filter) with status/version/mockup columns;
+    `/artworks/[id]` shows the **needs_review** artwork with only an Archive action, a **failed**
+    version listing its validation issues, and publish gated; on a **ready** artwork, Publish is
+    **blocked** until every mockup is **approved** (approve → tally `2 approved / 0 pending`), then
+    Publish transitions to **Published** (honest "would call the API — status set locally" notice;
+    actions update to Unpublish); the SEO / edition / compatibility panels render; `/artworks/new`
+    **upload** flow rejects an unsupported format, runs a valid PNG through uploading → processing →
+    validating → **Draft created** (all checks passed), and a low-res PNG through to **Passed with
+    warnings**. No console errors; screenshots captured.
+  - Scope delivered: extended the admin data provider (`AdminArtworkSummary`/`AdminArtworkDetail` +
+    `ArtworkStatus`/`MockupApproval`/`VersionProcessing`; `listArtworks(params)` + `getArtwork(id)`;
+    7-artwork dataset spanning the lifecycle); pure `lib/artworks.ts` (status format/tone, search,
+    `artworkActions`/`applyArtworkAction` lifecycle, `setMockupApproval`/`approvalTally`/`canPublish`,
+    `validateUpload`; 14 tests). `ArtworksView` (searchable/filterable table + "New artwork"),
+    `ArtworkDetailView` (mockup approval, versions + validation issues, lifecycle actions gated on
+    approval, story/tags/SEO/edition/compatibility — all local state with honest "not persisted"
+    notices), and `ArtworkUpload` (simulated upload/progress/processing/validation with real file
+    input + samples, honest "no file stored" notice). Routes `/artworks`, `/artworks/new`,
+    `/artworks/[id]` (noindex). Still 100% mock — needs TMS-FBR-007 (catalogue write: upload +
+    processing + mockup generation + publish/schedule/archive + SEO/edition).
+  - Follow-ups: real upload + async processing + mockup generation + lifecycle persistence via the
+    catalogue API (TMS-FBR-007); editable metadata forms (story/tags/SEO/edition) once the write API
+    lands; version re-upload + reprocess.
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

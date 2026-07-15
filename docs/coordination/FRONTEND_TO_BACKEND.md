@@ -165,7 +165,14 @@ email**. It needs, on top of the auth endpoints above:
   customer, delivery, totals, status timeline). It also needs **fulfilment actions** (print asset,
   packing slip, notification resend, refund, return) as real endpoints and **internal notes**
   (`GET/POST/DELETE /api/v1/admin/orders/{reference}/notes`); today the actions are honest
-  no-op placeholders and notes persist in `localStorage`.
+  no-op placeholders and notes persist in `localStorage`. **Artworks (F4-003, delivered):** the
+  admin lists/opens artworks (`GET /api/v1/admin/artworks`, `GET /api/v1/admin/artworks/{id}` —
+  story, tags, SEO, edition, versions with processing/validation state, mockups with approval state,
+  garment/placement compatibility) and needs the **catalogue write** surface: upload
+  (`POST /api/v1/admin/artworks` with async processing + validation results), mockup generation +
+  approval (`PATCH …/mockups/{id}`), and the publishing lifecycle
+  (`POST …/{id}/publish|schedule|archive|unpublish`). Today upload is a simulated client flow (no
+  file stored), and lifecycle + approval changes are local state only.
 - Required response fields: money in **minor units** + currency (formatted client-side); statuses
   as the shared `@tms/contracts` enums so the admin can present readable labels
   (`formatOrderStatus`) without inventing values.
