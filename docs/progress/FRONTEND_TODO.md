@@ -698,10 +698,29 @@ page.tsx`, `StoryCard`, and the client `ShoppableScene` (Escape-to-close, one-op
     replace the placeholders. Hotspot links reuse the existing catalogue routes.
   - Follow-ups: CMS-backed stories + real scene imagery with authored hotspots; add-to-cart directly
     from a product hotspot; tag/related-story navigation; feature the newest story on the homepage.
-- [ ] **TMS-F5-008** Studio Guide (customer AI assistant) — chat UI shell: assistant identity,
-      suggested prompts, message list, typing/loading, tool-failure + retry, product/Design-Studio
-      reference cards, human-support route, and **guardrails** (no invented stock/price/delivery). Mock
-      responder only; **TMS-FBR-009** (assistant endpoint + tool results). No auto-actions.
+- [x] **TMS-F5-008** Studio Guide (customer AI assistant)
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **184 storefront tests**, up from 176: +8 studio-guide lib). In-browser on the served
+    build: a new **`/studio-guide`** chat shell with an **assistant identity** header (name + role +
+    honest "mock, no live data, never places orders" preview note), **suggested-prompt** chips, a
+    **message list** (user/assistant bubbles), a **typing** indicator, **reference cards** (Design
+    Studio / catalogue / policy / support links) under replies, and a **human-support route**. Asking
+    **"Where is my order?"** surfaces a **tool-failure** card ("Couldn’t reach a tool") with a **Retry**
+    button + account/contact links. **Guardrails** hold: price/stock/delivery questions get a deflection
+    to the authoritative source (product page / delivery page / studio) with a "not guessed" note and
+    **never a number**. No auto-actions. No console/hydration errors.
+  - Scope delivered: pure `lib/studio-guide.ts` — `studioGuideRespond(prompt)` returning a discriminated
+    `GuideOutcome` (`reply` with references + a `guardrail` flag, or `tool_error` for order-status) +
+    `SUGGESTED_PROMPTS`, with **8 unit tests** (guardrails assert no invented digits, order-status →
+    tool_error, topic routing, fallback). Client `StudioGuideChat` (message log with `role="log"`
+    aria-live, typing dots, suggested prompts, Enter-to-send composer, tool-error + retry, reference
+    cards). New `/studio-guide` route; "Studio Guide" added to the footer Help nav.
+  - **Note:** the responder is a **deterministic mock** — no LLM, no live tools. The real assistant
+    endpoint + tool results land under **TMS-FBR-009**; the guardrails (never invent stock/price/
+    delivery) and the no-auto-actions rule are encoded in the mock and must carry over to the real one.
+  - Follow-ups: wire the real assistant endpoint + streaming (TMS-FBR-009); real tool calls (order
+    lookup, stock/price) behind the same guardrails; conversation history + feedback; an optional
+    floating launcher across the storefront.
 - [ ] **TMS-F5-009** Brand Storyteller (admin AI) — admin draft-generation UI (`apps/admin`): select
       artwork/collection → content type → generate (mock) → compare variants → edit → approve/reject →
       save draft, with generation metadata. **Never auto-publishes.** **TMS-FBR-009** (generation endpoint).

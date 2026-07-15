@@ -38,6 +38,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
     heading: 'Help',
     items: [
+      { href: '/studio-guide', label: 'Studio Guide' },
       { href: '/delivery', label: 'Delivery' },
       { href: '/returns', label: 'Returns' },
       { href: '/size-guide', label: 'Size guide' },

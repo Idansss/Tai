@@ -22,6 +22,20 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Studio Guide — customer AI assistant (TMS-F5-008) — Verified.** Pure `lib/studio-guide.ts` is a
+  deterministic mock responder: `studioGuideRespond(prompt)` returns a discriminated `GuideOutcome`
+  (`reply` with reference cards + a `guardrail` flag, or `tool_error` for order-status), plus
+  `SUGGESTED_PROMPTS`, with **8 unit tests**. Guardrails are the point: price/stock/delivery questions
+  deflect to the authoritative source and **never emit a number** (asserted in tests); order-status
+  returns a recoverable `tool_error`. Client `StudioGuideChat` renders the assistant identity, a
+  `role="log"` aria-live message list, a typing indicator, suggested-prompt chips, reference cards, a
+  tool-failure card with **Retry**, and a human-support route — Enter-to-send composer, no
+  auto-actions. New `/studio-guide` route; "Studio Guide" added to the footer Help nav. Verified in the
+  browser: topic replies link to the right routes; "Where is my order?" shows the retry card; "how
+  much / in stock / delivery" deflect with no invented figures; no console errors. Full `pnpm check`
+  green (**184 storefront tests**). No LLM/live tools — the real endpoint + tool results are backend
+  (**TMS-FBR-009**); the guardrails + no-auto-actions rule must carry over.
+
 - **Community gallery (TMS-F5-005) — Verified.** Pure `lib/community.ts` makes the display
   moderation-aware in one place: `isPublic`/`filterApproved` (approved only), `moderationLabel`/
   `moderationTone`, `formatHandle`, and `validatePhotoSubmission`, with **8 unit tests**. New provider
