@@ -20,4 +20,21 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
 - Blocking: no (F0 uses mock adapter; F1 build proceeds on mock).
 - Suggested fallback: typed `mockProvider` fixtures; swap to `apiProvider` on delivery.
 
+## Request TMS-FBR-002 — Product / garment read
+
+- Frontend task: F1 shop listing and product page (`/shop`, `/products/[slug]`).
+- Required endpoints: `GET /api/v1/products` (list) and `GET /api/v1/products/{slug}`.
+- Required method: GET.
+- Required response fields (list): `id`, `slug`, `title`, `artworkSlug`, `artworkTitle`,
+  `collection`, `garment`, `priceMinor`, `currency`, `availability`, `colourCount`.
+- Required response fields (detail) add: `description`, `fabric`, `fit`, `printMethod`, `care`,
+  `deliveryEstimate`, `returnSummary`, `colours[]` (`{ name, hex, available }`),
+  `sizes[]` (`{ label, available }`). Ideally availability is a per-colour×size matrix so the UI
+  can disable unavailable combinations precisely (frontend currently models size availability
+  globally).
+- Reason: shop and product-configuration surfaces (colour/size selection, stock state, price).
+- Blocking: no (F1 uses typed `mockProvider`).
+- Suggested fallback: typed `mockProvider` fixtures; swap to `apiProvider` on delivery. Prices
+  and availability must come from the server and are authoritative at cart/checkout.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

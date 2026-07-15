@@ -2,7 +2,25 @@
 
 ## Current frontend phase
 
-F0 — Reference audit and design foundation (substantially complete; two follow-ups open).
+F1 — Public storefront (in progress). F0 foundation complete (PR #4, CI green). This branch
+`claude/f1-storefront` is **stacked on `claude/f0-visual-foundation`** — merge F0 (#4) first.
+
+### F1 progress this session
+
+- Site chrome: accessible `SiteHeader` (native `<dialog>` mobile menu — focus trap, Esc,
+  backdrop close, scroll lock, `aria-current`) + `SiteFooter` (labelled nav landmarks +
+  newsletter form), wired into the root layout as the shared shell.
+- Homepage refactored into editorial sections using the shared shell + reusable `ArtworkCard`.
+- `/artworks` gallery listing (mock, loading skeletons, empty state) with **collection /
+  availability / sort filters carried in the URL** (shareable, SSR), a desktop filter bar and an
+  accessible mobile `<dialog>` filter drawer + active-filter chips; pure param parse/build is
+  unit-tested (7 tests, first storefront Vitest suite). `/artworks/[slug]` gallery-style detail
+  (breadcrumb, story, edition, related, Design Studio CTA, generateMetadata, segment not-found).
+- 15 editorial/policy route scaffolds (real accessible placeholder pages) so nav never 404s.
+- **Known defect TMS-F1-DEF-001:** `/artworks/[slug]` returns HTTP 200 (soft 404) for unknown
+  slugs under Turbopack prod though the not-found UI renders correctly.
+- Verified: full `pnpm check` green; served build smoke-tested (19 routes; valid detail 200,
+  gallery lists mock artworks, mobile-menu dialog present).
 
 ## Work completed
 
@@ -104,7 +122,10 @@ Build: 13/13 pass (both apps prerender). No app-level Vitest suites yet (Playwri
 
 ## Known defects
 
-None functional. Two F0 follow-ups outstanding (Base44 PNGs, Playwright baselines).
+- **TMS-F1-DEF-001** — soft 404: `/artworks/[slug]` returns HTTP 200 instead of 404 for unknown
+  slugs under the Next 16 Turbopack production server (correct not-found UI still renders).
+  `notFound()` used correctly; the streamed shell commits 200 first. SEO impact only.
+- F0 follow-ups outstanding: Base44 PNG screenshots, Playwright baselines.
 
 ## Blockers
 

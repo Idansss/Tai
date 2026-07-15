@@ -1,9 +1,9 @@
 {
   "agent": "Claude Code",
   "area": "frontend",
-  "currentPhase": "F0",
-  "lastVerifiedTask": "TMS-F0-012",
-  "nextRecommendedTask": "TMS-F1-001",
+  "currentPhase": "F1",
+  "lastVerifiedTask": "TMS-F1-009",
+  "nextRecommendedTask": "TMS-F1-010",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -14,15 +14,30 @@
     "TMS-F0-008",
     "TMS-F0-009",
     "TMS-F0-011",
-    "TMS-F0-012"
+    "TMS-F0-012",
+    "TMS-F1-001",
+    "TMS-F1-002",
+    "TMS-F1-003",
+    "TMS-F1-004",
+    "TMS-F1-005",
+    "TMS-F1-007",
+    "TMS-F1-008",
+    "TMS-F1-009"
   ],
   "inProgressTasks": [],
-  "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010"],
+  "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
   "blockedTasks": [],
+  "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
   "buildStatus": "passing",
   "testStatus": "passing",
   "visualRegressionStatus": "harness-scaffolded-baselines-pending",
-  "mockDependencies": ["storefront:home:featuredArtworks (TMS-FBR-001)"],
-  "branch": "claude/f0-visual-foundation",
+  "mockDependencies": [
+    "storefront:home:featuredArtworks (TMS-FBR-001)",
+    "storefront:/artworks listing + detail (TMS-FBR-001)",
+    "storefront:/collections (TMS-FBR-001)",
+    "storefront:/search (TMS-FBR-001)",
+    "storefront:/shop + /products/[slug] (TMS-FBR-002)"
+  ],
+  "branch": "claude/f1-storefront",
   "lastUpdated": "2026-07-14"
 }
