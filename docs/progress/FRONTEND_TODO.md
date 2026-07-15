@@ -178,9 +178,9 @@ lint, build, visual evidence, docs updated).
   All three list off the finite mock catalogue today (swap to the real API under TMS-FBR-001/002).
   - **Root cause (corrected):** the earlier note blamed Turbopack — **wrong**. A **webpack**
     production build behaves identically, so this is general Next 16 App Router behavior, not a
-    Turbopack bug. On the self-hosted `next start` Node server, a *matched* dynamic route that
+    Turbopack bug. On the self-hosted `next start` Node server, a _matched_ dynamic route that
     resolves to not-found is rendered dynamically and the streamed response commits **200**
-    before the status can be set; only *completely unmatched* paths (e.g. `/totally-unknown`) get
+    before the status can be set; only _completely unmatched_ paths (e.g. `/totally-unknown`) get
     the routing-layer 404 (verified: root not-found → 404, dynamic-slug not-found → 200).
   - **Residual (verified):** under `next start` the three routes still return **200** for unknown
     slugs (the styled not-found UI renders correctly). `NextResponse.rewrite` — with or without a
@@ -516,7 +516,7 @@ customers + analytics.
     merged to `main`** (bottom-up, merge commits, branches deleted; `pnpm check` green on the
     integrated `main`, HEAD `e919e7e`). Active work continues on `claude/f5-post-merge`.
 
-## Phase F5 — Growth & AI (scoped 2026-07-15; not started)
+## Phase F5 — Growth & AI (scoped 2026-07-15; TMS-F5-001 Verified)
 
 Scoped from the master prompt §19 (AI interfaces), §20 (editorial & growth) and §29 (phase
 definition). **Everything builds on the typed mock adapter** — no growth/AI backend exists yet
@@ -527,34 +527,58 @@ these are additive. AI surfaces must have a clear assistant identity, honest too
 states, source/product references, a human-support route, **no invented stock/price/delivery
 claims**, and **must never auto-publish or auto-act**.
 
-- [ ] **TMS-F5-001** Limited drops & countdown — drop schedule surface (`/drops` + drop detail),
-  live countdown timers, upcoming / live / ended / sold-out states, early-access gating UI, drop
-  hero + on-brand motion (reduced-motion safe). Pure frontend + mock provider (`listDrops`/`getDrop`).
+- [x] **TMS-F5-001** Limited drops & countdown
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **113 storefront tests**, up from 89: +21 drop-domain + 3 provider). Served-route +
+    in-browser pass on the live build: `/drops` (200) lists all five sample drops **sorted**
+    live → early access → upcoming → sold out → closed, each with the correct status badge and a
+    live countdown (or a static label for finished drops); all five detail routes (200) render the
+    hero, status, big countdown, early-access panel, story and the drop's pieces; the countdown
+    **ticks live** (verified seconds 17→15 in-browser); **no console/hydration errors**; mobile
+    375px has **zero horizontal overflow** and the countdown row fits. Unknown drop slug → the
+    documented soft-404 (see note below). Nav gained a **Drops** item (header + footer).
+  - Scope delivered: pure domain in `lib/drops.ts` (`dropStatus` upcoming/early_access/live/ended/
+    sold_out from timestamps + `soldOut`; `dropStatusLabel`/`dropStatusTone`; `nextMilestone` — what
+    the countdown targets; `countdownParts`/`countdownLabel`; `sortDrops`) with **24 unit tests**.
+    Provider gained `listDrops()` + `getDrop(slug)` (+ api stubs + 3 provider tests) over a 5-drop
+    dataset spanning every state, with mock timestamps generated relative to now so the preview
+    countdowns are always live. Components: `Countdown` (client, hydration-safe — digits render after
+    mount, `role="timer"` accessible summary, reduced-motion safe, no animation deps), `DropCard`,
+    `DropStatusBadge`, `DropEarlyAccess` (client — routes guests to sign in, confirms members;
+    **UI-only, no real gating/waitlist**, honest preview notices). Routes `/drops` + `/drops/[slug]`
+    (+ loading + not-found). Backend gap logged as **TMS-FBR-008**.
+  - **Rendering note:** the two drops routes are **`dynamic = 'force-dynamic'`** (request-time) so the
+    live status + countdown are never frozen at build — a deliberate divergence from the stable
+    catalogue detail routes (static + `dynamicParams=false`). Trade-off: an unknown drop slug is a
+    soft 404 under self-hosted `next start` (SEO-only, same residual class as TMS-F1-DEF-001).
+  - Follow-ups: real drops API + server-authoritative timeline/inventory (TMS-FBR-008); wire the
+    early-access gate + waitlist to real membership/notify (pairs with TMS-F5-002); promote the
+    countdown into `packages/ui` if reused; real drop imagery.
 - [ ] **TMS-F5-002** Waitlist & back-in-stock — email-capture UI on sold-out artworks/products +
-  drop early-access signup, confirmation + already-registered states, honest "preview, not a real
-  signup" notice. Mock capture; **TMS-FBR-008** (waitlist/notify endpoint).
+      drop early-access signup, confirmation + already-registered states, honest "preview, not a real
+      signup" notice. Mock capture; **TMS-FBR-008** (waitlist/notify endpoint).
 - [ ] **TMS-F5-003** Pre-order & made-to-order — pre-order badges/flow on eligible drop items,
-  made-to-order lead-time messaging surfaced in product + cart + checkout, ships-by estimate. Mock.
+      made-to-order lead-time messaging surfaced in product + cart + checkout, ships-by estimate. Mock.
 - [ ] **TMS-F5-004** Reviews & ratings — review display on product/artwork (rating summary +
-  distribution + list, verified-purchase badge), write-a-review form (mock submit, honest notice),
-  empty/loading/failure states. **TMS-FBR-008** (reviews read + write, moderation).
+      distribution + list, verified-purchase badge), write-a-review form (mock submit, honest notice),
+      empty/loading/failure states. **TMS-FBR-008** (reviews read + write, moderation).
 - [ ] **TMS-F5-005** Community gallery — customer-photo gallery (moderation-aware display), submit-a-
-  photo UI (mock), per-artwork "styled by the community" section. **TMS-FBR-008** (UGC + moderation).
+      photo UI (mock), per-artwork "styled by the community" section. **TMS-FBR-008** (UGC + moderation).
 - [ ] **TMS-F5-006** Artwork Passport — per-artwork-version authenticity/provenance page (immutable
-  version id, edition/serial, story, release, ownership-record placeholder, share). Frontend on
-  existing artwork data; **TMS-FBR-001** (version + edition fields) extends it.
+      version id, edition/serial, story, release, ownership-record placeholder, share). Frontend on
+      existing artwork data; **TMS-FBR-001** (version + edition fields) extends it.
 - [ ] **TMS-F5-007** Shoppable stories — editorial story pages with embedded shoppable artwork/
-  product hotspots linking to gallery/studio/product; upgrades the `/stories` placeholder journal.
-  Frontend + mock.
+      product hotspots linking to gallery/studio/product; upgrades the `/stories` placeholder journal.
+      Frontend + mock.
 - [ ] **TMS-F5-008** Studio Guide (customer AI assistant) — chat UI shell: assistant identity,
-  suggested prompts, message list, typing/loading, tool-failure + retry, product/Design-Studio
-  reference cards, human-support route, and **guardrails** (no invented stock/price/delivery). Mock
-  responder only; **TMS-FBR-009** (assistant endpoint + tool results). No auto-actions.
+      suggested prompts, message list, typing/loading, tool-failure + retry, product/Design-Studio
+      reference cards, human-support route, and **guardrails** (no invented stock/price/delivery). Mock
+      responder only; **TMS-FBR-009** (assistant endpoint + tool results). No auto-actions.
 - [ ] **TMS-F5-009** Brand Storyteller (admin AI) — admin draft-generation UI (`apps/admin`): select
-  artwork/collection → content type → generate (mock) → compare variants → edit → approve/reject →
-  save draft, with generation metadata. **Never auto-publishes.** **TMS-FBR-009** (generation endpoint).
+      artwork/collection → content type → generate (mock) → compare variants → edit → approve/reject →
+      save draft, with generation metadata. **Never auto-publishes.** **TMS-FBR-009** (generation endpoint).
 - [ ] **TMS-F5-010** Loyalty & referrals — account loyalty tier/points display, referral link + share
-  UI, rewards list + how-it-works, honest "preview" notices. **TMS-FBR-008** (loyalty/referral data).
+      UI, rewards list + how-it-works, honest "preview" notices. **TMS-FBR-008** (loyalty/referral data).
 - _Deferred (per "core commerce first"):_ gift cards, gifting flow, collaborations — add rows if
   prioritised. Sequencing recommendation: **F5-001 → 002 → 003** (drops cluster) first (fully
   mockable, high brand value), then **006/007** (passport/stories), then reviews/community
@@ -567,33 +591,33 @@ Scoped from master prompt §29 (F6), §24 (performance), §25 (SEO), §21 (state
 Codex delivering endpoints.
 
 - [ ] **TMS-F6-001** Accessibility audit — route-level axe sweeps across all storefront + admin
-  routes; keyboard traversal, screen-reader labels, reduced-motion, focus management; fix findings.
+      routes; keyboard traversal, screen-reader labels, reduced-motion, focus management; fix findings.
 - [ ] **TMS-F6-002** Performance audit — measure LCP/INP/CLS against budgets (≤2.5s / ≤200ms / ≤0.1);
-  responsive images + modern formats + explicit dimensions + lazy/priority; route code-splitting;
-  isolate the Design Studio bundle; skeletons that preserve layout.
+      responsive images + modern formats + explicit dimensions + lazy/priority; route code-splitting;
+      isolate the Design Studio bundle; skeletons that preserve layout.
 - [ ] **TMS-F6-003** Visual review & regression coverage — extend Playwright baselines to gallery,
-  artwork detail, collection, shop, product, Design Studio, cart, checkout, account, admin dashboard,
-  artwork manager, order detail, production queue (§28); manual diff review; wire into CI once a
-  stable render env exists.
+      artwork detail, collection, shop, product, Design Studio, cart, checkout, account, admin dashboard,
+      artwork manager, order detail, production queue (§28); manual diff review; wire into CI once a
+      stable render env exists.
 - [ ] **TMS-F6-004** Mobile & responsive review — 360/390/430/768/1024/1280/1440; nav, galleries,
-  Design Studio, colour/size selectors, sticky actions, data tables, admin forms, modals/drawers,
-  image zoom. Mobile is a complete experience, not a reduced desktop.
+      Design Studio, colour/size selectors, sticky actions, data tables, admin forms, modals/drawers,
+      image zoom. Mobile is a complete experience, not a reduced desktop.
 - [ ] **TMS-F6-005** Cross-browser testing — Chromium / WebKit / Firefox via Playwright on the
-  required journeys (§27).
+      required journeys (§27).
 - [ ] **TMS-F6-006** Error-state audit — verify the §21 state matrix (loading/incremental/empty/
-  no-results/offline/slow/image-unavailable/API-failure/auth-expired/access-denied/validation/
-  inventory-changed/payment-failure/quote-failure/background/maintenance) across every important
-  feature; no raw JSON/HTML errors; every error says what happened, what to do, whether data was kept.
+      no-results/offline/slow/image-unavailable/API-failure/auth-expired/access-denied/validation/
+      inventory-changed/payment-failure/quote-failure/background/maintenance) across every important
+      feature; no raw JSON/HTML errors; every error says what happened, what to do, whether data was kept.
 - [ ] **TMS-F6-007** Real API replacement — as Codex ships endpoints, swap mock → api adapter per
-  surface, add integration tests, verify loading/failure/permission behaviour, remove dead mock
-  paths (§26). Depends on backend delivery (TMS-FBR-001…009).
+      surface, add integration tests, verify loading/failure/permission behaviour, remove dead mock
+      paths (§26). Depends on backend delivery (TMS-FBR-001…009).
 - [ ] **TMS-F6-008** SEO completion — sitemap.xml, robots, canonical + OG/social images, breadcrumbs,
-  product structured data + variant relationships, artwork/collection internal linking, slug-change
-  redirects, and a full `noindex` coverage audit (admin/account/checkout/private designs). **Includes
-  closing the TMS-F1-DEF-001 residual on the chosen production host** (confirm the `fallback: false`
-  404 on the real host, or add the self-hosted slug-guard).
+      product structured data + variant relationships, artwork/collection internal linking, slug-change
+      redirects, and a full `noindex` coverage audit (admin/account/checkout/private designs). **Includes
+      closing the TMS-F1-DEF-001 residual on the chosen production host** (confirm the `fallback: false`
+      404 on the real host, or add the self-hosted slug-guard).
 - [ ] **TMS-F6-009** Security-facing frontend review — no secrets in client bundles, safe error
-  surfaces (no stack traces/secrets, §18), auth/permission gating, admin RBAC readiness (TMS-FBR-006),
-  CSP/security-header recommendations.
+      surfaces (no stack traces/secrets, §18), auth/permission gating, admin RBAC readiness (TMS-FBR-006),
+      CSP/security-header recommendations.
 - [ ] **TMS-F6-010** Staging acceptance & launch checklist — run all required journeys (§27) on
-  staging, real-data smoke, sign-off, and a launch checklist.
+      staging, real-data smoke, sign-off, and a launch checklist.

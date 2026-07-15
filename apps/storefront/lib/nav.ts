@@ -7,6 +7,7 @@ export interface NavItem {
 export const primaryNav: NavItem[] = [
   { href: '/artworks', label: 'Artworks' },
   { href: '/collections', label: 'Collections' },
+  { href: '/drops', label: 'Drops' },
   { href: '/shop', label: 'Shop' },
   { href: '/design-studio', label: 'Design Studio' },
   { href: '/about', label: 'About' },
@@ -19,6 +20,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
     items: [
       { href: '/artworks', label: 'Artworks' },
       { href: '/collections', label: 'Collections' },
+      { href: '/drops', label: 'Drops' },
       { href: '/shop', label: 'Shop' },
       { href: '/design-studio', label: 'Design Studio' },
     ],

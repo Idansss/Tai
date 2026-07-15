@@ -125,6 +125,34 @@ export interface ListArtworksParams {
   sort?: ArtworkSort;
 }
 
+/**
+ * Limited drops (TMS-F5-001). A drop is a timed release of a set of artworks.
+ * Timestamps are ISO strings; the *status* is derived from them relative to the
+ * current time by the pure helpers in `lib/drops.ts` (never trust a status the
+ * client could forge). `earlyAccessAt`/`endsAt` are null when there is no early
+ * window / the drop is open-ended. The mock adapter generates timestamps
+ * relative to "now" so the countdowns are live in the preview; the real API
+ * (TMS-FBR-008) will provide server-authoritative absolute timestamps.
+ */
+export interface DropSummary {
+  slug: string;
+  title: string;
+  tagline: string;
+  collection: string;
+  earlyAccessAt: string | null;
+  releaseAt: string;
+  endsAt: string | null;
+  pieceCount: number;
+  /** Server-authoritative sell-through flag; overrides the time window. */
+  soldOut: boolean;
+}
+
+export interface DropDetail extends DropSummary {
+  story: string;
+  /** The artworks released in this drop. */
+  artworks: ArtworkSummary[];
+}
+
 export interface StorefrontDataProvider {
   listArtworks(params?: ListArtworksParams): Promise<CursorPage<ArtworkSummary>>;
   getArtwork(slug: string): Promise<ArtworkDetail | null>;
@@ -144,4 +172,8 @@ export interface StorefrontDataProvider {
   getStudioOptions(): Promise<StudioOptions>;
   /** Available delivery methods with fees + ETAs for checkout. */
   getDeliveryOptions(): Promise<DeliveryOption[]>;
+  /** Limited drops for the drops index, newest release first (TMS-F5-001). */
+  listDrops(): Promise<DropSummary[]>;
+  /** A drop and its released artworks, or null if the slug is unknown. */
+  getDrop(slug: string): Promise<DropDetail | null>;
 }

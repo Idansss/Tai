@@ -227,4 +227,27 @@ email**. It needs, on top of the auth endpoints above:
   `mockAdminProvider` with `apiProvider` (env switch already wired). The error centre must **never**
   surface stack traces or secrets (spec §18) — expose correlation IDs + resolution state only.
 
+## Request TMS-FBR-008 — Limited drops (growth) [TMS-F5-001]
+
+- Frontend task: F5 drops surface (`/drops` index + `/drops/{slug}` detail), live countdowns,
+  early-access/membership gating, and (next) the waitlist/back-in-stock signup (TMS-F5-002).
+- Required endpoints (proposed): `GET /api/v1/drops` (list) and `GET /api/v1/drops/{slug}` (detail
+  with its released artworks). Later, for early access + waitlist: `POST /api/v1/drops/{slug}/waitlist`
+  (join) and a membership/early-access check on the session.
+- Required response fields (per drop): `slug`, `title`, `tagline`, `collection`, `earlyAccessAt`
+  (nullable ISO), `releaseAt` (ISO), `endsAt` (nullable ISO), `pieceCount`, `soldOut`. Detail adds
+  `story` and `artworks[]` (the released `ArtworkSummary`s). **Timestamps must be absolute,
+  server-authoritative UTC** — the frontend derives `upcoming/early_access/live/ended/sold_out`
+  from them in `lib/drops.ts` and **never trusts a client-supplied status**; `soldOut` (and real
+  inventory) is server-owned.
+- Reason: the drops surface currently runs on the typed mock provider (`listDrops`/`getDrop`) with
+  timestamps generated **relative to now** so the preview countdowns stay live. Real drops need a
+  server-authoritative timeline + inventory, and the early-access gate + waitlist are UI-only today
+  (no membership tier, no notify) — honest "preview" notices are shown.
+- Blocking: no (drops build on the typed mock; swap `apiProvider` on delivery).
+- Suggested fallback: keep `lib/drops.ts` (pure status/countdown/sort) + the `DropSummary`/`DropDetail`
+  shapes as the view model; replace `listDrops`/`getDrop` with the endpoints. Because these pages are
+  `force-dynamic` (time-sensitive), no build-time enumeration is needed. Membership/early-access
+  enforcement + the waitlist/notify endpoint pair with TMS-F5-002.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

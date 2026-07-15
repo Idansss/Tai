@@ -77,6 +77,32 @@ describe('mockProvider delivery options', () => {
   });
 });
 
+describe('mockProvider drops', () => {
+  it('lists drops with valid timestamps and piece counts', async () => {
+    const drops = await mockProvider.listDrops();
+    expect(drops.length).toBeGreaterThan(0);
+    for (const d of drops) {
+      expect(d.slug).toMatch(/^[a-z0-9-]+$/);
+      expect(Number.isNaN(Date.parse(d.releaseAt))).toBe(false);
+      if (d.earlyAccessAt !== null) expect(Number.isNaN(Date.parse(d.earlyAccessAt))).toBe(false);
+      if (d.endsAt !== null) expect(Number.isNaN(Date.parse(d.endsAt))).toBe(false);
+      expect(d.pieceCount).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns a drop with its released artworks', async () => {
+    const drop = await mockProvider.getDrop('night-market');
+    expect(drop).not.toBeNull();
+    expect(drop?.artworks.length).toBe(drop?.pieceCount);
+    expect(drop?.artworks.every((a) => a.collection === drop.collection)).toBe(true);
+    expect(drop?.story).toBeTruthy();
+  });
+
+  it('returns null for an unknown drop slug', async () => {
+    expect(await mockProvider.getDrop('does-not-exist')).toBeNull();
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

@@ -7,6 +7,8 @@ import type {
   CollectionDetail,
   CollectionSummary,
   DeliveryOption,
+  DropDetail,
+  DropSummary,
   ListArtworksParams,
   ProductDetail,
   ProductSummary,
@@ -267,6 +269,110 @@ const artworks: ArtworkSummary[] = [
   },
 ];
 
+const HOUR_MS = 3_600_000;
+const DAY_MS = 86_400_000;
+
+/**
+ * Drop seeds (TMS-F5-001). Timings are offsets in ms relative to "now" so the
+ * preview always shows a live countdown for each state; the real API
+ * (TMS-FBR-008) will send absolute server timestamps. `earlyOffset`/`endOffset`
+ * are null when there is no early window / the drop is open-ended.
+ */
+interface DropSeed {
+  slug: string;
+  title: string;
+  tagline: string;
+  story: string;
+  collection: string;
+  earlyOffset: number | null;
+  releaseOffset: number;
+  endOffset: number | null;
+  soldOut: boolean;
+}
+
+const dropSeeds: DropSeed[] = [
+  {
+    slug: 'night-market',
+    title: 'Night Market',
+    tagline: 'The Night Studies drop, live now.',
+    story:
+      'Four pieces pulled from the quietest hours of the city — ink, neon and the last warm light on the street. Made to order in a limited run.',
+    collection: 'Night Studies',
+    earlyOffset: -2 * DAY_MS,
+    releaseOffset: -1 * DAY_MS,
+    endOffset: 3 * DAY_MS,
+    soldOut: false,
+  },
+  {
+    slug: 'city-portraits-vol-1',
+    title: 'City Portraits, Vol. 1',
+    tagline: 'Early access is open for members.',
+    story:
+      'Street-level scenes rendered in confident, tangled linework. Members get first access before the public release.',
+    collection: 'City Portraits',
+    earlyOffset: -1 * HOUR_MS,
+    releaseOffset: 1 * DAY_MS,
+    endOffset: 8 * DAY_MS,
+    soldOut: false,
+  },
+  {
+    slug: 'harmattan-editions',
+    title: 'Harmattan Editions',
+    tagline: 'Dust-season florals, dropping soon.',
+    story:
+      'A short seasonal set drawn in single unbroken lines. Join early access to be first in the queue when it opens.',
+    collection: 'Season Sketches',
+    earlyOffset: 1 * DAY_MS,
+    releaseOffset: 2 * DAY_MS,
+    endOffset: 9 * DAY_MS,
+    soldOut: false,
+  },
+  {
+    slug: 'comic-line-reprint',
+    title: 'Comic Line — Reprint',
+    tagline: 'Sold out in record time.',
+    story:
+      'A one-week reprint of the Comic Line favourites. This run has fully sold through — join the waitlist for the next one.',
+    collection: 'Comic Line',
+    earlyOffset: -6 * DAY_MS,
+    releaseOffset: -5 * DAY_MS,
+    endOffset: 2 * DAY_MS,
+    soldOut: true,
+  },
+  {
+    slug: 'first-light',
+    title: 'First Light',
+    tagline: 'The drop that started it all — now closed.',
+    story:
+      'The studio’s first limited release, archived here for the record. Closed to new orders.',
+    collection: 'Night Studies',
+    earlyOffset: -12 * DAY_MS,
+    releaseOffset: -11 * DAY_MS,
+    endOffset: -2 * DAY_MS,
+    soldOut: false,
+  },
+];
+
+function dropArtworks(collection: string): ArtworkSummary[] {
+  return artworks.filter((a) => a.collection === collection);
+}
+
+function toDropSummary(seed: DropSeed, now: number): DropSummary {
+  const iso = (offset: number | null): string | null =>
+    offset === null ? null : new Date(now + offset).toISOString();
+  return {
+    slug: seed.slug,
+    title: seed.title,
+    tagline: seed.tagline,
+    collection: seed.collection,
+    earlyAccessAt: iso(seed.earlyOffset),
+    releaseAt: iso(seed.releaseOffset)!,
+    endsAt: iso(seed.endOffset),
+    pieceCount: dropArtworks(seed.collection).length,
+    soldOut: seed.soldOut,
+  };
+}
+
 function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
@@ -384,5 +490,20 @@ export const mockProvider: StorefrontDataProvider = {
         eta: 'Ready in 2–4 working days',
       },
     ]);
+  },
+
+  async listDrops(): Promise<DropSummary[]> {
+    const now = Date.now();
+    return delay(dropSeeds.map((seed) => toDropSummary(seed, now)));
+  },
+
+  async getDrop(slug: string): Promise<DropDetail | null> {
+    const seed = dropSeeds.find((d) => d.slug === slug);
+    if (!seed) return delay(null);
+    return delay({
+      ...toDropSummary(seed, Date.now()),
+      story: seed.story,
+      artworks: dropArtworks(seed.collection),
+    });
   },
 };

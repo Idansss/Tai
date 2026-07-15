@@ -20,6 +20,24 @@ TMS-F4-005 (production + QC + fulfilment) + TMS-F4-006 (error centre + customers
 F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
 
+### F5 progress this session
+
+- **Limited drops & countdown (TMS-F5-001) — Verified.** First F5 (growth) task, on the typed mock
+  adapter. Pure `lib/drops.ts` derives drop status (upcoming / early access / live / ended / sold out)
+  from timestamps + a `soldOut` flag relative to an explicit `now`, plus `nextMilestone` (the countdown
+  target), `countdownParts`/`countdownLabel`, and `sortDrops` (active → finished, soonest first) —
+  **24 new unit tests**. Provider gained `listDrops`/`getDrop` (+ api stubs) over a 5-drop dataset
+  spanning every state, with now-relative mock timestamps so the preview countdowns stay live.
+  `/drops` (index) + `/drops/[slug]` (detail: hero, status, big live countdown, early-access panel,
+  story, pieces) with loading + not-found; a **Drops** nav item. `Countdown` is a client component that
+  is hydration-safe (digits after mount), accessible (`role="timer"` summary) and reduced-motion safe;
+  `DropEarlyAccess` is **UI-only** (routes guests to sign in, confirms members) with honest "preview —
+  not enforced" notices (no real membership/waitlist). Both routes are **`force-dynamic`** so the clock
+  is never frozen at build (a deliberate divergence from the static catalogue routes — see the TODO).
+  Verified: full `pnpm check` green (113 storefront tests); in-browser — all states render + sort
+  correctly, the countdown **ticks** (17→15s), no console/hydration errors, mobile 375px no overflow.
+  Still 100% mock — gap logged as **TMS-FBR-008** (drops API + server-authoritative timeline/inventory).
+
 ### F4 progress this session
 
 - **Error centre + customers + analytics (TMS-F4-006) — F4 complete.** The last three admin sections,
