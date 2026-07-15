@@ -22,6 +22,25 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Shoppable stories (TMS-F5-007) — Verified.** Pure `lib/stories.ts` derives each hotspot's href +
+  CTA + kind label and counts shoppable items (`hotspotHref`, `hotspotActionLabel`, `hotspotKindLabel`,
+  `isShoppable`, `storyHotspotTargets`, `countShoppableItems`), with **7 unit tests**. New provider
+  methods `listStories`/`getStory` return editorial stories whose scene blocks carry positioned
+  hotspots; the mock seeds **3 stories** with targets built from the **same** artwork/product/
+  collection data (titles + prices never drift), api stub throws (**4 mock tests**, incl. a check that
+  every hotspot resolves to a real catalogue slug). The `/stories` placeholder is replaced by an
+  **SSG journal index** (`StoryCard` grid, "N shoppable" badge, newest first) and **SSG**
+  `/stories/[slug]` (`dynamicParams=false` → genuine 404 for unknown slugs) that interleaves editorial
+  blocks with the client **`ShoppableScene`** — a placeholder scene image with numbered hotspots that
+  open a catalogue-linking card (artwork/product-with-price/collection/studio), plus an always-present
+  "In this scene" list as the keyboard/no-JS/screen-reader fallback. "Stories" added to the primary
+  nav. Verified in the browser on the served build: index + 3 detail pages 200, unknown slug 404,
+  hotspot links resolve to `/artworks`·`/products`·`/collections`·`/design-studio` with correct CTAs
+  and prices (₦12,000 / ₦18,000); no console/hydration errors. Full `pnpm check` green (**151
+  storefront tests**). Content is **mock/editorial** on placeholder imagery — a real CMS feed maps
+  onto the `Story*` shapes and real scene photography + authored hotspot coordinates replace the
+  placeholders.
+
 - **Artwork Passport (TMS-F5-006) — Verified.** Pure `lib/passport.ts` derives an **immutable,
   content-addressed version id** (`artworkVersionId` — deterministic FNV-1a over slug+edition+release,
   formatted `AP-XXXX-XXXX`; same content → same id, any field change → a new version) plus a

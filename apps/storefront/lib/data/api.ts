@@ -53,4 +53,10 @@ export const apiProvider: StorefrontDataProvider = {
   getDrop() {
     return notImplemented('getDrop');
   },
+  listStories() {
+    return notImplemented('listStories');
+  },
+  getStory() {
+    return notImplemented('getStory');
+  },
 };

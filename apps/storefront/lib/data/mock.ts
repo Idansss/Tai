@@ -1,6 +1,7 @@
 import type { CursorPage } from '@tms/contracts';
 import { artworkVersionId, passportSerial } from '../passport';
 import { artworkMatchesQuery } from '../search';
+import { countShoppableItems } from '../stories';
 import type {
   ArtworkDetail,
   ArtworkPassport,
@@ -16,6 +17,9 @@ import type {
   ProductSummary,
   ProvenanceEvent,
   StorefrontDataProvider,
+  StoryDetail,
+  StoryHotspotTarget,
+  StorySummary,
   StudioOptions,
 } from './types';
 
@@ -376,6 +380,250 @@ function toDropSummary(seed: DropSeed, now: number): DropSummary {
   };
 }
 
+/**
+ * Shoppable story seeds (TMS-F5-007). Hotspot targets are built from the same
+ * artwork/product/collection data the rest of the catalogue uses, so titles and
+ * prices never drift. `StorySummary` (index) is derived from each detail by
+ * dropping the body and counting shoppable hotspots.
+ */
+function artworkTarget(slug: string): StoryHotspotTarget {
+  const a = artworks.find((x) => x.slug === slug);
+  return { kind: 'artwork', slug, label: a?.title ?? slug };
+}
+
+function productTarget(slug: string): StoryHotspotTarget {
+  const p = productSeeds.find((x) => x.slug === slug);
+  return {
+    kind: 'product',
+    slug,
+    label: p ? `${p.artworkTitle} — ${p.garment}` : slug,
+    priceMinor: p?.priceMinor ?? 0,
+    currency: 'NGN',
+  };
+}
+
+function collectionTarget(slug: string): StoryHotspotTarget {
+  const c = collectionMeta.find((x) => x.slug === slug);
+  return { kind: 'collection', slug, label: c?.name ?? slug };
+}
+
+const studioTarget: StoryHotspotTarget = { kind: 'studio', label: 'Design Studio' };
+
+type StorySeed = Omit<StoryDetail, 'shoppableCount'>;
+
+const storySeeds: StorySeed[] = [
+  {
+    slug: 'how-midnight-in-lagos-came-together',
+    title: 'How Midnight in Lagos came together',
+    category: 'Process',
+    excerpt:
+      'From a blurred phone photo on a night bus to a single unbroken line — the making of our most-worn piece.',
+    readMinutes: 5,
+    publishedOn: '2026-06-20',
+    intro:
+      'Every piece starts on paper. Midnight in Lagos began as a photograph taken through a bus window and ended as a drawing we could not stop returning to.',
+    blocks: [
+      { kind: 'heading', text: 'From a photograph to a line' },
+      {
+        kind: 'paragraph',
+        text: 'The first sketches chased the neon — too much of it. Stripping the scene back to one continuous line was what finally made the city feel awake rather than lit up.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-drawing',
+          caption: 'The finished drawing, pinned in the studio',
+          hotspots: [
+            {
+              id: 'h-artwork',
+              x: 32,
+              y: 42,
+              caption: 'The finished piece in the gallery',
+              target: artworkTarget('midnight-in-lagos'),
+            },
+            {
+              id: 'h-collection',
+              x: 70,
+              y: 64,
+              caption: 'More drawings from after dark',
+              target: collectionTarget('night-studies'),
+            },
+          ],
+        },
+      },
+      { kind: 'heading', text: 'Onto the garment' },
+      {
+        kind: 'paragraph',
+        text: 'A water-based screen print keeps the line crisp without sitting heavy on the cotton. The first proof went straight onto our classic tee.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-proof',
+          caption: 'The first press proof on a classic tee',
+          hotspots: [
+            {
+              id: 'h-product',
+              x: 46,
+              y: 50,
+              caption: 'Wear the piece',
+              target: productTarget('midnight-in-lagos-classic-tee'),
+            },
+            {
+              id: 'h-studio',
+              x: 76,
+              y: 30,
+              caption: 'Place it your way',
+              target: studioTarget,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    slug: 'styling-the-city-portraits-drop',
+    title: 'Styling the City Portraits drop',
+    category: 'Lookbook',
+    excerpt:
+      'Three street scenes, three ways to wear them — from the market run to the evening out.',
+    readMinutes: 4,
+    publishedOn: '2026-07-02',
+    intro:
+      'The City Portraits drop is built for the everyday. Here is how we styled three of its pieces across a single Lagos day.',
+    blocks: [
+      { kind: 'heading', text: 'The street, by daylight' },
+      {
+        kind: 'paragraph',
+        text: 'Market Day wants room to breathe, so we paired the long-sleeve with soft neutrals and let the linework do the talking.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-day',
+          caption: 'Market Day, styled for the everyday',
+          hotspots: [
+            {
+              id: 'h-market',
+              x: 40,
+              y: 46,
+              caption: 'The long-sleeve',
+              target: productTarget('market-day-longsleeve'),
+            },
+            {
+              id: 'h-okada',
+              x: 66,
+              y: 60,
+              caption: 'Okada Run in the gallery',
+              target: artworkTarget('okada-run'),
+            },
+            {
+              id: 'h-collection',
+              x: 20,
+              y: 72,
+              caption: 'The full collection',
+              target: collectionTarget('city-portraits'),
+            },
+          ],
+        },
+      },
+      { kind: 'heading', text: 'Layered up for the evening' },
+      {
+        kind: 'paragraph',
+        text: 'As the light drops, the oversized cut takes over. Paper Tigers reads bolder at night.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-night',
+          caption: 'Layered up for the evening',
+          hotspots: [
+            {
+              id: 'h-paper',
+              x: 50,
+              y: 40,
+              caption: 'Paper Tigers, oversized',
+              target: productTarget('paper-tigers-oversized-tee'),
+            },
+            {
+              id: 'h-studio',
+              x: 78,
+              y: 66,
+              caption: 'Build your own look',
+              target: studioTarget,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    slug: 'comic-line-one-unbroken-line',
+    title: 'Comic Line, one unbroken line',
+    category: 'Studio notes',
+    excerpt:
+      'The rule behind the Comic Line collection: tell the whole story without lifting the pen.',
+    readMinutes: 6,
+    publishedOn: '2026-05-15',
+    intro:
+      'Comic Line is a self-imposed constraint — every panel drawn in a single continuous stroke. The constraint is the point.',
+    blocks: [
+      { kind: 'heading', text: 'One line, no lifting the pen' },
+      {
+        kind: 'paragraph',
+        text: 'Working in one unbroken line forces every decision to the front. There is no going back to fix a corner, so the corner has to be right the first time.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-inking',
+          caption: 'Inking a Comic Line panel',
+          hotspots: [
+            {
+              id: 'h-paper',
+              x: 34,
+              y: 44,
+              caption: 'Paper Tigers',
+              target: artworkTarget('paper-tigers'),
+            },
+            {
+              id: 'h-getaway',
+              x: 64,
+              y: 54,
+              caption: 'The Getaway',
+              target: artworkTarget('the-getaway'),
+            },
+            {
+              id: 'h-collection',
+              x: 50,
+              y: 76,
+              caption: 'The whole Comic Line',
+              target: collectionTarget('comic-line'),
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+function toStoryDetail(seed: StorySeed): StoryDetail {
+  return { ...seed, shoppableCount: countShoppableItems(seed.blocks) };
+}
+
+function toStorySummary(seed: StorySeed): StorySummary {
+  const { slug, title, category, excerpt, readMinutes, publishedOn } = seed;
+  return {
+    slug,
+    title,
+    category,
+    excerpt,
+    readMinutes,
+    publishedOn,
+    shoppableCount: countShoppableItems(seed.blocks),
+  };
+}
+
 function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
@@ -556,5 +804,17 @@ export const mockProvider: StorefrontDataProvider = {
       story: seed.story,
       artworks: dropArtworks(seed.collection),
     });
+  },
+
+  async listStories(): Promise<StorySummary[]> {
+    // Newest first.
+    return delay(
+      storySeeds.map(toStorySummary).sort((a, b) => b.publishedOn.localeCompare(a.publishedOn)),
+    );
+  },
+
+  async getStory(slug: string): Promise<StoryDetail | null> {
+    const seed = storySeeds.find((s) => s.slug === slug);
+    return delay(seed ? toStoryDetail(seed) : null);
   },
 };

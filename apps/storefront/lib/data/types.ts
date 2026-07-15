@@ -70,6 +70,59 @@ export interface ArtworkPassport {
   provenance: ProvenanceEvent[];
 }
 
+/**
+ * Shoppable editorial stories (TMS-F5-007). A story is an editorial article
+ * whose "scene" blocks carry positioned **hotspots** that link into the
+ * catalogue (an artwork, a product, a collection, or the Design Studio). The
+ * hotspot geometry (x/y percentages) is authored data; the href + action label
+ * for each target are derived by the pure helpers in `lib/stories.ts`. Content
+ * is mock/editorial today; a real CMS feed can map onto these shapes later.
+ */
+export type StoryHotspotTarget =
+  | { kind: 'artwork'; slug: string; label: string }
+  | { kind: 'product'; slug: string; label: string; priceMinor: number; currency: string }
+  | { kind: 'collection'; slug: string; label: string }
+  | { kind: 'studio'; label: string };
+
+export interface StoryHotspot {
+  id: string;
+  /** Centre of the hotspot on the scene, as percentages (0–100). */
+  x: number;
+  y: number;
+  /** Short caption shown alongside the linked item. */
+  caption: string;
+  target: StoryHotspotTarget;
+}
+
+export interface StoryScene {
+  id: string;
+  /** Alt/label for the scene placeholder image. */
+  caption: string;
+  hotspots: StoryHotspot[];
+}
+
+export type StoryBlock =
+  | { kind: 'heading'; text: string }
+  | { kind: 'paragraph'; text: string }
+  | { kind: 'scene'; scene: StoryScene };
+
+export interface StorySummary {
+  slug: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  readMinutes: number;
+  /** ISO date the story was published. */
+  publishedOn: string;
+  /** Count of shoppable (artwork/product) hotspots across the story. */
+  shoppableCount: number;
+}
+
+export interface StoryDetail extends StorySummary {
+  intro: string;
+  blocks: StoryBlock[];
+}
+
 export interface CollectionSummary {
   slug: string;
   name: string;
@@ -213,4 +266,8 @@ export interface StorefrontDataProvider {
   listDrops(): Promise<DropSummary[]>;
   /** A drop and its released artworks, or null if the slug is unknown. */
   getDrop(slug: string): Promise<DropDetail | null>;
+  /** Shoppable editorial stories for the journal index, newest first (TMS-F5-007). */
+  listStories(): Promise<StorySummary[]>;
+  /** A story with its editorial blocks + hotspots, or null if the slug is unknown. */
+  getStory(slug: string): Promise<StoryDetail | null>;
 }

@@ -132,6 +132,55 @@ describe('mockProvider artwork passport', () => {
   });
 });
 
+describe('mockProvider shoppable stories', () => {
+  it('lists stories newest first with a shoppable count', async () => {
+    const stories = await mockProvider.listStories();
+    expect(stories.length).toBeGreaterThan(0);
+    for (const s of stories) {
+      expect(s.slug).toMatch(/^[a-z0-9-]+$/);
+      expect(s.readMinutes).toBeGreaterThan(0);
+      expect(Number.isNaN(Date.parse(s.publishedOn))).toBe(false);
+      expect(s.shoppableCount).toBeGreaterThanOrEqual(0);
+    }
+    const dates = stories.map((s) => s.publishedOn);
+    expect(dates).toEqual([...dates].sort((a, b) => b.localeCompare(a)));
+  });
+
+  it('returns a story whose scene hotspots point at real catalogue slugs', async () => {
+    const story = await mockProvider.getStory('how-midnight-in-lagos-came-together');
+    expect(story).not.toBeNull();
+    expect(story?.blocks.length).toBeGreaterThan(0);
+
+    const scenes = story!.blocks.filter((b) => b.kind === 'scene');
+    expect(scenes.length).toBeGreaterThan(0);
+
+    const { items: allArtworks } = await mockProvider.listArtworks({ limit: 100 });
+    const artworkSlugs = new Set(allArtworks.map((a) => a.slug));
+    const productSlugs = new Set((await mockProvider.listProducts()).map((p) => p.slug));
+
+    for (const block of scenes) {
+      if (block.kind !== 'scene') continue;
+      for (const h of block.scene.hotspots) {
+        if (h.target.kind === 'artwork') expect(artworkSlugs.has(h.target.slug)).toBe(true);
+        if (h.target.kind === 'product') expect(productSlugs.has(h.target.slug)).toBe(true);
+      }
+    }
+  });
+
+  it('counts only shoppable (artwork/product) hotspots in the summary', async () => {
+    const story = await mockProvider.getStory('how-midnight-in-lagos-came-together');
+    const shoppable = story!.blocks
+      .filter((b) => b.kind === 'scene')
+      .flatMap((b) => (b.kind === 'scene' ? b.scene.hotspots : []))
+      .filter((h) => h.target.kind === 'artwork' || h.target.kind === 'product').length;
+    expect(story?.shoppableCount).toBe(shoppable);
+  });
+
+  it('returns null for an unknown story slug', async () => {
+    expect(await mockProvider.getStory('does-not-exist')).toBeNull();
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

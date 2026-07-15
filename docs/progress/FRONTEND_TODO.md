@@ -627,9 +627,32 @@ claims**, and **must never auto-publish or auto-act**.
   - Follow-ups: server-authoritative version id + real per-piece serial/ownership ledger (TMS-FBR-001);
     a scannable/verifiable proof (QR / signed link) once the ledger exists; per-purchase passport in
     the account order detail.
-- [ ] **TMS-F5-007** Shoppable stories — editorial story pages with embedded shoppable artwork/
-      product hotspots linking to gallery/studio/product; upgrades the `/stories` placeholder journal.
-      Frontend + mock.
+- [x] **TMS-F5-007** Shoppable stories
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **151 storefront tests**, up from 140: +11 stories — 7 lib + 4 mock). In-browser on
+    the served build: the **`/stories`** placeholder is replaced by an **editorial journal index** (3
+    seeded stories as cards with category, read-time, publish date, and a "N shoppable" badge, newest
+    first). Each **`/stories/[slug]`** renders editorial blocks (headings/paragraphs) interleaved with
+    **shoppable scenes** — a placeholder scene image carrying **numbered hotspots**; opening a hotspot
+    reveals a card linking into the catalogue (**artwork → /artworks**, **product → /products** with
+    price, **collection → /collections**, **studio → /design-studio**), each with a distinct CTA
+    ("View artwork" / "Shop this piece" / "Explore collection" / "Open in Studio"). Every hotspot is
+    **also** listed below the scene ("In this scene") as reachable links — a keyboard/no-JS/screen-
+    reader fallback. Unknown story slugs are a **genuine 404** (SSG + `dynamicParams=false`).
+    "Stories" added to the primary nav. No console/hydration errors.
+  - Scope delivered: pure `lib/stories.ts` — `hotspotHref`, `hotspotActionLabel`, `hotspotKindLabel`,
+    `isShoppable`, `storyHotspotTargets`, `countShoppableItems` — with **7 unit tests**. `Story*`/
+    `StoryHotspot*` types + `listStories`/`getStory` on the provider (mock seeds 3 stories whose
+    hotspot targets are built from the **same** artwork/product/collection data so titles + prices
+    never drift; api stub throws; **4 mock tests** incl. a slug-integrity check that every hotspot
+    resolves to a real catalogue slug). New SSG routes `app/stories/page.tsx` + `app/stories/[slug]/
+page.tsx`, `StoryCard`, and the client `ShoppableScene` (Escape-to-close, one-open-at-a-time,
+    flip-above-when-low + horizontal clamp so cards stay in frame).
+  - **Note:** stories are **mock/editorial** content on placeholder scene imagery; a real CMS feed can
+    map onto the `Story*` shapes, and real scene photography + authored hotspot coordinates would
+    replace the placeholders. Hotspot links reuse the existing catalogue routes.
+  - Follow-ups: CMS-backed stories + real scene imagery with authored hotspots; add-to-cart directly
+    from a product hotspot; tag/related-story navigation; feature the newest story on the homepage.
 - [ ] **TMS-F5-008** Studio Guide (customer AI assistant) — chat UI shell: assistant identity,
       suggested prompts, message list, typing/loading, tool-failure + retry, product/Design-Studio
       reference cards, human-support route, and **guardrails** (no invented stock/price/delivery). Mock

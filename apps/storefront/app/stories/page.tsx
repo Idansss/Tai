@@ -1,61 +1,43 @@
+import { Container, Eyebrow, Heading, Text } from '@tms/ui';
 import type { Metadata } from 'next';
-import { ContentPage } from '@/components/site/content-page';
+import { StoryCard } from '@/components/story/story-card';
+import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Stories',
-  description: 'Notes from the studio: process, releases and the ideas behind the work.',
+  description:
+    'Shoppable notes from the studio: process, lookbooks and the ideas behind the work — with every piece a click away.',
 };
 
-export default function Page() {
+export default async function StoriesPage() {
+  const stories = await dataProvider.listStories();
+
   return (
-    <ContentPage
-      eyebrow="Editorial"
-      title="Stories"
-      intro="Notes from the studio — how a drawing becomes a piece you can wear, what we are releasing next, and the ideas we keep returning to."
-      sections={[
-        {
-          heading: 'From drawing to garment',
-          body: (
-            <p>
-              Every release starts on paper. We share the thinking behind new artworks here — the
-              references, the false starts, and the choice of garment that finally does the drawing
-              justice.
-            </p>
-          ),
-        },
-        {
-          heading: 'Releases & editions',
-          body: (
-            <p>
-              New drops and limited editions are announced here first. Until the full journal is
-              live, the freshest work always sits in the{' '}
-              <a
-                href="/artworks"
-                className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
-              >
-                gallery
-              </a>{' '}
-              and across our{' '}
-              <a
-                href="/collections"
-                className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
-              >
-                collections
-              </a>
-              .
-            </p>
-          ),
-        },
-        {
-          heading: 'Stay close',
-          body: (
-            <p>
-              We are still building out the full journal. In the meantime, the newsletter in the
-              footer is the best way to hear about new stories and releases as they land.
-            </p>
-          ),
-        },
-      ]}
-    />
+    <Container className="py-10">
+      <div className="max-w-2xl">
+        <Eyebrow>Editorial</Eyebrow>
+        <Heading as={1} size="display-lg" className="mt-2">
+          Stories
+        </Heading>
+        <Text size="lg" tone="secondary" className="mt-3">
+          Notes from the studio — how a drawing becomes a piece you can wear, and how we style each
+          release. Tap a hotspot in any story to shop the piece.
+        </Text>
+      </div>
+
+      {stories.length > 0 ? (
+        <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {stories.map((story) => (
+            <li key={story.slug}>
+              <StoryCard story={story} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <Text tone="muted" className="mt-10">
+          No stories yet — check back soon.
+        </Text>
+      )}
+    </Container>
   );
 }
