@@ -496,8 +496,9 @@ customers + analytics.
   - Follow-ups: real error-centre feed (retry/resolve as audited ops actions, correlation-id search across
     systems); real customer records (account status, saved designs via TMS-FBR-005, lifetime value);
     server-computed analytics (funnels, cohorts, date-range controls) once the reporting API lands.
-  - **F4 (admin platform) is complete** (001–006). Nothing is merged to `main` yet — the F0→F4 PR stack
-    (#4 → #5 → #6 → #7 → #8) still needs merging bottom-up.
+  - **F4 (admin platform) is complete** (001–006). **The F0→F4 PR stack (#4→#5→#6→#7→#8) is now
+    merged to `main`** (bottom-up, merge commits, branches deleted; `pnpm check` green on the
+    integrated `main`, HEAD `e919e7e`). Active work continues on `claude/f5-post-merge`.
 
 ## Later phases
 

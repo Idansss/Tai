@@ -2,13 +2,20 @@
 
 ## Current frontend phase
 
-F4 — Admin platform (**complete**). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
-TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) + TMS-F4-005 (production +
-QC + fulfilment) + TMS-F4-006 (error centre + customers + analytics) Verified** (2026-07-15).
-Branch `claude/f4-admin` is **stacked on
-`claude/f3-commerce` → `claude/f2-design-studio` → `claude/f1-storefront` →
-`claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8).
-Nothing is merged to `main` yet.
+**F0–F4 all Verified AND MERGED TO `main`** (2026-07-15). The F0→F4 PR stack (#4→#5→#6→#7→#8)
+was merged **bottom-up with merge commits** and all five phase branches deleted; `pnpm check`
+re-run **green on the integrated `main`** (HEAD `e919e7e`; 13/13 build tasks, all unit tests,
+format/lint/typecheck/db:validate). Active work now happens on `claude/f5-post-merge` cut from
+that `main`. F4 — Admin platform is **complete**: TMS-F4-001 (foundation) + TMS-F4-002 (order
+management) + TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) +
+TMS-F4-005 (production + QC + fulfilment) + TMS-F4-006 (error centre + customers + analytics).
+
+> **Merge recovery note (for future stacked merges):** GitHub's auto-retarget did **not** fire
+> when `gh pr merge --delete-branch` deleted a PR's base branch — the dependent PR was **auto-closed**
+> (and a closed PR whose base branch is gone can't be reopened or retargeted). Recovered by pushing
+> the deleted base branch back, reopening the PR, and retargeting it to `main`. **Safe procedure:**
+> retarget each next PR to `main` **before** merging, and delete phase branches only as a final
+> cleanup step — never `--delete-branch` a branch that is still another open PR's base.
 
 F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
@@ -292,9 +299,10 @@ them to `main` with everything else.
 
 ## First recommended next task
 
-**F4 (admin platform) is complete.** Next: either (a) **merge the F0→F4 PR stack to `main`** bottom-up
-(#4 → #5 → #6 → #7 → #8) — nothing is merged yet; (b) clear the tracked soft-404 defect
-**TMS-F1-DEF-001**; or (c) begin **F5 (growth & AI)** / remaining F1 content. No F4 work outstanding.
+**F0–F4 are merged to `main`.** Next: (a) clear the tracked soft-404 defect **TMS-F1-DEF-001**
+(`/artworks/[slug]` returns 200 instead of 404 for unknown slugs under Next 16 Turbopack prod —
+SEO-only, not-found UI already correct); then (b) scope **F5 (growth & AI)** and **F6 (hardening)**
+into task rows from the master prompt/spec and build on the established patterns.
 
 ## Routes completed
 
