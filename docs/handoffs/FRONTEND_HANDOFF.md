@@ -283,7 +283,12 @@ TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -0
 
 ## In-progress task
 
-None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
+None active. **All enumerated F0–F4 tasks are now Verified** — this session closed the last three
+loose ends: **TMS-F1-006** (real editorial/policy content, 12 routes), **TMS-F0-010** (committed
+Playwright visual baselines, 4 viewports), and **TMS-F0-002** (Base44 breakpoint screenshots, with an
+honest note they capture the mismatched "moda.studio" template). `implementedNotVerified` is empty.
+Note: these three fixes were committed on the stack tip (`claude/f4-admin`); merging the stack brings
+them to `main` with everything else.
 
 ## First recommended next task
 
@@ -362,7 +367,8 @@ Build: 13/13 pass (both apps prerender). No app-level Vitest suites yet (Playwri
 - **TMS-F1-DEF-001** — soft 404: `/artworks/[slug]` returns HTTP 200 instead of 404 for unknown
   slugs under the Next 16 Turbopack production server (correct not-found UI still renders).
   `notFound()` used correctly; the streamed shell commits 200 first. SEO impact only.
-- F0 follow-ups outstanding: Base44 PNG screenshots, Playwright baselines.
+- F0 follow-ups (Base44 PNG screenshots, Playwright baselines) are now **done** — see TMS-F0-002 /
+  TMS-F0-010 above.
 
 ## Blockers
 
