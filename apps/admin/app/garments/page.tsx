@@ -1,15 +1,11 @@
 import type { Metadata } from 'next';
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { GarmentsView } from '@/components/garments-view';
 
-export const metadata: Metadata = { title: 'Garments' };
+export const metadata: Metadata = {
+  title: 'Garments',
+  robots: { index: false, follow: false, nocache: true },
+};
 
 export default function GarmentsPage() {
-  return (
-    <SectionPlaceholder
-      eyebrow="Catalogue"
-      title="Garment manager"
-      description="Garment templates, colours, sizes and size charts, front/back media, fabric, fit and care, print-safe areas, placement rules, prices, stock and availability."
-      task="TMS-F4-004"
-    />
-  );
+  return <GarmentsView />;
 }

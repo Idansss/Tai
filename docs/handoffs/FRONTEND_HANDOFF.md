@@ -3,7 +3,8 @@
 ## Current frontend phase
 
 F4 — Admin platform (in progress). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
-TMS-F4-003 (artwork manager) Verified** (2026-07-15). Branch `claude/f4-admin` is **stacked on
+TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) Verified** (2026-07-15).
+Branch `claude/f4-admin` is **stacked on
 `claude/f3-commerce` → `claude/f2-design-studio` → `claude/f1-storefront` →
 `claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8).
 Nothing is merged to `main` yet.
@@ -12,6 +13,31 @@ F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (check
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
 
 ### F4 progress this session
+
+- **Garment manager + inventory (TMS-F4-004).** Extended the admin data provider with garment view
+  models (`AdminGarmentSummary`/`AdminGarmentDetail` + `GarmentStatus`/`GarmentColour`/
+  `GarmentVariant`/`GarmentSize`/`SizeChartRow`/`PrintArea`/`PlacementRule`), `listGarments(params)`
+  (search + status filter) + `getGarment(id)` over a 7-garment dataset (tees/hoodie/cap/tote spanning
+  active/draft/archived, deterministic per-variant stock so low/out states appear, one discontinued
+  colourway, one-size garments). Pure `lib/garments.ts` (status format/tone, `filterGarments`,
+  `garmentActions`/`applyGarmentAction` lifecycle, currency + inventory maths — `stockLevel`/
+  `totalStock`/`countLowStock` (offered colours only) / `setVariantStock` (clamp ≥0 int) /
+  `setColourAvailability`) is unit-tested. `GarmentsView` = searchable/filterable table (template,
+  status, colour/size counts, price, stock + a low-stock badge) → row links to detail;
+  `GarmentDetailView` = front/back media placeholders, colours (swatch + availability checkbox), an
+  **editable inventory matrix** (colour × size, per-cell out/low/ok tone + legend + live total/restock
+  tally), size chart, print-safe areas + placement rules, and details/pricing panels — all local
+  state with honest "not persisted / would call the API" notices; a lifecycle action bar
+  (activate/draft/archive/restore); unknown id → a not-found panel. Routes `/garments` (replaced the
+  placeholder) + `/garments/[id]` (noindex). Admin Vitest suite now **68 tests**. Still 100% mock —
+  gaps under **TMS-FBR-007** (garment catalogue read + write + inventory).
+- Verified: full `pnpm check` re-run green this session (68 admin + 89 storefront tests; build
+  registers `/garments` + `ƒ /garments/[id]`; db:validate valid); served build smoke test —
+  `/garments`, `/garments/gm-classic-tee` return 200 with the correct titles/`noindex`. The interactive
+  click-through (stock edit → live total 289→339 / restock 5→4, colour toggle → 3/4 offered, lifecycle
+  transition, negative-clamp, discontinued colour) was documented in the prior same-session run and is
+  covered by the pure-domain unit tests; it was **not** re-driven here because this session's harness
+  did not expose the in-app browser tools. (Audit skipped — 410 outage, no new deps.)
 
 - **Artwork manager (TMS-F4-003).** Extended the admin data provider with artwork view models
   (`AdminArtworkSummary`/`AdminArtworkDetail`, `ArtworkStatus`/`MockupApproval`/`VersionProcessing`),
@@ -203,7 +229,8 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
 -005, -007, -008, -009; TMS-F2-001; TMS-F3-001, -002, -003, -004, -005 (F3 complete);
-**TMS-F4-001** (admin foundation); **TMS-F4-002** (order management); **TMS-F4-003** (artwork manager).
+**TMS-F4-001** (admin foundation); **TMS-F4-002** (order management); **TMS-F4-003** (artwork manager);
+**TMS-F4-004** (garment manager + inventory).
 
 ## In-progress task
 
@@ -211,11 +238,9 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F4-004 — Admin garment manager + inventory** (garment templates, colours, sizes, size charts,
-front/back media, fabric/fit/care, print-safe areas, placement rules, prices, stock/availability) on
-the admin data provider. Then F4-005 (production + QC + fulfilment), F4-006 (error centre + customers
-
-- analytics). **Or** clear the tracked soft-404 defect **TMS-F1-DEF-001**.
+**TMS-F4-005 — Production + QC + fulfilment** on the admin data provider (production queue, print/QC
+states, dispatch/exceptions). Then F4-006 (error centre + customers + analytics). **Or** clear the
+tracked soft-404 defect **TMS-F1-DEF-001**.
 
 ## Routes completed
 

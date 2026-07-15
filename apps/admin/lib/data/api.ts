@@ -29,4 +29,10 @@ export const apiProvider: AdminDataProvider = {
   getArtwork() {
     return notImplemented('getArtwork');
   },
+  listGarments() {
+    return notImplemented('listGarments');
+  },
+  getGarment() {
+    return notImplemented('getGarment');
+  },
 };

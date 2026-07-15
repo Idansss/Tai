@@ -382,6 +382,38 @@ customers + analytics.
     catalogue API (TMS-FBR-007); editable metadata forms (story/tags/SEO/edition) once the write API
     lands; version re-upload + reprocess.
 
+- [x] **TMS-F4-004** Garment manager + inventory — list + detail (colours/sizes/stock/media/print)
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **68 admin unit tests**, up from 46); `pnpm audit` not run (same registry-side 410
+    outage; **no new dependencies added**). Browser pass (desktop + mobile): `/garments` lists 7
+    sample garments (newest first) with template/status/colours/sizes/price/stock + a **low-stock**
+    badge; **search** (`hoodie` → Pullover Hoodie) and **status filter** (`Draft` → Crewneck
+    Sweatshirt) narrow the list; row links open `/garments/[id]`; the **detail** renders front/back
+    media placeholders, colours (swatch + availability checkbox), an editable **inventory matrix**
+    (colour × size, per-cell out/low/ok tone + legend, ₦ price), size chart, print-safe areas +
+    placement rules, and fabric/fit/care + pricing panels; **editing a stock cell** updates the
+    on-hand total (289 → 339) and restock count (5 → 4) live with an honest "not saved" notice, and
+    a negative value clamps to 0; **unchecking a colour** drops "colours offered" to 3/4 and excludes
+    it from the restock count; a **lifecycle** action (Move to draft → Draft, actions become
+    Activate/Archive) transitions with an honest "would call the API — set locally" notice; an
+    unknown id shows a not-found panel; discontinued colours (Long-sleeve bone) show as unavailable.
+    Mobile: panels stack single-column and the wide inventory/size-chart tables scroll inside their
+    own containers (no page-level horizontal scroll). No console errors; screenshots captured.
+  - Scope delivered: extended the admin data provider (`AdminGarmentSummary`/`AdminGarmentDetail` +
+    `GarmentStatus`/`GarmentColour`/`GarmentVariant`/`SizeChartRow`/`PrintArea`/`PlacementRule`;
+    `listGarments(params)` + `getGarment(id)`; 7-garment dataset with deterministic per-variant stock
+    so low/out states appear, one discontinued colourway, and one-size garments). Pure `lib/garments.ts`
+    (status format/tone, search, `garmentActions`/`applyGarmentAction` lifecycle, currency + inventory
+    maths — `stockLevel`/`totalStock`/`countLowStock`/`setVariantStock`/`setColourAvailability`; 16
+    tests) + provider tests. `GarmentsView` (searchable/filterable table with stock + low-stock badges)
+    and `GarmentDetailView` (media, colours, editable stock matrix, size chart, print areas + placement
+    rules, details/pricing — all local state with honest "not persisted" notices). Routes `/garments`
+    (replaced placeholder) + `/garments/[id]` (noindex). Still 100% mock — needs TMS-FBR-007 (garment
+    catalogue read + write: templates/colours/sizes/size charts/media/print rules/prices + inventory).
+  - Follow-ups: real garment read/write + inventory adjustments via the catalogue API (TMS-FBR-007);
+    editable metadata (fabric/fit/care/size chart/print areas) + media upload once the write API lands;
+    per-colour×size availability that the storefront product page can consume (pairs with TMS-FBR-002).
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

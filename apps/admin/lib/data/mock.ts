@@ -1,18 +1,27 @@
 import type { OrderStatus, PaymentStatus, ShippingStatus } from '@tms/contracts';
 import { filterArtworks } from '../artworks';
+import { countLowStock, filterGarments, totalStock } from '../garments';
 import { filterOrders, paginate } from '../orders';
 import type {
   AdminArtworkDetail,
   AdminArtworkListParams,
   AdminArtworkSummary,
   AdminDataProvider,
+  AdminGarmentDetail,
+  AdminGarmentListParams,
+  AdminGarmentSummary,
   AdminOrderDetail,
   AdminOrderItem,
   AdminOrderListParams,
   AdminOrderListResult,
   AdminOrderSummary,
   DashboardData,
+  GarmentColour,
+  GarmentVariant,
+  PlacementRule,
+  PrintArea,
   PrintStatus,
+  SizeChartRow,
 } from './types';
 
 /**
@@ -664,6 +673,299 @@ const ARTWORK_SUMMARIES: AdminArtworkSummary[] = ARTWORKS.map(toArtworkSummary).
   b.updatedAt.localeCompare(a.updatedAt),
 );
 
+// --- Garments ------------------------------------------------------------------
+
+/** A shared colour palette; each garment offers a subset. */
+const COLOUR_LIB: Record<string, Omit<GarmentColour, 'available'>> = {
+  black: { id: 'black', name: 'Black', hex: '#1b1b1b' },
+  bone: { id: 'bone', name: 'Bone', hex: '#e8e2d6' },
+  slate: { id: 'slate', name: 'Slate', hex: '#4a5568' },
+  olive: { id: 'olive', name: 'Olive', hex: '#5b6236' },
+  sand: { id: 'sand', name: 'Sand', hex: '#c9b191' },
+  grey: { id: 'grey', name: 'Heather grey', hex: '#9aa0a6' },
+  natural: { id: 'natural', name: 'Natural', hex: '#d8ccb4' },
+};
+
+const TEE_SIZE_CHART: SizeChartRow[] = [
+  { size: 'XS', chestCm: 46, lengthCm: 66, sleeveCm: 19 },
+  { size: 'S', chestCm: 51, lengthCm: 69, sleeveCm: 20 },
+  { size: 'M', chestCm: 56, lengthCm: 72, sleeveCm: 21 },
+  { size: 'L', chestCm: 61, lengthCm: 74, sleeveCm: 22 },
+  { size: 'XL', chestCm: 66, lengthCm: 76, sleeveCm: 23 },
+  { size: 'XXL', chestCm: 71, lengthCm: 78, sleeveCm: 24 },
+];
+
+const TEE_PRINT_AREAS: PrintArea[] = [
+  { id: 'pa-front', view: 'front', label: 'Front A3', widthCm: 30, heightCm: 40 },
+  { id: 'pa-back', view: 'back', label: 'Back A3', widthCm: 32, heightCm: 42 },
+];
+
+const TEE_PLACEMENTS: PlacementRule[] = [
+  { id: 'pl-left-chest', view: 'front', label: 'Left chest', allowed: true },
+  { id: 'pl-centre-chest', view: 'front', label: 'Centre chest', allowed: true },
+  { id: 'pl-full-front', view: 'front', label: 'Full front', allowed: true },
+  { id: 'pl-back', view: 'back', label: 'Full back', allowed: true },
+];
+
+interface GarmentSeed {
+  id: string;
+  slug: string;
+  name: string;
+  template: string;
+  status: AdminGarmentSummary['status'];
+  priceMinor: number;
+  updatedAt: string;
+  description: string;
+  fabric: string;
+  fit: string;
+  care: string[];
+  colourIds: string[];
+  /** Colour ids that are currently discontinued (offered = false). */
+  discontinued?: string[];
+  sizes: string[];
+  sizeChart: SizeChartRow[];
+  printAreas: PrintArea[];
+  placements: PlacementRule[];
+  /** Placement ids that are disallowed for this garment. */
+  disallowedPlacements?: string[];
+  /** Deterministic base stock; varied per variant so low/out states appear. */
+  baseStock: number;
+}
+
+const GARMENT_SEEDS: GarmentSeed[] = [
+  {
+    id: 'gm-classic-tee',
+    slug: 'classic-t-shirt',
+    name: 'Classic T-shirt',
+    template: 'Classic T-shirt',
+    status: 'active',
+    priceMinor: 1_200_000,
+    updatedAt: '2026-07-14T10:00:00.000Z',
+    description: 'The studio staple — a mid-weight crew tee cut for an everyday, true-to-size fit.',
+    fabric: '100% combed ring-spun cotton, 180gsm',
+    fit: 'Regular, true to size',
+    care: ['Machine wash cold, inside out', 'Do not tumble dry', 'Warm iron, avoid the print'],
+    colourIds: ['black', 'bone', 'slate', 'olive'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    sizeChart: TEE_SIZE_CHART,
+    printAreas: TEE_PRINT_AREAS,
+    placements: TEE_PLACEMENTS,
+    baseStock: 14,
+  },
+  {
+    id: 'gm-oversized-tee',
+    slug: 'oversized-t-shirt',
+    name: 'Oversized T-shirt',
+    template: 'Oversized T-shirt',
+    status: 'active',
+    priceMinor: 1_500_000,
+    updatedAt: '2026-07-13T09:30:00.000Z',
+    description:
+      'A relaxed, boxy tee with dropped shoulders — the gallery canvas for full-front art.',
+    fabric: '100% heavyweight cotton, 240gsm',
+    fit: 'Oversized, size down for a regular fit',
+    care: ['Machine wash cold, inside out', 'Do not tumble dry', 'Cool iron, avoid the print'],
+    colourIds: ['bone', 'sand', 'black'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    sizeChart: TEE_SIZE_CHART.slice(1, 5),
+    printAreas: TEE_PRINT_AREAS,
+    placements: TEE_PLACEMENTS,
+    disallowedPlacements: ['pl-left-chest'],
+    baseStock: 9,
+  },
+  {
+    id: 'gm-long-sleeve',
+    slug: 'long-sleeve-tee',
+    name: 'Long-sleeve Tee',
+    template: 'Long-sleeve Tee',
+    status: 'active',
+    priceMinor: 1_600_000,
+    updatedAt: '2026-07-12T15:10:00.000Z',
+    description: 'A clean long-sleeve crew for harmattan mornings and layered looks.',
+    fabric: '100% combed cotton, 200gsm',
+    fit: 'Regular, true to size',
+    care: ['Machine wash cold', 'Do not tumble dry', 'Warm iron, avoid the print'],
+    colourIds: ['black', 'slate', 'bone'],
+    discontinued: ['bone'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    sizeChart: TEE_SIZE_CHART.slice(1, 5),
+    printAreas: TEE_PRINT_AREAS,
+    placements: TEE_PLACEMENTS,
+    baseStock: 7,
+  },
+  {
+    id: 'gm-crewneck',
+    slug: 'crewneck-sweatshirt',
+    name: 'Crewneck Sweatshirt',
+    template: 'Sweatshirt',
+    status: 'draft',
+    priceMinor: 2_400_000,
+    updatedAt: '2026-07-11T11:45:00.000Z',
+    description:
+      'A brushed-back crewneck in development — colours and stock still being finalised.',
+    fabric: '80% cotton / 20% polyester fleece, 320gsm',
+    fit: 'Regular, true to size',
+    care: ['Machine wash cold', 'Do not tumble dry', 'Do not iron the print'],
+    colourIds: ['grey', 'black'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    sizeChart: TEE_SIZE_CHART.slice(1, 5),
+    printAreas: [
+      { id: 'pa-front', view: 'front', label: 'Front A4', widthCm: 28, heightCm: 35 },
+      { id: 'pa-back', view: 'back', label: 'Back A3', widthCm: 32, heightCm: 42 },
+    ],
+    placements: TEE_PLACEMENTS,
+    baseStock: 0,
+  },
+  {
+    id: 'gm-hoodie',
+    slug: 'pullover-hoodie',
+    name: 'Pullover Hoodie',
+    template: 'Hoodie',
+    status: 'active',
+    priceMinor: 2_800_000,
+    updatedAt: '2026-07-13T16:20:00.000Z',
+    description: 'A heavyweight pullover hoodie with a kangaroo pocket and double-lined hood.',
+    fabric: '80% cotton / 20% polyester fleece, 350gsm',
+    fit: 'Regular, roomy through the body',
+    care: ['Machine wash cold', 'Do not tumble dry', 'Do not iron the print'],
+    colourIds: ['black', 'olive', 'grey'],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    sizeChart: TEE_SIZE_CHART.slice(1),
+    printAreas: [
+      {
+        id: 'pa-front',
+        view: 'front',
+        label: 'Front A4 (below pocket)',
+        widthCm: 26,
+        heightCm: 32,
+      },
+      { id: 'pa-back', view: 'back', label: 'Back A3', widthCm: 32, heightCm: 42 },
+    ],
+    placements: [
+      { id: 'pl-left-chest', view: 'front', label: 'Left chest', allowed: true },
+      { id: 'pl-centre-chest', view: 'front', label: 'Centre chest', allowed: false },
+      { id: 'pl-full-front', view: 'front', label: 'Full front', allowed: true },
+      { id: 'pl-back', view: 'back', label: 'Full back', allowed: true },
+    ],
+    baseStock: 5,
+  },
+  {
+    id: 'gm-cap',
+    slug: 'studio-cap',
+    name: 'Studio Cap',
+    template: 'Cap',
+    status: 'active',
+    priceMinor: 900_000,
+    updatedAt: '2026-07-10T08:00:00.000Z',
+    description: 'A six-panel cotton cap with an adjustable strap — one size fits most.',
+    fabric: '100% cotton twill',
+    fit: 'One size, adjustable',
+    care: ['Spot clean only', 'Do not machine wash', 'Reshape while damp'],
+    colourIds: ['black', 'bone'],
+    sizes: ['OS'],
+    sizeChart: [{ size: 'OS', chestCm: 0, lengthCm: 0, sleeveCm: 0 }],
+    printAreas: [{ id: 'pa-front', view: 'front', label: 'Front panel', widthCm: 10, heightCm: 6 }],
+    placements: [{ id: 'pl-front-panel', view: 'front', label: 'Front panel', allowed: true }],
+    baseStock: 12,
+  },
+  {
+    id: 'gm-tote',
+    slug: 'canvas-tote',
+    name: 'Canvas Tote',
+    template: 'Tote',
+    status: 'archived',
+    priceMinor: 700_000,
+    updatedAt: '2026-06-28T12:00:00.000Z',
+    description: 'A retired heavyweight canvas tote — kept for reference and reprints.',
+    fabric: '100% cotton canvas, 340gsm',
+    fit: 'One size',
+    care: ['Machine wash cold', 'Do not tumble dry', 'Iron inside out'],
+    colourIds: ['natural'],
+    sizes: ['OS'],
+    sizeChart: [{ size: 'OS', chestCm: 0, lengthCm: 0, sleeveCm: 0 }],
+    printAreas: [{ id: 'pa-front', view: 'front', label: 'Front', widthCm: 24, heightCm: 30 }],
+    placements: [{ id: 'pl-front', view: 'front', label: 'Front', allowed: true }],
+    baseStock: 3,
+  },
+];
+
+/**
+ * Deterministic per-variant stock so low/out states appear predictably: the base
+ * stock is nudged by the colour and size indices, and every 5th cell is emptied.
+ */
+function stockFor(base: number, colourIdx: number, sizeIdx: number): number {
+  const cell = colourIdx * 4 + sizeIdx;
+  if (cell % 5 === 0) return 0;
+  const value = base + ((colourIdx * 3 + sizeIdx * 2) % 9) - 3;
+  return Math.max(0, value);
+}
+
+function buildGarment(seed: GarmentSeed): AdminGarmentDetail {
+  const colours: GarmentColour[] = seed.colourIds.map((id) => ({
+    ...COLOUR_LIB[id]!,
+    available: !(seed.discontinued ?? []).includes(id),
+  }));
+  const variants: GarmentVariant[] = [];
+  seed.colourIds.forEach((colourId, ci) => {
+    seed.sizes.forEach((size, si) => {
+      variants.push({ colourId, size, stock: stockFor(seed.baseStock, ci, si) });
+    });
+  });
+  const placements = seed.placements.map((p) =>
+    (seed.disallowedPlacements ?? []).includes(p.id) ? { ...p, allowed: false } : p,
+  );
+
+  return {
+    id: seed.id,
+    slug: seed.slug,
+    name: seed.name,
+    template: seed.template,
+    status: seed.status,
+    colourCount: colours.filter((c) => c.available).length,
+    sizeCount: seed.sizes.length,
+    priceMinor: seed.priceMinor,
+    currency: 'NGN',
+    lowStockCount: countLowStock(variants, colours),
+    totalStock: totalStock(variants),
+    updatedAt: seed.updatedAt,
+    description: seed.description,
+    fabric: seed.fabric,
+    fit: seed.fit,
+    care: seed.care,
+    frontMediaLabel: `${seed.name} — front (flat lay)`,
+    backMediaLabel: `${seed.name} — back (flat lay)`,
+    colours,
+    sizes: seed.sizes.map((label) => ({ label })),
+    variants,
+    sizeChart: seed.sizeChart,
+    printAreas: seed.printAreas,
+    placements,
+  };
+}
+
+const GARMENT_RECORDS: AdminGarmentDetail[] = GARMENT_SEEDS.map(buildGarment);
+
+function toGarmentSummary(g: AdminGarmentDetail): AdminGarmentSummary {
+  return {
+    id: g.id,
+    slug: g.slug,
+    name: g.name,
+    template: g.template,
+    status: g.status,
+    colourCount: g.colourCount,
+    sizeCount: g.sizeCount,
+    priceMinor: g.priceMinor,
+    currency: g.currency,
+    lowStockCount: g.lowStockCount,
+    totalStock: g.totalStock,
+    updatedAt: g.updatedAt,
+  };
+}
+
+const GARMENT_SUMMARIES: AdminGarmentSummary[] = GARMENT_RECORDS.map(toGarmentSummary).sort(
+  (a, b) => b.updatedAt.localeCompare(a.updatedAt),
+);
+
 export const mockAdminProvider: AdminDataProvider = {
   getDashboard() {
     return Promise.resolve(DASHBOARD);
@@ -682,5 +984,11 @@ export const mockAdminProvider: AdminDataProvider = {
   },
   getArtwork(id: string) {
     return Promise.resolve(ARTWORKS.find((a) => a.id === id) ?? null);
+  },
+  listGarments(params: AdminGarmentListParams = {}) {
+    return Promise.resolve(filterGarments(GARMENT_SUMMARIES, params));
+  },
+  getGarment(id: string) {
+    return Promise.resolve(GARMENT_RECORDS.find((g) => g.id === id) ?? null);
   },
 };

@@ -90,3 +90,52 @@ describe('mockAdminProvider.getOrder', () => {
     expect(await mockAdminProvider.getOrder('TMS-NOPE00')).toBeNull();
   });
 });
+
+describe('mockAdminProvider.listGarments', () => {
+  it('lists garments newest first', async () => {
+    const list = await mockAdminProvider.listGarments();
+    expect(list.length).toBeGreaterThan(0);
+    const dates = list.map((g) => g.updatedAt);
+    expect([...dates].sort((a, b) => b.localeCompare(a))).toEqual(dates);
+  });
+
+  it('filters by status and searches by name/template', async () => {
+    const active = await mockAdminProvider.listGarments({ status: 'active' });
+    expect(active.every((g) => g.status === 'active')).toBe(true);
+    const byName = await mockAdminProvider.listGarments({ query: 'hoodie' });
+    expect(byName.some((g) => g.name.toLowerCase().includes('hoodie'))).toBe(true);
+  });
+
+  it('summarises inventory (total + low stock) and counts only offered colours', async () => {
+    const list = await mockAdminProvider.listGarments();
+    for (const g of list) {
+      expect(g.totalStock).toBeGreaterThanOrEqual(0);
+      expect(g.lowStockCount).toBeGreaterThanOrEqual(0);
+      expect(g.colourCount).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('mockAdminProvider.getGarment', () => {
+  it('returns full detail for a known id', async () => {
+    const g = await mockAdminProvider.getGarment('gm-classic-tee');
+    expect(g).not.toBeNull();
+    expect(g?.colours.length).toBeGreaterThan(0);
+    expect(g?.sizes.length).toBeGreaterThan(0);
+    // one variant per colour×size
+    if (g) {
+      expect(g.variants).toHaveLength(g.colours.length * g.sizes.length);
+      expect(g.sizeChart.length).toBeGreaterThan(0);
+      expect(g.printAreas.some((p) => p.view === 'front')).toBe(true);
+    }
+  });
+
+  it('marks a discontinued colour as unavailable', async () => {
+    const g = await mockAdminProvider.getGarment('gm-long-sleeve');
+    expect(g?.colours.find((c) => c.id === 'bone')?.available).toBe(false);
+  });
+
+  it('returns null for an unknown id', async () => {
+    expect(await mockAdminProvider.getGarment('gm-nope')).toBeNull();
+  });
+});

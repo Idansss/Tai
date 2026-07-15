@@ -212,6 +212,94 @@ export interface AdminArtworkListParams {
   status?: ArtworkStatus | 'all';
 }
 
+// --- Garments (F4-004) ---------------------------------------------------------
+
+export type GarmentStatus = 'active' | 'draft' | 'archived';
+
+export interface GarmentColour {
+  id: string;
+  name: string;
+  /** Swatch colour, e.g. "#1c1c1c". */
+  hex: string;
+  /** Whether this colourway is currently offered. */
+  available: boolean;
+}
+
+export interface GarmentSize {
+  label: string;
+}
+
+/** Stock for one colour×size variant. */
+export interface GarmentVariant {
+  colourId: string;
+  size: string;
+  stock: number;
+}
+
+/** A row of the printed size chart (body measurements, in cm). */
+export interface SizeChartRow {
+  size: string;
+  chestCm: number;
+  lengthCm: number;
+  sleeveCm: number;
+}
+
+/** A print-safe area — the maximum printable box on the front or back. */
+export interface PrintArea {
+  id: string;
+  view: 'front' | 'back';
+  label: string;
+  widthCm: number;
+  heightCm: number;
+}
+
+/** A placement rule — where artwork may sit, and whether it's currently allowed. */
+export interface PlacementRule {
+  id: string;
+  label: string;
+  view: 'front' | 'back';
+  allowed: boolean;
+}
+
+export interface AdminGarmentSummary {
+  id: string;
+  slug: string;
+  name: string;
+  /** The base template this garment derives from (e.g. "Classic T-shirt"). */
+  template: string;
+  status: GarmentStatus;
+  colourCount: number;
+  sizeCount: number;
+  priceMinor: number;
+  currency: string;
+  /** Variants at or below the low-stock threshold (incl. out of stock), available colours only. */
+  lowStockCount: number;
+  totalStock: number;
+  updatedAt: string;
+}
+
+export interface AdminGarmentDetail extends AdminGarmentSummary {
+  description: string;
+  fabric: string;
+  fit: string;
+  care: string[];
+  /** Placeholder media descriptors (no real asset store yet). */
+  frontMediaLabel: string;
+  backMediaLabel: string;
+  colours: GarmentColour[];
+  sizes: GarmentSize[];
+  /** The colour×size stock matrix. */
+  variants: GarmentVariant[];
+  sizeChart: SizeChartRow[];
+  printAreas: PrintArea[];
+  placements: PlacementRule[];
+}
+
+export interface AdminGarmentListParams {
+  query?: string;
+  status?: GarmentStatus | 'all';
+}
+
 /** The admin data access surface. Extended per F4 task (garments, …). */
 export interface AdminDataProvider {
   getDashboard(): Promise<DashboardData>;
@@ -219,4 +307,6 @@ export interface AdminDataProvider {
   getOrder(reference: string): Promise<AdminOrderDetail | null>;
   listArtworks(params?: AdminArtworkListParams): Promise<AdminArtworkSummary[]>;
   getArtwork(id: string): Promise<AdminArtworkDetail | null>;
+  listGarments(params?: AdminGarmentListParams): Promise<AdminGarmentSummary[]>;
+  getGarment(id: string): Promise<AdminGarmentDetail | null>;
 }

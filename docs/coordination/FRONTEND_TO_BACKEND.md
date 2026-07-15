@@ -172,7 +172,19 @@ email**. It needs, on top of the auth endpoints above:
   (`POST /api/v1/admin/artworks` with async processing + validation results), mockup generation +
   approval (`PATCH …/mockups/{id}`), and the publishing lifecycle
   (`POST …/{id}/publish|schedule|archive|unpublish`). Today upload is a simulated client flow (no
-  file stored), and lifecycle + approval changes are local state only.
+  file stored), and lifecycle + approval changes are local state only. **Garments (F4-004,
+  delivered):** the admin lists/opens garments (`GET /api/v1/admin/garments` with search/status
+  filter, `GET /api/v1/admin/garments/{id}` — template, fabric/fit/care, front/back media, colours
+  with per-colourway availability, sizes + a body-measurement size chart, print-safe areas, placement
+  rules, price, and a colour×size **inventory** matrix with on-hand stock). It needs the **catalogue
+  write + inventory** surface: garment create/edit (metadata, colours, sizes, size chart, print areas,
+  placement rules, price, media upload), the publishing lifecycle
+  (`POST …/{id}/activate|archive|restore` + move-to-draft), per-colourway availability toggles, and
+  **stock adjustments** (`PATCH …/{id}/variants/{colourId}/{size}` or a bulk inventory endpoint).
+  Today colours/sizes/media are read-only samples (no real asset store), and stock edits, colour
+  availability toggles and lifecycle changes are local state only (honest "not saved" notices). The
+  per-colour×size availability should also feed the storefront product page (pairs with
+  **TMS-FBR-002**, which currently models size availability globally).
 - Required response fields: money in **minor units** + currency (formatted client-side); statuses
   as the shared `@tms/contracts` enums so the admin can present readable labels
   (`formatOrderStatus`) without inventing values.
