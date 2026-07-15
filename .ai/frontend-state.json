@@ -1,9 +1,9 @@
 {
   "agent": "Claude Code",
   "area": "frontend",
-  "currentPhase": "F3",
-  "lastVerifiedTask": "TMS-F3-005",
-  "nextRecommendedTask": "F4 (admin platform) — F3 complete; or TMS-F1-DEF-001 (soft 404)",
+  "currentPhase": "F4",
+  "lastVerifiedTask": "TMS-F4-001",
+  "nextRecommendedTask": "TMS-F4-002 (admin order management) or TMS-F1-DEF-001 (soft 404)",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -28,11 +28,11 @@
     "TMS-F3-002",
     "TMS-F3-003",
     "TMS-F3-004",
-    "TMS-F3-005"
+    "TMS-F3-005",
+    "TMS-F4-001"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
-  "branch": "claude/f3-commerce",
   "blockedTasks": [],
   "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
   "buildStatus": "passing",
@@ -50,8 +50,11 @@
     "storefront:payment states — mock resolver, no real Flutterwave; needs webhook-verified status (TMS-FBR-004)",
     "storefront:auth/session/account — mock localStorage session, no real auth or passwords (TMS-FBR-005)",
     "storefront:account orders history / order tracking — client localStorage, keyed by contact email; needs orders API + real fulfilment status (TMS-FBR-004)",
-    "storefront:account saved designs + wishlist — client localStorage per email; needs account-data API (TMS-FBR-005)"
+    "storefront:account saved designs + wishlist — client localStorage per email; needs account-data API (TMS-FBR-005)",
+    "admin:staff auth/session — mock localStorage staff session, no real auth/RBAC/passwords (TMS-FBR-006)",
+    "admin:dashboard metrics/queues/recent orders/top lists — typed mock admin provider, no admin read API (TMS-FBR-007)"
   ],
-  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) verified green (pnpm check + browser pass). F3 complete. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added on F3-004/005, so risk is unchanged from the last clean run.",
-  "lastUpdated": "2026-07-15T12:00:00Z"
+  "branch": "claude/f4-admin",
+  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + TMS-F4-001 verified green (pnpm check + browser pass). F3 complete; F4 in progress. Admin app gained its own Vitest suite (10 tests). Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added on F3-004/005/F4-001, so risk is unchanged from the last clean run.",
+  "lastUpdated": "2026-07-15T13:00:00Z"
 }

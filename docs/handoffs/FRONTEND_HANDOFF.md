@@ -2,14 +2,38 @@
 
 ## Current frontend phase
 
-F3 — Commerce & account. **F3 is complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
-TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all **Verified**
-(2026-07-15). Branch `claude/f3-commerce`
-is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`**
-— merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR (#7) with base
-`claude/f2-design-studio`. Nothing is merged to `main` yet.
+F4 — Admin platform (in progress). **TMS-F4-001 (admin foundation) Verified** (2026-07-15).
+Branch `claude/f4-admin` is **stacked on `claude/f3-commerce` → `claude/f2-design-studio` →
+`claude/f1-storefront` → `claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) →
+F3 (#7) first, then F4. Nothing is merged to `main` yet.
 
-### F3 progress this session
+F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
+TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
+
+### F4 progress this session
+
+- **Admin foundation (TMS-F4-001).** The admin app (port 3001) gained its operational backbone,
+  all on a typed mock adapter. Typed **admin data provider** (`lib/data/*` — `AdminDataProvider` +
+  `mockAdminProvider` + loud-failing `apiProvider` stub + env switch; 4 tests) mirrors the
+  storefront's data architecture (§26). Pure `lib/admin-auth.ts` (staff session validators +
+  helpers, **no passwords stored**; 4 tests) + `AdminAuthProvider`. Pure `lib/order-status.ts`
+  (`formatOrderStatus`/`orderStatusTone`; 2 tests). Client `AdminShell` = responsive sidebar +
+  topbar (signed-in identity + sign out) + mobile `<dialog>` nav + an **auth gate** that redirects
+  guests to `/login`. `AdminLoginForm` + `/login` (honest "preview — no real staff auth/RBAC"
+  notice). `DashboardView` (loading/ready/error states) renders metric cards (revenue/paid
+  orders/AOV + warning/danger tiles), deep-linked operational queues, a recent-orders table with
+  **readable** statuses, and top-performer lists, behind a "preview data" notice. Shared
+  `SectionPlaceholder` + scaffold routes (`/orders`, `/artworks`, `/garments`, `/production`,
+  `/customers`, `/errors`, all `noindex`) keep nav intact until F4-002…006 build them. Added a
+  Vitest config + `test` script to the admin app (10 tests total). Gaps: **TMS-FBR-006** (staff
+  auth + RBAC) and **TMS-FBR-007** (admin read endpoints).
+- Verified: full `pnpm check` green (10 admin tests + 89 storefront); browser pass (desktop +
+  mobile) — guest `/` → `/login`, sign-in → dashboard, metrics/queues/recent-orders/top-lists
+  render, section placeholders, mobile nav dialog opens/links/closes, sign-out clears session →
+  `/login`; no console errors; dashboard screenshot captured. (Audit skipped — npm audit endpoint
+  410 outage, no new deps added.)
+
+### F3 progress (prior session)
 
 - **Account build-out (TMS-F3-005).** Pure domain: `lib/order-status.ts` maps `OrderStatus` to
   **customer-facing** copy + a fulfilment tracking timeline (spec §17 — **no raw provider codes**,
@@ -139,8 +163,8 @@ is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude
 ## Tasks verified
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
--005, -007, -008, -009; TMS-F2-001; TMS-F3-001; TMS-F3-002; TMS-F3-003; TMS-F3-004; **TMS-F3-005**
-(F3 complete).
+-005, -007, -008, -009; TMS-F2-001; TMS-F3-001, -002, -003, -004, -005 (F3 complete);
+**TMS-F4-001** (admin foundation).
 
 ## In-progress task
 
@@ -148,9 +172,10 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-F3 is complete. Options: begin **F4 — Admin platform** (admin shell, dashboard, artwork manager,
-orders, production, QC, fulfilment, customers, content, errors, analytics), **or** clear the tracked
-soft-404 defect **TMS-F1-DEF-001**.
+**TMS-F4-002 — Admin order management** (searchable/filterable order table, pagination, order
+detail with payment/customer/production/shipment detail, status timeline, internal notes and
+fulfilment actions) on the admin data provider. Then F4-003…006. **Or** clear the tracked soft-404
+defect **TMS-F1-DEF-001**.
 
 ## Routes completed
 

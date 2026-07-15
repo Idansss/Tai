@@ -131,4 +131,45 @@ email**. It needs, on top of the auth endpoints above:
   history by **contact email** so guest orders reconcile on later sign-in — the server should do
   the equivalent association.
 
+## Request TMS-FBR-006 — Staff auth + RBAC (admin) [TMS-F4-001]
+
+- Frontend task: F4 admin console sign-in + route protection (`apps/admin`).
+- Required endpoints (proposed): `POST /api/v1/admin/auth/login`, `POST /api/v1/admin/auth/logout`,
+  `GET /api/v1/admin/auth/session` (current staff user + roles/permissions).
+- Required response fields: staff `user` (`id`, `name`, `email`, `roles[]`/`permissions[]`), set via
+  an **httpOnly session cookie** (never a client-stored token); typed error for invalid credentials.
+- Reason: the admin app currently runs a **mock staff session** — any well-formed sign-in starts a
+  local `{ email, name }` demo session in `localStorage` (`tms.admin.session.v1`), with **no real
+  authentication, roles or passwords**. The `AdminShell` gate simply redirects when no session
+  exists. Real staff auth + **role-based access control** must gate the console (and per-section
+  permissions) before launch.
+- Blocking: no (admin builds on the mock `AdminAuthProvider`; swap `login`/`logout`/session
+  hydration to the API on delivery).
+- Suggested fallback: keep `lib/admin-auth.ts` validators + `AdminAuthProvider` shape; replace its
+  storage calls with the endpoints and hydrate from the cookie-backed `GET /session`; enforce
+  role/permission checks per route/section.
+
+## Request TMS-FBR-007 — Admin read endpoints (dashboard + operations) [TMS-F4-001+]
+
+- Frontend task: F4 admin dashboard (delivered) and the operational sections (orders, artworks,
+  garments, production, customers, errors — F4-002…006).
+- Required endpoints (proposed, dashboard first): `GET /api/v1/admin/dashboard` returning the
+  operational summary — headline metrics (revenue, paid orders, AOV, pending/failed payments,
+  low-stock count), operational queue counts (production, quality check, ready for dispatch,
+  delivery exceptions), ranked lists (top artwork/garment/colours), recent orders (reference,
+  customer, `status` per `OrderStatusSchema`, total), and an open-issues count. Later sections need
+  admin list/detail endpoints for orders, artworks, garments, production jobs, customers and the
+  error centre (each defined as its F4 task lands).
+- Required response fields: money in **minor units** + currency (formatted client-side); statuses
+  as the shared `@tms/contracts` enums so the admin can present readable labels
+  (`formatOrderStatus`) without inventing values.
+- Reason: the admin dashboard currently renders **representative sample data** from a typed mock
+  adapter (`apps/admin/lib/data`) — nothing reflects real operations. All admin read surfaces must
+  move server-side, permission-scoped (TMS-FBR-006).
+- Blocking: no (admin builds on the typed mock provider; swap `adminDataProvider` to the API
+  adapter on delivery).
+- Suggested fallback: keep the `AdminDataProvider` interface + view-model shapes; replace
+  `mockAdminProvider` with `apiProvider` (env switch already wired). The error centre must **never**
+  surface stack traces or secrets (spec §18) — expose correlation IDs + resolution state only.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

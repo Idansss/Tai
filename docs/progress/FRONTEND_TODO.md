@@ -288,8 +288,43 @@ lint, build, visual evidence, docs updated).
 
 ### F3 complete
 
-All F3 tasks (TMS-F3-001…005) are Verified. Next: F4 (admin platform) or the tracked soft-404
-defect TMS-F1-DEF-001.
+All F3 tasks (TMS-F3-001…005) are Verified.
+
+## Phase F4 — Admin platform (in progress)
+
+Planned breakdown (IDs assigned as work starts): **F4-001** admin foundation (shell, mock staff
+auth gate, mock admin data provider, dashboard) · **F4-002** order management (table, filters,
+pagination, order detail + timeline, actions) · **F4-003** artwork manager (list, upload,
+processing/validation, mockup approval, publish/schedule/archive) · **F4-004** garment manager +
+inventory · **F4-005** production + quality control + fulfilment · **F4-006** error centre +
+customers + analytics.
+
+- [x] **TMS-F4-001** Admin foundation — shell + staff auth gate + mock data provider + dashboard
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **10 new admin unit tests**, admin now has its own Vitest suite); `pnpm audit
+--audit-level high --prod` not run (npm audit endpoint returned the same registry-side 410 seen
+    since F3-004; **no new dependencies added** — Vitest is a hoisted root dev dep — so risk is
+    unchanged). Browser pass (desktop + mobile) on the admin app (port 3001): unauthenticated
+    `/` → redirect to `/login`; sign-in starts a demo staff session → dashboard; dashboard renders
+    metrics (revenue/paid orders/AOV + warning/danger tiles), operational queues (production/QC/
+    dispatch/delivery-exceptions, deep-linked), a recent-orders table with **readable** statuses,
+    and top-performer lists, behind a loading→ready state + honest "preview data" notice; section
+    placeholders (orders/customers) render with "Coming in TMS-F4-00x"; sidebar collapses to an
+    accessible mobile `<dialog>` nav (opens, links, closes on select); sign-out clears the session
+    and returns to `/login`. No console errors; screenshot captured.
+  - Scope delivered: typed **admin mock data provider** (`lib/data/*` — `AdminDataProvider`,
+    `mockAdminProvider`, loud-failing `apiProvider` stub, env switch; 4 provider tests) mirroring the
+    storefront's data architecture (§26); pure `lib/admin-auth.ts` (staff session validators +
+    helpers, **no passwords stored**; 4 tests) + `AdminAuthProvider`; pure `lib/order-status.ts`
+    (`formatOrderStatus`/`orderStatusTone`; 2 tests). Client `AdminShell` (responsive sidebar +
+    topbar + mobile `<dialog>` nav + **auth gate** redirecting guests to `/login`), `AdminLoginForm`
+    - `/login`, `DashboardView` (loading/ready/error states) + rebuilt `/` dashboard, shared
+      `SectionPlaceholder`, and scaffold routes for `/orders`, `/artworks`, `/garments`, `/production`,
+      `/customers`, `/errors` (all `noindex`). Added a Vitest config + `test` script to the admin app.
+      Everything runs on the typed mock adapter — no admin backend. Gaps: TMS-FBR-006 (staff auth +
+      RBAC) and TMS-FBR-007 (admin read endpoints).
+  - Follow-ups: F4-002…006 build the real sections on the provider; wire to the admin API on
+    delivery; real staff auth + role-based access + httpOnly cookie session (TMS-FBR-006).
 
 ## Later phases
 
