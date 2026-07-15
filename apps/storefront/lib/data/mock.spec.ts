@@ -243,6 +243,32 @@ describe('mockProvider community gallery', () => {
   });
 });
 
+describe('mockProvider loyalty', () => {
+  it('returns a stable, well-formed profile for a customer', async () => {
+    const a = await mockProvider.getLoyalty('ada@example.com');
+    const b = await mockProvider.getLoyalty('ada@example.com');
+    expect(a).toEqual(b); // deterministic per email
+    expect(a.points).toBeGreaterThan(0);
+    expect(a.lifetimePoints).toBeGreaterThanOrEqual(a.points);
+    expect(a.referralCode).toMatch(/^TAI-[0-9A-Z]{1,6}$/);
+    expect(a.rewards.length).toBeGreaterThan(0);
+    expect(a.rewards.every((r) => r.pointsCost > 0)).toBe(true);
+  });
+
+  it('is case-insensitive on the email', async () => {
+    const a = await mockProvider.getLoyalty('Ada@Example.com');
+    const b = await mockProvider.getLoyalty('ada@example.com');
+    expect(a.points).toBe(b.points);
+    expect(a.referralCode).toBe(b.referralCode);
+  });
+
+  it('gives different customers different balances', async () => {
+    const a = await mockProvider.getLoyalty('ada@example.com');
+    const c = await mockProvider.getLoyalty('kelechi@example.com');
+    expect(a.referralCode).not.toBe(c.referralCode);
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

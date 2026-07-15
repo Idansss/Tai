@@ -16,6 +16,8 @@ import type {
   DropDetail,
   DropSummary,
   ListArtworksParams,
+  LoyaltyProfile,
+  LoyaltyReward,
   ProductDetail,
   ProductSummary,
   ProvenanceEvent,
@@ -780,6 +782,47 @@ const communityPhotoSeeds: CommunityPhoto[] = [
   },
 ];
 
+/**
+ * Loyalty rewards catalogue (TMS-F5-010). Illustrative — real earning/redemption
+ * is server-authoritative (TMS-FBR-008).
+ */
+const loyaltyRewards: LoyaltyReward[] = [
+  {
+    id: 'free-delivery',
+    name: 'Free standard delivery',
+    description: 'Standard delivery on your next order, on us.',
+    pointsCost: 250,
+  },
+  {
+    id: 'off-2k',
+    name: '₦2,000 off',
+    description: 'Money off your next order of ₦10,000 or more.',
+    pointsCost: 400,
+  },
+  {
+    id: 'early-access',
+    name: 'Early drop access',
+    description: 'A 48-hour head start on the next limited drop.',
+    pointsCost: 800,
+  },
+  {
+    id: 'studio-print',
+    name: 'Signed studio print',
+    description: 'A small signed print tucked into your next order.',
+    pointsCost: 1200,
+  },
+];
+
+/** Deterministic 32-bit hash so a customer's illustrative balance is stable. */
+function hashString(input: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
+}
+
 function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
@@ -994,5 +1037,23 @@ export const mockProvider: StorefrontDataProvider = {
         .filter((p) => p.artworkSlug === slug)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     );
+  },
+
+  async getLoyalty(email: string): Promise<LoyaltyProfile> {
+    // Deterministic, illustrative balance derived from the email so it is stable
+    // per customer across reloads. The real ledger lives server-side.
+    const h = hashString(email.trim().toLowerCase());
+    const points = 300 + (h % 1300); // 300–1599: spans the Silver/Gold bands
+    const lifetimePoints = points + (h % 600);
+    const referralCode = `TAI-${h.toString(36).toUpperCase().padStart(6, '0').slice(0, 6)}`;
+    return delay({
+      points,
+      lifetimePoints,
+      memberSince: '2026-01-15',
+      referralCode,
+      referralRewardText:
+        'You both get ₦2,000 off when a friend places their first order with your link.',
+      rewards: loyaltyRewards,
+    });
   },
 };

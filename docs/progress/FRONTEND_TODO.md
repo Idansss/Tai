@@ -745,8 +745,29 @@ page.tsx`, `StoryCard`, and the client `ShoppableScene` (Escape-to-close, one-op
   - Follow-ups: wire the real generation endpoint + streaming (TMS-FBR-009); persist drafts + a review/
     publish workflow (with RBAC) feeding the artwork/collection editors; regenerate-with-feedback;
     per-brand tone presets.
-- [ ] **TMS-F5-010** Loyalty & referrals — account loyalty tier/points display, referral link + share
-      UI, rewards list + how-it-works, honest "preview" notices. **TMS-FBR-008** (loyalty/referral data).
+- [x] **TMS-F5-010** Loyalty & referrals
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **195 storefront tests**, up from 184: +11 loyalty — 8 lib + 3 mock). In-browser on the
+    served build (signed in): a new **`/account/loyalty`** page shows the **points balance + tier**
+    (Bronze/Silver/Gold, derived from lifetime points) with a **progress bar** and "N points to
+    {nextTier}" (or "top tier"), a **rewards** grid (each with a points cost + a Redeem button that
+    disables when the balance is short and, on redeem, shows a preview note), a **refer-a-friend** card
+    (referral **code** + shareable **link** with copy/Web-Share, reward text), and a **how-it-works**
+    list — all under honest **"preview"** notices. A "Loyalty & referrals" tile was added to the
+    account overview. No console/hydration errors.
+  - Scope delivered: pure `lib/loyalty.ts` — `TIERS`, `tierForPoints`, `nextTier`, `pointsToNextTier`,
+    `tierProgressPercent`, `referralUrl`, `canRedeem` — with **8 unit tests** (tier boundaries, progress
+    within a band, top-tier, referral URL, redemption). `LoyaltyProfile`/`LoyaltyReward` types +
+    `getLoyalty(email)` on the provider (deterministic, email-derived balance + referral code + rewards
+    catalogue; api stub throws; **3 mock tests** incl. determinism + case-insensitivity). Client
+    `LoyaltyView` (tier/progress, rewards, referral share, how-it-works) via `AccountShell` +
+    `useRequireAuth`; account-overview tile.
+  - **Note:** points, tiers, rewards and the referral code are **illustrative preview data** derived
+    client-side from the email — earning, redemption, tier calculation, and referral attribution are
+    server-authoritative (**TMS-FBR-008**). Redeeming and referral sharing do nothing beyond the
+    preview.
+  - Follow-ups: real loyalty ledger + earn/redeem + referral attribution (TMS-FBR-008); apply a
+    redeemed reward at checkout; points history; tier perks surfaced across the storefront.
 - _Deferred (per "core commerce first"):_ gift cards, gifting flow, collaborations — add rows if
   prioritised. Sequencing recommendation: **F5-001 → 002 → 003** (drops cluster) first (fully
   mockable, high brand value), then **006/007** (passport/stories), then reviews/community

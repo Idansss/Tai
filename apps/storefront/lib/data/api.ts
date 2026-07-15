@@ -68,4 +68,7 @@ export const apiProvider: StorefrontDataProvider = {
   listArtworkCommunityPhotos() {
     return notImplemented('listArtworkCommunityPhotos');
   },
+  getLoyalty() {
+    return notImplemented('getLoyalty');
+  },
 };

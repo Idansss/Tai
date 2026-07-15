@@ -71,6 +71,32 @@ export interface ArtworkPassport {
 }
 
 /**
+ * Loyalty & referrals (TMS-F5-010). The tier is *derived* from points by the
+ * pure helpers in `lib/loyalty.ts` (single source of truth), so the provider
+ * returns raw points + the rewards catalogue + a referral code. All of it is
+ * illustrative preview data — real earning, tiers, redemption, and referral
+ * attribution are server-authoritative (TMS-FBR-008).
+ */
+export interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string;
+  pointsCost: number;
+}
+
+export interface LoyaltyProfile {
+  points: number;
+  /** Lifetime points earned, for display. */
+  lifetimePoints: number;
+  /** ISO date the customer joined the programme. */
+  memberSince: string;
+  referralCode: string;
+  /** What a successful referral gives, in plain words. */
+  referralRewardText: string;
+  rewards: LoyaltyReward[];
+}
+
+/**
  * Community gallery (TMS-F5-005) — customer photos of pieces in the wild. Every
  * photo carries a `status`; only `approved` photos are ever shown publicly. The
  * mock's public methods return approved photos only, and the pure helpers in
@@ -333,4 +359,6 @@ export interface StorefrontDataProvider {
   listCommunityPhotos(): Promise<CommunityPhoto[]>;
   /** Approved community photos for a single artwork, newest first. */
   listArtworkCommunityPhotos(slug: string): Promise<CommunityPhoto[]>;
+  /** Loyalty & referral profile for a signed-in customer (TMS-F5-010). */
+  getLoyalty(email: string): Promise<LoyaltyProfile>;
 }

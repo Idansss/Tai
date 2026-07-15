@@ -22,6 +22,20 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+> **F5 (growth & AI) is COMPLETE** — all of TMS-F5-001…010 Verified. Storefront tests 195, admin 125.
+
+- **Loyalty & referrals (TMS-F5-010) — Verified.** Pure `lib/loyalty.ts` owns the tier ladder +
+  progress: `TIERS`, `tierForPoints`, `nextTier`, `pointsToNextTier`, `tierProgressPercent`,
+  `referralUrl`, `canRedeem`, with **8 unit tests**. New provider method `getLoyalty(email)` returns a
+  deterministic, email-derived `LoyaltyProfile` (points, lifetime points, referral code, rewards
+  catalogue; api stub throws; **3 mock tests** incl. determinism + case-insensitivity). Client
+  `LoyaltyView` (via `AccountShell` + `useRequireAuth`) shows the balance + tier with a progress bar,
+  a rewards grid (Redeem disabled when short; preview note on redeem), a refer-a-friend card (code +
+  shareable link with copy/Web-Share), and a how-it-works list — all under honest preview notices.
+  Account-overview tile added. Points/tiers/rewards/referral are illustrative preview data; the real
+  ledger + earn/redeem + referral attribution are backend (**TMS-FBR-008**). Verified in the browser
+  signed in; full `pnpm check` green (**195 storefront tests**).
+
 - **Brand Storyteller — admin AI (TMS-F5-009) — Verified.** Pure `apps/admin/lib/storyteller.ts` is a
   deterministic mock generator: `CONTENT_TYPES` + `contentTypeLabel`, `canGenerate`, `generateVariants`
   (per-content-type tone templates — Editorial/Punchy/Minimal — with generation metadata + a
