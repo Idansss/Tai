@@ -12,13 +12,15 @@ lint, build, visual evidence, docs updated).
   - Evidence: main at `dd910ae9…` confirmed; branch `claude/f0-visual-foundation` from latest
     main; ownership dirs + control files read.
 
-- [ ] **TMS-F0-002** Base44 reference audit & design inventory
-  - Status: Implemented
-  - Acceptance met: reference inspected; tokens/typography/palette/layout/motion documented in
-    `docs/frontend/DESIGN_INVENTORY.md`.
-  - **Outstanding for Verified:** PNG breakpoint screenshots under `docs/reference/base44/`.
-    Automation screenshots timed out repeatedly; exact computed tokens were extracted instead.
-    Also recorded: live URL renders a generic "moda.studio" template (content mismatch).
+- [x] **TMS-F0-002** Base44 reference audit & design inventory
+  - Status: **Verified** (2026-07-15) — reference inspected; tokens/typography/palette/layout/motion
+    documented in `docs/frontend/DESIGN_INVENTORY.md`; **PNG breakpoint screenshots now captured**
+    under `docs/reference/base44/` (4 viewports — desktop-1440/1280, tablet-768, mobile-390 — via
+    Playwright/Chromium) with a README.
+  - **Honest caveat:** the live URL serves a generic **"moda.studio" template** (content mismatch), so
+    the screenshots are a dated visual record of the reference’s state, **not** a design target. The
+    authoritative sources remain the master prompt/spec (content/structure) and the extracted tokens in
+    `DESIGN_INVENTORY.md` + `packages/ui` (design). This is documented in the folder README.
 
 - [x] **TMS-F0-003** Route inventory & content map
   - Status: Verified

@@ -3,9 +3,10 @@
   "area": "frontend",
   "currentPhase": "F4",
   "lastVerifiedTask": "TMS-F4-006",
-  "nextRecommendedTask": "TMS-F1-DEF-001 (soft 404) — F4 (admin platform) complete; F0–F4 stack ready to merge to main",
+  "nextRecommendedTask": "Merge the F0–F4 PR stack to main (bottom-up #4→#8); then TMS-F1-DEF-001 (soft 404) or F5. All enumerated F0–F4 tasks now Verified.",
   "completedTasks": [
     "TMS-F0-001",
+    "TMS-F0-002",
     "TMS-F0-003",
     "TMS-F0-004",
     "TMS-F0-005",
@@ -39,7 +40,7 @@
     "TMS-F4-006"
   ],
   "inProgressTasks": [],
-  "implementedNotVerified": ["TMS-F0-002"],
+  "implementedNotVerified": [],
   "blockedTasks": [],
   "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
   "buildStatus": "passing",
@@ -67,6 +68,6 @@
     "admin:error centre (safe integration failures — correlation id + resolution lifecycle, no stack traces/secrets) + customers (derived from orders) + analytics (daily series/status mix/top lists derived from orders) — typed mock provider + local state, no admin ops/customer/analytics API (TMS-FBR-007)"
   ],
   "branch": "claude/f4-admin",
-  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + all F4 (001–006) verified green (pnpm check this session). F3 + F4 complete; nothing merged to main yet. TMS-F1-006 (real editorial/policy content across 12 routes) and TMS-F0-010 (Playwright visual baselines — 4 viewports, 8/8 pass) now Verified this session. Only TMS-F0-002 (Base44 reference screenshots) remains open — blocked on browser tooling for the external reference (which now serves a mismatched template). Admin Vitest suite 116 tests; storefront 89. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added, so risk is unchanged from the last clean run.",
-  "lastUpdated": "2026-07-15T21:00:00Z"
+  "buildStatusNote": "All enumerated frontend tasks F0–F4 now Verified (pnpm check green this session). This session cleared the last three loose ends: TMS-F1-006 (real editorial/policy content across 12 routes), TMS-F0-010 (Playwright visual baselines — 4 viewports, 8/8 pass, committed), and TMS-F0-002 (Base44 reference breakpoint screenshots captured — with an honest note they show the mismatched moda.studio template). implementedNotVerified is now empty. Nothing merged to main yet — F0→F4 PR stack (#4→#8) ready to merge bottom-up. Only open item is defect TMS-F1-DEF-001 (soft 404, SEO-only). Admin Vitest 116 tests; storefront 89. Note: pnpm audit 410 outage since F3-004; no new deps added.",
+  "lastUpdated": "2026-07-15T21:30:00Z"
 }
