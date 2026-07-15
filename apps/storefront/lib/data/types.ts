@@ -71,6 +71,27 @@ export interface ArtworkPassport {
 }
 
 /**
+ * Community gallery (TMS-F5-005) — customer photos of pieces in the wild. Every
+ * photo carries a `status`; only `approved` photos are ever shown publicly. The
+ * mock's public methods return approved photos only, and the pure helpers in
+ * `lib/community.ts` enforce that filter. Real UGC intake + moderation is
+ * backend (TMS-FBR-008); submit-a-photo is preview-only here (no real upload).
+ */
+export type ModerationStatus = 'approved' | 'pending' | 'rejected';
+
+export interface CommunityPhoto {
+  id: string;
+  artworkSlug: string;
+  artworkTitle: string;
+  /** Display handle, e.g. "@ada.wears". */
+  handle: string;
+  caption: string;
+  status: ModerationStatus;
+  /** ISO timestamp. */
+  createdAt: string;
+}
+
+/**
  * Reviews & ratings (TMS-F5-004). Reviews attach to a product or an artwork by
  * slug. `verifiedPurchase` is a server-vouched flag (a real order backs the
  * review) — the client never sets it. Aggregate stats are derived by the pure
@@ -308,4 +329,8 @@ export interface StorefrontDataProvider {
   getStory(slug: string): Promise<StoryDetail | null>;
   /** Reviews + aggregate stats for a product or artwork (empty when none). */
   getReviews(targetType: ReviewTargetType, slug: string): Promise<ReviewCollection>;
+  /** Approved community photos for the gallery, newest first (TMS-F5-005). */
+  listCommunityPhotos(): Promise<CommunityPhoto[]>;
+  /** Approved community photos for a single artwork, newest first. */
+  listArtworkCommunityPhotos(slug: string): Promise<CommunityPhoto[]>;
 }

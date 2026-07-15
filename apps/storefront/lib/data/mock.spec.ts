@@ -216,6 +216,33 @@ describe('mockProvider reviews', () => {
   });
 });
 
+describe('mockProvider community gallery', () => {
+  it('returns only approved photos, newest first', async () => {
+    const photos = await mockProvider.listCommunityPhotos();
+    expect(photos.length).toBeGreaterThan(0);
+    expect(photos.every((p) => p.status === 'approved')).toBe(true);
+    const dates = photos.map((p) => p.createdAt);
+    expect(dates).toEqual([...dates].sort((a, b) => b.localeCompare(a)));
+  });
+
+  it('never surfaces pending or rejected submissions publicly', async () => {
+    const photos = await mockProvider.listCommunityPhotos();
+    expect(photos.some((p) => p.handle === '@pending.user')).toBe(false);
+    expect(photos.some((p) => p.handle === '@rejected.user')).toBe(false);
+  });
+
+  it('scopes artwork photos to that artwork and to approved only', async () => {
+    const photos = await mockProvider.listArtworkCommunityPhotos('midnight-in-lagos');
+    expect(photos.length).toBeGreaterThan(0);
+    expect(photos.every((p) => p.artworkSlug === 'midnight-in-lagos')).toBe(true);
+    expect(photos.every((p) => p.status === 'approved')).toBe(true);
+  });
+
+  it('returns an empty list for an artwork with no approved photos', async () => {
+    expect(await mockProvider.listArtworkCommunityPhotos('okada-run')).toEqual([]);
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

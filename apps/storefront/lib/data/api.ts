@@ -62,4 +62,10 @@ export const apiProvider: StorefrontDataProvider = {
   getReviews() {
     return notImplemented('getReviews');
   },
+  listCommunityPhotos() {
+    return notImplemented('listCommunityPhotos');
+  },
+  listArtworkCommunityPhotos() {
+    return notImplemented('listArtworkCommunityPhotos');
+  },
 };

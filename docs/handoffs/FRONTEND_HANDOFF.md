@@ -22,6 +22,20 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Community gallery (TMS-F5-005) — Verified.** Pure `lib/community.ts` makes the display
+  moderation-aware in one place: `isPublic`/`filterApproved` (approved only), `moderationLabel`/
+  `moderationTone`, `formatHandle`, and `validatePhotoSubmission`, with **8 unit tests**. New provider
+  methods `listCommunityPhotos`/`listArtworkCommunityPhotos` return approved photos only, newest first
+  (mock seeds include pending/rejected on purpose to prove they're filtered; api stub throws; **4 mock
+  tests**). New static `/community` route (approved feed grid + submit form with artwork picker) and a
+  "Styled by the community" section on each artwork detail page (scoped, no picker), built from a
+  presentational `CommunityPhotoCard` + client `CommunityBoard`. Submissions are **preview-only** — no
+  real upload; a submitted photo is shown back to the submitter as an **"In review"** card with an
+  honest notice, never published. "Community" added to the footer nav. Verified in the browser:
+  `/community` shows approved photos and hides `@pending.user`/`@rejected.user`; artwork section
+  scopes correctly; no console errors. Full `pnpm check` green (**176 storefront tests**). Real UGC +
+  moderation is backend (**TMS-FBR-008**).
+
 - **Reviews & ratings (TMS-F5-004) — Verified.** Pure `lib/reviews.ts` aggregates reviews into an
   average + count + per-star distribution (`summariseReviews`, clamps out-of-range ratings),
   `distributionPercents`, `formatAverage`, and `validateReviewInput`, with **9 unit tests**. New

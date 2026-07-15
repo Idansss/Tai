@@ -1,6 +1,7 @@
 import type { CursorPage } from '@tms/contracts';
 import { artworkVersionId, passportSerial } from '../passport';
 import { artworkMatchesQuery } from '../search';
+import { filterApproved } from '../community';
 import { summariseReviews } from '../reviews';
 import { countShoppableItems } from '../stories';
 import type {
@@ -10,6 +11,7 @@ import type {
   Availability,
   CollectionDetail,
   CollectionSummary,
+  CommunityPhoto,
   DeliveryOption,
   DropDetail,
   DropSummary,
@@ -706,6 +708,78 @@ const reviewSeeds: Record<string, Review[]> = {
   ],
 };
 
+/**
+ * Community photo seeds (TMS-F5-005). Includes a couple of non-approved photos
+ * on purpose so the moderation-aware filter is exercised — the public methods
+ * must never surface them. Real UGC + moderation is server-side (TMS-FBR-008).
+ */
+const communityPhotoSeeds: CommunityPhoto[] = [
+  {
+    id: 'cp-1',
+    artworkSlug: 'midnight-in-lagos',
+    artworkTitle: 'Midnight in Lagos',
+    handle: '@ada.wears',
+    caption: 'Caught the neon just right on the island bridge.',
+    status: 'approved',
+    createdAt: '2026-07-05T18:00:00.000Z',
+  },
+  {
+    id: 'cp-2',
+    artworkSlug: 'paper-tigers',
+    artworkTitle: 'Paper Tigers',
+    handle: '@kelechi.k',
+    caption: 'Oversized fit, all the confidence.',
+    status: 'approved',
+    createdAt: '2026-07-03T12:30:00.000Z',
+  },
+  {
+    id: 'cp-3',
+    artworkSlug: 'market-day',
+    artworkTitle: 'Market Day',
+    handle: '@bisi.styles',
+    caption: 'Market run in the long-sleeve.',
+    status: 'approved',
+    createdAt: '2026-06-29T09:15:00.000Z',
+  },
+  {
+    id: 'cp-4',
+    artworkSlug: 'midnight-in-lagos',
+    artworkTitle: 'Midnight in Lagos',
+    handle: '@tunde.a',
+    caption: 'Layered for the evening.',
+    status: 'approved',
+    createdAt: '2026-06-25T20:00:00.000Z',
+  },
+  {
+    id: 'cp-5',
+    artworkSlug: 'harmattan-bloom',
+    artworkTitle: 'Harmattan Bloom',
+    handle: '@ngozi.e',
+    caption: 'Soft neutrals for dust season.',
+    status: 'approved',
+    createdAt: '2026-06-20T11:00:00.000Z',
+  },
+  // Non-approved — must never appear in the public gallery.
+  {
+    id: 'cp-6',
+    artworkSlug: 'paper-tigers',
+    artworkTitle: 'Paper Tigers',
+    handle: '@pending.user',
+    caption: 'Awaiting moderation.',
+    status: 'pending',
+    createdAt: '2026-07-06T08:00:00.000Z',
+  },
+  {
+    id: 'cp-7',
+    artworkSlug: 'okada-run',
+    artworkTitle: 'Okada Run',
+    handle: '@rejected.user',
+    caption: 'Off-brand submission.',
+    status: 'rejected',
+    createdAt: '2026-07-02T08:00:00.000Z',
+  },
+];
+
 function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
@@ -905,5 +979,20 @@ export const mockProvider: StorefrontDataProvider = {
       .slice()
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return delay({ stats: summariseReviews(items), items });
+  },
+
+  async listCommunityPhotos(): Promise<CommunityPhoto[]> {
+    // Moderation-aware: approved only, newest first.
+    return delay(
+      filterApproved(communityPhotoSeeds).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
+  },
+
+  async listArtworkCommunityPhotos(slug: string): Promise<CommunityPhoto[]> {
+    return delay(
+      filterApproved(communityPhotoSeeds)
+        .filter((p) => p.artworkSlug === slug)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
   },
 };

@@ -623,8 +623,30 @@ claims**, and **must never auto-publish or auto-act**.
   - Follow-ups: real reviews API + moderation queue (TMS-FBR-008); server verified-purchase check tied
     to orders; helpful-vote + sort/filter; media in reviews; aggregate rating on cards + `AggregateRating`
     structured data for SEO.
-- [ ] **TMS-F5-005** Community gallery — customer-photo gallery (moderation-aware display), submit-a-
-      photo UI (mock), per-artwork "styled by the community" section. **TMS-FBR-008** (UGC + moderation).
+- [x] **TMS-F5-005** Community gallery
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **176 storefront tests**, up from 164: +12 community — 8 lib + 4 mock). In-browser on
+    the served build: a new **`/community`** gallery shows the **approved** customer-photo feed (grid of
+    handle + caption + artwork link) and a **submit-a-photo** form (artwork picker, handle, caption,
+    mock file chooser). Each **artwork** detail page gains a **"Styled by the community"** section
+    scoped to that artwork (no picker). The display is **moderation-aware**: seeded **pending/rejected**
+    photos (`@pending.user`, `@rejected.user`) **never appear** in the public feed, enforced by a
+    single pure filter. Submitting validates (handle/caption/photo), then shows the photo back **only
+    to the submitter** as an **"In review"** card with an honest "not uploaded or published, all photos
+    moderated" notice. "Community" added to the footer nav. No console/hydration errors.
+  - Scope delivered: pure `lib/community.ts` — `isPublic`, `filterApproved`, `moderationLabel`,
+    `moderationTone`, `formatHandle`, `validatePhotoSubmission` — with **8 unit tests**.
+    `CommunityPhoto`/`ModerationStatus` types + `listCommunityPhotos`/`listArtworkCommunityPhotos` on
+    the provider (approved-only, newest first; api stub throws; **4 mock tests** incl. a check that
+    pending/rejected are never returned). Presentational `CommunityPhotoCard` + client `CommunityBoard`
+    (approved grid + local in-review previews + `SubmitPhoto` form). New static `/community` route;
+    section wired into the artwork detail page.
+  - **Note:** photos are **placeholder tiles** (no real image upload) and submit is **preview-only**
+    (local state, nothing sent/stored) — real UGC intake, storage, and **moderation** are backend
+    (**TMS-FBR-008**). The client only ever displays approved photos publicly; the submitter's own
+    pending preview is local and never shared.
+  - Follow-ups: real image upload + moderation queue + reporting (TMS-FBR-008); like/feature controls;
+    pull-through to the homepage; EXIF stripping + content policy on the real upload path.
 - [x] **TMS-F5-006** Artwork Passport
   - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
     db:validate; **140 storefront tests**, up from 129: +11 passport — 7 lib + 4 mock). In-browser on

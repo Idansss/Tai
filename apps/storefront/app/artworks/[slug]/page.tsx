@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { CommunityBoard } from '@/components/community/community-board';
 import { Reviews } from '@/components/review/reviews';
 import { dataProvider } from '@/lib/data';
 
@@ -42,6 +43,7 @@ export default async function ArtworkDetailPage({ params }: Params) {
   const artwork = await dataProvider.getArtwork(slug);
   if (!artwork) notFound();
   const reviews = await dataProvider.getReviews('artwork', slug);
+  const communityPhotos = await dataProvider.listArtworkCommunityPhotos(slug);
 
   return (
     <>
@@ -120,6 +122,23 @@ export default async function ArtworkDetailPage({ params }: Params) {
         <div className="mt-14">
           <Reviews targetType="artwork" targetLabel={artwork.title} initial={reviews} />
         </div>
+
+        <section aria-labelledby="community-title" className="mt-14 border-t border-line pt-10">
+          <Heading id="community-title" as={2} size="md">
+            Styled by the community
+          </Heading>
+          <Text tone="secondary" className="mt-1">
+            How people are wearing {artwork.title}.
+          </Text>
+          <div className="mt-6">
+            <CommunityBoard
+              initialPhotos={communityPhotos}
+              artworks={[]}
+              fixedArtwork={{ slug: artwork.slug, title: artwork.title }}
+              emptyLabel={`Be the first to share how you style ${artwork.title}.`}
+            />
+          </div>
+        </section>
       </Container>
 
       {artwork.related.length > 0 ? (
