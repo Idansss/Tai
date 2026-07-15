@@ -139,3 +139,26 @@ describe('mockAdminProvider.getGarment', () => {
     expect(await mockAdminProvider.getGarment('gm-nope')).toBeNull();
   });
 });
+
+describe('mockAdminProvider.listProductionJobs', () => {
+  it('derives active jobs from orders, oldest first, only on-board statuses', async () => {
+    const jobs = await mockAdminProvider.listProductionJobs();
+    expect(jobs.length).toBeGreaterThan(0);
+    const times = jobs.map((j) => j.placedAt);
+    expect([...times].sort((a, b) => a.localeCompare(b))).toEqual(times);
+    const offBoard = ['AWAITING_PAYMENT', 'PAYMENT_FAILED', 'DELIVERED', 'COMPLETED', 'CANCELLED'];
+    expect(jobs.every((j) => !offBoard.includes(j.status))).toBe(true);
+    expect(jobs.every((j) => j.items.length > 0)).toBe(true);
+  });
+
+  it('filters by stage', async () => {
+    const qc = await mockAdminProvider.listProductionJobs({ stage: 'quality_check' });
+    expect(qc.every((j) => j.stage === 'quality_check')).toBe(true);
+  });
+
+  it('spans multiple stages across the dataset', async () => {
+    const jobs = await mockAdminProvider.listProductionJobs();
+    const stages = new Set(jobs.map((j) => j.stage));
+    expect(stages.size).toBeGreaterThan(1);
+  });
+});

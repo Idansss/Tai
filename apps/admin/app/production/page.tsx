@@ -1,15 +1,17 @@
 import type { Metadata } from 'next';
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { Suspense } from 'react';
+import { Skeleton } from '@tms/ui';
+import { ProductionView } from '@/components/production-view';
 
-export const metadata: Metadata = { title: 'Production' };
+export const metadata: Metadata = {
+  title: 'Production',
+  robots: { index: false, follow: false, nocache: true },
+};
 
 export default function ProductionPage() {
   return (
-    <SectionPlaceholder
-      eyebrow="Operations"
-      title="Production & quality"
-      description="Production queue with artwork preview, garment, colour, size, placement and quantity, print-file access, printing status, quality-check result, reprint and internal notes."
-      task="TMS-F4-005"
-    />
+    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+      <ProductionView />
+    </Suspense>
   );
 }

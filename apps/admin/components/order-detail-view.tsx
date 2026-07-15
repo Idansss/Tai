@@ -4,7 +4,7 @@ import { Alert, Badge, Heading, Skeleton, Text, cn } from '@tms/ui';
 import { Check, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { adminDataProvider, type AdminOrderDetail, type PrintStatus } from '@/lib/data';
+import { adminDataProvider, type AdminOrderDetail } from '@/lib/data';
 import { useAdminAuth } from './admin-auth-provider';
 import {
   formatEnumLabel,
@@ -13,9 +13,9 @@ import {
   formatShippingStatus,
   orderStatusTone,
   paymentStatusTone,
-  type StatusTone,
 } from '@/lib/order-status';
 import { orderTimeline } from '@/lib/orders';
+import { formatPrintStatus, printStatusTone } from '@/lib/production';
 import {
   addNote,
   type InternalNote,
@@ -28,14 +28,6 @@ import {
 function money(minor: number): string {
   return `₦${Math.round(minor / 100).toLocaleString('en-NG')}`;
 }
-
-const printTone: Record<PrintStatus, StatusTone> = {
-  queued: 'neutral',
-  printing: 'info',
-  printed: 'info',
-  qc_passed: 'success',
-  reprint: 'warning',
-};
 
 function Panel({ title, children, id }: { title: string; id?: string; children: React.ReactNode }) {
   return (
@@ -237,8 +229,8 @@ export function OrderDetailView({ reference }: { reference: string }) {
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <Badge tone={printTone[item.printStatus]}>
-                          {formatEnumLabel(item.printStatus)}
+                        <Badge tone={printStatusTone(item.printStatus)}>
+                          {formatPrintStatus(item.printStatus)}
                         </Badge>
                       </td>
                       <td className="px-3 py-3 text-center tabular-nums text-ink-2">

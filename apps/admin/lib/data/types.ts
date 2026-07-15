@@ -300,7 +300,44 @@ export interface AdminGarmentListParams {
   status?: GarmentStatus | 'all';
 }
 
-/** The admin data access surface. Extended per F4 task (garments, …). */
+// --- Production / QC / fulfilment (F4-005) --------------------------------------
+
+/**
+ * The board lanes a paid order moves through. Each maps to one or more
+ * `OrderStatus` values (see lib/production.ts); terminal states (delivered,
+ * completed, cancelled, refunded) and pre-payment states are off the board.
+ */
+export type ProductionStage =
+  | 'paid'
+  | 'queued'
+  | 'printing'
+  | 'quality_check'
+  | 'ready_for_dispatch'
+  | 'dispatched'
+  | 'exception';
+
+/** One order on the production board, derived from its order record. */
+export interface AdminProductionJob {
+  reference: string;
+  customerName: string;
+  placedAt: string;
+  status: OrderStatus;
+  stage: ProductionStage;
+  itemCount: number;
+  /** Per-line production context (artwork/garment/colour/size + print state). */
+  items: AdminOrderItem[];
+  shippingStatus: ShippingStatus;
+  deliveryMethodLabel: string;
+}
+
+export interface AdminProductionListParams {
+  /** Focus a single board lane, or all active jobs. */
+  stage?: ProductionStage | 'all';
+  /** Free-text search over reference / customer name. */
+  query?: string;
+}
+
+/** The admin data access surface. Extended per F4 task (garments, production, …). */
 export interface AdminDataProvider {
   getDashboard(): Promise<DashboardData>;
   listOrders(params?: AdminOrderListParams): Promise<AdminOrderListResult>;
@@ -309,4 +346,5 @@ export interface AdminDataProvider {
   getArtwork(id: string): Promise<AdminArtworkDetail | null>;
   listGarments(params?: AdminGarmentListParams): Promise<AdminGarmentSummary[]>;
   getGarment(id: string): Promise<AdminGarmentDetail | null>;
+  listProductionJobs(params?: AdminProductionListParams): Promise<AdminProductionJob[]>;
 }

@@ -184,7 +184,18 @@ email**. It needs, on top of the auth endpoints above:
   Today colours/sizes/media are read-only samples (no real asset store), and stock edits, colour
   availability toggles and lifecycle changes are local state only (honest "not saved" notices). The
   per-colour×size availability should also feed the storefront product page (pairs with
-  **TMS-FBR-002**, which currently models size availability globally).
+  **TMS-FBR-002**, which currently models size availability globally). **Production / QC / fulfilment
+  (F4-005, delivered):** the admin production board lists active jobs
+  (`GET /api/v1/admin/production` with a `stage` filter — reference, customer, placed date, order
+  status/stage, per-line garment + print state, shipping) and drives **stage transitions** through the
+  audited order state machine (spec §"Operations"): move to production, start printing, send to QC, **QC
+  pass** / **reprint**, book & dispatch, mark delivered, and **flag / retry delivery exception** — as
+  real endpoints (e.g. `POST /api/v1/admin/orders/{reference}/transitions` with `{ to, reason }`), each
+  recording **actor, reason, correlation ID and provider event**. It also needs **print-file (production
+  asset) access** and **per-line QC results** (today the whole order moves as one stage), plus packing
+  slips / carrier booking. Today jobs are derived from the sample order dataset and every transition is
+  local state only (honest "not saved" notices) — no state machine, no audit trail, no production
+  assets. The board reuses the shared `OrderStatus` enum so the mock and a real backend agree on stages.
 - Required response fields: money in **minor units** + currency (formatted client-side); statuses
   as the shared `@tms/contracts` enums so the admin can present readable labels
   (`formatOrderStatus`) without inventing values.

@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F4",
-  "lastVerifiedTask": "TMS-F4-004",
-  "nextRecommendedTask": "TMS-F4-005 (production + QC + fulfilment) or TMS-F1-DEF-001 (soft 404)",
+  "lastVerifiedTask": "TMS-F4-005",
+  "nextRecommendedTask": "TMS-F4-006 (error centre + customers + analytics) or TMS-F1-DEF-001 (soft 404)",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -32,7 +32,8 @@
     "TMS-F4-001",
     "TMS-F4-002",
     "TMS-F4-003",
-    "TMS-F4-004"
+    "TMS-F4-004",
+    "TMS-F4-005"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
@@ -58,9 +59,10 @@
     "admin:dashboard metrics/queues/recent orders/top lists — typed mock admin provider, no admin read API (TMS-FBR-007)",
     "admin:orders list/detail + fulfilment actions + internal notes — typed mock provider + local notes, no admin order API (TMS-FBR-007)",
     "admin:artwork list/detail/versions/mockups + publishing lifecycle + upload — typed mock provider + local state, no admin catalogue write API (TMS-FBR-007)",
-    "admin:garment list/detail + colours/sizes/size charts/media/print rules/prices + inventory (stock edits, colour availability, lifecycle) — typed mock provider + local state, no admin catalogue read/write API (TMS-FBR-007)"
+    "admin:garment list/detail + colours/sizes/size charts/media/print rules/prices + inventory (stock edits, colour availability, lifecycle) — typed mock provider + local state, no admin catalogue read/write API (TMS-FBR-007)",
+    "admin:production board (jobs derived from orders) + stage transitions (queue/print/QC pass/reprint/dispatch/exception) — typed mock provider + local state, no admin fulfilment API or audited state machine (TMS-FBR-007)"
   ],
   "branch": "claude/f4-admin",
-  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + TMS-F4-001/002/003/004 verified green (pnpm check re-run this session; served /garments + /garments/[id] return 200). F3 complete; F4 in progress. Admin Vitest suite now 68 tests. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added through F4-004, so risk is unchanged from the last clean run.",
-  "lastUpdated": "2026-07-15T18:15:00Z"
+  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + TMS-F4-001/002/003/004/005 verified green (pnpm check this session; served /production + /production?stage= return 200). F3 complete; F4 in progress. Admin Vitest suite now 88 tests. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added through F4-005, so risk is unchanged from the last clean run.",
+  "lastUpdated": "2026-07-15T19:00:00Z"
 }

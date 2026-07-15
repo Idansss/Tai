@@ -2,6 +2,7 @@ import type { OrderStatus, PaymentStatus, ShippingStatus } from '@tms/contracts'
 import { filterArtworks } from '../artworks';
 import { countLowStock, filterGarments, totalStock } from '../garments';
 import { filterOrders, paginate } from '../orders';
+import { filterJobs, printStatusForOrderStatus, productionStageForStatus } from '../production';
 import type {
   AdminArtworkDetail,
   AdminArtworkListParams,
@@ -15,12 +16,13 @@ import type {
   AdminOrderListParams,
   AdminOrderListResult,
   AdminOrderSummary,
+  AdminProductionJob,
+  AdminProductionListParams,
   DashboardData,
   GarmentColour,
   GarmentVariant,
   PlacementRule,
   PrintArea,
-  PrintStatus,
   SizeChartRow,
 } from './types';
 
@@ -66,25 +68,6 @@ function shipmentStatusFor(status: OrderStatus): ShippingStatus {
       return 'PICKUP_SCHEDULED';
     default:
       return 'QUOTE_PENDING';
-  }
-}
-
-function printStatusFor(status: OrderStatus): PrintStatus {
-  switch (status) {
-    case 'PRINTING':
-      return 'printing';
-    case 'QUALITY_CHECK':
-      return 'printed';
-    case 'READY_FOR_DISPATCH':
-    case 'SHIPMENT_BOOKED':
-    case 'SHIPPED':
-    case 'DELIVERED':
-    case 'COMPLETED':
-      return 'qc_passed';
-    case 'DELIVERY_EXCEPTION':
-      return 'qc_passed';
-    default:
-      return 'queued';
   }
 }
 
@@ -313,7 +296,7 @@ function buildOrder(seed: OrderSeed): AdminOrderDetail {
   const items: AdminOrderItem[] = seed.items.map((it, i) => ({
     ...it,
     id: `${seed.reference}-L${i + 1}`,
-    printStatus: printStatusFor(seed.status),
+    printStatus: printStatusForOrderStatus(seed.status),
   }));
   const subtotalMinor = items.reduce((sum, it) => sum + it.unitPriceMinor * it.quantity, 0);
   const discountMinor = 0;
@@ -388,6 +371,30 @@ const ORDER_SUMMARIES: AdminOrderSummary[] = ORDERS.map(toSummary).sort((a, b) =
   b.placedAt.localeCompare(a.placedAt),
 );
 
+// --- Production board (derived from orders) ------------------------------------
+
+/** Map an order onto a production job, or null when it is off the board. */
+function toProductionJob(o: AdminOrderDetail): AdminProductionJob | null {
+  const stage = productionStageForStatus(o.status);
+  if (!stage) return null;
+  return {
+    reference: o.reference,
+    customerName: o.customerName,
+    placedAt: o.placedAt,
+    status: o.status,
+    stage,
+    itemCount: o.itemCount,
+    items: o.items,
+    shippingStatus: o.shipment.status,
+    deliveryMethodLabel: o.deliveryMethodLabel,
+  };
+}
+
+/** Active jobs, oldest first — the studio works the production queue FIFO. */
+const PRODUCTION_JOBS: AdminProductionJob[] = ORDERS.map(toProductionJob)
+  .filter((j): j is AdminProductionJob => j !== null)
+  .sort((a, b) => a.placedAt.localeCompare(b.placedAt));
+
 // --- Dashboard -----------------------------------------------------------------
 
 const DASHBOARD: DashboardData = {
@@ -436,14 +443,29 @@ const DASHBOARD: DashboardData = {
     },
   ],
   queues: [
-    { id: 'production', label: 'Production queue', count: 14, href: '/production' },
-    { id: 'qc', label: 'Quality check', count: 5, href: '/production' },
-    { id: 'dispatch', label: 'Ready for dispatch', count: 8, href: '/orders' },
+    {
+      id: 'production',
+      label: 'Production queue',
+      count: PRODUCTION_JOBS.filter((j) => j.stage === 'queued' || j.stage === 'printing').length,
+      href: '/production',
+    },
+    {
+      id: 'qc',
+      label: 'Quality check',
+      count: PRODUCTION_JOBS.filter((j) => j.stage === 'quality_check').length,
+      href: '/production?stage=quality_check',
+    },
+    {
+      id: 'dispatch',
+      label: 'Ready for dispatch',
+      count: PRODUCTION_JOBS.filter((j) => j.stage === 'ready_for_dispatch').length,
+      href: '/production?stage=ready_for_dispatch',
+    },
     {
       id: 'exceptions',
       label: 'Delivery exceptions',
-      count: 2,
-      href: '/orders',
+      count: PRODUCTION_JOBS.filter((j) => j.stage === 'exception').length,
+      href: '/production?stage=exception',
       tone: 'danger',
     },
   ],
@@ -990,5 +1012,8 @@ export const mockAdminProvider: AdminDataProvider = {
   },
   getGarment(id: string) {
     return Promise.resolve(GARMENT_RECORDS.find((g) => g.id === id) ?? null);
+  },
+  listProductionJobs(params: AdminProductionListParams = {}) {
+    return Promise.resolve(filterJobs(PRODUCTION_JOBS, params));
   },
 };

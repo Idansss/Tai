@@ -414,6 +414,37 @@ customers + analytics.
     editable metadata (fabric/fit/care/size chart/print areas) + media upload once the write API lands;
     per-colour×size availability that the storefront product page can consume (pairs with TMS-FBR-002).
 
+- [x] **TMS-F4-005** Production + QC + fulfilment — board (jobs derived from orders) + stage actions
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **88 admin unit tests**, up from 68; **89 storefront**); `pnpm audit` not run (same
+    registry-side 410 outage; **no new dependencies added**). Served-route smoke test: `/production`
+    and `/production?stage=quality_check` return **200** with the correct title + `noindex`; `pnpm build`
+    registers `/production` (static, searchParams behind a Suspense boundary). The interactive
+    click-through (stage filter chips narrow the board; a QC job → **QC pass** advances it to _Ready for
+    dispatch_ / **Reprint** sends it back to _Printing_; **Book & dispatch**, **Mark delivered** removes
+    the card from the board; **Flag exception** / **Retry dispatch**; each with an honest "would call the
+    fulfilment API — updated locally, not saved" notice) is covered by the pure-domain unit tests but was
+    **not** re-driven in-browser this session (the harness didn't expose the in-app browser tools).
+  - Scope delivered: extended the admin data provider (`AdminProductionJob` + `ProductionStage`;
+    `listProductionJobs(params)` deriving active jobs from the existing order dataset, oldest-first, only
+    on-board statuses). Pure `lib/production.ts` (stage⇄`OrderStatus` mapping, `PRODUCTION_LANES`,
+    `stageLabel`/`stageTone`, the `stageActions`/`applyStageAction` transition machine —
+    queue→print→QC→dispatch plus QC reprint + delivery exceptions, `filterJobs`/`groupByStage`/
+    `stageCounts`, `formatAge`/`isPriority`, and shared `formatPrintStatus`/`printStatusTone`/
+    `printStatusForOrderStatus`; 20 tests) + provider tests. `ProductionView` = stage filter chips with
+    live counts (deep-linkable via `?stage=`), search, and a lane-grouped board of job cards (reference →
+    order detail, customer, age + **priority** flag, per-line garment/print-status chips, shipping for
+    dispatched/exception, and stage-transition action buttons) — all local state with honest "not saved"
+    notices. Route `/production` replaces the placeholder (noindex, Suspense-wrapped). The dashboard's
+    operational queue tiles now **derive** their counts from the same dataset and deep-link into the board
+    (`?stage=quality_check` / `ready_for_dispatch` / `exception`), so they resolve to real views.
+    Refactored `OrderDetailView` to reuse the shared print-status helpers (also fixes "Qc passed" →
+    "QC passed"). Still 100% mock — needs TMS-FBR-007 (fulfilment API + audited state machine).
+  - Follow-ups: real production/fulfilment endpoints + the audited state machine (actor/reason/
+    correlation-id/provider event per transition, spec §"Operations"); print-file (production asset)
+    access + per-line QC results (not just an order-level stage); packing slips + carrier booking;
+    production notes.
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

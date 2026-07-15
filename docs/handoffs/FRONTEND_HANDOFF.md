@@ -3,8 +3,8 @@
 ## Current frontend phase
 
 F4 — Admin platform (in progress). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
-TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) Verified** (2026-07-15).
-Branch `claude/f4-admin` is **stacked on
+TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) + TMS-F4-005 (production +
+QC + fulfilment) Verified** (2026-07-15). Branch `claude/f4-admin` is **stacked on
 `claude/f3-commerce` → `claude/f2-design-studio` → `claude/f1-storefront` →
 `claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8).
 Nothing is merged to `main` yet.
@@ -13,6 +13,30 @@ F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (check
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
 
 ### F4 progress this session
+
+- **Production + QC + fulfilment (TMS-F4-005).** Extended the admin data provider with a production
+  board: `AdminProductionJob` + `ProductionStage`, and `listProductionJobs(params)` that **derives**
+  active jobs from the existing order dataset (oldest-first, only on-board statuses) — so the board and
+  the dashboard queue tiles share one source of truth. Pure `lib/production.ts` maps the pipeline lanes
+  onto the shared `@tms/contracts` order state machine (no parallel enum): `productionStageForStatus`,
+  `PRODUCTION_LANES`, `stageLabel`/`stageTone`, the `stageActions`/`applyStageAction` transition machine
+  (queue → print → QC → ready → dispatch → delivered, plus QC **reprint** and **delivery exception** +
+  retry), `filterJobs`/`groupByStage`/`stageCounts`, `formatAge`/`isPriority`, and shared
+  `formatPrintStatus`/`printStatusTone`/`printStatusForOrderStatus` (the last now reused by the mock and
+  by `OrderDetailView`, which also picks up a "Qc passed" → "QC passed" fix). `ProductionView` = stage
+  filter chips with live counts (deep-linkable via `?stage=`), search, and a lane-grouped board of job
+  cards (reference → order detail, customer, age + **priority** flag, per-line garment + print-status
+  chips, shipping on dispatched/exception, and stage-transition buttons) — all local state with honest
+  "would call the fulfilment API — not saved" notices. Route `/production` replaces the placeholder
+  (noindex, Suspense-wrapped for `useSearchParams`). The dashboard's operational queues now derive their
+  counts from the dataset and deep-link into the board. Admin Vitest suite now **88 tests**. Still 100%
+  mock — gaps under **TMS-FBR-007** (fulfilment API + audited state machine).
+- Verified: full `pnpm check` green (88 admin + 89 storefront tests; build registers `/production`;
+  db:validate valid); served build smoke test — `/production`, `/production?stage=quality_check` return
+  200 with the correct title + `noindex`. The interactive click-through (filter chips, QC pass/reprint,
+  book & dispatch, mark delivered removes the card, flag/​retry exception, live "not saved" notices) is
+  covered by the pure-domain unit tests; it was **not** re-driven in-browser here because this session's
+  harness did not expose the in-app browser tools. (Audit skipped — 410 outage, no new deps.)
 
 - **Garment manager + inventory (TMS-F4-004).** Extended the admin data provider with garment view
   models (`AdminGarmentSummary`/`AdminGarmentDetail` + `GarmentStatus`/`GarmentColour`/
@@ -230,7 +254,7 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
 -005, -007, -008, -009; TMS-F2-001; TMS-F3-001, -002, -003, -004, -005 (F3 complete);
 **TMS-F4-001** (admin foundation); **TMS-F4-002** (order management); **TMS-F4-003** (artwork manager);
-**TMS-F4-004** (garment manager + inventory).
+**TMS-F4-004** (garment manager + inventory); **TMS-F4-005** (production + QC + fulfilment).
 
 ## In-progress task
 
@@ -238,9 +262,9 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F4-005 — Production + QC + fulfilment** on the admin data provider (production queue, print/QC
-states, dispatch/exceptions). Then F4-006 (error centre + customers + analytics). **Or** clear the
-tracked soft-404 defect **TMS-F1-DEF-001**.
+**TMS-F4-006 — Error centre + customers + analytics** on the admin data provider (integration error
+centre — correlation IDs + resolution state, **never** stack traces/secrets per spec §18; customer
+list/detail; analytics). **Or** clear the tracked soft-404 defect **TMS-F1-DEF-001**.
 
 ## Routes completed
 

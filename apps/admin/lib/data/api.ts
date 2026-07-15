@@ -35,4 +35,7 @@ export const apiProvider: AdminDataProvider = {
   getGarment() {
     return notImplemented('getGarment');
   },
+  listProductionJobs() {
+    return notImplemented('listProductionJobs');
+  },
 };
