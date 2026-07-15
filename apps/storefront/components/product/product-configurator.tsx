@@ -5,6 +5,7 @@ import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { WishlistButton } from '@/components/account/wishlist-button';
 import { useCart } from '@/components/cart/cart-provider';
+import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import { WaitlistForm } from '@/components/waitlist/waitlist-form';
 import type { ProductDetail } from '@/lib/data';
 import { waitlistKey } from '@/lib/waitlist';
@@ -269,7 +270,9 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
               submitLabel="Notify me"
             />
           </div>
-        ) : null}
+        ) : (
+          <MadeToOrderNote className="mt-4" />
+        )}
 
         {status ? (
           <div className="mt-4" aria-live="polite">

@@ -516,7 +516,7 @@ customers + analytics.
     merged to `main`** (bottom-up, merge commits, branches deleted; `pnpm check` green on the
     integrated `main`, HEAD `e919e7e`). Active work continues on `claude/f5-post-merge`.
 
-## Phase F5 — Growth & AI (scoped 2026-07-15; TMS-F5-001, -002 Verified)
+## Phase F5 — Growth & AI (scoped 2026-07-15; TMS-F5-001, -002, -003 Verified)
 
 Scoped from the master prompt §19 (AI interfaces), §20 (editorial & growth) and §29 (phase
 definition). **Everything builds on the typed mock adapter** — no growth/AI backend exists yet
@@ -575,8 +575,28 @@ claims**, and **must never auto-publish or auto-act**.
   - Follow-ups: real waitlist/notify endpoint + membership-scoped early access (TMS-FBR-008); an
     account view of "things I'm waiting on"; artwork-level back-in-stock once artworks are directly
     purchasable; double-opt-in + unsubscribe when real email lands.
-- [ ] **TMS-F5-003** Pre-order & made-to-order — pre-order badges/flow on eligible drop items,
-      made-to-order lead-time messaging surfaced in product + cart + checkout, ships-by estimate. Mock.
+- [x] **TMS-F5-003** Pre-order & made-to-order
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **129 storefront tests**, up from 119: +10 fulfilment). In-browser on the served
+    build: the **product** page (available), the **cart** summary, and the **checkout** order summary
+    all show a made-to-order note — "Made to order — printed and finished in 2–4 working days" plus a
+    client-computed **ship window** ("Estimated ship 17 Jul–21 Jul", correct working-day maths skipping
+    the weekend). **Upcoming/early-access drops** show a **Pre-order** badge and a pre-order note whose
+    window starts from the drop's release ("Estimated ship 21 Jul–23 Jul, after the drop opens"), while
+    a **live** drop shows the plain made-to-order note. Sold-out product shows the F5-002 back-in-stock
+    form instead. No console/hydration errors.
+  - Scope delivered: pure `lib/fulfilment.ts` — `addWorkingDays` (UTC, weekend-skipping),
+    `madeToOrderWindow`, `preOrderWindow` (production starts when the drop opens), `isPreOrderStatus`,
+    `madeToOrderSummary`, `PRODUCTION_LEAD` — with **10 unit tests** (anchored on a known weekday for
+    determinism). Client `MadeToOrderNote` (clock-free summary on the server; absolute ship dates
+    computed after mount to avoid a hydration mismatch — same pattern as the countdown). Wired into the
+    product configurator (not-sold-out), cart summary, checkout order summary, and the drop detail
+    (pre-order badge + note for upcoming/early access, made-to-order for live).
+  - **Note:** the lead-time is a **frontend estimate** — the real fulfilment timeline is
+    server-authoritative (spec "server is authoritative for … shipping"; TMS-FBR-004/008), and a real
+    pre-order **reservation** (hold + charge policy) is a backend concern (TMS-FBR-008).
+  - Follow-ups: server-authoritative ship estimates + a real pre-order reservation/hold; per-item lead
+    times if garments diverge; surface the estimate on the order confirmation + account order detail.
 - [ ] **TMS-F5-004** Reviews & ratings — review display on product/artwork (rating summary +
       distribution + list, verified-purchase badge), write-a-review form (mock submit, honest notice),
       empty/loading/failure states. **TMS-FBR-008** (reviews read + write, moderation).

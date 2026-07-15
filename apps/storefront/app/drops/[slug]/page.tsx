@@ -1,4 +1,4 @@
-import { buttonVariants, Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { Badge, buttonVariants, Container, Eyebrow, Heading, Text } from '@tms/ui';
 import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -7,8 +7,10 @@ import { ArtworkCard } from '@/components/artwork/artwork-card';
 import { Countdown } from '@/components/drop/countdown';
 import { DropEarlyAccess } from '@/components/drop/drop-early-access';
 import { DropStatusBadge } from '@/components/drop/drop-status-badge';
+import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import { dataProvider } from '@/lib/data';
 import { dropStatus, nextMilestone } from '@/lib/drops';
+import { isPreOrderStatus } from '@/lib/fulfilment';
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -65,6 +67,7 @@ export default async function DropDetailPage({ params }: Params) {
             <div className="flex flex-wrap items-center gap-3">
               <Eyebrow className="m-0">{drop.collection}</Eyebrow>
               <DropStatusBadge status={status} />
+              {isPreOrderStatus(status) ? <Badge tone="info">Pre-order</Badge> : null}
             </div>
             <Heading as={1} size="display-lg" className="mt-2">
               {drop.title}
@@ -80,6 +83,16 @@ export default async function DropDetailPage({ params }: Params) {
                 <p className="text-sm font-medium text-ink">{milestone.label}</p>
               )}
             </div>
+
+            {status === 'live' || isPreOrderStatus(status) ? (
+              <div className="mt-4">
+                <MadeToOrderNote
+                  preOrderReleaseMs={
+                    isPreOrderStatus(status) ? Date.parse(drop.releaseAt) : undefined
+                  }
+                />
+              </div>
+            ) : null}
 
             <div className="mt-6">
               <DropEarlyAccess status={status} slug={drop.slug} title={drop.title} />

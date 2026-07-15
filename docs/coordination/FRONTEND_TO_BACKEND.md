@@ -266,4 +266,20 @@ notification**. It needs:
   `lib/waitlist.ts` + `WaitlistForm` as the client model; replace `joinWaitlist`'s storage with the
   endpoint and treat the server as the source of truth.
 
+### TMS-FBR-008 addendum — pre-order & made-to-order lead time [TMS-F5-003]
+
+The storefront now shows a **made-to-order / pre-order ship estimate** on the product page, cart,
+checkout and drop detail, computed **client-side** in `lib/fulfilment.ts` (working-day production
+lead time; pre-order production starts at the drop's release). This is a **frontend estimate only**:
+
+- The **real ship timeline is server-authoritative** — the checkout quote / order response
+  (TMS-FBR-004) should return a production + delivery estimate (and per-item lead times if garments
+  diverge) so the UI stops guessing.
+- A real **pre-order reservation** (reserve a piece before a drop opens: hold, charge-now vs
+  charge-on-release, cancellation) is a backend concern for the drops API (TMS-FBR-008). Today the
+  UI only _labels_ upcoming/early-access drop pieces as pre-order and routes purchase through the
+  Design Studio / product flow.
+- Suggested fallback: keep `lib/fulfilment.ts` + `MadeToOrderNote` as the presentation; swap the
+  computed window for the server estimate on delivery.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

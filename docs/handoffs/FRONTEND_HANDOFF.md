@@ -22,6 +22,19 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Pre-order & made-to-order (TMS-F5-003) — Verified.** Pure `lib/fulfilment.ts` computes a
+  made-to-order ship window from working-day production lead time (`addWorkingDays` in UTC,
+  `madeToOrderWindow`, `preOrderWindow` — production starts when a drop opens, `isPreOrderStatus`,
+  `madeToOrderSummary`) with **10 unit tests** (weekday-anchored for determinism). A client
+  `MadeToOrderNote` renders the clock-free summary on the server and the absolute "estimated ship"
+  dates after mount (hydration-safe, same pattern as the countdown). Wired into the product
+  configurator (not-sold-out), cart summary, checkout order summary, and the drop detail (a
+  **Pre-order** badge + ships-after-open estimate for upcoming/early-access; made-to-order for live).
+  Verified in the browser: product/cart/checkout show "17 Jul–21 Jul" and the pre-order drop shows
+  "21 Jul–23 Jul, after the drop opens" (correct weekend-skipping maths); no console errors. Full
+  `pnpm check` green (129 storefront tests). Lead-time is a **frontend estimate** — real ship timing
+  is server-authoritative and a real pre-order reservation is a backend concern (TMS-FBR-004/008).
+
 - **Waitlist & back-in-stock (TMS-F5-002) — Verified.** Pure `lib/waitlist.ts` (`waitlistKey`,
   `hasEmail`, non-mutating case-insensitive `addEntry`, `joinWaitlist` validate + persist with an
   idempotent already-joined result; SSR-guarded `localStorage`; reuses `isValidEmail`/`normalizeEmail`)
