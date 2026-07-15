@@ -1,10 +1,11 @@
 'use client';
 
 import { Container, IconButton, cn } from '@tms/ui';
-import { Menu, Search, ShoppingBag, X } from 'lucide-react';
+import { Menu, Search, ShoppingBag, User, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
 import { primaryNav } from '@/lib/nav';
 
@@ -17,6 +18,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { count, ready, openCart } = useCart();
+  const { user, ready: authReady } = useAuth();
 
   const close = useCallback(() => {
     dialogRef.current?.close();
@@ -89,6 +91,13 @@ export function SiteHeader() {
               className="inline-flex size-11 items-center justify-center rounded-[var(--radius-md)] text-ink outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
             >
               <Search className="size-5" aria-hidden />
+            </Link>
+            <Link
+              href={authReady && user ? '/account' : '/login'}
+              aria-label={authReady && user ? `Account — ${user.name}` : 'Sign in'}
+              className="inline-flex size-11 items-center justify-center rounded-[var(--radius-md)] text-ink outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            >
+              <User className="size-5" aria-hidden />
             </Link>
             <div className="relative">
               <IconButton

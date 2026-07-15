@@ -4,7 +4,8 @@ import { Alert, EmptyState, Heading, Price, Skeleton, Text, cn } from '@tms/ui';
 import { Lock, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
 import type { DeliveryOption } from '@/lib/data';
 import {
@@ -52,11 +53,24 @@ const inputClass =
 
 export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOption[] }) {
   const { items, ready, subtotalMinor, estimatedTotalMinor, promotion } = useCart();
+  const { user } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState<CheckoutForm>(EMPTY_CHECKOUT_FORM);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const prefilled = useRef(false);
+
+  // Prefill contact + recipient from the signed-in session (once, only empties).
+  useEffect(() => {
+    if (!user || prefilled.current) return;
+    prefilled.current = true;
+    setForm((f) => ({
+      ...f,
+      contact: { ...f.contact, email: f.contact.email || user.email },
+      delivery: { ...f.delivery, fullName: f.delivery.fullName || user.name },
+    }));
+  }, [user]);
 
   const currency = items[0]?.currency ?? 'NGN';
   const discountMinor = subtotalMinor - estimatedTotalMinor;

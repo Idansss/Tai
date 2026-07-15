@@ -237,7 +237,24 @@ lint, build, visual evidence, docs updated).
     exercises the other states for review (server must own the real status — never a client param).
   - Follow-ups: real payment intent + webhook-verified status + idempotent retry (TMS-FBR-004);
     surface order status history once the orders API + account (TMS-F3-005) land.
-- [ ] **TMS-F3-004** Auth — registration + login (mock session).
+- [x] **TMS-F3-004** Auth — registration + login + account (mock session)
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); audit not run this pass (npm audit endpoint returned a registry-side 410 outage;
+    **no new dependencies added**, so risk is unchanged from the last clean run). Browser pass
+    (desktop + mobile): register (validation → success → session + account created with **no
+    password stored** → redirect to `/account`); duplicate email rejected (case-insensitive);
+    login (unknown-email error; success restores the session); sign-out clears the session, updates
+    the header, and lands home; guest `/account` → `/login?next=/account`; `?next=` sends the user
+    onward (→ `/checkout`); checkout **prefills** email + recipient from the session; header account
+    link reflects state. No console errors.
+  - Scope delivered: pure domain in `lib/auth.ts` (register/login validation, account list +
+    session helpers — **no passwords persisted**) with 6 unit tests; `AuthProvider`
+    (localStorage-backed session, `ready` flag); shared `AuthForm` (login/register, `?next=`
+    redirect, honest preview notice); `/login`, `/register`, protected `/account`
+    (`AccountOverview` — profile, recent order, sign out, "coming soon" tiles). Header gained an
+    account link; checkout prefills from the session. Wrapped the app in `AuthProvider`.
+  - Follow-ups: real secure auth (cookie session) — TMS-FBR-005; feeds TMS-F3-005 (orders / saved
+    designs / wishlist).
 - [ ] **TMS-F3-005** Account — orders list, order detail + tracking, saved designs, wishlist.
 
 ## Later phases

@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F3",
-  "lastVerifiedTask": "TMS-F3-003",
-  "nextRecommendedTask": "TMS-F3-004 (auth) or TMS-F3-005 (account/orders) or TMS-F1-DEF-001",
+  "lastVerifiedTask": "TMS-F3-004",
+  "nextRecommendedTask": "TMS-F3-005 (account: orders/tracking/saved designs/wishlist) or TMS-F1-DEF-001",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-003",
@@ -26,7 +26,8 @@
     "TMS-F2-001",
     "TMS-F3-001",
     "TMS-F3-002",
-    "TMS-F3-003"
+    "TMS-F3-003",
+    "TMS-F3-004"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
@@ -45,8 +46,9 @@
     "storefront:/design-studio options (TMS-FBR-002 / studio config)",
     "storefront:cart/promotion/totals — client localStorage store, mock promos (TMS-FBR-003)",
     "storefront:checkout delivery/quote/order — mock delivery + VAT, local order snapshot (TMS-FBR-004)",
-    "storefront:payment states — mock resolver, no real Flutterwave; needs webhook-verified status (TMS-FBR-004)"
+    "storefront:payment states — mock resolver, no real Flutterwave; needs webhook-verified status (TMS-FBR-004)",
+    "storefront:auth/session/account — mock localStorage session, no real auth or passwords (TMS-FBR-005)"
   ],
-  "buildStatusNote": "F0/F1/F2 + TMS-F3-001/002/003 verified green (pnpm check + browser pass); payment states signed off 2026-07-15",
+  "buildStatusNote": "F0/F1/F2 + TMS-F3-001/002/003/004 verified green (pnpm check + browser pass); auth signed off 2026-07-15. Note: pnpm audit endpoint had a registry 410 outage on the F3-004 pass (no new deps added).",
   "lastUpdated": "2026-07-15"
 }

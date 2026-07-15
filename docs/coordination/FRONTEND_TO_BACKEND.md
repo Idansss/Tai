@@ -88,4 +88,22 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
   verifiable token — never trust a client `?outcome=` param), and idempotent retry. No money is
   moved client-side today.
 
+## Request TMS-FBR-005 — Auth / session / customer account
+
+- Frontend task: F3 auth (`/login`, `/register`), account (`/account`), and checkout prefill.
+- Required endpoints (proposed): `POST /api/v1/auth/register`, `POST /api/v1/auth/login`,
+  `POST /api/v1/auth/logout`, `GET /api/v1/auth/session` (current user), plus password reset later.
+- Required request fields: register — `name`, `email`, `password`; login — `email`, `password`.
+- Required response fields: session `user` (`id`, `name`, `email`), set via an **httpOnly session
+  cookie** (never a client-stored token); typed errors for duplicate email / invalid credentials.
+- Reason: the storefront currently runs a **mock session** — accounts are a local `{email,name}`
+  list in `localStorage` (`tms.accounts.v1` / `tms.session.v1`) with **no passwords stored and no
+  real authentication** (login only checks the email exists). This must move to real, secure
+  server auth before launch. The account page + checkout prefill consume `useAuth().user`.
+- Blocking: no (auth builds on the mock `AuthProvider`; swap `register`/`login`/`logout`/session
+  hydration to the API on delivery).
+- Suggested fallback: keep `lib/auth.ts` validators + `AuthProvider` shape; replace its storage
+  calls with the endpoints and hydrate the session from the cookie-backed `GET /session`. Feeds
+  TMS-F3-005 (account: orders, saved designs, wishlist).
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

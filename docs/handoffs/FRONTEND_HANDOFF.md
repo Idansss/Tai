@@ -2,13 +2,25 @@
 
 ## Current frontend phase
 
-F3 — Commerce & account. TMS-F3-001 (cart) + TMS-F3-002 (checkout) + TMS-F3-003 (payment states)
-**Verified** (2026-07-15). Branch `claude/f3-commerce`
+F3 — Commerce & account. TMS-F3-001 (cart) + TMS-F3-002 (checkout) + TMS-F3-003 (payment states) +
+TMS-F3-004 (auth) **Verified** (2026-07-15). Branch `claude/f3-commerce`
 is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`**
 — merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR with base
 `claude/f2-design-studio`. Nothing is merged to `main` yet.
 
 ### F3 progress this session
+
+- **Auth + account (TMS-F3-004).** Mock **client session** — `lib/auth.ts` (register/login
+  validation, account list + session helpers, **no passwords stored**, 6 unit tests) + `AuthProvider`
+  (localStorage, `ready` flag). Shared `AuthForm` powers `/login` + `/register` (`?next=` redirect,
+  honest preview notice); protected `/account` (`AccountOverview` — profile, recent order, sign out,
+  "coming soon" tiles) redirects guests to `/login?next=/account`. Header gained an account link that
+  reflects sign-in state; checkout **prefills** email + recipient from the session. App wrapped in
+  `AuthProvider`. Login only checks the email exists (nothing to verify a password against) — real
+  secure auth is **TMS-FBR-005**; feeds TMS-F3-005.
+- Verified: full `pnpm check` green; browser pass on register/login/logout/duplicate/unknown-email/
+  protected-redirect/next/prefill (desktop + mobile); no console errors. (Audit skipped this pass —
+  npm audit endpoint 410 outage; no new deps added.)
 
 - **Payment states (TMS-F3-003).** `/checkout/payment` (`PaymentProcessing`, Suspense-wrapped for
   `useSearchParams`) simulates a provider round-trip then resolves to **success** (order
@@ -106,7 +118,7 @@ is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude
 ## Tasks verified
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
--005, -007, -008, -009; TMS-F2-001; TMS-F3-001; TMS-F3-002; **TMS-F3-003**.
+-005, -007, -008, -009; TMS-F2-001; TMS-F3-001; TMS-F3-002; TMS-F3-003; **TMS-F3-004**.
 
 ## In-progress task
 
@@ -114,9 +126,9 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F3-004** (auth: registration/login mock session) **or** **TMS-F3-005** (account: orders list,
-order detail + tracking, saved designs, wishlist — the order snapshots + status from F3-003 feed
-straight into it) **or** the tracked soft-404 defect TMS-F1-DEF-001.
+**TMS-F3-005** (account: orders list, order detail + tracking, saved designs, wishlist — the
+`AuthProvider` session + the F3-003 order snapshots/status feed straight into it) **or** the tracked
+soft-404 defect TMS-F1-DEF-001.
 
 ## Routes completed
 
