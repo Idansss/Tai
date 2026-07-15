@@ -109,12 +109,21 @@ lint, build, visual evidence, docs updated).
   - Evidence: `components/artwork/artwork-card.tsx`; reused by homepage, gallery and related.
     (ProductCard/CollectionCard follow with `/shop` + `/collections` build-out.)
 
-- [ ] **TMS-F1-006** Editorial & policy route scaffolds
-  - Status: Implemented
-  - Acceptance met: real accessible placeholder pages (single h1, metadata, landmarks, forward
-    links) for collections, shop, design-studio, about, artist, stories, delivery, returns,
-    size-guide, care, faq, contact, privacy, terms, cookies — so navigation never 404s.
-  - **Outstanding for Verified:** real content/behaviour per route (later F1/F5).
+- [x] **TMS-F1-006** Editorial & policy routes — real content
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); served build smoke test — all 12 routes return **200 with real content** (delivery
+    shows "36 states"/"Production:"/"made to order"; size-guide renders the measurements table; FAQ
+    shows Flutterwave) and **no** leftover "being built in phase" placeholder text on any of them.
+  - Scope delivered: a shared `ContentPage` layout (landmarks, single h1, readable measure, consistent
+    section typography, forward links) plus **real, brand-consistent copy** for all 12 editorial/policy
+    routes — **about, artist, stories** (editorial); **delivery, returns, size-guide, care, faq,
+    contact** (help — size-guide has a real measurements table, faq a native `<details>` accordion,
+    contact real studio channels); **privacy, terms, cookies** (legal — plain-language, each carrying an
+    honest "working draft, to be reviewed by legal counsel before launch, not legal advice" note). The
+    now-unused `PlaceholderPage` component was removed. (The `collections`/`shop`/`design-studio` routes
+    named in the old scaffold list already have real content from F1-008/009 + F2.)
+  - Follow-ups: a full editorial journal for `/stories`, a working contact form + live chat, and
+    legal-reviewed final policy copy before launch.
 
 - [x] **TMS-F1-007** Site-wide search
   - Status: Verified

@@ -20,6 +20,7 @@
     "TMS-F1-003",
     "TMS-F1-004",
     "TMS-F1-005",
+    "TMS-F1-006",
     "TMS-F1-007",
     "TMS-F1-008",
     "TMS-F1-009",
@@ -37,7 +38,7 @@
     "TMS-F4-006"
   ],
   "inProgressTasks": [],
-  "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010", "TMS-F1-006"],
+  "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010"],
   "blockedTasks": [],
   "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
   "buildStatus": "passing",
@@ -65,6 +66,6 @@
     "admin:error centre (safe integration failures — correlation id + resolution lifecycle, no stack traces/secrets) + customers (derived from orders) + analytics (daily series/status mix/top lists derived from orders) — typed mock provider + local state, no admin ops/customer/analytics API (TMS-FBR-007)"
   ],
   "branch": "claude/f4-admin",
-  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + all F4 (001–006) verified green (pnpm check this session; served /errors + /customers + /customers/[id] + /analytics return 200). F3 + F4 complete; nothing merged to main yet. Admin Vitest suite now 116 tests. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added through F4-006, so risk is unchanged from the last clean run.",
-  "lastUpdated": "2026-07-15T20:00:00Z"
+  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + all F4 (001–006) verified green (pnpm check this session). F3 + F4 complete; nothing merged to main yet. TMS-F1-006 (real editorial/policy content across 12 routes) now Verified — served content confirmed real, no placeholder text. Admin Vitest suite 116 tests; storefront 89. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added, so risk is unchanged from the last clean run.",
+  "lastUpdated": "2026-07-15T20:30:00Z"
 }
