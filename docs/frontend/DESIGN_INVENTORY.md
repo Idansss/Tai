@@ -14,9 +14,11 @@ source for _content, structure, and product model_. Base44 is treated strictly a
 _visual-language_ reference — we adopt its strongest typographic and palette qualities and
 discard its weaknesses (borderline muted-text contrast, generic layout).
 
-Screenshot capture repeatedly timed out in the automation pane; exact computed design tokens
-were extracted instead (recorded below), which is more precise than pixel captures. Re-capture
-of PNG breakpoints under `docs/reference/base44/` is tracked as a follow-up (TMS-F0-002).
+Exact computed design tokens were extracted (recorded below), which is more precise than pixel
+captures. PNG breakpoint screenshots are now captured under `docs/reference/base44/`
+(4 viewports, 2026-07-15, via Playwright/Chromium) — but note they document the **mismatched
+"moda.studio" template** the URL currently serves, not the target design; see that folder's README.
+This closes TMS-F0-002.
 
 ## Typography
 

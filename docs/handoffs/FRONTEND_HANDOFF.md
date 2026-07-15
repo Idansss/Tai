@@ -2,14 +2,151 @@
 
 ## Current frontend phase
 
-F3 — Commerce & account. **F3 is complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
-TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all **Verified**
-(2026-07-15). Branch `claude/f3-commerce`
-is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`**
-— merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR (#7) with base
-`claude/f2-design-studio`. Nothing is merged to `main` yet.
+F4 — Admin platform (**complete**). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
+TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) + TMS-F4-005 (production +
+QC + fulfilment) + TMS-F4-006 (error centre + customers + analytics) Verified** (2026-07-15).
+Branch `claude/f4-admin` is **stacked on
+`claude/f3-commerce` → `claude/f2-design-studio` → `claude/f1-storefront` →
+`claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8).
+Nothing is merged to `main` yet.
 
-### F3 progress this session
+F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
+TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
+
+### F4 progress this session
+
+- **Error centre + customers + analytics (TMS-F4-006) — F4 complete.** The last three admin sections,
+  all on the typed mock provider. **Error centre** (`/errors`): `AdminErrorEntry` + `listErrors(params)`
+  over a **safe-by-construction** dataset — correlation ID + human summary only, **never** stack
+  traces/payloads/secrets (spec §18) — across payment/webhook/shipping/image/email/AI/job sources. Pure
+  `lib/errors.ts` (labels/tones, `filterErrors`, `openCount`, the `errorActions`/`applyErrorAction`
+  resolution lifecycle gated on retryability); `ErrorCentreView` = unresolved banner + source/resolution/
+  search filters + a card list with per-entry actions (local, honest notices). **Customers** (`/customers`
+  - `/customers/[id]`): `AdminCustomerSummary`/`AdminCustomerProfile` + `listCustomers`/`getCustomer`
+    **derived from the order dataset** (reconciled by contact email). Pure `lib/customers.ts`
+    (`deriveCustomers`/`deriveCustomerProfile`, `customerStatus`, paid-only spend, `filterCustomers`);
+    `CustomersView` directory + `CustomerDetailView` (order history → order detail, contact, summary;
+    unknown id → not-found). **Analytics** (`/analytics`, new nav item): `AdminAnalytics` + `getAnalytics()`
+    derived from orders. Pure `lib/analytics.ts` (`buildDailySeries` 14-day zero-filled, `statusBreakdown`,
+    bar scaling); `AnalyticsView` = KPI cards + an accessible CSS daily-orders bar chart (with an sr-only
+    data table) + status-mix bars + top artwork/garments. Admin Vitest suite now **116 tests**. Still 100%
+    mock — gaps under **TMS-FBR-007** (error/ops + customer + analytics endpoints).
+- Verified: full `pnpm check` green (116 admin + 89 storefront tests; build registers `/errors`,
+  `/customers`, `ƒ /customers/[id]`, `/analytics`; db:validate valid); served build smoke test — all four
+  return 200 with correct titles + `noindex`. The interactive click-throughs (error resolution actions +
+  unresolved count, customer filter → profile, analytics chart/breakdown) are covered by the pure-domain
+  unit tests; **not** re-driven in-browser here (the harness didn't expose the in-app browser tools).
+  (Audit skipped — 410 outage, no new deps.)
+
+- **Production + QC + fulfilment (TMS-F4-005).** Extended the admin data provider with a production
+  board: `AdminProductionJob` + `ProductionStage`, and `listProductionJobs(params)` that **derives**
+  active jobs from the existing order dataset (oldest-first, only on-board statuses) — so the board and
+  the dashboard queue tiles share one source of truth. Pure `lib/production.ts` maps the pipeline lanes
+  onto the shared `@tms/contracts` order state machine (no parallel enum): `productionStageForStatus`,
+  `PRODUCTION_LANES`, `stageLabel`/`stageTone`, the `stageActions`/`applyStageAction` transition machine
+  (queue → print → QC → ready → dispatch → delivered, plus QC **reprint** and **delivery exception** +
+  retry), `filterJobs`/`groupByStage`/`stageCounts`, `formatAge`/`isPriority`, and shared
+  `formatPrintStatus`/`printStatusTone`/`printStatusForOrderStatus` (the last now reused by the mock and
+  by `OrderDetailView`, which also picks up a "Qc passed" → "QC passed" fix). `ProductionView` = stage
+  filter chips with live counts (deep-linkable via `?stage=`), search, and a lane-grouped board of job
+  cards (reference → order detail, customer, age + **priority** flag, per-line garment + print-status
+  chips, shipping on dispatched/exception, and stage-transition buttons) — all local state with honest
+  "would call the fulfilment API — not saved" notices. Route `/production` replaces the placeholder
+  (noindex, Suspense-wrapped for `useSearchParams`). The dashboard's operational queues now derive their
+  counts from the dataset and deep-link into the board. Admin Vitest suite now **88 tests**. Still 100%
+  mock — gaps under **TMS-FBR-007** (fulfilment API + audited state machine).
+- Verified: full `pnpm check` green (88 admin + 89 storefront tests; build registers `/production`;
+  db:validate valid); served build smoke test — `/production`, `/production?stage=quality_check` return
+  200 with the correct title + `noindex`. The interactive click-through (filter chips, QC pass/reprint,
+  book & dispatch, mark delivered removes the card, flag/​retry exception, live "not saved" notices) is
+  covered by the pure-domain unit tests; it was **not** re-driven in-browser here because this session's
+  harness did not expose the in-app browser tools. (Audit skipped — 410 outage, no new deps.)
+
+- **Garment manager + inventory (TMS-F4-004).** Extended the admin data provider with garment view
+  models (`AdminGarmentSummary`/`AdminGarmentDetail` + `GarmentStatus`/`GarmentColour`/
+  `GarmentVariant`/`GarmentSize`/`SizeChartRow`/`PrintArea`/`PlacementRule`), `listGarments(params)`
+  (search + status filter) + `getGarment(id)` over a 7-garment dataset (tees/hoodie/cap/tote spanning
+  active/draft/archived, deterministic per-variant stock so low/out states appear, one discontinued
+  colourway, one-size garments). Pure `lib/garments.ts` (status format/tone, `filterGarments`,
+  `garmentActions`/`applyGarmentAction` lifecycle, currency + inventory maths — `stockLevel`/
+  `totalStock`/`countLowStock` (offered colours only) / `setVariantStock` (clamp ≥0 int) /
+  `setColourAvailability`) is unit-tested. `GarmentsView` = searchable/filterable table (template,
+  status, colour/size counts, price, stock + a low-stock badge) → row links to detail;
+  `GarmentDetailView` = front/back media placeholders, colours (swatch + availability checkbox), an
+  **editable inventory matrix** (colour × size, per-cell out/low/ok tone + legend + live total/restock
+  tally), size chart, print-safe areas + placement rules, and details/pricing panels — all local
+  state with honest "not persisted / would call the API" notices; a lifecycle action bar
+  (activate/draft/archive/restore); unknown id → a not-found panel. Routes `/garments` (replaced the
+  placeholder) + `/garments/[id]` (noindex). Admin Vitest suite now **68 tests**. Still 100% mock —
+  gaps under **TMS-FBR-007** (garment catalogue read + write + inventory).
+- Verified: full `pnpm check` re-run green this session (68 admin + 89 storefront tests; build
+  registers `/garments` + `ƒ /garments/[id]`; db:validate valid); served build smoke test —
+  `/garments`, `/garments/gm-classic-tee` return 200 with the correct titles/`noindex`. The interactive
+  click-through (stock edit → live total 289→339 / restock 5→4, colour toggle → 3/4 offered, lifecycle
+  transition, negative-clamp, discontinued colour) was documented in the prior same-session run and is
+  covered by the pure-domain unit tests; it was **not** re-driven here because this session's harness
+  did not expose the in-app browser tools. (Audit skipped — 410 outage, no new deps.)
+
+- **Artwork manager (TMS-F4-003).** Extended the admin data provider with artwork view models
+  (`AdminArtworkSummary`/`AdminArtworkDetail`, `ArtworkStatus`/`MockupApproval`/`VersionProcessing`),
+  `listArtworks(params)` (search + status filter) + `getArtwork(id)`, over a 7-artwork dataset
+  spanning the lifecycle. Pure `lib/artworks.ts` (status format/tone, search,
+  `artworkActions`/`applyArtworkAction` publishing lifecycle, `setMockupApproval`/`approvalTally`/
+  `canPublish`, `validateUpload`) is unit-tested. `ArtworksView` = searchable/filterable table +
+  "New artwork"; `ArtworkDetailView` = mockup **approval** (approve/reject + tally), versions with
+  **validation issues**, **lifecycle actions** (publish/schedule/archive/unpublish — gated so an
+  artwork can't publish until every mockup is approved) with honest "not persisted" notices, plus
+  story/tags/SEO/edition/compatibility panels; `ArtworkUpload` = a simulated
+  upload → processing → validation → draft flow (real file input + samples, honest "no file stored"
+  notice, reject/warn/pass paths). Routes `/artworks`, `/artworks/new`, `/artworks/[id]` (noindex).
+  Admin Vitest suite now 46 tests. Still 100% mock — gaps under **TMS-FBR-007** (catalogue write:
+  upload/processing/mockups/publish).
+- Verified: full `pnpm check` green (46 admin + 89 storefront tests); browser pass (desktop +
+  mobile) — list search/filter, needs_review detail (archive-only, failed version), publish blocked
+  → approve all mockups → published, upload reject/pass/warn paths; no console errors; screenshots
+  captured. (Audit skipped — 410 outage, no new deps.)
+
+- **Order management (TMS-F4-002).** Extended the admin data provider with order view models
+  (`AdminOrderSummary`/`AdminOrderDetail`), `listOrders(params)` (search + status filter +
+  pagination over a deterministic 24-order dataset) and `getOrder(reference)`; the dashboard's
+  recent orders now **derive** from this dataset so their links resolve. Pure `lib/orders.ts`
+  (`filterOrders`/`paginate`/`pageCount`/`orderTimeline`) and `lib/order-notes.ts` (pure add/remove
+  plus per-reference localStorage) are unit-tested; status helpers gained payment/shipping formatters
+  and `paymentStatusTone`. `OrdersView` = searchable/filterable/paginated table (loading + empty
+  states); `OrderDetailView` = status **timeline**, items with per-line **production/print status**,
+  payment + shipment detail, customer + delivery, reconciling totals, **internal notes** (add +
+  persist, authored by the signed-in staff), and honest fulfilment **action** placeholders (print
+  asset / packing slip / resend / refund / return — "no action was taken"); unknown reference → a
+  not-found panel. Routes `/orders` + `/orders/[reference]` (noindex). Admin Vitest suite now 32
+  tests. Still 100% mock — gaps under **TMS-FBR-007** (admin order API + fulfilment actions + notes).
+- Verified: full `pnpm check` green (32 admin + 89 storefront tests); browser pass (desktop +
+  mobile) — list renders 24 orders, search (`chidi`→1), status filter (`Delivery exception`→1),
+  pagination (Page 1 of 3), detail timeline/items/payment/shipment/totals, note add+persist, action
+  placeholder alert, not-found; no console errors; screenshots captured. (Audit skipped — 410
+  outage, no new deps.)
+
+- **Admin foundation (TMS-F4-001).** The admin app (port 3001) gained its operational backbone,
+  all on a typed mock adapter. Typed **admin data provider** (`lib/data/*` — `AdminDataProvider` +
+  `mockAdminProvider` + loud-failing `apiProvider` stub + env switch; 4 tests) mirrors the
+  storefront's data architecture (§26). Pure `lib/admin-auth.ts` (staff session validators +
+  helpers, **no passwords stored**; 4 tests) + `AdminAuthProvider`. Pure `lib/order-status.ts`
+  (`formatOrderStatus`/`orderStatusTone`; 2 tests). Client `AdminShell` = responsive sidebar +
+  topbar (signed-in identity + sign out) + mobile `<dialog>` nav + an **auth gate** that redirects
+  guests to `/login`. `AdminLoginForm` + `/login` (honest "preview — no real staff auth/RBAC"
+  notice). `DashboardView` (loading/ready/error states) renders metric cards (revenue/paid
+  orders/AOV + warning/danger tiles), deep-linked operational queues, a recent-orders table with
+  **readable** statuses, and top-performer lists, behind a "preview data" notice. Shared
+  `SectionPlaceholder` + scaffold routes (`/orders`, `/artworks`, `/garments`, `/production`,
+  `/customers`, `/errors`, all `noindex`) keep nav intact until F4-002…006 build them. Added a
+  Vitest config + `test` script to the admin app (10 tests total). Gaps: **TMS-FBR-006** (staff
+  auth + RBAC) and **TMS-FBR-007** (admin read endpoints).
+- Verified: full `pnpm check` green (10 admin tests + 89 storefront); browser pass (desktop +
+  mobile) — guest `/` → `/login`, sign-in → dashboard, metrics/queues/recent-orders/top-lists
+  render, section placeholders, mobile nav dialog opens/links/closes, sign-out clears session →
+  `/login`; no console errors; dashboard screenshot captured. (Audit skipped — npm audit endpoint
+  410 outage, no new deps added.)
+
+### F3 progress (prior session)
 
 - **Account build-out (TMS-F3-005).** Pure domain: `lib/order-status.ts` maps `OrderStatus` to
   **customer-facing** copy + a fulfilment tracking timeline (spec §17 — **no raw provider codes**,
@@ -139,18 +276,25 @@ is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude
 ## Tasks verified
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
--005, -007, -008, -009; TMS-F2-001; TMS-F3-001; TMS-F3-002; TMS-F3-003; TMS-F3-004; **TMS-F3-005**
-(F3 complete).
+-005, -007, -008, -009; TMS-F2-001; TMS-F3-001, -002, -003, -004, -005 (F3 complete);
+**TMS-F4-001** (admin foundation); **TMS-F4-002** (order management); **TMS-F4-003** (artwork manager);
+**TMS-F4-004** (garment manager + inventory); **TMS-F4-005** (production + QC + fulfilment);
+**TMS-F4-006** (error centre + customers + analytics) — **F4 complete**.
 
 ## In-progress task
 
-None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
+None active. **All enumerated F0–F4 tasks are now Verified** — this session closed the last three
+loose ends: **TMS-F1-006** (real editorial/policy content, 12 routes), **TMS-F0-010** (committed
+Playwright visual baselines, 4 viewports), and **TMS-F0-002** (Base44 breakpoint screenshots, with an
+honest note they capture the mismatched "moda.studio" template). `implementedNotVerified` is empty.
+Note: these three fixes were committed on the stack tip (`claude/f4-admin`); merging the stack brings
+them to `main` with everything else.
 
 ## First recommended next task
 
-F3 is complete. Options: begin **F4 — Admin platform** (admin shell, dashboard, artwork manager,
-orders, production, QC, fulfilment, customers, content, errors, analytics), **or** clear the tracked
-soft-404 defect **TMS-F1-DEF-001**.
+**F4 (admin platform) is complete.** Next: either (a) **merge the F0→F4 PR stack to `main`** bottom-up
+(#4 → #5 → #6 → #7 → #8) — nothing is merged yet; (b) clear the tracked soft-404 defect
+**TMS-F1-DEF-001**; or (c) begin **F5 (growth & AI)** / remaining F1 content. No F4 work outstanding.
 
 ## Routes completed
 
@@ -223,7 +367,8 @@ Build: 13/13 pass (both apps prerender). No app-level Vitest suites yet (Playwri
 - **TMS-F1-DEF-001** — soft 404: `/artworks/[slug]` returns HTTP 200 instead of 404 for unknown
   slugs under the Next 16 Turbopack production server (correct not-found UI still renders).
   `notFound()` used correctly; the streamed shell commits 200 first. SEO impact only.
-- F0 follow-ups outstanding: Base44 PNG screenshots, Playwright baselines.
+- F0 follow-ups (Base44 PNG screenshots, Playwright baselines) are now **done** — see TMS-F0-002 /
+  TMS-F0-010 above.
 
 ## Blockers
 

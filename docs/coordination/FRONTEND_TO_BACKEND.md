@@ -131,4 +131,93 @@ email**. It needs, on top of the auth endpoints above:
   history by **contact email** so guest orders reconcile on later sign-in — the server should do
   the equivalent association.
 
+## Request TMS-FBR-006 — Staff auth + RBAC (admin) [TMS-F4-001]
+
+- Frontend task: F4 admin console sign-in + route protection (`apps/admin`).
+- Required endpoints (proposed): `POST /api/v1/admin/auth/login`, `POST /api/v1/admin/auth/logout`,
+  `GET /api/v1/admin/auth/session` (current staff user + roles/permissions).
+- Required response fields: staff `user` (`id`, `name`, `email`, `roles[]`/`permissions[]`), set via
+  an **httpOnly session cookie** (never a client-stored token); typed error for invalid credentials.
+- Reason: the admin app currently runs a **mock staff session** — any well-formed sign-in starts a
+  local `{ email, name }` demo session in `localStorage` (`tms.admin.session.v1`), with **no real
+  authentication, roles or passwords**. The `AdminShell` gate simply redirects when no session
+  exists. Real staff auth + **role-based access control** must gate the console (and per-section
+  permissions) before launch.
+- Blocking: no (admin builds on the mock `AdminAuthProvider`; swap `login`/`logout`/session
+  hydration to the API on delivery).
+- Suggested fallback: keep `lib/admin-auth.ts` validators + `AdminAuthProvider` shape; replace its
+  storage calls with the endpoints and hydrate from the cookie-backed `GET /session`; enforce
+  role/permission checks per route/section.
+
+## Request TMS-FBR-007 — Admin read endpoints (dashboard + operations) [TMS-F4-001+]
+
+- Frontend task: F4 admin dashboard (delivered) and the operational sections (orders, artworks,
+  garments, production, customers, errors — F4-002…006).
+- Required endpoints (proposed, dashboard first): `GET /api/v1/admin/dashboard` returning the
+  operational summary — headline metrics (revenue, paid orders, AOV, pending/failed payments,
+  low-stock count), operational queue counts (production, quality check, ready for dispatch,
+  delivery exceptions), ranked lists (top artwork/garment/colours), recent orders (reference,
+  customer, `status` per `OrderStatusSchema`, total), and an open-issues count. Later sections need
+  admin list/detail endpoints for orders, artworks, garments, production jobs, customers and the
+  error centre (each defined as its F4 task lands). **Orders (F4-002, delivered):** the admin lists
+  orders (`GET /api/v1/admin/orders` with search/status/pagination) and opens an order
+  (`GET /api/v1/admin/orders/{reference}` — items + per-line production state, payment, shipment,
+  customer, delivery, totals, status timeline). It also needs **fulfilment actions** (print asset,
+  packing slip, notification resend, refund, return) as real endpoints and **internal notes**
+  (`GET/POST/DELETE /api/v1/admin/orders/{reference}/notes`); today the actions are honest
+  no-op placeholders and notes persist in `localStorage`. **Artworks (F4-003, delivered):** the
+  admin lists/opens artworks (`GET /api/v1/admin/artworks`, `GET /api/v1/admin/artworks/{id}` —
+  story, tags, SEO, edition, versions with processing/validation state, mockups with approval state,
+  garment/placement compatibility) and needs the **catalogue write** surface: upload
+  (`POST /api/v1/admin/artworks` with async processing + validation results), mockup generation +
+  approval (`PATCH …/mockups/{id}`), and the publishing lifecycle
+  (`POST …/{id}/publish|schedule|archive|unpublish`). Today upload is a simulated client flow (no
+  file stored), and lifecycle + approval changes are local state only. **Garments (F4-004,
+  delivered):** the admin lists/opens garments (`GET /api/v1/admin/garments` with search/status
+  filter, `GET /api/v1/admin/garments/{id}` — template, fabric/fit/care, front/back media, colours
+  with per-colourway availability, sizes + a body-measurement size chart, print-safe areas, placement
+  rules, price, and a colour×size **inventory** matrix with on-hand stock). It needs the **catalogue
+  write + inventory** surface: garment create/edit (metadata, colours, sizes, size chart, print areas,
+  placement rules, price, media upload), the publishing lifecycle
+  (`POST …/{id}/activate|archive|restore` + move-to-draft), per-colourway availability toggles, and
+  **stock adjustments** (`PATCH …/{id}/variants/{colourId}/{size}` or a bulk inventory endpoint).
+  Today colours/sizes/media are read-only samples (no real asset store), and stock edits, colour
+  availability toggles and lifecycle changes are local state only (honest "not saved" notices). The
+  per-colour×size availability should also feed the storefront product page (pairs with
+  **TMS-FBR-002**, which currently models size availability globally). **Production / QC / fulfilment
+  (F4-005, delivered):** the admin production board lists active jobs
+  (`GET /api/v1/admin/production` with a `stage` filter — reference, customer, placed date, order
+  status/stage, per-line garment + print state, shipping) and drives **stage transitions** through the
+  audited order state machine (spec §"Operations"): move to production, start printing, send to QC, **QC
+  pass** / **reprint**, book & dispatch, mark delivered, and **flag / retry delivery exception** — as
+  real endpoints (e.g. `POST /api/v1/admin/orders/{reference}/transitions` with `{ to, reason }`), each
+  recording **actor, reason, correlation ID and provider event**. It also needs **print-file (production
+  asset) access** and **per-line QC results** (today the whole order moves as one stage), plus packing
+  slips / carrier booking. Today jobs are derived from the sample order dataset and every transition is
+  local state only (honest "not saved" notices) — no state machine, no audit trail, no production
+  assets. The board reuses the shared `OrderStatus` enum so the mock and a real backend agree on stages.
+  **Error centre + customers + analytics (F4-006, delivered):** three read surfaces. **Error centre** —
+  `GET /api/v1/admin/errors` (integration failures with `source`/`resolution` filters) returning
+  **safe** entries only: a correlation ID, a human summary, severity, resolution state, affected order
+  and retryability — **never stack traces, payloads or secrets** (spec §18); plus resolution actions
+  (retry / investigate / resolve / ignore / reopen) as audited ops endpoints. **Customers** —
+  `GET /api/v1/admin/customers` (search + status) and `GET /api/v1/admin/customers/{id}` (contact, order
+  history, lifetime value, account status, saved-designs count); today these are **derived from the
+  order dataset by contact email** and saved-designs is representative (needs the account API,
+  TMS-FBR-005). **Analytics** — `GET /api/v1/admin/analytics` (date-range KPIs, a daily orders/revenue
+  series, order-status mix, top artwork/garments); today computed client-side from the sample orders
+  over a fixed 14-day window. All three are read-only mock derivations with local-only actions until the
+  endpoints land.
+- Required response fields: money in **minor units** + currency (formatted client-side); statuses
+  as the shared `@tms/contracts` enums so the admin can present readable labels
+  (`formatOrderStatus`) without inventing values.
+- Reason: the admin dashboard currently renders **representative sample data** from a typed mock
+  adapter (`apps/admin/lib/data`) — nothing reflects real operations. All admin read surfaces must
+  move server-side, permission-scoped (TMS-FBR-006).
+- Blocking: no (admin builds on the typed mock provider; swap `adminDataProvider` to the API
+  adapter on delivery).
+- Suggested fallback: keep the `AdminDataProvider` interface + view-model shapes; replace
+  `mockAdminProvider` with `apiProvider` (env switch already wired). The error centre must **never**
+  surface stack traces or secrets (spec §18) — expose correlation IDs + resolution state only.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._
