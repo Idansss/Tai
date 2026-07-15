@@ -159,7 +159,13 @@ email**. It needs, on top of the auth endpoints above:
   delivery exceptions), ranked lists (top artwork/garment/colours), recent orders (reference,
   customer, `status` per `OrderStatusSchema`, total), and an open-issues count. Later sections need
   admin list/detail endpoints for orders, artworks, garments, production jobs, customers and the
-  error centre (each defined as its F4 task lands).
+  error centre (each defined as its F4 task lands). **Orders (F4-002, delivered):** the admin lists
+  orders (`GET /api/v1/admin/orders` with search/status/pagination) and opens an order
+  (`GET /api/v1/admin/orders/{reference}` — items + per-line production state, payment, shipment,
+  customer, delivery, totals, status timeline). It also needs **fulfilment actions** (print asset,
+  packing slip, notification resend, refund, return) as real endpoints and **internal notes**
+  (`GET/POST/DELETE /api/v1/admin/orders/{reference}/notes`); today the actions are honest
+  no-op placeholders and notes persist in `localStorage`.
 - Required response fields: money in **minor units** + currency (formatted client-side); statuses
   as the shared `@tms/contracts` enums so the admin can present readable labels
   (`formatOrderStatus`) without inventing values.

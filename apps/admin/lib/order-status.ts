@@ -1,4 +1,4 @@
-import type { OrderStatus } from '@tms/contracts';
+import type { OrderStatus, PaymentStatus, ShippingStatus } from '@tms/contracts';
 
 /**
  * Admin-side order status presentation. Staff see precise operational states
@@ -9,9 +9,41 @@ import type { OrderStatus } from '@tms/contracts';
 export type StatusTone = 'neutral' | 'success' | 'warning' | 'error' | 'info' | 'accent';
 
 /** Title-case a status enum, e.g. "READY_FOR_DISPATCH" → "Ready for dispatch". */
-export function formatOrderStatus(status: OrderStatus): string {
-  const lower = status.toLowerCase().replace(/_/g, ' ');
+export function formatEnumLabel(value: string): string {
+  const lower = value.toLowerCase().replace(/_/g, ' ');
   return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+export function formatOrderStatus(status: OrderStatus): string {
+  return formatEnumLabel(status);
+}
+
+export function formatPaymentStatus(status: PaymentStatus): string {
+  return formatEnumLabel(status);
+}
+
+export function formatShippingStatus(status: ShippingStatus): string {
+  return formatEnumLabel(status);
+}
+
+export function paymentStatusTone(status: PaymentStatus): StatusTone {
+  switch (status) {
+    case 'SUCCEEDED':
+      return 'success';
+    case 'FAILED':
+    case 'CANCELLED':
+    case 'REVERSED':
+    case 'DISPUTED':
+      return 'error';
+    case 'PENDING':
+    case 'PROCESSING':
+      return 'warning';
+    case 'REFUNDED':
+    case 'PARTIALLY_REFUNDED':
+      return 'info';
+    default:
+      return 'neutral';
+  }
 }
 
 /** Badge tone for a status, grouping the lifecycle into a small palette. */

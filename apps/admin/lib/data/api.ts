@@ -17,4 +17,10 @@ export const apiProvider: AdminDataProvider = {
   getDashboard() {
     return notImplemented('getDashboard');
   },
+  listOrders() {
+    return notImplemented('listOrders');
+  },
+  getOrder() {
+    return notImplemented('getOrder');
+  },
 };

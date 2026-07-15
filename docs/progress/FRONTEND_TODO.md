@@ -326,6 +326,34 @@ customers + analytics.
   - Follow-ups: F4-002…006 build the real sections on the provider; wire to the admin API on
     delivery; real staff auth + role-based access + httpOnly cookie session (TMS-FBR-006).
 
+- [x] **TMS-F4-002** Order management — table (search/filter/pagination) + order detail
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **32 admin unit tests**, up from 10); `pnpm audit` not run (same registry-side 410
+    outage; **no new dependencies added**). Browser pass (desktop + mobile) on the admin app:
+    `/orders` lists 24 sample orders (newest first) with reference/customer/date/status/total;
+    **search** by reference/name/email (`chidi` → 1) and **status filter** (`Delivery exception` →
+    1. both narrow the list; **pagination** (Page 1 of 3) pages through; row + dashboard links open
+       `/orders/[reference]`; the **detail** shows a status **timeline** (Paid → Production queued →
+       Printing · Current), items with per-line **production/print status**, payment detail (method,
+       status, provider ref), shipment detail (carrier/status/tracking/ETA), customer + delivery,
+       reconciling totals (₦23,000 + ₦2,500 + ₦1,725 = ₦27,225), and an **internal note** added +
+       persisted (keyed by reference, authored by the signed-in staff); the fulfilment **actions**
+       (print asset / packing slip / resend / refund / return) are honest placeholders ("no action was
+       taken"); an unknown reference shows a not-found panel. No console errors; screenshots captured.
+  - Scope delivered: extended the admin data provider (`AdminOrderSummary`/`AdminOrderDetail` view
+    models, `listOrders(params)` with search/status/pagination + `getOrder(reference)`; deterministic
+    24-order dataset; dashboard recent-orders now **derive** from it so links resolve); pure
+    `lib/orders.ts` (`filterOrders`/`paginate`/`pageCount`/`orderTimeline`; tested) and
+    `lib/order-notes.ts` (pure add/remove + per-reference localStorage; tested); status helpers gained
+    `formatPaymentStatus`/`formatShippingStatus`/`paymentStatusTone`. New `OrdersView` (search + status
+    select + paginated table + loading/empty states) and `OrderDetailView` (timeline, items+production,
+    payment, shipment, customer, delivery, totals, internal notes, honest action buttons); routes
+    `/orders` + `/orders/[reference]` (noindex). Still 100% mock — order data + fulfilment actions need
+    TMS-FBR-007; notes need a notes endpoint.
+  - Follow-ups: real order list/detail + fulfilment actions (print asset, packing slip, refund,
+    return, notification resend) + notes via the admin API (TMS-FBR-007); URL-synced filters for
+    shareable views; server-side pagination.
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

@@ -36,4 +36,57 @@ describe('mockAdminProvider.getDashboard', () => {
       expect(o.reference.startsWith('TMS-')).toBe(true);
     }
   });
+
+  it('every recent order resolves to a real order detail', async () => {
+    const { recentOrders } = await mockAdminProvider.getDashboard();
+    for (const row of recentOrders) {
+      const detail = await mockAdminProvider.getOrder(row.reference);
+      expect(detail).not.toBeNull();
+      expect(detail?.totalMinor).toBe(row.totalMinor);
+    }
+  });
+});
+
+describe('mockAdminProvider.listOrders', () => {
+  it('paginates the dataset', async () => {
+    const first = await mockAdminProvider.listOrders({ page: 1, pageSize: 10 });
+    expect(first.items).toHaveLength(10);
+    expect(first.total).toBeGreaterThan(10);
+    expect(first.page).toBe(1);
+    // newest first
+    const dates = first.items.map((o) => o.placedAt);
+    expect([...dates].sort((a, b) => b.localeCompare(a))).toEqual(dates);
+  });
+
+  it('filters by status', async () => {
+    const res = await mockAdminProvider.listOrders({ status: 'PAID', pageSize: 100 });
+    expect(res.items.length).toBeGreaterThan(0);
+    expect(res.items.every((o) => o.status === 'PAID')).toBe(true);
+  });
+
+  it('searches by reference and customer', async () => {
+    const byRef = await mockAdminProvider.listOrders({ query: 'TMS-5HWEUR' });
+    expect(byRef.items.map((o) => o.reference)).toContain('TMS-5HWEUR');
+    const byName = await mockAdminProvider.listOrders({ query: 'ada', pageSize: 100 });
+    expect(byName.items.some((o) => o.customerName.toLowerCase().includes('ada'))).toBe(true);
+  });
+});
+
+describe('mockAdminProvider.getOrder', () => {
+  it('returns full detail for a known reference', async () => {
+    const order = await mockAdminProvider.getOrder('TMS-5HWEUR');
+    expect(order).not.toBeNull();
+    expect(order?.items.length).toBeGreaterThan(0);
+    expect(order?.payment.providerReference).toBeTruthy();
+    // totals add up: subtotal - discount + delivery + tax = total
+    if (order) {
+      expect(order.subtotalMinor - order.discountMinor + order.deliveryMinor + order.taxMinor).toBe(
+        order.totalMinor,
+      );
+    }
+  });
+
+  it('returns null for an unknown reference', async () => {
+    expect(await mockAdminProvider.getOrder('TMS-NOPE00')).toBeNull();
+  });
 });

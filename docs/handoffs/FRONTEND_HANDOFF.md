@@ -2,15 +2,34 @@
 
 ## Current frontend phase
 
-F4 — Admin platform (in progress). **TMS-F4-001 (admin foundation) Verified** (2026-07-15).
-Branch `claude/f4-admin` is **stacked on `claude/f3-commerce` → `claude/f2-design-studio` →
-`claude/f1-storefront` → `claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) →
-F3 (#7) first, then F4. Nothing is merged to `main` yet.
+F4 — Admin platform (in progress). **TMS-F4-001 (admin foundation) + TMS-F4-002 (order management)
+Verified** (2026-07-15). Branch `claude/f4-admin` is **stacked on `claude/f3-commerce` →
+`claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`** — merge F0 (#4)
+→ F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8). Nothing is merged to `main` yet.
 
 F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
 
 ### F4 progress this session
+
+- **Order management (TMS-F4-002).** Extended the admin data provider with order view models
+  (`AdminOrderSummary`/`AdminOrderDetail`), `listOrders(params)` (search + status filter +
+  pagination over a deterministic 24-order dataset) and `getOrder(reference)`; the dashboard's
+  recent orders now **derive** from this dataset so their links resolve. Pure `lib/orders.ts`
+  (`filterOrders`/`paginate`/`pageCount`/`orderTimeline`) and `lib/order-notes.ts` (pure add/remove
+  plus per-reference localStorage) are unit-tested; status helpers gained payment/shipping formatters
+  and `paymentStatusTone`. `OrdersView` = searchable/filterable/paginated table (loading + empty
+  states); `OrderDetailView` = status **timeline**, items with per-line **production/print status**,
+  payment + shipment detail, customer + delivery, reconciling totals, **internal notes** (add +
+  persist, authored by the signed-in staff), and honest fulfilment **action** placeholders (print
+  asset / packing slip / resend / refund / return — "no action was taken"); unknown reference → a
+  not-found panel. Routes `/orders` + `/orders/[reference]` (noindex). Admin Vitest suite now 32
+  tests. Still 100% mock — gaps under **TMS-FBR-007** (admin order API + fulfilment actions + notes).
+- Verified: full `pnpm check` green (32 admin + 89 storefront tests); browser pass (desktop +
+  mobile) — list renders 24 orders, search (`chidi`→1), status filter (`Delivery exception`→1),
+  pagination (Page 1 of 3), detail timeline/items/payment/shipment/totals, note add+persist, action
+  placeholder alert, not-found; no console errors; screenshots captured. (Audit skipped — 410
+  outage, no new deps.)
 
 - **Admin foundation (TMS-F4-001).** The admin app (port 3001) gained its operational backbone,
   all on a typed mock adapter. Typed **admin data provider** (`lib/data/*` — `AdminDataProvider` +
@@ -164,7 +183,7 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
 -005, -007, -008, -009; TMS-F2-001; TMS-F3-001, -002, -003, -004, -005 (F3 complete);
-**TMS-F4-001** (admin foundation).
+**TMS-F4-001** (admin foundation); **TMS-F4-002** (order management).
 
 ## In-progress task
 
@@ -172,10 +191,10 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F4-002 — Admin order management** (searchable/filterable order table, pagination, order
-detail with payment/customer/production/shipment detail, status timeline, internal notes and
-fulfilment actions) on the admin data provider. Then F4-003…006. **Or** clear the tracked soft-404
-defect **TMS-F1-DEF-001**.
+**TMS-F4-003 — Admin artwork manager** (list, upload with progress/processing/validation states,
+mockup/preview approval, publish/schedule/archive, SEO + edition fields) on the admin data provider.
+Then F4-004 (garments + inventory), F4-005 (production + QC + fulfilment), F4-006 (error centre +
+customers + analytics). **Or** clear the tracked soft-404 defect **TMS-F1-DEF-001**.
 
 ## Routes completed
 
