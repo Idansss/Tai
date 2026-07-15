@@ -170,11 +170,27 @@ lint, build, visual evidence, docs updated).
 
 ### Known defects
 
-- **TMS-F1-DEF-001** — `/artworks/[slug]` renders the correct not-found UI for unknown slugs but
-  returns **HTTP 200 instead of 404** under the Next 16 Turbopack production server (soft 404).
-  `notFound()` is used correctly in both the page and `generateMetadata`; the streamed shell
-  commits a 200 before `notFound()` resolves. Impacts SEO (§25). Next step: confirm against a
-  Next patch / non-Turbopack build, or add a status workaround. UI/UX is unaffected.
+- **TMS-F1-DEF-001** — soft 404 on catalogue detail routes. **Fixed for production hosting**
+  (2026-07-15) and root-caused. `/artworks/[slug]`, `/collections/[slug]` and `/products/[slug]`
+  now use `generateStaticParams` + `export const dynamicParams = false`, so all valid detail
+  pages are prerendered (`●` SSG) and the build records **`fallback: false`** for each dynamic
+  route — which returns a **genuine HTTP 404** for unknown slugs on static/CDN/edge hosting.
+  All three list off the finite mock catalogue today (swap to the real API under TMS-FBR-001/002).
+  - **Root cause (corrected):** the earlier note blamed Turbopack — **wrong**. A **webpack**
+    production build behaves identically, so this is general Next 16 App Router behavior, not a
+    Turbopack bug. On the self-hosted `next start` Node server, a *matched* dynamic route that
+    resolves to not-found is rendered dynamically and the streamed response commits **200**
+    before the status can be set; only *completely unmatched* paths (e.g. `/totally-unknown`) get
+    the routing-layer 404 (verified: root not-found → 404, dynamic-slug not-found → 200).
+  - **Residual (verified):** under `next start` the three routes still return **200** for unknown
+    slugs (the styled not-found UI renders correctly). `NextResponse.rewrite` — with or without a
+    `status: 404` init — does **not** override the rendered-page status, so there is no clean
+    middleware fix that preserves the styled page; only a bare `new NextResponse(body, {status:404})`
+    would, at the cost of the styled UI. Given the fix yields correct 404s on CDN/edge deployment
+    (`fallback: false`), the residual is a self-hosted-serving artifact, not a code defect. SEO-only;
+    UI/UX unaffected. Re-verify the 404 status on the chosen production host; if the app is
+    self-hosted behind `next start`, add a lightweight slug-guard (middleware returning a real 404
+    for unknown catalogue slugs, or a reverse-proxy rule) before launch.
 
 ## Phase F2 — Design Studio (TMS-F2-001 done)
 

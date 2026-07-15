@@ -372,9 +372,16 @@ Build: 13/13 pass (both apps prerender). No app-level Vitest suites yet (Playwri
 
 ## Known defects
 
-- **TMS-F1-DEF-001** — soft 404: `/artworks/[slug]` returns HTTP 200 instead of 404 for unknown
-  slugs under the Next 16 Turbopack production server (correct not-found UI still renders).
-  `notFound()` used correctly; the streamed shell commits 200 first. SEO impact only.
+- **TMS-F1-DEF-001** — soft 404 on catalogue detail routes. **Fixed for production hosting**
+  (2026-07-15): `/artworks/[slug]`, `/collections/[slug]` and `/products/[slug]` now use
+  `generateStaticParams` + `dynamicParams = false` (build records `fallback: false`), so unknown
+  slugs return a **genuine 404 on static/CDN/edge hosting** and all valid pages are prerendered.
+  Root cause corrected: **not Turbopack-specific** — a webpack build behaves identically; it's
+  general Next 16 `next start` behavior where a matched dynamic route resolving to not-found
+  streams a 200. **Residual (verified):** self-hosted `next start` still returns 200 for unknown
+  slugs (styled not-found UI renders); no `NextResponse.rewrite` variant overrides the rendered
+  status. If self-hosting behind `next start`, add a middleware/proxy slug-guard before launch.
+  SEO-only; UI/UX unaffected. See FRONTEND_TODO.md for the full write-up.
 - F0 follow-ups (Base44 PNG screenshots, Playwright baselines) are now **done** — see TMS-F0-002 /
   TMS-F0-010 above.
 

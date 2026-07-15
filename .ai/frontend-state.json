@@ -42,7 +42,7 @@
   "inProgressTasks": [],
   "implementedNotVerified": [],
   "blockedTasks": [],
-  "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
+  "knownDefects": ["TMS-F1-DEF-001 (soft 404) — FIXED for production hosting: /artworks|/collections|/products/[slug] now generateStaticParams + dynamicParams=false (fallback:false → genuine 404 on static/CDN/edge). Root cause corrected: NOT Turbopack-specific (webpack build identical) — general Next 16 next-start behavior. Residual: self-hosted next start still returns 200 for unknown slugs (styled not-found renders); no NextResponse.rewrite variant overrides rendered status. Add a middleware/proxy slug-guard if self-hosting."],
   "buildStatus": "passing",
   "testStatus": "passing",
   "visualRegressionStatus": "baselines-committed (4 viewports, homepage; Windows-rendered, not in CI)",

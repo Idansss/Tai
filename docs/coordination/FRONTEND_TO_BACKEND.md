@@ -19,6 +19,13 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
 - Reason: artwork-first gallery and gallery-style detail pages are core F1 surfaces.
 - Blocking: no (F0 uses mock adapter; F1 build proceeds on mock).
 - Suggested fallback: typed `mockProvider` fixtures; swap to `apiProvider` on delivery.
+- **SSG note (TMS-F1-DEF-001 fix):** `/artworks/[slug]` (and `/collections/[slug]`,
+  `/products/[slug]` under TMS-FBR-002) now enumerate valid slugs via `generateStaticParams` +
+  `dynamicParams = false` so unknown slugs 404 correctly. When these read endpoints land, the
+  build will call the **list** endpoint to enumerate slugs. If the catalogue must change without a
+  redeploy, we'll move to ISR (`dynamicParams = true` + `revalidate`, or on-demand revalidation) —
+  so the list endpoint should be buildtime-callable and, ideally, support a webhook/tag for
+  on-demand revalidation on publish/unpublish.
 
 ## Request TMS-FBR-002 — Product / garment read
 

@@ -10,6 +10,21 @@ interface Params {
   params: Promise<{ slug: string }>;
 }
 
+// The artwork catalogue is a finite, enumerable set, so we statically generate
+// every detail page and reject any slug outside it. `dynamicParams = false`
+// makes an unknown slug a *genuine* 404 at the routing layer — resolved before
+// any streaming begins — which fixes TMS-F1-DEF-001 (the soft 404 where the
+// streamed shell committed HTTP 200 before notFound() resolved under Turbopack).
+// When the real catalogue API lands (TMS-FBR-001), generateStaticParams will
+// enumerate from it; switch to ISR (`dynamicParams = true` + `revalidate`) only
+// if on-demand slugs must resolve without a rebuild.
+export const dynamicParams = false;
+
+export async function generateStaticParams() {
+  const { items } = await dataProvider.listArtworks({ limit: 100 });
+  return items.map((artwork) => ({ slug: artwork.slug }));
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const artwork = await dataProvider.getArtwork(slug);

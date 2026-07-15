@@ -9,6 +9,19 @@ interface Params {
   params: Promise<{ slug: string }>;
 }
 
+// Finite, enumerable catalogue: statically generate every product page and
+// reject anything else. `dynamicParams = false` makes an unknown slug a genuine
+// 404 (fallback:false → real 404 status on static/CDN hosting), which is the
+// idiomatic Next fix for the soft-404 tracked as TMS-F1-DEF-001. When the
+// product API lands (TMS-FBR-002), enumerate from it here; switch to ISR only
+// if slugs must resolve without a rebuild.
+export const dynamicParams = false;
+
+export async function generateStaticParams() {
+  const products = await dataProvider.listProducts();
+  return products.map((product) => ({ slug: product.slug }));
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const product = await dataProvider.getProduct(slug);
