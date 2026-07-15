@@ -10,6 +10,7 @@ import type {
   ProductDetail,
   ProductSummary,
   StorefrontDataProvider,
+  StudioOptions,
 } from './types';
 
 const COLOUR_PALETTE: Record<string, string> = {
@@ -331,5 +332,27 @@ export const mockProvider: StorefrontDataProvider = {
   async getProduct(slug: string): Promise<ProductDetail | null> {
     const seed = productSeeds.find((p) => p.slug === slug);
     return delay(seed ? toProductDetail(seed) : null);
+  },
+
+  async getStudioOptions(): Promise<StudioOptions> {
+    return delay({
+      colours: Object.entries(COLOUR_PALETTE).map(([name, hex]) => ({
+        name,
+        hex,
+        available: true,
+      })),
+      sizes: SIZES,
+      placements: [
+        { id: 'left-chest', label: 'Left chest', area: 'front', x: 33, y: 30 },
+        { id: 'centre-chest', label: 'Centre chest', area: 'front', x: 50, y: 38 },
+        { id: 'full-front', label: 'Full front', area: 'front', x: 50, y: 52 },
+        { id: 'back', label: 'Back', area: 'back', x: 50, y: 42 },
+      ],
+      scalePresets: [
+        { id: 'small', label: 'Small', widthPct: 20 },
+        { id: 'medium', label: 'Medium', widthPct: 44 },
+        { id: 'large', label: 'Large', widthPct: 64 },
+      ],
+    });
   },
 };

@@ -52,6 +52,17 @@ describe('mockProvider products', () => {
   });
 });
 
+describe('mockProvider studio options', () => {
+  it('returns colours, sizes, placements and scale presets', async () => {
+    const options = await mockProvider.getStudioOptions();
+    expect(options.colours.length).toBeGreaterThan(0);
+    expect(options.sizes.length).toBeGreaterThan(0);
+    expect(options.placements.some((p) => p.area === 'front')).toBe(true);
+    expect(options.placements.some((p) => p.area === 'back')).toBe(true);
+    expect(options.scalePresets.every((s) => s.widthPct > 0 && s.widthPct <= 100)).toBe(true);
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

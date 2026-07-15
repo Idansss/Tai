@@ -158,6 +158,28 @@ lint, build, visual evidence, docs updated).
   commits a 200 before `notFound()` resolves. Impacts SEO (§25). Next step: confirm against a
   Next patch / non-Turbopack build, or add a status workaround. UI/UX is unaffected.
 
+## Phase F2 — Design Studio (TMS-F2-001 done)
+
+- [x] **TMS-F2-001** Design Studio shell + guided flow + 2D preview + share
+  - Status: **Verified** (2026-07-14) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate only, below threshold);
+    browser pass on `/design-studio`: colour retint (Slate→Black), placement/scale move the overlay
+    (left-chest/small: 33%/30%/20%w), front/back toggle hides the front-placed artwork with the
+    "on the other side" hint, and the pre-filled share URL restores full state. No console errors;
+    keyboard focus, `aria-pressed`, live region and skip link all present.
+  - Scope delivered: `/design-studio` guided flow (artwork → garment → colour → size → placement →
+    scale) in a dark-gallery `DesignStudio` client component; live 2D DOM preview (colour-tinted
+    garment, positioned artwork overlay by placement + scale, print-area guide, front/back toggle,
+    "artwork is on the other side" hint); summary with price; honest add-to-bag status (no fake
+    cart, F3); **shareable config** via URL (`Copy share link` + resume from query params) with a
+    pure, tested codec (`parseStudioParams`/`buildStudioQuery`/`isStudioConfigComplete`, round-trip
+    tested); loading state. Provider gained `getStudioOptions()` (colours/sizes/placements/scale) +
+    api stub + 1 provider test.
+  - Acceptance criteria to confirm at Verified: `pnpm check` green; keyboard + a11y pass; live
+    preview updates on every control; share link round-trips; mobile layout; visual evidence.
+  - Follow-ups: `/design-studio/[configurationId]` resume route; contrast warning + undo; promote
+    ColourSwatch/SizeSelector/preview into `packages/ui`; real placement coords/imagery via backend.
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

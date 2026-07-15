@@ -38,4 +38,7 @@ export const apiProvider: StorefrontDataProvider = {
   getProduct() {
     return notImplemented('getProduct');
   },
+  getStudioOptions() {
+    return notImplemented('getStudioOptions');
+  },
 };
