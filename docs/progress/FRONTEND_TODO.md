@@ -57,12 +57,19 @@ lint, build, visual evidence, docs updated).
   - Evidence: token-contrast unit test passes AA (light+dark); axe assertions on primitives
     pass; focus-visible ring + reduced-motion handling in `theme.css`; skip link present.
 
-- [ ] **TMS-F0-010** Visual-regression & e2e harness (Playwright)
-  - Status: Implemented
-  - Acceptance met: Playwright configured (4 breakpoints, motion frozen, snapshot template);
-    smoke + visual spec written; documented in `VISUAL_REGRESSION.md`.
-  - **Outstanding for Verified:** run Playwright to generate committed baselines (needs a
-    browser binary install + running server; not executed this session).
+- [x] **TMS-F0-010** Visual-regression & e2e harness (Playwright)
+  - Status: **Verified** (2026-07-15) — Chromium installed, the storefront served build run, and the
+    suite executed: **8/8 pass** (4 viewports × [functional smoke + visual baseline]). **4 committed
+    baselines** generated under `apps/storefront/tests/__screenshots__/visual/showcase.spec.ts/`
+    (`home-{desktop-1440,desktop-1280,tablet-768,mobile-390}.png`); a second run **without**
+    `--update-snapshots` passes against them, confirming they’re deterministic.
+  - Acceptance met: Playwright configured (4 breakpoints, motion frozen, snapshot template); smoke +
+    visual spec written and passing; committed baselines in place; documented in `VISUAL_REGRESSION.md`.
+  - Note: baselines were rendered on Windows and the visual project is intentionally **not wired into
+    `pnpm test`/CI** (per the config header) — regenerate per-platform with
+    `pnpm --filter @tms/storefront test:e2e --update-snapshots` if CI runs on a different OS.
+  - Follow-ups: extend coverage beyond the homepage (gallery, an editorial page, the design studio) and
+    wire the visual project into CI once a stable rendering environment is fixed.
 
 - [x] **TMS-F0-011** Typed data-provider scaffold (mock/api adapter)
   - Status: Verified

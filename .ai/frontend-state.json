@@ -13,6 +13,7 @@
     "TMS-F0-007",
     "TMS-F0-008",
     "TMS-F0-009",
+    "TMS-F0-010",
     "TMS-F0-011",
     "TMS-F0-012",
     "TMS-F1-001",
@@ -38,12 +39,12 @@
     "TMS-F4-006"
   ],
   "inProgressTasks": [],
-  "implementedNotVerified": ["TMS-F0-002", "TMS-F0-010"],
+  "implementedNotVerified": ["TMS-F0-002"],
   "blockedTasks": [],
   "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
   "buildStatus": "passing",
   "testStatus": "passing",
-  "visualRegressionStatus": "harness-scaffolded-baselines-pending",
+  "visualRegressionStatus": "baselines-committed (4 viewports, homepage; Windows-rendered, not in CI)",
   "mockDependencies": [
     "storefront:home:featuredArtworks (TMS-FBR-001)",
     "storefront:/artworks listing + detail (TMS-FBR-001)",
@@ -66,6 +67,6 @@
     "admin:error centre (safe integration failures — correlation id + resolution lifecycle, no stack traces/secrets) + customers (derived from orders) + analytics (daily series/status mix/top lists derived from orders) — typed mock provider + local state, no admin ops/customer/analytics API (TMS-FBR-007)"
   ],
   "branch": "claude/f4-admin",
-  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + all F4 (001–006) verified green (pnpm check this session). F3 + F4 complete; nothing merged to main yet. TMS-F1-006 (real editorial/policy content across 12 routes) now Verified — served content confirmed real, no placeholder text. Admin Vitest suite 116 tests; storefront 89. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added, so risk is unchanged from the last clean run.",
-  "lastUpdated": "2026-07-15T20:30:00Z"
+  "buildStatusNote": "F0/F1/F2 + all F3 (001–005) + all F4 (001–006) verified green (pnpm check this session). F3 + F4 complete; nothing merged to main yet. TMS-F1-006 (real editorial/policy content across 12 routes) and TMS-F0-010 (Playwright visual baselines — 4 viewports, 8/8 pass) now Verified this session. Only TMS-F0-002 (Base44 reference screenshots) remains open — blocked on browser tooling for the external reference (which now serves a mismatched template). Admin Vitest suite 116 tests; storefront 89. Note: pnpm audit endpoint has had a registry-side 410 outage since the F3-004 pass; no new deps added, so risk is unchanged from the last clean run.",
+  "lastUpdated": "2026-07-15T21:00:00Z"
 }
