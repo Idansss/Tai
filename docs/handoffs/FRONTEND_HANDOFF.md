@@ -22,6 +22,19 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Brand Storyteller — admin AI (TMS-F5-009) — Verified.** Pure `apps/admin/lib/storyteller.ts` is a
+  deterministic mock generator: `CONTENT_TYPES` + `contentTypeLabel`, `canGenerate`, `generateVariants`
+  (per-content-type tone templates — Editorial/Punchy/Minimal — with generation metadata + a
+  reproducible batch id, honouring an optional brief), and `draftFromVariant` whose **status is always
+  `draft`** (tracks whether the operator edited it), with **9 unit tests**. Client
+  `BrandStorytellerView` runs the flow: configure (artwork **or** collection + content type + brief) →
+  generate (mock, loading state) → compare 3 variants with metadata → edit → approve/reject → a saved-
+  drafts list stamped "Draft — not published". New admin `/storyteller` route + nav entry. It **never
+  auto-publishes** — that's structural (the tool only produces a `draft`). Verified in the browser on
+  the served admin build: generate → compare → edit → approve appends a draft; nothing publishes; no
+  console errors. Full `pnpm check` green (**125 admin tests**). Real generation endpoint + draft
+  persistence are backend (**TMS-FBR-009**).
+
 - **Studio Guide — customer AI assistant (TMS-F5-008) — Verified.** Pure `lib/studio-guide.ts` is a
   deterministic mock responder: `studioGuideRespond(prompt)` returns a discriminated `GuideOutcome`
   (`reply` with reference cards + a `guardrail` flag, or `tool_error` for order-status), plus

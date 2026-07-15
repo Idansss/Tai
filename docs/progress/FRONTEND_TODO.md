@@ -721,9 +721,30 @@ page.tsx`, `StoryCard`, and the client `ShoppableScene` (Escape-to-close, one-op
   - Follow-ups: wire the real assistant endpoint + streaming (TMS-FBR-009); real tool calls (order
     lookup, stock/price) behind the same guardrails; conversation history + feedback; an optional
     floating launcher across the storefront.
-- [ ] **TMS-F5-009** Brand Storyteller (admin AI) — admin draft-generation UI (`apps/admin`): select
-      artwork/collection → content type → generate (mock) → compare variants → edit → approve/reject →
-      save draft, with generation metadata. **Never auto-publishes.** **TMS-FBR-009** (generation endpoint).
+- [x] **TMS-F5-009** Brand Storyteller (admin AI)
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **125 admin tests**, up from 116: +9 storyteller lib). In-browser on the served admin
+    build: a new **`/storyteller`** console page — **1 · Configure** (source = artwork **or**
+    collection + a picker, content type select with a description, optional brief), **Generate drafts**
+    (mock, ~600ms, with a loading state) → **2 · Compare variants** (3 tone variants — Editorial /
+    Punchy / Minimal — side by side, each selectable) with **generation metadata** (model · variant
+    count · temperature · batch id · timestamp) → **3 · Edit & approve** (editable textarea, **Approve
+    & save draft** / **Reject**) → **Saved drafts** list, each stamped **"Draft — not published"** with
+    source/tone/edited flag + metadata. **Never auto-publishes** (approving only saves a draft; a
+    persistent note states going live is a separate human step). "Brand Storyteller" added to the admin
+    nav. No console/hydration errors.
+  - Scope delivered: pure `apps/admin/lib/storyteller.ts` — `CONTENT_TYPES`/`contentTypeLabel`,
+    `canGenerate`, `generateVariants` (deterministic per input+clock, per-content-type tone templates,
+    generation metadata + batch id, optional brief), `draftFromVariant` (**status always `draft`**,
+    tracks `edited`) — with **9 unit tests**. Client `BrandStorytellerView` (loads artworks from the
+    admin provider, derives collections, generate→compare→edit→approve/reject→drafts state machine).
+    New `/storyteller` route + admin nav entry.
+  - **Note:** generation is a **deterministic mock** (no LLM) and drafts live in local component state
+    only — the real generation endpoint + draft persistence are backend (**TMS-FBR-009**). The
+    **never-auto-publish** guarantee is structural: the tool only ever produces a `draft` status.
+  - Follow-ups: wire the real generation endpoint + streaming (TMS-FBR-009); persist drafts + a review/
+    publish workflow (with RBAC) feeding the artwork/collection editors; regenerate-with-feedback;
+    per-brand tone presets.
 - [ ] **TMS-F5-010** Loyalty & referrals — account loyalty tier/points display, referral link + share
       UI, rewards list + how-it-works, honest "preview" notices. **TMS-FBR-008** (loyalty/referral data).
 - _Deferred (per "core commerce first"):_ gift cards, gifting flow, collaborations — add rows if
