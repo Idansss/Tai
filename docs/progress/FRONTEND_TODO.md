@@ -255,7 +255,41 @@ lint, build, visual evidence, docs updated).
     account link; checkout prefills from the session. Wrapped the app in `AuthProvider`.
   - Follow-ups: real secure auth (cookie session) — TMS-FBR-005; feeds TMS-F3-005 (orders / saved
     designs / wishlist).
-- [ ] **TMS-F3-005** Account — orders list, order detail + tracking, saved designs, wishlist.
+- [x] **TMS-F3-005** Account — orders list, order detail + tracking, saved designs, wishlist
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; 89 storefront unit tests); `pnpm audit --audit-level high --prod` not run (npm audit
+    endpoint returned a registry-side 410 outage as on F3-004; **no new dependencies added**, so risk
+    is unchanged from the last clean run). Browser pass (desktop + mobile): register → account hub
+    with live tiles (Orders/Saved designs/Wishlist/Profile + counts); placed order recorded to history
+    and shown under `/account/orders` with a **human status** ("Order confirmed", never a raw code);
+    `/account/orders/[reference]` renders the fulfilment **tracking timeline** (Order confirmed →
+    Delivered) with the reached step current and the rest upcoming; Design Studio **Save design** →
+    `/account/saved-designs` (open-in-studio restores the config, remove works); wishlist hearts on
+    shop cards toggle live (aria-pressed, no card navigation) → `/account/wishlist` (2 items, remove);
+    hub counts (1/1/2) reflect state; guest guard redirects to `/login?next=…` (param preserved);
+    sign-out lands home with no redirect bounce. No console errors.
+  - Scope delivered: pure domain in `lib/order-status.ts` (§17 customer-facing status +
+    `orderTracking` timeline — **no raw provider codes**, 8 unit tests) and `lib/account.ts`
+    (per-email order history / saved designs / wishlist stores + pure transforms, 15 unit tests);
+    reactive `WishlistProvider` (user-scoped, `ready` flag) wrapped in the layout; `useRequireAuth`
+    guard hook + presentational `AccountShell`; account hub (`AccountOverview` rebuilt with counts +
+    recent order), `OrdersList`, `OrderDetail` (tracking timeline + totals), `SavedDesignsView`,
+    `WishlistView`, `ProfileView`, and a shared `WishlistButton` (icon overlay on `ProductCard` as a
+    valid anchor sibling; labelled on the product page). Routes: `/account/orders`,
+    `/account/orders/[reference]`, `/account/saved-designs`, `/account/wishlist`, `/account/profile`
+    (all `noindex`, §25). Wiring: checkout `recordOrder` on place; payment sync via
+    `updateOrderInHistory` on resolve; Design Studio **Save design**. Order history is keyed by the
+    order's **contact email** so a guest checkout and a later sign-in with the same address share the
+    same orders. Still 100% mock/client store — backend gaps under TMS-FBR-004 (orders API) and
+    TMS-FBR-005 (auth + account data: saved designs, wishlist).
+  - Follow-ups: real orders/tracking + account-data APIs (TMS-FBR-004/005); once auth is
+    cookie-backed, migrate the per-email localStorage stores to the server; notification prefs,
+    email verification, password reset, data-export/deletion (profile placeholders today).
+
+### F3 complete
+
+All F3 tasks (TMS-F3-001…005) are Verified. Next: F4 (admin platform) or the tracked soft-404
+defect TMS-F1-DEF-001.
 
 ## Later phases
 

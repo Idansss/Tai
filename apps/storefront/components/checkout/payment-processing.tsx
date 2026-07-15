@@ -12,6 +12,7 @@ import {
   parseOutcome,
   shouldClearCart,
 } from '@/lib/payment';
+import { updateOrderInHistory } from '@/lib/account';
 import { readLastOrder, updateLastOrder } from '@/lib/order';
 
 type Phase = 'loading' | 'processing' | 'pending' | 'failure' | 'no-order';
@@ -47,6 +48,11 @@ export function PaymentProcessing() {
       resolvedRef.current = true;
       const statuses = outcomeToStatuses(outcome);
       updateLastOrder({ status: statuses.order, paymentStatus: statuses.payment });
+      // Keep the account order history in sync with the resolved payment.
+      updateOrderInHistory(order.contact.email, order.reference, {
+        status: statuses.order,
+        paymentStatus: statuses.payment,
+      });
       if (shouldClearCart(outcome)) clear();
       if (outcome === 'success') {
         router.replace('/checkout/success');

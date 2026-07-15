@@ -2,13 +2,34 @@
 
 ## Current frontend phase
 
-F3 — Commerce & account. TMS-F3-001 (cart) + TMS-F3-002 (checkout) + TMS-F3-003 (payment states) +
-TMS-F3-004 (auth) **Verified** (2026-07-15). Branch `claude/f3-commerce`
+F3 — Commerce & account. **F3 is complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
+TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all **Verified**
+(2026-07-15). Branch `claude/f3-commerce`
 is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`**
-— merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR with base
+— merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR (#7) with base
 `claude/f2-design-studio`. Nothing is merged to `main` yet.
 
 ### F3 progress this session
+
+- **Account build-out (TMS-F3-005).** Pure domain: `lib/order-status.ts` maps `OrderStatus` to
+  **customer-facing** copy + a fulfilment tracking timeline (spec §17 — **no raw provider codes**,
+  8 tests); `lib/account.ts` holds per-email order history / saved designs / wishlist stores + pure
+  transforms (15 tests). Reactive `WishlistProvider` (user-scoped, `ready` flag) wraps the app; a
+  `useRequireAuth` guard hook + a presentational `AccountShell` frame the signed-in pages. New
+  surfaces: account **hub** (`AccountOverview` rebuilt — recent order + Orders/Saved designs/
+  Wishlist/Profile tiles with live counts), `/account/orders` (list, friendly status),
+  `/account/orders/[reference]` (**tracking timeline** + item/delivery/totals),
+  `/account/saved-designs` (open-in-studio + remove), `/account/wishlist` (remove), and
+  `/account/profile` (details + sign-out + honest preview notice) — all `noindex`. A shared
+  `WishlistButton` sits on `ProductCard` (icon overlay, as a valid anchor sibling) and the product
+  page (labelled). Wiring: checkout `recordOrder` on place; payment `updateOrderInHistory` on
+  resolve; Design Studio gained **Save design**. Order history is keyed by **contact email** so a
+  guest checkout reconciles on later sign-in. Still 100% mock/client store — the gaps are recorded
+  under TMS-FBR-004 (orders API) and TMS-FBR-005 (account data: saved designs, wishlist).
+- Verified: full `pnpm check` green (89 storefront tests); browser pass (desktop + mobile) on
+  register → hub → place order → orders list → order detail/timeline → save design → saved designs
+  → wishlist toggle → wishlist page → hub counts → guest guard `?next` → sign-out-home; no console
+  errors. (Audit skipped — npm audit endpoint 410 outage, no new deps added.)
 
 - **Auth + account (TMS-F3-004).** Mock **client session** — `lib/auth.ts` (register/login
   validation, account list + session helpers, **no passwords stored**, 6 unit tests) + `AuthProvider`
@@ -118,7 +139,8 @@ is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude
 ## Tasks verified
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
--005, -007, -008, -009; TMS-F2-001; TMS-F3-001; TMS-F3-002; TMS-F3-003; **TMS-F3-004**.
+-005, -007, -008, -009; TMS-F2-001; TMS-F3-001; TMS-F3-002; TMS-F3-003; TMS-F3-004; **TMS-F3-005**
+(F3 complete).
 
 ## In-progress task
 
@@ -126,9 +148,9 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-**TMS-F3-005** (account: orders list, order detail + tracking, saved designs, wishlist — the
-`AuthProvider` session + the F3-003 order snapshots/status feed straight into it) **or** the tracked
-soft-404 defect TMS-F1-DEF-001.
+F3 is complete. Options: begin **F4 — Admin platform** (admin shell, dashboard, artwork manager,
+orders, production, QC, fulfilment, customers, content, errors, analytics), **or** clear the tracked
+soft-404 defect **TMS-F1-DEF-001**.
 
 ## Routes completed
 

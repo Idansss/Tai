@@ -3,6 +3,7 @@
 import { Alert, Badge, Price, cn } from '@tms/ui';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
+import { WishlistButton } from '@/components/account/wishlist-button';
 import { useCart } from '@/components/cart/cart-provider';
 import type { ProductDetail } from '@/lib/data';
 
@@ -234,15 +235,28 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
         </div>
 
         {/* Add to bag (desktop) */}
-        <button
-          type="button"
-          onClick={addToBag}
-          disabled={soldOut}
-          className="mt-8 hidden h-12 w-full items-center justify-center gap-2 rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:bg-[var(--color-disabled-background)] disabled:text-disabled-ink sm:flex"
-        >
-          <ShoppingBag className="size-4" aria-hidden />
-          {soldOut ? 'Sold out' : 'Add to bag'}
-        </button>
+        <div className="mt-8 hidden gap-3 sm:flex">
+          <button
+            type="button"
+            onClick={addToBag}
+            disabled={soldOut}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:bg-[var(--color-disabled-background)] disabled:text-disabled-ink"
+          >
+            <ShoppingBag className="size-4" aria-hidden />
+            {soldOut ? 'Sold out' : 'Add to bag'}
+          </button>
+          <WishlistButton
+            variant="labelled"
+            item={{
+              slug: product.slug,
+              title: product.artworkTitle,
+              garment: product.garment,
+              collection: product.collection,
+              priceMinor: product.priceMinor,
+              currency: product.currency,
+            }}
+          />
+        </div>
 
         {status ? (
           <div className="mt-4" aria-live="polite">

@@ -17,6 +17,7 @@ import {
   computeOrderTotals,
   validateCheckout,
 } from '@/lib/checkout';
+import { recordOrder } from '@/lib/account';
 import { createOrderReference, type PlacedOrder, saveLastOrder } from '@/lib/order';
 
 function Field({
@@ -117,8 +118,11 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
       paymentStatus: 'CREATED',
     };
     // Persist the order and hand off to the (mock) payment step. The bag is
-    // kept until payment resolves so a failed payment can be retried.
+    // kept until payment resolves so a failed payment can be retried. The order
+    // is also recorded in account history (keyed by contact email) so it shows
+    // under /account/orders regardless of sign-in state.
     saveLastOrder(order);
+    recordOrder(order);
     router.push('/checkout/payment');
   }
 

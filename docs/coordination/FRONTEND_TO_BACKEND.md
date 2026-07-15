@@ -106,4 +106,29 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
   calls with the endpoints and hydrate the session from the cookie-backed `GET /session`. Feeds
   TMS-F3-005 (account: orders, saved designs, wishlist).
 
+### TMS-FBR-005 addendum — account data (orders, saved designs, wishlist) [TMS-F3-005]
+
+The account build-out (`/account`, `/account/orders`, `/account/orders/[reference]`,
+`/account/saved-designs`, `/account/wishlist`) currently runs on **client localStorage keyed by
+email**. It needs, on top of the auth endpoints above:
+
+- **Order history + detail:** `GET /api/v1/orders` (the signed-in customer's orders — reference,
+  placed date, item count, `status` per `OrderStatusSchema`, totals, currency) and
+  `GET /api/v1/orders/{reference}` (full order: items snapshot, contact, delivery, totals, and a
+  status/shipping timeline). Belongs with the orders API in **TMS-FBR-004**. The UI maps
+  `OrderStatus` → **customer-facing** copy + a fulfilment timeline in `lib/order-status.ts` and
+  **never renders raw provider codes** (spec §17); the server should still drive the real status.
+- **Saved designs:** `GET/POST/DELETE /api/v1/account/saved-designs` storing a
+  `DesignConfigurationInput` (+ display metadata: artwork title, colour, price) so a customer can
+  reopen a design in the studio. Today `lib/account.ts` persists these per email.
+- **Wishlist:** `GET /api/v1/account/wishlist`, `POST`/`DELETE` by product slug/id. Today a
+  per-email localStorage list via `WishlistProvider`.
+- Reason: these are per-customer account resources; they must be server-owned + auth-scoped (and,
+  once cookie sessions land, persist across devices) before launch.
+- Blocking: no (all three build on the typed client stores; swap to the API on delivery).
+- Suggested fallback: keep the `lib/account.ts` transforms + `lib/order-status.ts` mapping as the
+  view model; replace the storage wrappers with the endpoints. Note the current model keys order
+  history by **contact email** so guest orders reconcile on later sign-in — the server should do
+  the equivalent association.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._
