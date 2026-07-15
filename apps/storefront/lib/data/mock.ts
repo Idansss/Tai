@@ -1,6 +1,7 @@
 import type { CursorPage } from '@tms/contracts';
 import { artworkVersionId, passportSerial } from '../passport';
 import { artworkMatchesQuery } from '../search';
+import { summariseReviews } from '../reviews';
 import { countShoppableItems } from '../stories';
 import type {
   ArtworkDetail,
@@ -16,6 +17,9 @@ import type {
   ProductDetail,
   ProductSummary,
   ProvenanceEvent,
+  Review,
+  ReviewCollection,
+  ReviewTargetType,
   StorefrontDataProvider,
   StoryDetail,
   StoryHotspotTarget,
@@ -624,6 +628,84 @@ function toStorySummary(seed: StorySeed): StorySummary {
   };
 }
 
+/**
+ * Review seeds (TMS-F5-004), keyed `${targetType}:${slug}`. Deterministic so the
+ * aggregate stars match the list. `verifiedPurchase` is a server-vouched flag in
+ * the seed data; some targets have no reviews to exercise the empty state. Real
+ * read/write/moderation is server-authoritative (TMS-FBR-008).
+ */
+const reviewSeeds: Record<string, Review[]> = {
+  'product:midnight-in-lagos-classic-tee': [
+    {
+      id: 'rv-mil-1',
+      rating: 5,
+      title: 'The print is the star',
+      body: 'Wore it to a gallery opening and got stopped three times. The line work holds up beautifully after a wash.',
+      author: 'Ada O.',
+      createdAt: '2026-06-28T10:00:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-mil-2',
+      rating: 4,
+      title: 'Lovely, runs a touch large',
+      body: 'Gorgeous heavyweight cotton and the neon reads exactly like the artwork. I would size down for a classic fit.',
+      author: 'Tunde A.',
+      createdAt: '2026-06-15T09:30:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-mil-3',
+      rating: 5,
+      title: 'My most-complimented tee',
+      body: 'Soft, well cut and the design feels like wearing a drawing. Delivery to Lagos took four days.',
+      author: 'Ngozi E.',
+      createdAt: '2026-05-30T14:00:00.000Z',
+      verifiedPurchase: false,
+    },
+  ],
+  'product:paper-tigers-oversized-tee': [
+    {
+      id: 'rv-pt-1',
+      rating: 5,
+      title: 'Bold and comfortable',
+      body: 'The oversized cut is exactly right and the ink sits flat — no cracking after several washes.',
+      author: 'Kelechi N.',
+      createdAt: '2026-07-01T08:00:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-pt-2',
+      rating: 3,
+      title: 'Great print, wanted heavier fabric',
+      body: 'The design is fantastic. The cotton is a little lighter than I expected for the price, but the fit is good.',
+      author: 'Bisi K.',
+      createdAt: '2026-06-20T11:15:00.000Z',
+      verifiedPurchase: true,
+    },
+  ],
+  'artwork:midnight-in-lagos': [
+    {
+      id: 'rv-a-mil-1',
+      rating: 5,
+      title: 'A piece with a mood',
+      body: 'Bought it on a longsleeve and the artwork carries the whole garment. It really does feel like the city after dark.',
+      author: 'Chidi M.',
+      createdAt: '2026-06-10T16:45:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-a-mil-2',
+      rating: 4,
+      title: 'Beautiful linework',
+      body: 'One of my favourite pieces in the collection. Would love to see it on more garment types.',
+      author: 'Zainab I.',
+      createdAt: '2026-05-22T12:00:00.000Z',
+      verifiedPurchase: false,
+    },
+  ],
+};
+
 function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
@@ -816,5 +898,12 @@ export const mockProvider: StorefrontDataProvider = {
   async getStory(slug: string): Promise<StoryDetail | null> {
     const seed = storySeeds.find((s) => s.slug === slug);
     return delay(seed ? toStoryDetail(seed) : null);
+  },
+
+  async getReviews(targetType: ReviewTargetType, slug: string): Promise<ReviewCollection> {
+    const items = (reviewSeeds[`${targetType}:${slug}`] ?? [])
+      .slice()
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return delay({ stats: summariseReviews(items), items });
   },
 };

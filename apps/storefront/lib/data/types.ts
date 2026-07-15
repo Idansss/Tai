@@ -71,6 +71,42 @@ export interface ArtworkPassport {
 }
 
 /**
+ * Reviews & ratings (TMS-F5-004). Reviews attach to a product or an artwork by
+ * slug. `verifiedPurchase` is a server-vouched flag (a real order backs the
+ * review) — the client never sets it. Aggregate stats are derived by the pure
+ * helpers in `lib/reviews.ts`. Read + write + moderation are backend
+ * (TMS-FBR-008); today the mock seeds a deterministic set and writes are
+ * preview-only.
+ */
+export type ReviewTargetType = 'product' | 'artwork';
+
+export interface Review {
+  id: string;
+  /** Whole-star rating, 1–5. */
+  rating: number;
+  title: string;
+  body: string;
+  author: string;
+  /** ISO timestamp. */
+  createdAt: string;
+  verifiedPurchase: boolean;
+}
+
+export interface ReviewStats {
+  /** Mean rating (0 when there are no reviews). */
+  average: number;
+  count: number;
+  /** Number of reviews at each whole-star rating, keyed 1–5. */
+  distribution: Record<number, number>;
+}
+
+export interface ReviewCollection {
+  stats: ReviewStats;
+  /** Reviews, newest first. */
+  items: Review[];
+}
+
+/**
  * Shoppable editorial stories (TMS-F5-007). A story is an editorial article
  * whose "scene" blocks carry positioned **hotspots** that link into the
  * catalogue (an artwork, a product, a collection, or the Design Studio). The
@@ -270,4 +306,6 @@ export interface StorefrontDataProvider {
   listStories(): Promise<StorySummary[]>;
   /** A story with its editorial blocks + hotspots, or null if the slug is unknown. */
   getStory(slug: string): Promise<StoryDetail | null>;
+  /** Reviews + aggregate stats for a product or artwork (empty when none). */
+  getReviews(targetType: ReviewTargetType, slug: string): Promise<ReviewCollection>;
 }

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProductConfigurator } from '@/components/product/product-configurator';
+import { Reviews } from '@/components/review/reviews';
 import { dataProvider } from '@/lib/data';
 
 interface Params {
@@ -37,6 +38,7 @@ export default async function ProductPage({ params }: Params) {
   const { slug } = await params;
   const product = await dataProvider.getProduct(slug);
   if (!product) notFound();
+  const reviews = await dataProvider.getReviews('product', slug);
 
   return (
     <Container className="py-10 pb-24 sm:pb-14">
@@ -67,6 +69,10 @@ export default async function ProductPage({ params }: Params) {
 
       <div className="mt-8">
         <ProductConfigurator product={product} />
+      </div>
+
+      <div className="mt-14">
+        <Reviews targetType="product" targetLabel={product.title} initial={reviews} />
       </div>
     </Container>
   );

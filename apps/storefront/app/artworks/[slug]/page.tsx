@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { Reviews } from '@/components/review/reviews';
 import { dataProvider } from '@/lib/data';
 
 interface Params {
@@ -40,6 +41,7 @@ export default async function ArtworkDetailPage({ params }: Params) {
   const { slug } = await params;
   const artwork = await dataProvider.getArtwork(slug);
   if (!artwork) notFound();
+  const reviews = await dataProvider.getReviews('artwork', slug);
 
   return (
     <>
@@ -113,6 +115,10 @@ export default async function ArtworkDetailPage({ params }: Params) {
               </Link>
             </div>
           </div>
+        </div>
+
+        <div className="mt-14">
+          <Reviews targetType="artwork" targetLabel={artwork.title} initial={reviews} />
         </div>
       </Container>
 

@@ -22,6 +22,20 @@ TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out)
 
 ### F5 progress this session
 
+- **Reviews & ratings (TMS-F5-004) — Verified.** Pure `lib/reviews.ts` aggregates reviews into an
+  average + count + per-star distribution (`summariseReviews`, clamps out-of-range ratings),
+  `distributionPercents`, `formatAverage`, and `validateReviewInput`, with **9 unit tests**. New
+  provider method `getReviews(targetType, slug)` returns a `ReviewCollection` (mock seeds product +
+  artwork reviews, empty for others; api stub throws; **4 mock tests**). Presentational `RatingStars`
+  (fractional fill + a11y label) + a client `Reviews` section render the summary, a 5→1 distribution,
+  the list (verified-purchase badge), and a validated `WriteReviewForm` (star radio input, name
+  prefilled from the session). Wired into the **product** and **artwork** detail pages. Writes are
+  **preview-only** — a submitted review is prepended locally (never granted the verified badge) with an
+  honest notice; real read/write + verified-purchase vouch + moderation are backend (**TMS-FBR-008**).
+  Verified in the browser: product + artwork pages show stars/distribution/list; a no-review target
+  shows the empty state; submitting prepends the review; no console errors. Full `pnpm check` green
+  (**164 storefront tests**).
+
 - **Shoppable stories (TMS-F5-007) — Verified.** Pure `lib/stories.ts` derives each hotspot's href +
   CTA + kind label and counts shoppable items (`hotspotHref`, `hotspotActionLabel`, `hotspotKindLabel`,
   `isShoppable`, `storyHotspotTargets`, `countShoppableItems`), with **7 unit tests**. New provider

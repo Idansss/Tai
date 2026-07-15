@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F5",
-  "lastVerifiedTask": "TMS-F5-007",
-  "nextRecommendedTask": "TMS-F5-004 (Reviews & ratings) or F5-005 (Community gallery) — both frontend + mock (backend under TMS-FBR-008); or the AI shells F5-008 (Studio Guide) / F5-009 (Brand Storyteller). F0–F4 merged to main; TMS-F1-DEF-001 fixed for production; F5 drops cluster (001/002/003) + 006 (passport) + 007 (shoppable stories) Verified.",
+  "lastVerifiedTask": "TMS-F5-004",
+  "nextRecommendedTask": "TMS-F5-005 (Community gallery) next, then F5-008/009 (AI shells) + F5-010 (loyalty) to finish F5. F0–F4 merged to main; TMS-F1-DEF-001 fixed for production; F5 done so far: 001/002/003 (drops cluster) + 006 (passport) + 007 (shoppable stories) + 004 (reviews) Verified.",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-002",
@@ -42,7 +42,8 @@
     "TMS-F5-002",
     "TMS-F5-003",
     "TMS-F5-006",
-    "TMS-F5-007"
+    "TMS-F5-007",
+    "TMS-F5-004"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": [],
@@ -77,7 +78,8 @@
     "storefront:waitlist / back-in-stock (sold-out products + sold-out/upcoming drops) — client localStorage store (tms.waitlist.v1), no real notification sent; needs the waitlist/notify endpoint (TMS-FBR-008)",
     "storefront:made-to-order / pre-order lead-time (product + cart + checkout + drops) — client-side working-day estimate (lib/fulfilment.ts), no real reservation; real ship timeline is server-authoritative + pre-order hold is backend (TMS-FBR-004/008)",
     "storefront:artwork passport (/artworks/[slug]/passport) — frontend-derived immutable version id + illustrative serial (lib/passport.ts, deterministic FNV-1a), ownership-record placeholder, no real authenticity proof; server-authoritative version id + per-piece serial/ownership ledger are backend (TMS-FBR-001)",
-    "storefront:shoppable stories (/stories + /stories/[slug]) — mock/editorial story seeds with hotspots over placeholder scene imagery; hotspot targets built from existing artwork/product/collection data (no new backend); a real CMS feed maps onto the Story* shapes + real scene photography/authored coordinates replace placeholders"
+    "storefront:shoppable stories (/stories + /stories/[slug]) — mock/editorial story seeds with hotspots over placeholder scene imagery; hotspot targets built from existing artwork/product/collection data (no new backend); a real CMS feed maps onto the Story* shapes + real scene photography/authored coordinates replace placeholders",
+    "storefront:reviews & ratings (product + artwork detail) — read-only seeded reviews + aggregate stars (lib/reviews.ts); write-a-review is preview-only (local state, no network); real read/write, verified-purchase vouch, and moderation are backend (TMS-FBR-008)"
   ],
   "branch": "claude/f5-post-merge",
   "buildStatusNote": "F5 in progress: TMS-F5-001 (limited drops & countdown) + TMS-F5-002 (waitlist & back-in-stock) + TMS-F5-003 (pre-order & made-to-order) + TMS-F5-006 (artwork passport) + TMS-F5-007 (shoppable stories) Verified (pnpm check green; 151 storefront tests). F0–F4 Verified AND MERGED TO MAIN (2026-07-15). The F0→F4 PR stack (#4→#8) was merged bottom-up with merge commits (main HEAD e919e7e; merge commits 9599d35/190d8c7/d0201a1/f0de066/e919e7e) and all five phase branches deleted; pnpm check re-run green on the integrated main (13/13 build tasks, all unit tests, format/lint/typecheck/db:validate). Recovery note: PR #5 auto-closed when gh's --delete-branch removed its base (f0) before the auto-retarget fired; recovered by recreating the f0 branch, reopening #5, retargeting to main — thereafter each next PR was retargeted to main BEFORE merge and branches were deleted only as final cleanup. Only open item is defect TMS-F1-DEF-001 (soft 404, SEO-only). Admin Vitest 116 tests; storefront 151 (was 89 — +24 drops, +6 waitlist, +10 fulfilment, +11 passport, +11 stories). Note: pnpm audit 410 outage since F3-004 (this is the only failing CI 'quality' check — a retired npm endpoint, not a code issue); no new deps added.",

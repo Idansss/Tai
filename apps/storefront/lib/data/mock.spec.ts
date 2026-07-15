@@ -181,6 +181,41 @@ describe('mockProvider shoppable stories', () => {
   });
 });
 
+describe('mockProvider reviews', () => {
+  it('returns reviews newest first with matching aggregate stats', async () => {
+    const { stats, items } = await mockProvider.getReviews(
+      'product',
+      'midnight-in-lagos-classic-tee',
+    );
+    expect(items.length).toBe(stats.count);
+    expect(stats.count).toBeGreaterThan(0);
+    const dates = items.map((r) => r.createdAt);
+    expect(dates).toEqual([...dates].sort((a, b) => b.localeCompare(a)));
+
+    const sumFromDistribution = Object.values(stats.distribution).reduce((a, b) => a + b, 0);
+    expect(sumFromDistribution).toBe(stats.count);
+    const mean = items.reduce((sum, r) => sum + r.rating, 0) / items.length;
+    expect(stats.average).toBeCloseTo(mean);
+  });
+
+  it('marks at least one review as a verified purchase', async () => {
+    const { items } = await mockProvider.getReviews('product', 'midnight-in-lagos-classic-tee');
+    expect(items.some((r) => r.verifiedPurchase)).toBe(true);
+  });
+
+  it('serves reviews for an artwork target too', async () => {
+    const { stats } = await mockProvider.getReviews('artwork', 'midnight-in-lagos');
+    expect(stats.count).toBeGreaterThan(0);
+  });
+
+  it('returns an empty collection for a target with no reviews', async () => {
+    const { stats, items } = await mockProvider.getReviews('product', 'okada-run-oversized-tee');
+    expect(items).toEqual([]);
+    expect(stats.count).toBe(0);
+    expect(stats.average).toBe(0);
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

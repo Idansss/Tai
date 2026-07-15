@@ -597,9 +597,32 @@ claims**, and **must never auto-publish or auto-act**.
     pre-order **reservation** (hold + charge policy) is a backend concern (TMS-FBR-008).
   - Follow-ups: server-authoritative ship estimates + a real pre-order reservation/hold; per-item lead
     times if garments diverge; surface the estimate on the order confirmation + account order detail.
-- [ ] **TMS-F5-004** Reviews & ratings — review display on product/artwork (rating summary +
-      distribution + list, verified-purchase badge), write-a-review form (mock submit, honest notice),
-      empty/loading/failure states. **TMS-FBR-008** (reviews read + write, moderation).
+- [x] **TMS-F5-004** Reviews & ratings
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **164 storefront tests**, up from 151: +13 reviews — 9 lib + 4 mock). In-browser on
+    the served build: **product** pages (`midnight-in-lagos-classic-tee`) and **artwork** pages
+    (`midnight-in-lagos`) show a **rating summary** (average to 1 dp + fractional star row + count), a
+    **5→1 star distribution** with proportional bars, and a **review list** (per-review stars, title,
+    author, date, and a **Verified purchase** badge where the seed vouches it). A target with no seed
+    reviews (`okada-run-oversized-tee`) shows the **empty state** ("Be the first to review …"). The
+    **write-a-review** form validates (star rating 1–5, title ≥3, body ≥10, name), prefills the name
+    from the signed-in session, and on submit **prepends the review locally** with a success notice —
+    honestly flagged as preview-only (not sent/moderated, never granted the verified badge). No
+    console/hydration errors.
+  - Scope delivered: pure `lib/reviews.ts` — `summariseReviews` (average + count + per-star
+    distribution, clamps out-of-range ratings), `distributionPercents`, `formatAverage`,
+    `validateReviewInput` — with **9 unit tests**. `Review`/`ReviewStats`/`ReviewCollection` types +
+    `getReviews(targetType, slug)` on the provider (mock seeds product + artwork reviews, empty for
+    others; api stub throws; **4 mock tests** incl. stats-match-list + empty-collection). Presentational
+    `RatingStars` (fractional fill, a11y label) + client `Reviews` section (summary + distribution +
+    list + `WriteReviewForm` with star radio input). Wired into the product and artwork detail pages.
+  - **Note:** reviews are **read-only mock data** and writes are **preview-only** (local state, no
+    network) — real read/write, the verified-purchase vouch, and **moderation** are backend
+    (**TMS-FBR-008**). Skeleton-loading + failure surfaces (from `@tms/ui`) activate on the real async
+    API; the deterministic mock exercises the empty/populated/submitting states.
+  - Follow-ups: real reviews API + moderation queue (TMS-FBR-008); server verified-purchase check tied
+    to orders; helpful-vote + sort/filter; media in reviews; aggregate rating on cards + `AggregateRating`
+    structured data for SEO.
 - [ ] **TMS-F5-005** Community gallery — customer-photo gallery (moderation-aware display), submit-a-
       photo UI (mock), per-artwork "styled by the community" section. **TMS-FBR-008** (UGC + moderation).
 - [x] **TMS-F5-006** Artwork Passport

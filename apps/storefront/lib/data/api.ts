@@ -59,4 +59,7 @@ export const apiProvider: StorefrontDataProvider = {
   getStory() {
     return notImplemented('getStory');
   },
+  getReviews() {
+    return notImplemented('getReviews');
+  },
 };
