@@ -3,11 +3,14 @@
 import { Alert, Badge, Price, cn } from '@tms/ui';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
+import { WishlistButton } from '@/components/account/wishlist-button';
+import { useCart } from '@/components/cart/cart-provider';
 import type { ProductDetail } from '@/lib/data';
 
 type View = 'front' | 'back';
 
 export function ProductConfigurator({ product }: { product: ProductDetail }) {
+  const { addItem } = useCart();
   const firstAvailableColour = useMemo(
     () => product.colours.find((c) => c.available)?.name ?? product.colours[0]?.name,
     [product.colours],
@@ -26,6 +29,11 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
 
   function addToBag() {
     if (soldOut) return;
+    if (!colour) {
+      setStatus(null);
+      setError('Please select an available colour to continue.');
+      return;
+    }
     if (!size) {
       setStatus(null);
       setError('Please select a size to continue.');
@@ -33,9 +41,18 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
       return;
     }
     setError(null);
+    addItem({
+      productSlug: product.slug,
+      artworkTitle: product.artworkTitle,
+      garment: product.garment,
+      colour,
+      size,
+      priceMinor: product.priceMinor,
+      currency: product.currency,
+      quantity,
+    });
     setStatus(
-      `Selected: ${product.artworkTitle} on ${product.garment}, ${colour}, size ${size}, ×${quantity}. ` +
-        'Bag and checkout arrive in phase F3.',
+      `Added to your bag: ${product.artworkTitle} on ${product.garment}, ${colour}, size ${size}, ×${quantity}.`,
     );
   }
 
@@ -218,19 +235,32 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
         </div>
 
         {/* Add to bag (desktop) */}
-        <button
-          type="button"
-          onClick={addToBag}
-          disabled={soldOut}
-          className="mt-8 hidden h-12 w-full items-center justify-center gap-2 rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:bg-[var(--color-disabled-background)] disabled:text-disabled-ink sm:flex"
-        >
-          <ShoppingBag className="size-4" aria-hidden />
-          {soldOut ? 'Sold out' : 'Add to bag'}
-        </button>
+        <div className="mt-8 hidden gap-3 sm:flex">
+          <button
+            type="button"
+            onClick={addToBag}
+            disabled={soldOut}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:bg-[var(--color-disabled-background)] disabled:text-disabled-ink"
+          >
+            <ShoppingBag className="size-4" aria-hidden />
+            {soldOut ? 'Sold out' : 'Add to bag'}
+          </button>
+          <WishlistButton
+            variant="labelled"
+            item={{
+              slug: product.slug,
+              title: product.artworkTitle,
+              garment: product.garment,
+              collection: product.collection,
+              priceMinor: product.priceMinor,
+              currency: product.currency,
+            }}
+          />
+        </div>
 
         {status ? (
-          <div className="mt-4">
-            <Alert tone="info" title="Preview build">
+          <div className="mt-4" aria-live="polite">
+            <Alert tone="success" title="Added to bag">
               {status}
             </Alert>
           </div>

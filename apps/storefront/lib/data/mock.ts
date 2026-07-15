@@ -6,6 +6,7 @@ import type {
   Availability,
   CollectionDetail,
   CollectionSummary,
+  DeliveryOption,
   ListArtworksParams,
   ProductDetail,
   ProductSummary,
@@ -354,5 +355,34 @@ export const mockProvider: StorefrontDataProvider = {
         { id: 'large', label: 'Large', widthPct: 64 },
       ],
     });
+  },
+
+  async getDeliveryOptions(): Promise<DeliveryOption[]> {
+    return delay([
+      {
+        id: 'standard',
+        label: 'Standard delivery',
+        description: 'Tracked courier across Nigeria.',
+        priceMinor: 250000,
+        currency: 'NGN',
+        eta: '3–6 working days',
+      },
+      {
+        id: 'express',
+        label: 'Express delivery',
+        description: 'Priority dispatch to major cities.',
+        priceMinor: 500000,
+        currency: 'NGN',
+        eta: '1–2 working days',
+      },
+      {
+        id: 'pickup',
+        label: 'Studio pickup — Lagos',
+        description: 'Collect from the studio in Lagos. We email when it is ready.',
+        priceMinor: 0,
+        currency: 'NGN',
+        eta: 'Ready in 2–4 working days',
+      },
+    ]);
   },
 };

@@ -1,10 +1,12 @@
 'use client';
 
 import { Container, IconButton, cn } from '@tms/ui';
-import { Menu, Search, ShoppingBag, X } from 'lucide-react';
+import { Menu, Search, ShoppingBag, User, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@/components/account/auth-provider';
+import { useCart } from '@/components/cart/cart-provider';
 import { primaryNav } from '@/lib/nav';
 
 /**
@@ -15,6 +17,8 @@ import { primaryNav } from '@/lib/nav';
 export function SiteHeader() {
   const pathname = usePathname();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const { count, ready, openCart } = useCart();
+  const { user, ready: authReady } = useAuth();
 
   const close = useCallback(() => {
     dialogRef.current?.close();
@@ -88,7 +92,29 @@ export function SiteHeader() {
             >
               <Search className="size-5" aria-hidden />
             </Link>
-            <IconButton label="Cart" icon={<ShoppingBag className="size-5" aria-hidden />} />
+            <Link
+              href={authReady && user ? '/account' : '/login'}
+              aria-label={authReady && user ? `Account — ${user.name}` : 'Sign in'}
+              className="inline-flex size-11 items-center justify-center rounded-[var(--radius-md)] text-ink outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            >
+              <User className="size-5" aria-hidden />
+            </Link>
+            <div className="relative">
+              <IconButton
+                label={ready && count > 0 ? `Bag, ${count} item${count === 1 ? '' : 's'}` : 'Bag'}
+                icon={<ShoppingBag className="size-5" aria-hidden />}
+                onClick={openCart}
+                aria-haspopup="dialog"
+              />
+              {ready && count > 0 ? (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute right-1 top-1 grid min-w-[1.1rem] place-items-center rounded-full bg-accent px-1 text-[0.65rem] font-semibold leading-tight text-on-accent"
+                >
+                  {count > 9 ? '9+' : count}
+                </span>
+              ) : null}
+            </div>
             <IconButton
               className="md:hidden"
               label="Open menu"

@@ -37,4 +37,98 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
 - Suggested fallback: typed `mockProvider` fixtures; swap to `apiProvider` on delivery. Prices
   and availability must come from the server and are authoritative at cart/checkout.
 
+## Request TMS-FBR-003 — Cart / promotion / totals
+
+- Frontend task: F3 cart (`/cart`, cart drawer) and the interim checkout summary.
+- Required endpoints (proposed): `POST /api/v1/cart/items` (add a configured line),
+  `PATCH /api/v1/cart/items/{lineId}` (quantity), `DELETE /api/v1/cart/items/{lineId}`,
+  `GET /api/v1/cart`, `POST /api/v1/cart/promotion` (apply/validate a code).
+- Required request fields (add line): product/garment-variant id, artwork-version id, colour,
+  size, placement id, scale preset, view, quantity; promotion apply: `code`.
+- Required response fields: cart `id`, `items[]` (`lineId`, config snapshot, `unitPriceMinor`,
+  `quantity`, `lineTotalMinor`, thumbnail), `subtotalMinor`, applied `promotion`
+  (`code`, `label`, `discountMinor`), `currency`. **Delivery + tax are intentionally excluded
+  here** — they belong to the checkout quote (server-authoritative per spec §"server is
+  authoritative for … shipping … and totals").
+- Reason: the cart currently runs on a client-only store (localStorage) with a **preview**
+  subtotal and **mock** promotion codes (`STUDIO10`, `WELCOME`). Pricing, promotion validity and
+  totals must move server-side before checkout is real.
+- Blocking: no (F3 cart builds on the typed client store; swap to the API on delivery).
+- Suggested fallback: keep `lib/cart.ts` pure helpers as the client model; replace the store's
+  mutations with API calls and treat server totals as authoritative.
+
+## Request TMS-FBR-004 — Checkout / delivery quote / order
+
+- Frontend task: F3 checkout (`/checkout`) and order confirmation (`/checkout/success`).
+- Required endpoints (proposed): `GET /api/v1/checkout/delivery-options` (methods + fees + ETAs
+  for a destination), `POST /api/v1/checkout/quote` (authoritative subtotal, discount, delivery,
+  tax, total for the current cart + address + method), `POST /api/v1/orders` (place order →
+  returns order id/reference + payment intent for TMS-F3-003).
+- Required request fields: quote — cart id/lines, delivery address (state/city), delivery method
+  id, promotion code; place order — the quote id + contact + delivery + payment method.
+- Required response fields: delivery options (`id`, `label`, `description`, `priceMinor`,
+  `currency`, `eta`); quote (`subtotalMinor`, `discountMinor`, `deliveryMinor`, `taxMinor`,
+  `totalMinor`, `currency`); order (`reference`, `status` per `OrderStatusSchema`, `totals`,
+  snapshots of items/contact/delivery, `payment` handoff).
+- Reason: the checkout currently computes a **preview** total client-side — delivery fees are mock
+  (`getDeliveryOptions()`), **VAT is a mock 7.5%**, and "Place order" only snapshots the order to
+  `localStorage` (`tms.lastOrder.v1`); no payment is taken. Tax, shipping and totals must be
+  server-authoritative before checkout is real (spec §"server is authoritative for … tax,
+  shipping, and totals"), and inventory reservation + payment intents are server concerns.
+- Blocking: no (checkout builds on the typed mock + client store; swap to the API on delivery).
+- Suggested fallback: keep `lib/checkout.ts` (validation + total formula) and `lib/order.ts` as
+  the client model; replace the mock delivery source + local order snapshot with the endpoints and
+  treat the server quote/order as authoritative. Pairs with TMS-F3-003 (payment states) and
+  TMS-FBR-003 (cart).
+- **Payment states (TMS-F3-003, delivered):** the frontend renders processing / success / pending
+  / failure at `/checkout/payment` and a status-aware confirmation at `/checkout/success`, driven
+  by a **mock** resolver (`lib/payment.ts`) that maps to the `OrderStatus`/`PaymentStatus` enums
+  from `@tms/contracts`. It needs: a payment-intent/redirect from `POST /api/v1/orders`, a way to
+  observe the resolved status (webhook-backed `GET /api/v1/orders/{ref}` or a return URL with a
+  verifiable token — never trust a client `?outcome=` param), and idempotent retry. No money is
+  moved client-side today.
+
+## Request TMS-FBR-005 — Auth / session / customer account
+
+- Frontend task: F3 auth (`/login`, `/register`), account (`/account`), and checkout prefill.
+- Required endpoints (proposed): `POST /api/v1/auth/register`, `POST /api/v1/auth/login`,
+  `POST /api/v1/auth/logout`, `GET /api/v1/auth/session` (current user), plus password reset later.
+- Required request fields: register — `name`, `email`, `password`; login — `email`, `password`.
+- Required response fields: session `user` (`id`, `name`, `email`), set via an **httpOnly session
+  cookie** (never a client-stored token); typed errors for duplicate email / invalid credentials.
+- Reason: the storefront currently runs a **mock session** — accounts are a local `{email,name}`
+  list in `localStorage` (`tms.accounts.v1` / `tms.session.v1`) with **no passwords stored and no
+  real authentication** (login only checks the email exists). This must move to real, secure
+  server auth before launch. The account page + checkout prefill consume `useAuth().user`.
+- Blocking: no (auth builds on the mock `AuthProvider`; swap `register`/`login`/`logout`/session
+  hydration to the API on delivery).
+- Suggested fallback: keep `lib/auth.ts` validators + `AuthProvider` shape; replace its storage
+  calls with the endpoints and hydrate the session from the cookie-backed `GET /session`. Feeds
+  TMS-F3-005 (account: orders, saved designs, wishlist).
+
+### TMS-FBR-005 addendum — account data (orders, saved designs, wishlist) [TMS-F3-005]
+
+The account build-out (`/account`, `/account/orders`, `/account/orders/[reference]`,
+`/account/saved-designs`, `/account/wishlist`) currently runs on **client localStorage keyed by
+email**. It needs, on top of the auth endpoints above:
+
+- **Order history + detail:** `GET /api/v1/orders` (the signed-in customer's orders — reference,
+  placed date, item count, `status` per `OrderStatusSchema`, totals, currency) and
+  `GET /api/v1/orders/{reference}` (full order: items snapshot, contact, delivery, totals, and a
+  status/shipping timeline). Belongs with the orders API in **TMS-FBR-004**. The UI maps
+  `OrderStatus` → **customer-facing** copy + a fulfilment timeline in `lib/order-status.ts` and
+  **never renders raw provider codes** (spec §17); the server should still drive the real status.
+- **Saved designs:** `GET/POST/DELETE /api/v1/account/saved-designs` storing a
+  `DesignConfigurationInput` (+ display metadata: artwork title, colour, price) so a customer can
+  reopen a design in the studio. Today `lib/account.ts` persists these per email.
+- **Wishlist:** `GET /api/v1/account/wishlist`, `POST`/`DELETE` by product slug/id. Today a
+  per-email localStorage list via `WishlistProvider`.
+- Reason: these are per-customer account resources; they must be server-owned + auth-scoped (and,
+  once cookie sessions land, persist across devices) before launch.
+- Blocking: no (all three build on the typed client stores; swap to the API on delivery).
+- Suggested fallback: keep the `lib/account.ts` transforms + `lib/order-status.ts` mapping as the
+  view model; replace the storage wrappers with the endpoints. Note the current model keys order
+  history by **contact email** so guest orders reconcile on later sign-in — the server should do
+  the equivalent association.
+
 _No further requests yet. Add here as F1+ surfaces need contracts._

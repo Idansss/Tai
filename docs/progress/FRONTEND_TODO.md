@@ -180,6 +180,117 @@ lint, build, visual evidence, docs updated).
   - Follow-ups: `/design-studio/[configurationId]` resume route; contrast warning + undo; promote
     ColourSwatch/SizeSelector/preview into `packages/ui`; real placement coords/imagery via backend.
 
+## Phase F3 — Commerce & account (in progress)
+
+- [x] **TMS-F3-001** Cart — drawer + page + promotion + add-to-bag wiring
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate, below threshold);
+    browser pass: product **and** Design Studio "Add to bag" both add lines (studio lines carry
+    placement/scale + link back to their share URL); drawer opens with a live header count badge;
+    promotion `STUDIO10` applies 10% (₦36,000 → ₦32,400) and persists; quantity steppers update
+    totals + badge live; `/cart` page, `/checkout` interim summary, and the empty state all render;
+    state survives navigation (localStorage) and reflows correctly on mobile. No console errors.
+  - Scope delivered: pure cart domain in `lib/cart.ts` (line-merge id, add/set/remove, subtotal,
+    mock promotions, estimated total) with 16 unit tests; client `CartProvider`
+    (localStorage-persisted, `ready` flag to avoid SSR badge mismatch, drawer open state);
+    `CartDrawer` (native `<dialog>` slide-over), shared `CartLineList` + `CartSummary`, `/cart`
+    page + loading, and an honest `/checkout` interim summary (no fake payment). Header bag button
+    wired to open the drawer with an accessible count badge. Product configurator + Design Studio
+    "Add to bag" now push real lines. **Delivery + tax are intentionally deferred to checkout**
+    (server-authoritative). Backend gap recorded as TMS-FBR-003.
+  - Follow-ups: server cart/promotion/totals (TMS-FBR-003); persist across devices once auth lands.
+
+- [x] **TMS-F3-002** Checkout — contact / delivery / payment + order confirmation
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate, below threshold);
+    browser pass (desktop + mobile): validation blocks an empty submit (7 field errors, `aria-invalid`,
+    focus jumps to the first invalid field); live totals recompute (Subtotal ₦39,000 − ₦3,900 promo
+    - ₦5,000 express delivery + ₦2,632.50 VAT = ₦42,732.50); "Place order" snapshots the order,
+      clears the bag, and routes to `/checkout/success` with a reference (`TMS-DQXGCG`); confirmation
+      shows items/totals/address/contact + an honest "payment pending" notice; empty-cart and
+      no-order guards both render. No console errors.
+  - Scope delivered: single-page checkout (`CheckoutFlow`) — contact, delivery address (Nigerian
+    states select), delivery-method radios (from mock `getDeliveryOptions()`), payment-method
+    radios (Flutterwave card/transfer, clearly a preview), and a sticky itemised order summary
+    (subtotal, promo, delivery, VAT 7.5%, total). Pure domain in `lib/checkout.ts` (email/NG-phone
+    validation, section-namespaced errors, `computeOrderTotals`) + `lib/order.ts` (reference codec,
+    last-order persistence) with 12 unit tests. `/checkout/success` `OrderConfirmation` reads the
+    placed order; `/checkout` + `/checkout/success` + loading states. Provider gained
+    `getDeliveryOptions()` + api stub + 1 provider test. **No real payment** — delivery/tax are
+    mock and server-authoritative later (TMS-FBR-004).
+  - Follow-ups: server delivery quote + order + payment intent (TMS-FBR-004); wire into TMS-F3-003
+    payment states.
+- [x] **TMS-F3-003** Payment states — processing / success / pending / failure
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); `pnpm audit --audit-level high --prod` clean (1 moderate, below threshold);
+    browser pass on all outcomes: checkout "Place order" → `/checkout/payment` shows a processing
+    state, then resolves — **success** → order `PAID`/`SUCCEEDED`, bag cleared, status-aware
+    `/checkout/success` ("Order confirmed" + "Payment received"); **failure** → `PAYMENT_FAILED`,
+    **bag kept**, retry (clean URL) resolves to success; **pending** → `PAYMENT_PROCESSING`, bag
+    cleared, pending panel. No-order guard renders; no console errors.
+  - Scope delivered: `/checkout/payment` (`PaymentProcessing`, Suspense-wrapped for
+    `useSearchParams`) with a simulated provider round-trip and processing/pending/failure UIs;
+    `lib/payment.ts` (outcome parse + `OrderStatus`/`PaymentStatus` mapping from `@tms/contracts`,
+    cart-clear policy) with 4 unit tests; `PlacedOrder` gained `status` + `paymentStatus`;
+    `updateLastOrder()` helper. Checkout now hands off to payment (bag kept until resolved);
+    confirmation is status-aware. Natural flow resolves to success; `?outcome=pending|failure`
+    exercises the other states for review (server must own the real status — never a client param).
+  - Follow-ups: real payment intent + webhook-verified status + idempotent retry (TMS-FBR-004);
+    surface order status history once the orders API + account (TMS-F3-005) land.
+- [x] **TMS-F3-004** Auth — registration + login + account (mock session)
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate); audit not run this pass (npm audit endpoint returned a registry-side 410 outage;
+    **no new dependencies added**, so risk is unchanged from the last clean run). Browser pass
+    (desktop + mobile): register (validation → success → session + account created with **no
+    password stored** → redirect to `/account`); duplicate email rejected (case-insensitive);
+    login (unknown-email error; success restores the session); sign-out clears the session, updates
+    the header, and lands home; guest `/account` → `/login?next=/account`; `?next=` sends the user
+    onward (→ `/checkout`); checkout **prefills** email + recipient from the session; header account
+    link reflects state. No console errors.
+  - Scope delivered: pure domain in `lib/auth.ts` (register/login validation, account list +
+    session helpers — **no passwords persisted**) with 6 unit tests; `AuthProvider`
+    (localStorage-backed session, `ready` flag); shared `AuthForm` (login/register, `?next=`
+    redirect, honest preview notice); `/login`, `/register`, protected `/account`
+    (`AccountOverview` — profile, recent order, sign out, "coming soon" tiles). Header gained an
+    account link; checkout prefills from the session. Wrapped the app in `AuthProvider`.
+  - Follow-ups: real secure auth (cookie session) — TMS-FBR-005; feeds TMS-F3-005 (orders / saved
+    designs / wishlist).
+- [x] **TMS-F3-005** Account — orders list, order detail + tracking, saved designs, wishlist
+  - Status: **Verified** (2026-07-15) — `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; 89 storefront unit tests); `pnpm audit --audit-level high --prod` not run (npm audit
+    endpoint returned a registry-side 410 outage as on F3-004; **no new dependencies added**, so risk
+    is unchanged from the last clean run). Browser pass (desktop + mobile): register → account hub
+    with live tiles (Orders/Saved designs/Wishlist/Profile + counts); placed order recorded to history
+    and shown under `/account/orders` with a **human status** ("Order confirmed", never a raw code);
+    `/account/orders/[reference]` renders the fulfilment **tracking timeline** (Order confirmed →
+    Delivered) with the reached step current and the rest upcoming; Design Studio **Save design** →
+    `/account/saved-designs` (open-in-studio restores the config, remove works); wishlist hearts on
+    shop cards toggle live (aria-pressed, no card navigation) → `/account/wishlist` (2 items, remove);
+    hub counts (1/1/2) reflect state; guest guard redirects to `/login?next=…` (param preserved);
+    sign-out lands home with no redirect bounce. No console errors.
+  - Scope delivered: pure domain in `lib/order-status.ts` (§17 customer-facing status +
+    `orderTracking` timeline — **no raw provider codes**, 8 unit tests) and `lib/account.ts`
+    (per-email order history / saved designs / wishlist stores + pure transforms, 15 unit tests);
+    reactive `WishlistProvider` (user-scoped, `ready` flag) wrapped in the layout; `useRequireAuth`
+    guard hook + presentational `AccountShell`; account hub (`AccountOverview` rebuilt with counts +
+    recent order), `OrdersList`, `OrderDetail` (tracking timeline + totals), `SavedDesignsView`,
+    `WishlistView`, `ProfileView`, and a shared `WishlistButton` (icon overlay on `ProductCard` as a
+    valid anchor sibling; labelled on the product page). Routes: `/account/orders`,
+    `/account/orders/[reference]`, `/account/saved-designs`, `/account/wishlist`, `/account/profile`
+    (all `noindex`, §25). Wiring: checkout `recordOrder` on place; payment sync via
+    `updateOrderInHistory` on resolve; Design Studio **Save design**. Order history is keyed by the
+    order's **contact email** so a guest checkout and a later sign-in with the same address share the
+    same orders. Still 100% mock/client store — backend gaps under TMS-FBR-004 (orders API) and
+    TMS-FBR-005 (auth + account data: saved designs, wishlist).
+  - Follow-ups: real orders/tracking + account-data APIs (TMS-FBR-004/005); once auth is
+    cookie-backed, migrate the per-email localStorage stores to the server; notification prefs,
+    email verification, password reset, data-export/deletion (profile placeholders today).
+
+### F3 complete
+
+All F3 tasks (TMS-F3-001…005) are Verified. Next: F4 (admin platform) or the tracked soft-404
+defect TMS-F1-DEF-001.
+
 ## Later phases
 
 F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·

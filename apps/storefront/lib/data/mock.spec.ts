@@ -63,6 +63,20 @@ describe('mockProvider studio options', () => {
   });
 });
 
+describe('mockProvider delivery options', () => {
+  it('returns delivery methods with fees, currency and an ETA', async () => {
+    const options = await mockProvider.getDeliveryOptions();
+    expect(options.length).toBeGreaterThan(0);
+    expect(options.some((o) => o.priceMinor === 0)).toBe(true); // studio pickup is free
+    for (const o of options) {
+      expect(o.id).toMatch(/^[a-z0-9-]+$/);
+      expect(o.priceMinor).toBeGreaterThanOrEqual(0);
+      expect(o.currency).toBeTruthy();
+      expect(o.eta).toBeTruthy();
+    }
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });

@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, Space_Grotesk } from 'next/font/google';
+import { AuthProvider } from '@/components/account/auth-provider';
+import { WishlistProvider } from '@/components/account/wishlist-provider';
+import { CartDrawer } from '@/components/cart/cart-drawer';
+import { CartProvider } from '@/components/cart/cart-provider';
 import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
 import './globals.css';
@@ -52,13 +56,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <div className="flex min-h-dvh flex-col">
-          <SiteHeader />
-          <main id="main" className="flex-1">
-            {children}
-          </main>
-          <SiteFooter />
-        </div>
+        <AuthProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <div className="flex min-h-dvh flex-col">
+                <SiteHeader />
+                <main id="main" className="flex-1">
+                  {children}
+                </main>
+                <SiteFooter />
+              </div>
+              <CartDrawer />
+            </CartProvider>
+          </WishlistProvider>
+        </AuthProvider>
       </body>
     </html>
   );

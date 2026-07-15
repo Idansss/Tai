@@ -2,11 +2,91 @@
 
 ## Current frontend phase
 
-F2 — Design Studio. TMS-F2-001 **Verified** (2026-07-14). Branch `claude/f2-design-studio` is
-**stacked on `claude/f1-storefront` → `claude/f0-visual-foundation`** — merge F0 (#4) then F1 (#5)
-first. F2 opens as stacked PR #6 with base `claude/f1-storefront`.
+F3 — Commerce & account. **F3 is complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
+TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all **Verified**
+(2026-07-15). Branch `claude/f3-commerce`
+is **stacked on `claude/f2-design-studio` → `claude/f1-storefront` → `claude/f0-visual-foundation`**
+— merge F0 (#4) → F1 (#5) → F2 (#6) first. F3 opens as a stacked PR (#7) with base
+`claude/f2-design-studio`. Nothing is merged to `main` yet.
 
-### F2 progress this session
+### F3 progress this session
+
+- **Account build-out (TMS-F3-005).** Pure domain: `lib/order-status.ts` maps `OrderStatus` to
+  **customer-facing** copy + a fulfilment tracking timeline (spec §17 — **no raw provider codes**,
+  8 tests); `lib/account.ts` holds per-email order history / saved designs / wishlist stores + pure
+  transforms (15 tests). Reactive `WishlistProvider` (user-scoped, `ready` flag) wraps the app; a
+  `useRequireAuth` guard hook + a presentational `AccountShell` frame the signed-in pages. New
+  surfaces: account **hub** (`AccountOverview` rebuilt — recent order + Orders/Saved designs/
+  Wishlist/Profile tiles with live counts), `/account/orders` (list, friendly status),
+  `/account/orders/[reference]` (**tracking timeline** + item/delivery/totals),
+  `/account/saved-designs` (open-in-studio + remove), `/account/wishlist` (remove), and
+  `/account/profile` (details + sign-out + honest preview notice) — all `noindex`. A shared
+  `WishlistButton` sits on `ProductCard` (icon overlay, as a valid anchor sibling) and the product
+  page (labelled). Wiring: checkout `recordOrder` on place; payment `updateOrderInHistory` on
+  resolve; Design Studio gained **Save design**. Order history is keyed by **contact email** so a
+  guest checkout reconciles on later sign-in. Still 100% mock/client store — the gaps are recorded
+  under TMS-FBR-004 (orders API) and TMS-FBR-005 (account data: saved designs, wishlist).
+- Verified: full `pnpm check` green (89 storefront tests); browser pass (desktop + mobile) on
+  register → hub → place order → orders list → order detail/timeline → save design → saved designs
+  → wishlist toggle → wishlist page → hub counts → guest guard `?next` → sign-out-home; no console
+  errors. (Audit skipped — npm audit endpoint 410 outage, no new deps added.)
+
+- **Auth + account (TMS-F3-004).** Mock **client session** — `lib/auth.ts` (register/login
+  validation, account list + session helpers, **no passwords stored**, 6 unit tests) + `AuthProvider`
+  (localStorage, `ready` flag). Shared `AuthForm` powers `/login` + `/register` (`?next=` redirect,
+  honest preview notice); protected `/account` (`AccountOverview` — profile, recent order, sign out,
+  "coming soon" tiles) redirects guests to `/login?next=/account`. Header gained an account link that
+  reflects sign-in state; checkout **prefills** email + recipient from the session. App wrapped in
+  `AuthProvider`. Login only checks the email exists (nothing to verify a password against) — real
+  secure auth is **TMS-FBR-005**; feeds TMS-F3-005.
+- Verified: full `pnpm check` green; browser pass on register/login/logout/duplicate/unknown-email/
+  protected-redirect/next/prefill (desktop + mobile); no console errors. (Audit skipped this pass —
+  npm audit endpoint 410 outage; no new deps added.)
+
+- **Payment states (TMS-F3-003).** `/checkout/payment` (`PaymentProcessing`, Suspense-wrapped for
+  `useSearchParams`) simulates a provider round-trip then resolves to **success** (order
+  `PAID`/`SUCCEEDED`, bag cleared → status-aware `/checkout/success`), **pending** (`PAYMENT_PROCESSING`,
+  bag cleared, pending panel), or **failure** (`PAYMENT_FAILED`, **bag kept**, retry from a clean URL
+  succeeds). `lib/payment.ts` maps outcomes to the `OrderStatus`/`PaymentStatus` enums from
+  `@tms/contracts` (4 unit tests); `PlacedOrder` gained `status`/`paymentStatus`; `updateLastOrder()`
+  added; the confirmation is status-aware ("Order confirmed" + "Payment received" once paid).
+  Natural checkout resolves to success; `?outcome=pending|failure` exercises the other states for
+  review — **the server must own the real status (never a client param)**. No money moves.
+- Verified: full `pnpm check` green; audit clean; browser pass on all outcomes + no-order guard +
+  retry-to-success; no console errors.
+
+- **Checkout (TMS-F3-002).** Single-page `CheckoutFlow` — contact, delivery address (Nigerian
+  states select), delivery-method radios (mock `getDeliveryOptions()`), payment-method radios
+  (Flutterwave card/transfer, clearly a preview), and a sticky itemised order summary (subtotal,
+  promo, delivery, **VAT 7.5%**, total). Pure domain in `lib/checkout.ts` (email/NG-phone
+  validation, section-namespaced errors, `computeOrderTotals`) + `lib/order.ts` (reference codec,
+  `tms.lastOrder.v1` persistence) with 12 unit tests. "Place order" snapshots the order, clears the
+  bag, and routes to `/checkout/success`, where `OrderConfirmation` renders items/totals/address/
+  contact + an honest "payment pending" notice. Empty-cart and no-order guards included. **No real
+  payment** — delivery/tax are mock and server-authoritative later (**TMS-FBR-004**); pairs with
+  the upcoming TMS-F3-003 payment states.
+- Verified: full `pnpm check` green; audit clean; browser pass (validation blocks empty submit,
+  live totals ₦39,000 → ₦42,732.50, order placed with reference, confirmation, empty/no-order
+  guards, mobile single-column). No console errors.
+
+- **Cart (TMS-F3-001).** Pure cart domain in `lib/cart.ts` (line-merge id, add/set/remove,
+  subtotal, mock promotions `STUDIO10`/`WELCOME`, estimated total) with 16 unit tests. Client
+  `CartProvider` persists to `localStorage` (`tms.cart.v1`) with a `ready` flag so the SSR badge
+  never mismatches, and owns the drawer open state. `CartDrawer` is a native `<dialog>` slide-over;
+  `CartLineList` + `CartSummary` are shared by the drawer and the `/cart` page. Header bag button
+  opens the drawer and shows an accessible live count badge.
+- **Wiring.** Product configurator and Design Studio "Add to bag" now push real lines (studio
+  lines carry placement/scale and link back to their share URL). An honest `/checkout` interim
+  summary shows totals with no fake payment (full flow is TMS-F3-002).
+- **Deliberately deferred:** delivery + tax are computed at checkout (server-authoritative); the
+  cart shows a preview subtotal + preview promotion only. Backend gap = **TMS-FBR-003** in
+  FRONTEND_TO_BACKEND.md.
+- Verified: full `pnpm check` green; `pnpm audit --audit-level high --prod` clean (1 moderate);
+  browser pass — add from both entry points, drawer + badge, promo apply/persist (₦36,000 →
+  ₦32,400), quantity steppers update totals + badge live, `/cart` + `/checkout` + empty state,
+  localStorage survives navigation, mobile drawer reflow. No console errors.
+
+### F2 progress (prior session)
 
 - `/design-studio`: guided flow (artwork → garment → colour → size → placement → scale) in a
   dark-gallery `DesignStudio` client component; live 2D DOM preview (colour-tinted garment,
@@ -59,7 +139,8 @@ first. F2 opens as stacked PR #6 with base `claude/f1-storefront`.
 ## Tasks verified
 
 TMS-F0-001, -003, -004, -005, -006, -007, -008, -009, -011, -012; TMS-F1-001, -002, -003, -004,
--005, -007, -008, -009; **TMS-F2-001**.
+-005, -007, -008, -009; TMS-F2-001; TMS-F3-001; TMS-F3-002; TMS-F3-003; TMS-F3-004; **TMS-F3-005**
+(F3 complete).
 
 ## In-progress task
 
@@ -67,9 +148,9 @@ None active. F0-002, F0-010, F1-006 remain `Implemented` (not `Verified`).
 
 ## First recommended next task
 
-F2 follow-ups (`/design-studio/[configurationId]` resume route; contrast warning + undo; promote
-ColourSwatch/SizeSelector/preview into `packages/ui`) **or** the tracked soft-404 defect
-TMS-F1-DEF-001 **or** begin **F3** (cart / checkout / account).
+F3 is complete. Options: begin **F4 — Admin platform** (admin shell, dashboard, artwork manager,
+orders, production, QC, fulfilment, customers, content, errors, analytics), **or** clear the tracked
+soft-404 defect **TMS-F1-DEF-001**.
 
 ## Routes completed
 

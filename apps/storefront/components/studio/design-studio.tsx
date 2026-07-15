@@ -1,8 +1,12 @@
 'use client';
 
 import { Alert, cn, Eyebrow, Heading, Price, Text } from '@tms/ui';
-import { Check, Copy, RotateCcw, ShoppingBag } from 'lucide-react';
+import { Check, Copy, Heart, RotateCcw, ShoppingBag } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useAuth } from '@/components/account/auth-provider';
+import { useCart } from '@/components/cart/cart-provider';
+import { designSignature, persistSavedDesign } from '@/lib/account';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import {
   buildStudioQuery,
@@ -82,10 +86,17 @@ export function DesignStudio({
   }));
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { addItem } = useCart();
+  const { user } = useAuth();
+  const router = useRouter();
 
   const update = useCallback((patch: Partial<StudioConfig>) => {
     setCopied(false);
     setStatus(null);
+    setAdded(false);
+    setSaved(false);
     setConfig((c) => ({ ...c, ...patch }));
   }, []);
 
@@ -126,14 +137,53 @@ export function DesignStudio({
   }, [config]);
 
   const addToBag = () => {
-    if (!complete) {
+    if (!complete || !artwork || !config.garment || !config.colour || !config.size) {
       setStatus('Choose an artwork, garment, colour and size to continue.');
       return;
     }
+    addItem({
+      productSlug: `${artwork.slug}-studio`,
+      href: `/design-studio${buildStudioQuery(config)}`,
+      artworkTitle: artwork.title,
+      garment: config.garment,
+      colour: config.colour,
+      size: config.size,
+      priceMinor: artwork.startingPriceMinor,
+      currency: artwork.currency,
+      quantity: Math.max(1, config.quantity),
+      placement: placement?.label,
+      scale: scale?.label,
+      view: config.view,
+    });
+    setAdded(true);
     setStatus(
-      `Saved preview: ${artwork?.title} on ${config.garment}, ${config.colour}, size ${config.size}, ` +
-        `${placement?.label.toLowerCase()} · ${scale?.label.toLowerCase()}. Bag & checkout arrive in phase F3.`,
+      `Added to your bag: ${artwork.title} on ${config.garment}, ${config.colour}, size ${config.size}, ` +
+        `${placement?.label.toLowerCase()} · ${scale?.label.toLowerCase()}.`,
     );
+  };
+
+  const saveDesign = () => {
+    if (!complete || !artwork) {
+      setStatus('Choose an artwork, garment, colour and size to save your design.');
+      return;
+    }
+    if (!user) {
+      // Saving belongs to an account — send guests to sign in and return here.
+      router.push(`/login?next=${encodeURIComponent(`/design-studio${buildStudioQuery(config)}`)}`);
+      return;
+    }
+    persistSavedDesign(user.email, {
+      id: designSignature(config),
+      config,
+      artworkTitle: artwork.title,
+      colourHex: colour?.hex,
+      priceMinor: artwork.startingPriceMinor,
+      currency: artwork.currency,
+      savedAt: new Date().toISOString(),
+    });
+    setAdded(false);
+    setSaved(true);
+    setStatus(`Saved to your designs: ${artwork.title}. Find it under your account.`);
   };
 
   return (
@@ -378,6 +428,15 @@ export function DesignStudio({
               </button>
               <button
                 type="button"
+                onClick={saveDesign}
+                disabled={!complete}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line-2 px-4 text-sm text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Heart className={cn('size-4', saved && 'fill-current text-accent')} aria-hidden />
+                {saved ? 'Design saved' : 'Save design'}
+              </button>
+              <button
+                type="button"
                 onClick={copyShareLink}
                 disabled={!artwork}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line-2 px-4 text-sm text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-40"
@@ -400,7 +459,10 @@ export function DesignStudio({
 
             <div aria-live="polite" className="mt-4 empty:hidden">
               {status ? (
-                <Alert tone="info" title="Preview build">
+                <Alert
+                  tone={added || saved ? 'success' : 'info'}
+                  title={added ? 'Added to bag' : saved ? 'Design saved' : 'Design Studio'}
+                >
                   {status}
                 </Alert>
               ) : null}
