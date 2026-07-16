@@ -12,6 +12,12 @@ describe('loadEnvironment', () => {
       LOG_LEVEL: 'info',
       APP_PUBLIC_URL: 'http://localhost:3000',
       SMTP_URL: 'smtp://localhost:1025',
+      REDIS_URL: 'redis://localhost:6379',
+      S3_ENDPOINT: 'http://localhost:9000',
+      S3_REGION: 'us-east-1',
+      S3_BUCKET: 'tai-manic-local',
+      S3_ACCESS_KEY: 'minio',
+      S3_SECRET_KEY: 'local_development_only',
       EMAIL_FROM: 'no-reply@taimanic.local',
       AUTH_TOKEN_PEPPER: 'local-development-auth-pepper-change-me',
       AUTH_COOKIE_NAME: 'tms_session',
@@ -44,5 +50,15 @@ describe('loadEnvironment', () => {
         AUTH_TOKEN_PEPPER: 'a-production-authentication-pepper',
       }),
     ).toThrow('ADMIN_MFA_ENCRYPTION_KEY must be replaced in production.');
+  });
+
+  it('requires a real malware scanner hook in production', () => {
+    expect(() =>
+      loadEnvironment({
+        NODE_ENV: 'production',
+        AUTH_TOKEN_PEPPER: 'a-production-authentication-pepper',
+        ADMIN_MFA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      }),
+    ).toThrow('MEDIA_MALWARE_SCAN_URL is required in production.');
   });
 });

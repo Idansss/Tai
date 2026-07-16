@@ -1,5 +1,5 @@
 {
-  "agent": "Codex",
+  "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
   "currentPhase": "B3",
   "lastVerifiedTask": "TMS-B3-001",
@@ -22,14 +22,16 @@
     "TMS-B2-001",
     "TMS-B2-002",
     "TMS-B2-003",
+    "TMS-B2-004",
+    "TMS-B2-004a",
     "TMS-B3-001"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified; garment-catalogue-merged; design-configurations-verified",
-  "lastUpdated": "2026-07-16T16:40:00Z",
+  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
+  "lastUpdated": "2026-07-16T19:10:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -55,6 +57,17 @@
     "pullRequest": 17,
     "migration": "20260716150000_design_configurations",
     "qualityGate": "passed"
+  },
+  "mediaEndToEnd": {
+    "task": "TMS-B2-004a",
+    "branch": "codex/b2-004a-media-e2e",
+    "status": "verified-pr-open",
+    "pullRequest": 16,
+    "migration": "none-required",
+    "qualityGate": "passed",
+    "concerns": [
+      "Stacked on codex/b2-media-pipeline because PR #15 is not merged yet. Merge PR #15 first, or #16 will show the media implementation in its diff."
+    ]
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -129,9 +142,11 @@
   "garmentCatalogue": {
     "task": "TMS-B2-003",
     "branch": "codex/b2-garment-catalogue",
-    "status": "verified-pr-open-ci-passed",
+    "status": "verified-merged",
     "pullRequest": 14,
-    "ciRun": 29497257382,
+    "ciRun": 29497566759,
+    "commit": "4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79",
+    "mergedAt": "2026-07-16T12:20:15Z",
     "migration": "20260716112000_garment_catalogue",
     "qualityGate": "passed",
     "runtimeSmoke": "passed",
@@ -152,14 +167,14 @@
     "pullRequest": 17,
     "migration": "20260716150000_design_configurations",
     "qualityGate": "passed",
-    "apiTests": 60,
-    "databaseTests": 7,
+    "apiTests": 74,
+    "databaseTests": 8,
     "decisions": [
       "ADR-013 approved placements are the only design geometry",
       "ADR-014 a saved design is identified by its approved tuple, not by quantity"
     ],
     "concerns": [
-      "Branched from main, so it does not contain the TMS-B2-004 media pipeline. Both branches bump the persistence suite migration-count guard, which conflicts on merge: the value must become 7 once PR #15 and PR #17 are both on main.",
+      "Merged origin/main (TMS-B2-004 media). The persistence migration-count guard is 7 here; each remaining open PR that adds a migration must raise it again.",
       "Guest designs are unsupported; anonymous save arrives with carts in TMS-B4-002.",
       "The Design Studio UI must drop freeform placement and crop before it can consume this surface (ADR-013)."
     ]

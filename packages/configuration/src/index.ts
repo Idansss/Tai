@@ -14,6 +14,13 @@ const EnvironmentSchema = z
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
     APP_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
     SMTP_URL: z.string().url().default('smtp://localhost:1025'),
+    REDIS_URL: z.string().url().default('redis://localhost:6379'),
+    S3_ENDPOINT: z.string().url().default('http://localhost:9000'),
+    S3_REGION: z.string().min(1).default('us-east-1'),
+    S3_BUCKET: z.string().min(3).max(63).default('tai-manic-local'),
+    S3_ACCESS_KEY: z.string().min(1).default('minio'),
+    S3_SECRET_KEY: z.string().min(8).default('local_development_only'),
+    MEDIA_MALWARE_SCAN_URL: z.string().url().optional(),
     EMAIL_FROM: z.string().email().default('no-reply@taimanic.local'),
     AUTH_TOKEN_PEPPER: z.string().min(32).default(localAuthPepper),
     AUTH_COOKIE_NAME: z
@@ -55,6 +62,13 @@ const EnvironmentSchema = z
         code: 'custom',
         path: ['ADMIN_MFA_ENCRYPTION_KEY'],
         message: 'ADMIN_MFA_ENCRYPTION_KEY must be replaced in production.',
+      });
+    }
+    if (environment.NODE_ENV === 'production' && !environment.MEDIA_MALWARE_SCAN_URL) {
+      context.addIssue({
+        code: 'custom',
+        path: ['MEDIA_MALWARE_SCAN_URL'],
+        message: 'MEDIA_MALWARE_SCAN_URL is required in production.',
       });
     }
   });

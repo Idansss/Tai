@@ -15,9 +15,12 @@
   },
   "dependencies": {
     "@tms/configuration": "workspace:*",
+    "@tms/database": "workspace:*",
+    "@tms/media": "workspace:*",
     "bullmq": "5.80.2",
     "ioredis": "5.11.1",
-    "pino": "10.3.1"
+    "pino": "10.3.1",
+    "sharp": "0.34.3"
   },
   "devDependencies": {
     "tsx": "4.23.1"
