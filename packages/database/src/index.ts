@@ -10,6 +10,7 @@ export {
   ArtworkVersionStatus,
   AuthAssuranceLevel,
   CompatibilityStatus,
+  DesignVisibility,
   GarmentType,
   GarmentView,
   MalwareScanStatus,

@@ -1,9 +1,9 @@
 {
   "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
-  "currentPhase": "B2",
-  "lastVerifiedTask": "TMS-B2-004a",
-  "nextRecommendedTask": "Merge PR #15 and PR #16, then TMS-B3-001",
+  "currentPhase": "B3",
+  "lastVerifiedTask": "TMS-B3-001",
+  "nextRecommendedTask": "TMS-B3-002",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -23,14 +23,15 @@
     "TMS-B2-002",
     "TMS-B2-003",
     "TMS-B2-004",
-    "TMS-B2-004a"
+    "TMS-B2-004a",
+    "TMS-B3-001"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
-  "lastUpdated": "2026-07-16T13:15:51+01:00",
+  "lastUpdated": "2026-07-16T19:10:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -50,21 +51,12 @@
     "concerns": []
   },
   "activeTask": {
-    "task": "TMS-B2-004",
-    "branch": "codex/b2-media-pipeline",
-    "status": "implemented-pr-open-ci-passed",
-    "pullRequest": 15,
-    "ciRun": 29513562330,
-    "commits": ["b93f4fc", "9188717"],
-    "migration": "20260716130000_media_pipeline",
-    "recoveredFrom": "uncommitted local worktree at C:/Users/Admin/Desktop/Tai-backend",
-    "defectsFoundDuringVerification": [
-      "OpenAPI error catalogue was missing MEDIA_VALIDATION_FAILED, MEDIA_INFECTED, and MEDIA_PROCESSING_FAILED; the contract parity test was failing. Fixed in b93f4fc.",
-      "@aws-sdk/client-s3 pulled fast-xml-parser <5.5.6 with one critical and three high advisories; the CI production audit blocked the PR. Pinned to >=5.5.6 in 9188717."
-    ],
-    "concerns": [
-      "pnpm 10 cannot run the production audit locally: the npm audit endpoint returns 410. CI is the source of truth for that gate."
-    ]
+    "task": "TMS-B3-001",
+    "branch": "codex/b3-design-configurations",
+    "status": "verified-pr-open",
+    "pullRequest": 17,
+    "migration": "20260716150000_design_configurations",
+    "qualityGate": "passed"
   },
   "mediaEndToEnd": {
     "task": "TMS-B2-004a",
@@ -166,6 +158,25 @@
     "concerns": [
       "Exact-version media assets, ingestion, derivatives, and mockups remain TMS-B2-004.",
       "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001."
+    ]
+  },
+  "designConfigurations": {
+    "task": "TMS-B3-001",
+    "branch": "codex/b3-design-configurations",
+    "status": "verified-pr-open",
+    "pullRequest": 17,
+    "migration": "20260716150000_design_configurations",
+    "qualityGate": "passed",
+    "apiTests": 74,
+    "databaseTests": 8,
+    "decisions": [
+      "ADR-013 approved placements are the only design geometry",
+      "ADR-014 a saved design is identified by its approved tuple, not by quantity"
+    ],
+    "concerns": [
+      "Merged origin/main (TMS-B2-004 media). The persistence migration-count guard is 7 here; each remaining open PR that adds a migration must raise it again.",
+      "Guest designs are unsupported; anonymous save arrives with carts in TMS-B4-002.",
+      "The Design Studio UI must drop freeform placement and crop before it can consume this surface (ADR-013)."
     ]
   }
 }

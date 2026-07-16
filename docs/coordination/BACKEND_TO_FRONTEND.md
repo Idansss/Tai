@@ -180,3 +180,15 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Required Studio change: replace the freeform transform and crop controls with a picker over the approved placements and scale presets returned for the selected artwork version and garment template. Do not send geometry the server cannot approve; it will be rejected with `422 CONFIGURATION_NOT_APPROVED`.
 - Rationale: an administrator approves an exact placement, not a region. Freeform geometry would let a customer position or scale artwork into a print that was never approved and cannot be quality-checked for DPI. Sharing, pricing, and production rendering all key off the approved tuple.
 - Shareable Studio URLs should carry the approved IDs rather than percentages. Existing `printX`/`printY`/`printWidth`/`crop*` query parameters have no server meaning and should be dropped rather than translated.
+
+## 2026-07-16 — TMS-B3-001 saved designs are available
+
+- Status: implemented on `codex/b3-design-configurations`; consume after its PR is merged.
+- Compatibility: additive. No existing operation changes. Six new operations: `GET/POST /api/v1/designs`, `GET/PATCH/DELETE /api/v1/designs/{id}`, `POST /api/v1/designs/{id}/share`, and public `GET /api/v1/shared-designs/{token}`.
+- **This replaces the saved-designs mock in `apps/storefront/lib/account.ts` and the share behaviour in the Design Studio.** Requires an authenticated customer session cookie (`tms_session`); an administrator session is a different audience and is rejected.
+- `POST /api/v1/designs` takes the approved tuple only: `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, name? }`. Sending `printX`/`printY`/`printWidth`/`crop*` is a `400`, and an unapproved placement, unpublished artwork version, or unknown scale preset is `422 CONFIGURATION_NOT_APPROVED`. See ADR-013.
+- Saving is idempotent: `201` for a new design, `200` with the existing design for an identical tuple. Do not treat `200` as an error or create a duplicate locally.
+- Quantity is not part of a saved design (ADR-014). Keep quantity in cart state; it arrives with the cart in TMS-B4-002.
+- Sharing: a design is `PRIVATE` (no `shareToken`) or `UNLISTED` (with one). `POST /designs/{id}/share` publishes or rotates a link — **rotating immediately breaks the previous URL**, so surface that in the UI. `PATCH { visibility: 'PRIVATE' }` revokes. `GET /shared-designs/{token}` is public, returns `shareToken: null`, and never exposes the owner.
+- Reading a design you do not own returns `404`, not `403`. Do not render a "forbidden" state; treat it as not found.
+- Still absent and not to be faked: price, availability, stock (TMS-B3-002 and TMS-B4-001) and production renders (TMS-B3-003). Keep typed adapters for those fields.

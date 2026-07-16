@@ -45,6 +45,8 @@ import { SessionGuard } from './session.guard.js';
       },
     },
   ],
-  exports: [AuthService, SessionGuard, AuthRateLimiterService],
+  // AUTH_CONFIG is exported so an importing module can construct SessionGuard, mirroring the
+  // way AdminAuthModule exports ADMIN_AUTH_CONFIG alongside its guards.
+  exports: [AuthService, SessionGuard, AuthRateLimiterService, AUTH_CONFIG],
 })
 export class AuthModule {}

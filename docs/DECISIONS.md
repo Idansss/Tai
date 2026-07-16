@@ -55,3 +55,11 @@ Status: Accepted. A saved design binds one immutable published artwork version t
 Context: the Design Studio user interface was built against typed mocks with no backend and offers continuous print placement (`printX`, `printY`, `printWidth`) plus crop (`cropZoom`, `cropX`, `cropY`). No approved-canvas model can express that geometry, so the two representations are irreconcilable.
 
 Consequences: freeform placement and crop controls leave the Studio and are replaced by the placements and scale presets an administrator has actually approved. This preserves the ADR-011 invariant that only administrator-approved configurations are valid, guarantees print resolution and DPI on production output, and keeps the TMS-B3-003 renderer deterministic — an approved tuple always renders one exact result. The cost is real Studio interface rework and the loss of fine customer positioning. A bounded offset within an approved placement box was considered and rejected for this phase because it weakens exact approval; it can be revisited as a separate task without invalidating stored designs, since a bounded offset is additive to the approved tuple.
+
+## ADR-014 — A saved design is identified by its approved tuple, not by quantity
+
+Status: Accepted. `design_configurations` stores the approved tuple and a SHA-256 hash over that tuple only. Quantity is excluded.
+
+Context: the shared `DesignConfigurationInputSchema` carries a quantity because the garment validation endpoint answers "may this be bought, and how many". A saved design answers a different question: "what did the customer make".
+
+Consequences: saving the same design twice is idempotent and collapses onto one row, so `POST /api/v1/designs` returns 201 for a new design and 200 for an identical one, including under a concurrent unique-index race. Quantity moves to the cart in TMS-B4-002. A design is PRIVATE with no share token or UNLISTED with one, and a database check constraint prevents those states from drifting; rotation invalidates the previous link immediately. Ownership failures report not-found rather than forbidden so design identifiers cannot be probed. Foreign keys to the artwork version, variant, placement, and scale preset are RESTRICT so a saved design cannot silently lose the configuration it was built from.
