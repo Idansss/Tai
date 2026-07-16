@@ -20,7 +20,7 @@ function TimelineRow({ step, last }: { step: TrackingStep; last: boolean }) {
           className={cn(
             'grid size-6 shrink-0 place-items-center rounded-full border',
             done && 'border-transparent bg-[var(--color-success)] text-white',
-            current && 'border-[var(--color-accent-primary)] text-accent',
+            current && 'border-accent-2 text-accent-2',
             !done && !current && 'border-line-2 text-muted',
           )}
           aria-hidden
@@ -28,7 +28,7 @@ function TimelineRow({ step, last }: { step: TrackingStep; last: boolean }) {
           {done ? (
             <Check className="size-3.5" />
           ) : (
-            <span className={cn('size-2 rounded-full', current ? 'bg-accent' : 'bg-line-2')} />
+            <span className={cn('size-2 rounded-full', current ? 'bg-accent-2' : 'bg-line-2')} />
           )}
         </span>
         {!last ? (
@@ -44,7 +44,7 @@ function TimelineRow({ step, last }: { step: TrackingStep; last: boolean }) {
         )}
       >
         {step.label}
-        {current ? <span className="ml-2 text-xs text-accent">In progress</span> : null}
+        {current ? <span className="ml-2 text-xs text-accent-2">In progress</span> : null}
       </span>
     </li>
   );
@@ -211,7 +211,7 @@ export function OrderDetail({ reference }: { reference: string }) {
                 </dd>
               </div>
               {order.totals.discountMinor > 0 ? (
-                <div className="flex items-center justify-between text-accent">
+                <div className="flex items-center justify-between text-accent-2">
                   <dt>Promotion</dt>
                   <dd>
                     −<Price amountMinor={order.totals.discountMinor} currency={order.currency} />

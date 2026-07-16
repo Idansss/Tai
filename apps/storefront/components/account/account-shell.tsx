@@ -28,7 +28,7 @@ export function AccountShell({
       <div>
         <Link
           href="/account"
-          className="inline-flex items-center gap-1 rounded-sm text-sm text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          className="inline-flex items-center gap-1 rounded-sm font-mono text-xs uppercase tracking-[0.12em] text-muted outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
         >
           <ChevronLeft className="size-4" aria-hidden />
           Account

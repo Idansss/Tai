@@ -109,7 +109,7 @@ function LoyaltyContent({ profile, origin }: { profile: LoyaltyProfile; origin: 
             aria-valuemax={100}
             aria-label={`Progress to ${next ? next.label : 'top tier'}`}
           >
-            <div className="h-full rounded-full bg-accent" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-full bg-accent-2" style={{ width: `${progress}%` }} />
           </div>
           <p className="mt-2 text-sm text-ink-2">
             {toNext !== null && next
@@ -166,7 +166,7 @@ function RewardCard({ reward, points }: { reward: LoyaltyReward; points: number 
   return (
     <div className="flex h-full flex-col rounded-[var(--radius-lg)] border border-line bg-surface p-5">
       <div className="flex items-start justify-between gap-3">
-        <Gift className="size-5 shrink-0 text-accent" aria-hidden />
+        <Gift className="size-5 shrink-0 text-accent-2" aria-hidden />
         <Badge tone={affordable ? 'success' : 'neutral'}>
           {reward.pointsCost.toLocaleString()} pts
         </Badge>
@@ -233,7 +233,7 @@ function ReferralCard({ profile, origin }: { profile: LoyaltyProfile; origin: st
       className="rounded-[var(--radius-lg)] border border-line bg-surface p-6"
     >
       <div className="flex items-center gap-2">
-        <Sparkles className="size-5 text-accent" aria-hidden />
+        <Sparkles className="size-5 text-accent-2" aria-hidden />
         <Heading id="referral-title" as={2} size="md">
           Refer a friend
         </Heading>

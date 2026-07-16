@@ -4,6 +4,7 @@ import { EmptyState, Price, Text } from '@tms/ui';
 import { Palette, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import { deleteSavedDesign, readSavedDesigns, type SavedDesign } from '@/lib/account';
 import { buildStudioQuery } from '@/lib/studio';
 import { AccountShell } from './account-shell';
@@ -57,14 +58,16 @@ export function SavedDesignsView() {
               className="flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-canvas-2"
             >
               <div
-                className="grid aspect-[4/3] w-full place-items-center"
+                className="relative grid aspect-[4/3] w-full place-items-center overflow-hidden"
                 style={{ backgroundColor: design.colourHex ?? 'var(--color-surface-secondary)' }}
                 role="img"
                 aria-label={`${design.artworkTitle} design preview`}
               >
-                <span className="rounded-sm bg-white/85 px-2 py-1 text-center text-[11px] font-medium text-black/70">
-                  {design.artworkTitle}
-                </span>
+                <div aria-hidden className="w-[38%] overflow-hidden rounded-sm shadow-md ring-1 ring-black/10">
+                  {design.config.artwork ? (
+                    <ArtworkVisual seed={design.config.artwork} title={design.artworkTitle} />
+                  ) : null}
+                </div>
               </div>
               <div className="flex flex-1 flex-col gap-2 p-4">
                 <div className="flex items-start justify-between gap-2">

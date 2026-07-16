@@ -42,7 +42,7 @@ export function MadeToOrderNote({
         className,
       )}
     >
-      <Package className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+      <Package className="mt-0.5 size-4 shrink-0 text-accent-2" aria-hidden />
       <div>
         <p className="text-ink">
           {isPreOrder

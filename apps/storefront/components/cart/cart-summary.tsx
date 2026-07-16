@@ -34,7 +34,7 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
       {promotion ? (
         <div className="flex items-center justify-between rounded-md border border-line-2 bg-canvas-2 px-3 py-2">
           <span className="inline-flex items-center gap-2 text-sm text-ink">
-            <Tag className="size-4 text-accent" aria-hidden />
+            <Tag className="size-4 text-accent-2" aria-hidden />
             <span className="font-medium">{promotion.code}</span>
             <span className="text-muted">· {promotion.label}</span>
           </span>
@@ -51,7 +51,7 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
         <form onSubmit={onSubmit} className="space-y-1">
           <label
             htmlFor={inputId}
-            className="text-xs font-medium uppercase tracking-[0.08em] text-muted"
+            className="font-mono text-xs uppercase tracking-[0.12em] text-muted"
           >
             Promotion code
           </label>
@@ -90,7 +90,7 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
           </dd>
         </div>
         {discount > 0 ? (
-          <div className="flex items-center justify-between text-accent">
+          <div className="flex items-center justify-between text-accent-2">
             <dt>Promotion</dt>
             <dd>
               −<Price amountMinor={discount} currency={currency} />

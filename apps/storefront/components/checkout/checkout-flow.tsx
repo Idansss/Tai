@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, EmptyState, Heading, Price, Select, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, EmptyState, Heading, Price, SectionIndex, Select, Skeleton, Text, cn } from '@tms/ui';
 import { Lock, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -166,9 +166,12 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
       <div className="space-y-10">
         {/* Contact */}
         <section aria-labelledby="contact-heading">
-          <Heading as={2} id="contact-heading" size="md">
-            Contact
-          </Heading>
+          <div className="flex items-center gap-3">
+            <SectionIndex index={1} />
+            <Heading as={2} id="contact-heading" size="md">
+              Contact
+            </Heading>
+          </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field id="email" label="Email" error={err('contact.email')}>
               <input
@@ -200,9 +203,12 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
 
         {/* Delivery address */}
         <section aria-labelledby="address-heading">
-          <Heading as={2} id="address-heading" size="md">
-            Delivery address
-          </Heading>
+          <div className="flex items-center gap-3">
+            <SectionIndex index={2} />
+            <Heading as={2} id="address-heading" size="md">
+              Delivery address
+            </Heading>
+          </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Field id="fullName" label="Full name" error={err('delivery.fullName')}>
@@ -277,9 +283,12 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
 
         {/* Delivery method */}
         <section aria-labelledby="delivery-heading">
-          <Heading as={2} id="delivery-heading" size="md">
-            Delivery method
-          </Heading>
+          <div className="flex items-center gap-3">
+            <SectionIndex index={3} />
+            <Heading as={2} id="delivery-heading" size="md">
+              Delivery method
+            </Heading>
+          </div>
           {err('delivery.deliveryOptionId') ? (
             <p role="alert" className="mt-2 text-xs text-error">
               {err('delivery.deliveryOptionId')}
@@ -293,7 +302,7 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
                 className={cn(
                   'flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border p-4 transition-colors',
                   form.delivery.deliveryOptionId === option.id
-                    ? 'border-[var(--color-accent-primary)] bg-canvas-2'
+                    ? 'border-accent-2 bg-accent-2/10'
                     : 'border-line-2 hover:bg-canvas-2',
                 )}
               >
@@ -303,7 +312,7 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
                   value={option.id}
                   checked={form.delivery.deliveryOptionId === option.id}
                   onChange={() => setDelivery('deliveryOptionId', option.id)}
-                  className="mt-1 accent-[var(--color-accent-primary)]"
+                  className="mt-1 accent-[var(--color-accent-secondary)]"
                 />
                 <span className="flex-1">
                   <span className="flex items-center justify-between gap-3">
@@ -326,9 +335,12 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
 
         {/* Payment */}
         <section aria-labelledby="payment-heading">
-          <Heading as={2} id="payment-heading" size="md">
-            Payment
-          </Heading>
+          <div className="flex items-center gap-3">
+            <SectionIndex index={4} />
+            <Heading as={2} id="payment-heading" size="md">
+              Payment
+            </Heading>
+          </div>
           <fieldset className="mt-4 space-y-3">
             <legend className="sr-only">Choose a payment method</legend>
             {(
@@ -342,7 +354,7 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
                 className={cn(
                   'flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border p-4 transition-colors',
                   form.paymentMethod === value
-                    ? 'border-[var(--color-accent-primary)] bg-canvas-2'
+                    ? 'border-accent-2 bg-accent-2/10'
                     : 'border-line-2 hover:bg-canvas-2',
                 )}
               >
@@ -352,7 +364,7 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
                   value={value}
                   checked={form.paymentMethod === value}
                   onChange={() => setForm((f) => ({ ...f, paymentMethod: value }))}
-                  className="mt-1 accent-[var(--color-accent-primary)]"
+                  className="mt-1 accent-[var(--color-accent-secondary)]"
                 />
                 <span className="flex-1">
                   <span className="block text-sm font-medium text-ink">{label}</span>
@@ -403,7 +415,7 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
             </dd>
           </div>
           {totals.discountMinor > 0 ? (
-            <div className="flex items-center justify-between text-accent">
+            <div className="flex items-center justify-between text-accent-2">
               <dt>Promotion{promotion ? ` · ${promotion.code}` : ''}</dt>
               <dd>
                 −<Price amountMinor={totals.discountMinor} currency={currency} />

@@ -1,6 +1,7 @@
-import { Container, Eyebrow, Heading } from '@tms/ui';
+import { Container } from '@tms/ui';
 import type { Metadata } from 'next';
 import { CheckoutFlow } from '@/components/checkout/checkout-flow';
+import { PageHeading } from '@/components/site/page-heading';
 import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
@@ -13,13 +14,14 @@ export default async function CheckoutPage() {
   const deliveryOptions = await dataProvider.getDeliveryOptions();
 
   return (
-    <Container className="py-10">
-      <header className="mb-8">
-        <Eyebrow>Checkout</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Checkout
-        </Heading>
-      </header>
+    <Container className="py-10 sm:py-12">
+      <div className="mb-8">
+        <PageHeading
+          eyebrow="Checkout"
+          title="Checkout"
+          lead="Enter your details and place your order. Delivery and tax are confirmed before payment."
+        />
+      </div>
       <CheckoutFlow deliveryOptions={deliveryOptions} />
     </Container>
   );

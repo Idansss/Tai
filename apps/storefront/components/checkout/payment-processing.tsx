@@ -71,7 +71,7 @@ export function PaymentProcessing() {
         role="status"
         aria-live="polite"
       >
-        <Spinner className="size-8 text-accent" aria-hidden />
+        <Spinner className="size-8 text-accent-2" aria-hidden />
         <div>
           <Heading as={1} size="md">
             Processing payment

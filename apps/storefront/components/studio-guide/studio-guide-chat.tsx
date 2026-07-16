@@ -82,7 +82,7 @@ export function StudioGuideChat() {
             Your AI guide to the artworks, the Design Studio, sizing and policies.
           </p>
           <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted">
-            <ShieldCheck className="size-3.5 text-accent" aria-hidden />
+            <ShieldCheck className="size-3.5 text-accent-2" aria-hidden />
             Preview, a mock assistant. It won’t confirm live stock, price or delivery, and never
             places orders (TMS-FBR-009).
           </p>
@@ -120,7 +120,7 @@ export function StudioGuideChat() {
             className="flex items-center gap-2 text-sm text-muted"
             aria-label="Studio Guide is typing"
           >
-            <Sparkles className="size-4 text-accent" aria-hidden />
+            <Sparkles className="size-4 text-accent-2" aria-hidden />
             <span className="flex gap-1">
               <Dot /> <Dot delay="150ms" /> <Dot delay="300ms" />
             </span>
@@ -136,7 +136,7 @@ export function StudioGuideChat() {
             type="button"
             onClick={() => send(prompt)}
             disabled={pending}
-            className="rounded-full border border-line bg-canvas-2 px-3 py-1.5 text-xs text-ink outline-none hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:opacity-50"
+            className="rounded-full border border-line bg-canvas-2 px-3 py-1.5 text-xs text-ink outline-none hover:border-accent-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:opacity-50"
           >
             {prompt}
           </button>
@@ -197,7 +197,7 @@ function AssistantMessage({ message, onRetry }: { message: Message; onRetry: () 
           <button
             type="button"
             onClick={onRetry}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-sm text-sm text-accent outline-none hover:gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-sm text-sm text-accent-2 outline-none hover:gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
           >
             <RotateCw className="size-4" aria-hidden /> Try again
           </button>
@@ -214,7 +214,7 @@ function AssistantMessage({ message, onRetry }: { message: Message; onRetry: () 
         <p>{reply.text}</p>
         {reply.guardrail ? (
           <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted">
-            <ShieldCheck className="size-3.5 text-accent" aria-hidden />
+            <ShieldCheck className="size-3.5 text-accent-2" aria-hidden />
             Checked against the studio’s sources, not guessed.
           </p>
         ) : null}
@@ -232,14 +232,14 @@ function ReferenceCards({ references }: { references: GuideReference[] }) {
         <li key={ref.href}>
           <Link
             href={ref.href}
-            className="group flex items-start gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-3 outline-none hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            className="group flex items-start gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-3 outline-none hover:border-accent-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-ink">{ref.label}</p>
               <p className="text-xs text-muted">{ref.description}</p>
             </div>
             <ArrowRight
-              className="mt-0.5 size-4 shrink-0 text-accent group-hover:translate-x-0.5"
+              className="mt-0.5 size-4 shrink-0 text-accent-2 group-hover:translate-x-0.5"
               aria-hidden
             />
           </Link>

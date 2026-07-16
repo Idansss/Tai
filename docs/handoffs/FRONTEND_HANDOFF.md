@@ -652,3 +652,32 @@ Next: **UX5 — commerce + account** (cart + cart drawer, checkout + payment sta
 home/orders/order-detail+tracking, saved designs, wishlist, loyalty, profile). Reframe the remaining
 token-gradient placeholder in `wishlist-view`. Then UX6 (admin), UX1-005/006, UX7. Do not redo the
 palette; reuse `Frame`/`ArtworkVisual`/`PageHeading`/`SectionIndex`/`Reveal`.
+
+## F6 — UX5 commerce & account — session 4
+
+Calm, focused Gallery Press across commerce + account (all logic untouched):
+- **Cart**: line-item thumbnails reframed to `ArtworkVisual` plates (was a blank swatch), inherited
+  by the cart page and drawer; summary promo label mono, promo tag + discount → teal; cart masthead
+  via `PageHeading`.
+- **Checkout**: numbered stepped sections (`SectionIndex` 01–04), teal selected delivery/payment
+  cards, teal radios + discount, accessible custom state `Select` retained, `PageHeading` masthead,
+  focused content width kept.
+- **Payment states + order confirmation**: left intact (already calm/explicit/correct semantics);
+  processing spinner → teal.
+- **Account**: mono eyebrows on overview/shell/auth; order-detail tracking timeline current-state →
+  teal; **wishlist** + **saved-designs** placeholders reframed to `ArtworkVisual` (saved design
+  composites the artwork onto the garment colour); loyalty bar + reward icons → teal.
+- **Repo-wide accent sweep**: moved interactive/accent-pop icons, links and spinners from the now
+  near-black `accent` to the teal `accent-2` signature; left strong selected fills as `accent`.
+
+Verified live: all commerce + account routes HTTP 200, no console errors; real cart item → framed
+artwork thumbnails + mono summary, no overflow; checkout → steps 01–04 + custom state select + 3
+delivery options + Place order, no overflow. UI 35 + storefront 195 tests + typecheck + lint green.
+
+Next: **UX6 — admin overhaul** (`apps/admin`). Same tokens, quieter operational dialect: admin shell
++ nav, dashboard + metrics/charts, a refined DataTable dialect for orders/customers, artworks +
+upload + detail, garments + inventory matrix, production board, analytics, error centre, Brand
+Storyteller (in-system, no AI gradient), forms/filters/dropdowns, responsive. **Add IBM Plex Mono to
+the admin layout** (`apps/admin/app/layout.tsx`) to match the storefront. Admin already inherits the
+refined palette via the shared token CSS. Then UX1-005/006 (forms, Select portal + Combobox +
+dropdown audit) and UX7 (axe + production build + Playwright before/after PNGs). Do not redo palette.

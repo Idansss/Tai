@@ -3,6 +3,7 @@
 import { Eyebrow, EmptyState, Heading, Price, Text } from '@tms/ui';
 import { Heart, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import { AccountShell } from './account-shell';
 import { useRequireAuth } from './use-require-auth';
 import { useWishlist } from './wishlist-provider';
@@ -42,9 +43,11 @@ export function WishlistView() {
             >
               <Link
                 href={`/products/${item.slug}`}
-                className="block aspect-[3/4] w-full bg-gradient-to-br from-canvas-2 to-surface-2 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+                className="block aspect-[3/4] w-full overflow-hidden bg-canvas-2 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
                 aria-label={`${item.title}, view product`}
-              />
+              >
+                <ArtworkVisual seed={item.slug} title={item.title} label={item.garment} />
+              </Link>
               <div className="flex flex-1 flex-col gap-1 p-4">
                 <Eyebrow>{item.garment}</Eyebrow>
                 <Link

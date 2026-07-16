@@ -15,7 +15,7 @@ export default function CheckoutPaymentPage() {
       <Suspense
         fallback={
           <div className="flex min-h-[50vh] items-center justify-center">
-            <Spinner className="size-8 text-accent" />
+            <Spinner className="size-8 text-accent-2" />
           </div>
         }
       >

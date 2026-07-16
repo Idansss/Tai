@@ -63,7 +63,7 @@ export default async function ArtworkPassportPage({ params }: Params) {
 
       <div className="mt-6 max-w-3xl">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="size-5 text-accent" aria-hidden />
+          <ShieldCheck className="size-5 text-accent-2" aria-hidden />
           <Eyebrow className="m-0">Artwork Passport</Eyebrow>
         </div>
         <Heading as={1} size="display-lg" className="mt-2">
@@ -152,7 +152,7 @@ export default async function ArtworkPassportPage({ params }: Params) {
             <li key={`${event.label}-${index}`} className="relative">
               <span
                 aria-hidden
-                className="absolute -left-[1.6rem] top-1.5 size-2.5 rounded-full border border-line bg-accent"
+                className="absolute -left-[1.6rem] top-1.5 size-2.5 rounded-full border border-line bg-accent-2"
               />
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                 <p className="font-medium text-ink">{event.label}</p>

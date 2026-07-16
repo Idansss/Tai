@@ -85,7 +85,10 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <div className="mx-auto max-w-sm">
-      <Heading as={1} size="display-lg">
+      <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted">
+        {isRegister ? 'Join the studio' : 'Account'}
+      </p>
+      <Heading as={1} size="display-lg" className="mt-2">
         {isRegister ? 'Create account' : 'Sign in'}
       </Heading>
       <Text tone="secondary" className="mt-2">

@@ -3,6 +3,7 @@
 import { Price, cn } from '@tms/ui';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import type { CartItem } from '@/lib/cart';
 import { MAX_LINE_QUANTITY } from '@/lib/cart';
 import { useCart } from './cart-provider';
@@ -49,20 +50,17 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
         const href = item.href ?? `/products/${item.productSlug}`;
         return (
           <li key={item.id} className={cn('flex gap-4', compact ? 'py-4' : 'py-6')}>
-            {/* Swatch stand-in for the configured garment. */}
+            {/* Framed plate stand-in for the configured piece. */}
             <Link
               href={href}
               aria-hidden
               tabIndex={-1}
               className={cn(
-                'shrink-0 overflow-hidden rounded-md border border-line',
+                'shrink-0 overflow-hidden rounded-md border border-line bg-canvas-2',
                 compact ? 'size-16' : 'size-20',
               )}
             >
-              <span
-                className="block size-full"
-                style={{ backgroundColor: 'var(--color-surface-secondary)' }}
-              />
+              <ArtworkVisual seed={item.productSlug} title={item.artworkTitle} />
             </Link>
 
             <div className="min-w-0 flex-1">

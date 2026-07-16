@@ -909,8 +909,28 @@ logic (state, share-link, add-to-bag, save-design, params):
   `#0d0e10`; no overflow at 375; no console errors. typecheck + lint + UI 35 + storefront 195 green.
   Deferred to UX7: axe pass + production build.
 
-### UX5 — Commerce & account overhaul (Not started)
-Cart, checkout, payment states, auth, account, orders, tracking, saved designs, wishlist, loyalty.
+### UX5 — Commerce & account overhaul (Implemented, verifying)
+Applied Gallery Press to commerce + account with calm, focused refinement (logic untouched):
+- **Cart**: line thumbnails reframed to `ArtworkVisual` plates (was a blank swatch); cart page +
+  drawer inherit it; summary promo label mono, promo tag + discount → teal `accent-2`; cart page
+  masthead via `PageHeading`.
+- **Checkout**: numbered stepped sections (`SectionIndex` 01–04: Contact / Address / Delivery /
+  Payment); selected delivery+payment cards use teal border+tint; radios + discount → `accent-2`;
+  accessible custom state `Select` retained; `PageHeading` masthead; kept focused content width.
+- **Payment states + order confirmation**: left largely intact (already calm/explicit/correct
+  semantics); processing spinner → `accent-2`.
+- **Account**: `AccountOverview` mono eyebrow; `AccountShell` mono back-link; `AuthForm` mono
+  eyebrow; order-detail **tracking timeline** current-state → teal (node, dot, "In progress"),
+  discount → teal; **wishlist** + **saved designs** placeholders reframed to `ArtworkVisual`
+  (saved design composites the artwork onto the garment colour); loyalty progress bar + reward
+  icons → teal.
+- Repo-wide accent sweep: standardised interactive/accent-pop icons, links and spinners from the
+  now near-black `accent` to the teal `accent-2` signature (studio-guide, passport, community,
+  made-to-order note, checkout); left strong fills (selected markers) as `accent`.
+- Verified live: all commerce + account routes HTTP 200, no console errors; added a real item →
+  cart shows framed artwork thumbnails + mono summary, no overflow; checkout shows numbered steps
+  01–04 + custom state select + 3 delivery options + Place order, no overflow. typecheck + lint +
+  UI 35 + storefront 195 tests green. Deferred to UX7: axe + production build.
 
 ### UX6 — Admin overhaul (Not started)
 Admin shell, dashboard, tables, orders, artworks, garments, inventory, production, customers,

@@ -225,7 +225,7 @@ function SubmitPhoto({
               htmlFor={fileId}
               className="mt-1 flex cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] border border-dashed border-line bg-surface px-3 py-3 text-sm text-muted hover:border-accent"
             >
-              <ImagePlus className="size-5 shrink-0 text-accent" aria-hidden />
+              <ImagePlus className="size-5 shrink-0 text-accent-2" aria-hidden />
               <span className="min-w-0 truncate">{fileName ?? 'Choose a photo to share'}</span>
             </label>
             <input
