@@ -10,7 +10,8 @@
 | CI and quality gates                | TMS-B0-009     | GitHub Actions workflow                          | Local equivalent `pnpm check`                  |
 | Persistent coordination             | TMS-B0-010     | `AGENTS.md`, `docs`, `.ai`                       | Required-file inspection                       |
 | Foundation landing and handoff      | TMS-B0-011     | PR #1, merge `88a00912`, main CI run 29339734452 | Merge-state, file-presence, CI, runtime checks |
-| Identity, sessions, RBAC, audit     | TMS-B1-001–003 | Future B1 migrations/modules/OpenAPI             | Database, permission, API tests                |
+| Identity persistence/RBAC/audit     | TMS-B1-001     | Identity migration, seed, integration suite      | PostgreSQL migration/seed/invariant tests      |
+| Identity services and authorization | TMS-B1-002–003 | Future authentication/admin modules and OpenAPI  | Permission, bypass, contract, and API tests    |
 | Artwork-first immutable catalogue   | TMS-B2-001–004 | Future B2 modules and media jobs                 | Versioning, permission, job, API tests         |
 | Design configurations/rendering     | TMS-B3-001–003 | Future B3 schema/services/jobs                   | Contract, availability, renderer tests         |
 | Inventory/cart/checkout/orders      | TMS-B4-001–004 | Future B4 modules                                | Concurrency, state-machine, E2E tests          |

@@ -1,1 +1,1 @@
-export const databasePackageStatus = 'foundation-ready' as const;
+export const databasePackageStatus = 'identity-foundation-verified' as const;
