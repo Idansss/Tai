@@ -626,3 +626,29 @@ responsive, motion, a11y — reuse `Frame`/`ArtworkVisual`/`SectionIndex`/`Revea
 (commerce/account — also reframe the remaining token-gradient placeholders in `wishlist-view` and
 the studio preview), UX6 (admin), UX1-005/006 (form primitives, Select portal + Combobox +
 dropdown audit), UX7 (hardening). Do not redo the palette.
+
+## F6 — UX4 Design Studio — session 3
+
+Reworked `components/studio/design-studio.tsx` into a premium creative tool (all logic preserved:
+config state, share-link, add-to-bag, save-design, URL params):
+- **Live preview composites the real artwork** (`ArtworkVisual`) onto the selected garment colour,
+  front/back aware, with a print-area guide — replaced the old white box + title text.
+- **Zoom control** (animated, reduced-motion safe). NOTE: Tailwind v4 arbitrary `scale-[…]` via
+  className did not apply reliably here, so zoom uses an inline transform. Prefer inline transforms
+  (or predefined scale utilities) for dynamic scale in this repo.
+- `SectionIndex` + mono stage headers; teal-signature active chips; swatch `mix-blend` check
+  (non-colour cue) + teal ring; framed `ArtworkVisual` artwork picker with checked selection; mono
+  summary grid; premium action row (Add-to-bag full-width on mobile); `PageHeading` masthead; richer
+  loading skeleton.
+- **Latent bug fixed in `packages/ui/Frame`:** the `interactive` hover-zoom only targeted `<img>`,
+  but all plates render `<svg>` — added `[&_svg]` variants so the hover micro-zoom now works across
+  every framed card. Rebuild `@tms/ui` after this change (done).
+
+Verified live: selecting artwork composites it into the preview; zoom → `matrix(1.35)`;
+artwork→garment→size enables Add-to-bag and fires the status alert; dark `#0d0e10`; no overflow at
+375; no console errors. UI 35 + storefront 195 tests + typecheck + lint green.
+
+Next: **UX5 — commerce + account** (cart + cart drawer, checkout + payment states, auth, account
+home/orders/order-detail+tracking, saved designs, wishlist, loyalty, profile). Reframe the remaining
+token-gradient placeholder in `wishlist-view`. Then UX6 (admin), UX1-005/006, UX7. Do not redo the
+palette; reuse `Frame`/`ArtworkVisual`/`PageHeading`/`SectionIndex`/`Reveal`.

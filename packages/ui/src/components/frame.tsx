@@ -27,8 +27,9 @@ const frameVariants = cva('relative overflow-hidden isolate', {
       false: '',
     },
     interactive: {
-      /* Slow zoom on hover/focus-within; images inside should be `h-full w-full object-cover`. */
-      true: 'group [&_img]:transition-transform [&_img]:duration-[var(--duration-slower)] [&_img]:ease-[var(--ease-out)] hover:[&_img]:scale-[1.04] focus-within:[&_img]:scale-[1.04] motion-reduce:[&_img]:transition-none motion-reduce:hover:[&_img]:scale-100',
+      /* Slow zoom on hover/focus-within of the media (img or svg plate) inside.
+         Media should fill the frame (`h-full w-full object-cover`). */
+      true: 'group [&_img]:transition-transform [&_img]:duration-[var(--duration-slower)] [&_img]:ease-[var(--ease-out)] hover:[&_img]:scale-[1.04] focus-within:[&_img]:scale-[1.04] motion-reduce:[&_img]:transition-none [&_svg]:transition-transform [&_svg]:duration-[var(--duration-slower)] [&_svg]:ease-[var(--ease-out)] hover:[&_svg]:scale-[1.04] focus-within:[&_svg]:scale-[1.04] motion-reduce:[&_svg]:transition-none',
       false: '',
     },
   },

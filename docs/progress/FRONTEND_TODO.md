@@ -889,8 +889,25 @@ objects (`ArtworkCard`, `ProductCard`, `CollectionCard`, `DropCard`, `StoryCard`
   primary accent is now near-black ink. `TMS-UX1-004` (cards → framed objects) now effectively
   complete for the storefront.
 
-### UX4 — Design Studio overhaul (Not started)
-Stage system, configuration controls, preview, summary, responsive, motion, save/share/cart, a11y.
+### UX4 — Design Studio overhaul (Implemented, verifying)
+Reworked `components/studio/design-studio.tsx` into a premium creative tool while preserving all
+logic (state, share-link, add-to-bag, save-design, params):
+- **Live preview now composites the real artwork** (`ArtworkVisual`) onto the selected garment
+  colour, front/back aware, with a print-area guide; replaced the old white-box + title text.
+- **Zoom control** on the preview (inline transform, animated, reduced-motion safe) — note
+  Tailwind v4 arbitrary `scale-[…]` was unreliable via className here, so zoom uses inline style.
+- Stage headers use `SectionIndex` + mono labels; multi-choice chips get a teal-signature active
+  state; colour swatches show a `mix-blend` check (non-colour cue) + teal ring; artwork picker
+  uses framed `ArtworkVisual` thumbnails with a checked selected badge.
+- Summary as mono spec grid; premium action row (primary Add-to-bag fills, full-width on mobile);
+  editorial page masthead via `PageHeading`; richer loading skeleton.
+- **Latent bug fixed:** `Frame` `interactive` hover-zoom only targeted `<img>`, but plates render
+  `<svg>` — added `[&_svg]` variants so the hover micro-zoom now works across every framed card
+  (verified: 8 frames carry it, CSS rule generated, svg transitions).
+- Verified live (dev): selecting artwork updates preview aria + composites artwork; zoom →
+  `matrix(1.35)`; artwork→garment→size enables Add-to-bag and fires the status alert; dark theme
+  `#0d0e10`; no overflow at 375; no console errors. typecheck + lint + UI 35 + storefront 195 green.
+  Deferred to UX7: axe pass + production build.
 
 ### UX5 — Commerce & account overhaul (Not started)
 Cart, checkout, payment states, auth, account, orders, tracking, saved designs, wishlist, loyalty.

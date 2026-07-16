@@ -1,5 +1,6 @@
-import { Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container } from '@tms/ui';
 import type { Metadata } from 'next';
+import { PageHeading } from '@/components/site/page-heading';
 import { DesignStudio } from '@/components/studio/design-studio';
 import { dataProvider } from '@/lib/data';
 import { parseStudioParams } from '@/lib/studio';
@@ -21,17 +22,15 @@ export default async function DesignStudioPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <Container className="py-10">
-      <header className="mb-6 max-w-2xl">
-        <Eyebrow>Interactive</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Design Studio
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Choose an artwork, then make it yours, garment, colour, size, placement and scale, with a
-          live preview. Share your design or save it for checkout.
-        </Text>
-      </header>
+    <Container width="wide" className="py-12 sm:py-16">
+      <div className="mb-8">
+        <PageHeading
+          eyebrow="Interactive"
+          index={0}
+          title="Design Studio"
+          lead="Choose an artwork, then make it yours: garment, colour, size, placement and scale, with a live preview at every step. Share your design or save it for checkout."
+        />
+      </div>
 
       <DesignStudio artworks={artworks} options={options} initialConfig={initialConfig} />
     </Container>
