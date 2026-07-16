@@ -161,3 +161,14 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Compatibility is approved against an exact immutable `artworkVersionId`, a template, and an allowlist of published placement IDs. Publishing a replacement artwork version does not inherit the prior version's approval. Published template structure cannot change until the template is archived; leaving publication archives its current approvals.
 - Configuration validation requires `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, quantity? }` and returns the resolved IDs with `valid: true`. Treat `422 CONFIGURATION_NOT_APPROVED` as an unavailable selection and refresh compatibility; never infer compatibility client-side.
 - Inventory quantities, stock status, price, and reservations remain TMS-B4. Media URLs, artwork originals, derivatives, and mockups remain TMS-B2-004. Continue typed adapters for those absent fields.
+
+## 2026-07-16 — TMS-B4-001 garment inventory is available
+
+- Status: implemented on `codex/b4-inventory-reservations`; consume after its PR is merged.
+- Compatibility: additive. Six new administrator operations under `/api/v1/admin/inventory`, no existing operation changed.
+- **This replaces the stock matrix mock in the admin garment/inventory screens.** Reads need `inventory.read`; receipts, adjustments, and thresholds need `inventory.write`. Fulfilment operators and store administrators have both; analysts have read only; **content managers have no inventory access at all**, so hide the section for them rather than letting it 403.
+- A stock level is `{ variantId, sku, onHand, reserved, available, lowStockThreshold, lowStock }`. `available` is `onHand - reserved`. **Do not compute stock client-side** — a hold reduces `available` without changing `onHand`, and only the server knows which holds are still live.
+- `GET /api/v1/admin/inventory?lowStockOnly=true` powers the low-stock alert list. Use `lowStock` rather than re-deriving it from the threshold.
+- Adjustments require a `reason`; the API rejects a zero `quantityDelta`, an adjustment below zero (`400 VALIDATION_FAILED`), and an adjustment that would drop stock below what is already reserved (`409 INVENTORY_UNAVAILABLE`). Surface that conflict as a real message: it means someone is mid-purchase, not that the input was malformed.
+- `GET /api/v1/admin/inventory/{variantId}/movements` is an append-only ledger. There is deliberately no edit or delete: stock history cannot be rewritten. Do not build an edit affordance.
+- **Stock is not public yet.** There is no customer-facing stock endpoint, and `availability` from `garment-configurations/validate` still means "the catalogue permits this sale", not "in stock". Keep any storefront stock display on typed adapters until that follow-up lands.

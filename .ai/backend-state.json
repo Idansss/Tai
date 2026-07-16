@@ -1,9 +1,9 @@
 {
   "agent": "Codex",
   "area": "backend",
-  "currentPhase": "B2",
-  "lastVerifiedTask": "TMS-B2-003",
-  "nextRecommendedTask": "Merge PR #14, then start TMS-B2-004",
+  "currentPhase": "B4",
+  "lastVerifiedTask": "TMS-B4-001",
+  "nextRecommendedTask": "TMS-B4-002 (cart)",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -21,14 +21,15 @@
     "TMS-B1-003",
     "TMS-B2-001",
     "TMS-B2-002",
-    "TMS-B2-003"
+    "TMS-B2-003",
+    "TMS-B4-001"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
-  "lastUpdated": "2026-07-16T13:15:51+01:00",
+  "lastUpdated": "2026-07-16T18:45:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -48,11 +49,12 @@
     "concerns": []
   },
   "activeTask": {
-    "task": "TMS-B2-003",
-    "branch": "codex/b2-garment-catalogue",
-    "status": "verified-pr-open-ci-passed",
-    "pullRequest": 14,
-    "ciRun": 29497257382
+    "task": "TMS-B4-001",
+    "branch": "codex/b4-inventory-reservations",
+    "status": "verified-pr-open",
+    "pullRequest": 20,
+    "migration": "20260716170000_inventory_reservations",
+    "qualityGate": "passed"
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -141,6 +143,25 @@
     "concerns": [
       "Exact-version media assets, ingestion, derivatives, and mockups remain TMS-B2-004.",
       "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001."
+    ]
+  },
+  "inventoryReservations": {
+    "task": "TMS-B4-001",
+    "branch": "codex/b4-inventory-reservations",
+    "status": "verified-pr-open",
+    "pullRequest": 20,
+    "migration": "20260716170000_inventory_reservations",
+    "qualityGate": "passed",
+    "apiTests": 64,
+    "databaseTests": 7,
+    "decisions": [
+      "ADR-016 row-locked reservations with derived availability and an append-only ledger"
+    ],
+    "concerns": [
+      "Four open PRs each add a migration and bump the persistence suite migration-count guard (#15, #17, #19, #20). The value must equal the number of migration directories on main once they land.",
+      "The RBAC matrix grew to 14 permissions; #20 updates the persistence and admin-auth assertions. Any other branch asserting permission counts will conflict.",
+      "Public stock exposure and an OUT_OF_STOCK availability state are a follow-up once TMS-B3-002 (#19) merges.",
+      "Reservation TTL is caller-supplied; TMS-B4-002 must choose and document a cart hold duration."
     ]
   }
 }
