@@ -147,13 +147,21 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Tests: Six real HTTP/PostgreSQL garment scenarios verify authentication, `catalogue.read`/`catalogue.write` separation, incomplete publication rejection, strict colours and measured sizes, duplicate/cross-template variants, placement geometry, placement/scale publication order, public privacy, exact-version approval, replacement-version noninheritance, published-structure locking, placement allowlists, exact configuration validation, type filtering, safe errors, and audits. Seven direct PostgreSQL tests deploy all five migrations and verify garment indexes plus measurement, geometry, lifecycle, cross-template variant, and cross-template compatibility-placement constraints. The exact `pnpm check` passes 53 API tests across 12 files, every workspace test/build, and Prisma validation; frozen install, Compose validation, high-severity production audit, static OpenAPI validation, and compiled runtime Swagger/static parity also pass locally.
   - Notes: Verified and squash-merged through PR #14 on 2026-07-16 as `4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79` after final GitHub Actions run 29497566759 passed. Migration: `20260716112000_garment_catalogue`. Static and runtime OpenAPI each expose 68 paths and 91 operations. The idempotent RBAC seed uses bounded interactive-transaction timeouts and the persistence suite uses a bounded five-minute aggregate setup allowance for concurrent full-workspace Docker runs. Stock quantities/movements/reservations remain TMS-B4-001; media bytes remain TMS-B2-004.
 - [ ] TMS-B2-004 Implement media ingestion, validation, immutable originals, derivatives, mockups, and approval workflow
-  - Status: In progress
-  - Owner: Codex
+  - Status: Implemented; awaiting merge of PR #15 and TMS-B2-004a coverage
+  - Owner: Codex; verified and landed by Claude Code
   - Dependencies: TMS-B2-001
   - Acceptance criteria: File/MIME/dimension/size checks, malware hook, worker jobs, failure states, and admin approval tests.
+  - Implementation evidence: `packages/media` (validation, S3-compatible object storage, malware scan contract, `sharp` derivatives), `apps/api/src/media` (administrator upload/approval/retry and published read-only media), the `apps/worker` BullMQ `media-derivatives` consumer with retryable persisted job state, migration `20260716130000_media_pipeline` (`artwork_assets` and `media_processing_jobs` with shape/checksum/dimension/failure/approval constraints), and `MEDIA_MALWARE_SCAN_URL` required in production by configuration validation.
+  - Tests: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm db:validate`, `pnpm build` (14/14), and `pnpm test` (20/20 workspace tasks; API 13 files / 57 tests) pass locally. The PostgreSQL persistence suite deploys all six migrations. Compose validates. GitHub Actions run 29513562330 passes on PR #15.
+  - Notes: Implemented by Codex on `codex/b2-media-pipeline` but left **uncommitted and unpushed** in a local worktree; committed as `b93f4fc` to protect it. Two defects were found during verification and fixed. (1) `MEDIA_VALIDATION_FAILED`, `MEDIA_INFECTED`, and `MEDIA_PROCESSING_FAILED` were missing from the OpenAPI error catalogue, so the contract parity test was failing. (2) `@aws-sdk/client-s3` pulled `fast-xml-parser` <5.5.6, carrying one critical and three high advisories that the CI production audit blocked; pinned to >=5.5.6 in `9188717`. Not marked Verified: media has unit coverage only and still lacks the PostgreSQL HTTP e2e that every other B2 module has — see TMS-B2-004a. Production renders remain TMS-B3-003.
+- [ ] TMS-B2-004a Add PostgreSQL HTTP end-to-end coverage for the media pipeline
+  - Status: Not started
+  - Owner: Backend
+  - Dependencies: TMS-B2-004
+  - Acceptance criteria: Real-PostgreSQL HTTP scenarios cover upload validation, MIME-spoof rejection, malware rejection, derivative job state, mockup approval gating, retry of a failed job, `catalogue.read`/`catalogue.write` separation, and the guarantee that immutable originals are never publicly readable.
   - Implementation evidence:
   - Tests:
-  - Notes: Started on `codex/b2-media-pipeline` from the TMS-B2-003 merge commit `4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79`. This slice owns exact artwork-version media, S3-compatible object storage, validation/scanning, derivative jobs, and mockup approval. Production renders remain TMS-B3-003.
+  - Notes: Raised during TMS-B2-004 verification. `media.service.spec.ts` mocks object storage and the queue, so the controller, guards, and DTO validation are currently unproven against a real database. Complete before TMS-B3-003 renders depend on this surface.
 
 ## B3 — Design Studio services
 

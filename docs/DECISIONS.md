@@ -47,3 +47,11 @@ Status: Accepted. Garments are approved blank canvases for artwork, never creati
 ## ADR-012 — Immutable originals and persistent derivative state
 
 Status: Accepted. Media belongs to an exact immutable artwork version. Validate and scan bytes before storing a content-addressed original; never mutate or delete original bytes or provenance. Redis carries delivery, while PostgreSQL remains authoritative for queued/processing/succeeded/failed state and bounded attempts. Web previews are deterministic derivatives and are never production-print assets. Mockups require explicit approval before public exposure. Storage, scanner, and queue implementations remain provider-neutral so local MinIO/EICAR-aware development can be replaced without changing the domain contract.
+
+## ADR-013 — Approved placements are the only design geometry
+
+Status: Accepted. A saved design binds one immutable published artwork version to one published garment variant, placement, scale preset, and view, exactly as ADR-011 defines a valid selection. The server does not accept, store, or render freeform print geometry.
+
+Context: the Design Studio user interface was built against typed mocks with no backend and offers continuous print placement (`printX`, `printY`, `printWidth`) plus crop (`cropZoom`, `cropX`, `cropY`). No approved-canvas model can express that geometry, so the two representations are irreconcilable.
+
+Consequences: freeform placement and crop controls leave the Studio and are replaced by the placements and scale presets an administrator has actually approved. This preserves the ADR-011 invariant that only administrator-approved configurations are valid, guarantees print resolution and DPI on production output, and keeps the TMS-B3-003 renderer deterministic — an approved tuple always renders one exact result. The cost is real Studio interface rework and the loss of fine customer positioning. A bounded offset within an approved placement box was considered and rejected for this phase because it weakens exact approval; it can be revisited as a separate task without invalidating stored designs, since a bounded offset is additive to the approved tuple.

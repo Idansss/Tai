@@ -1,9 +1,9 @@
 {
-  "agent": "Codex",
+  "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
   "currentPhase": "B2",
   "lastVerifiedTask": "TMS-B2-003",
-  "nextRecommendedTask": "TMS-B2-004",
+  "nextRecommendedTask": "Merge PR #15, then TMS-B2-004a, then TMS-B3-001",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -50,7 +50,20 @@
   "activeTask": {
     "task": "TMS-B2-004",
     "branch": "codex/b2-media-pipeline",
-    "status": "in-progress"
+    "status": "implemented-pr-open-ci-passed",
+    "pullRequest": 15,
+    "ciRun": 29513562330,
+    "commits": ["b93f4fc", "9188717"],
+    "migration": "20260716130000_media_pipeline",
+    "recoveredFrom": "uncommitted local worktree at C:/Users/Admin/Desktop/Tai-backend",
+    "defectsFoundDuringVerification": [
+      "OpenAPI error catalogue was missing MEDIA_VALIDATION_FAILED, MEDIA_INFECTED, and MEDIA_PROCESSING_FAILED; the contract parity test was failing. Fixed in b93f4fc.",
+      "@aws-sdk/client-s3 pulled fast-xml-parser <5.5.6 with one critical and three high advisories; the CI production audit blocked the PR. Pinned to >=5.5.6 in 9188717."
+    ],
+    "concerns": [
+      "Media has unit coverage only and lacks the PostgreSQL HTTP e2e that every other B2 module has. Tracked as TMS-B2-004a.",
+      "pnpm 10 cannot run the production audit locally: the npm audit endpoint returns 410. CI is the source of truth for that gate."
+    ]
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",

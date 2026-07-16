@@ -171,3 +171,12 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Each `MediaAsset` includes kind/variant, filename/MIME/bytes/dimensions, alpha, SHA-256, dominant colour, `lowResolution`, processing/approval/failure state, optional garment IDs, creation time, and a short-lived signed `url`. Do not persist or infer signed URLs.
 - A successful original upload means storage and the persistent derivative job were recorded; `QUEUED`/`PROCESSING` is expected until the worker creates `WEB_DERIVATIVE` and `THUMBNAIL`. Treat failures as retryable administration state, not as a usable preview.
 - Production-print assets and configuration renders are deliberately absent and remain TMS-B3-003. A browser derivative or approved mockup must never be sent to production.
+
+## 2026-07-16 — TMS-B3-001 design configurations: Studio geometry is approval-bound
+
+- Status: decided (ADR-013); the backend design-configuration surface is being implemented against this shape.
+- **Breaking for the Studio mock, not for any shipped API.** `apps/storefront/lib/studio.ts` models a design as freeform `printX`/`printY`/`printWidth` plus `cropZoom`/`cropX`/`cropY`. The backend will never accept those fields.
+- A design is exactly `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, quantity }` — the same tuple `POST /api/v1/garments/configuration/validate` already validates today. `packages/contracts` `DesignConfigurationInputSchema` is authoritative.
+- Required Studio change: replace the freeform transform and crop controls with a picker over the approved placements and scale presets returned for the selected artwork version and garment template. Do not send geometry the server cannot approve; it will be rejected with `422 CONFIGURATION_NOT_APPROVED`.
+- Rationale: an administrator approves an exact placement, not a region. Freeform geometry would let a customer position or scale artwork into a print that was never approved and cannot be quality-checked for DPI. Sharing, pricing, and production rendering all key off the approved tuple.
+- Shareable Studio URLs should carry the approved IDs rather than percentages. Existing `printX`/`printY`/`printWidth`/`crop*` query parameters have no server meaning and should be dropped rather than translated.
