@@ -16,6 +16,9 @@ export const errorCodes = [
   'RESOURCE_NOT_FOUND',
   'CONFLICT',
   'CONFIGURATION_NOT_APPROVED',
+  'MEDIA_VALIDATION_FAILED',
+  'MEDIA_INFECTED',
+  'MEDIA_PROCESSING_FAILED',
   'RATE_LIMITED',
   'IDEMPOTENCY_CONFLICT',
   'INVENTORY_UNAVAILABLE',
@@ -251,7 +254,56 @@ export interface ArtworkVersion {
   publishedAt: string | null;
   archivedAt: string | null;
   createdAt: string;
+  media?: MediaAsset[];
 }
+
+export const MediaAssetKindSchema = z.enum(['ORIGINAL', 'WEB_DERIVATIVE', 'THUMBNAIL', 'MOCKUP']);
+export type MediaAssetKind = z.infer<typeof MediaAssetKindSchema>;
+export const MediaProcessingStatusSchema = z.enum(['QUEUED', 'PROCESSING', 'READY', 'FAILED']);
+export type MediaProcessingStatus = z.infer<typeof MediaProcessingStatusSchema>;
+export const MediaApprovalStatusSchema = z.enum([
+  'NOT_REQUIRED',
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+]);
+export type MediaApprovalStatus = z.infer<typeof MediaApprovalStatusSchema>;
+
+export interface MediaAsset {
+  id: string;
+  artworkVersionId: string;
+  kind: MediaAssetKind;
+  variantKey: string;
+  originalFilename: string;
+  mimeType: string;
+  byteSize: number;
+  width: number;
+  height: number;
+  hasAlpha: boolean;
+  checksumSha256: string;
+  dominantHex: string | null;
+  lowResolution: boolean;
+  processingStatus: MediaProcessingStatus;
+  approvalStatus: MediaApprovalStatus;
+  failureCode: string | null;
+  failureMessage: string | null;
+  rejectionReason: string | null;
+  garmentTemplateId: string | null;
+  garmentPlacementId: string | null;
+  url: string | null;
+  createdAt: string;
+}
+
+export const MockupApprovalInputSchema = z
+  .object({
+    status: z.enum(['APPROVED', 'REJECTED']),
+    reason: z.string().trim().min(1).max(500).optional(),
+  })
+  .refine((value) => value.status !== 'REJECTED' || !!value.reason, {
+    message: 'A rejection reason is required.',
+    path: ['reason'],
+  });
+export type MockupApprovalInput = z.infer<typeof MockupApprovalInputSchema>;
 
 export interface Artwork {
   id: string;
@@ -656,4 +708,55 @@ export interface GarmentConfigurationValidation {
   /** unitPrice.amountMinor * quantity, computed server-side in integer minor units. */
   totalPrice: Money;
   availability: ConfigurationAvailability;
+}
+
+export const DesignVisibilitySchema = z.enum(['PRIVATE', 'UNLISTED']);
+export type DesignVisibility = z.infer<typeof DesignVisibilitySchema>;
+
+/**
+ * A saved design is the approved tuple only. Quantity is deliberately absent: it is a cart
+ * concern, not part of a design's identity, so re-saving the same design at a different
+ * quantity must not create a second design. See ADR-013.
+ */
+export const SaveDesignInputSchema = z.object({
+  artworkVersionId: z.string().uuid(),
+  garmentVariantId: z.string().uuid(),
+  placementId: z.string().uuid(),
+  scalePreset: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  view: GarmentViewSchema,
+  name: z.string().trim().min(1).max(120).optional(),
+});
+export type SaveDesignInput = z.infer<typeof SaveDesignInputSchema>;
+
+export const UpdateDesignInputSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).nullable().optional(),
+    visibility: DesignVisibilitySchema.optional(),
+  })
+  .refine((value) => value.name !== undefined || value.visibility !== undefined, {
+    message: 'Provide a name or a visibility to update.',
+  });
+export type UpdateDesignInput = z.infer<typeof UpdateDesignInputSchema>;
+
+export interface DesignConfigurationSummary {
+  id: string;
+  artworkId: string;
+  artworkVersionId: string;
+  garmentTemplateId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+  /** Deterministic SHA-256 of the approved tuple; identical designs share one hash. */
+  configurationHash: string;
+  name: string | null;
+  visibility: DesignVisibility;
+  /** Present only while the design is UNLISTED and the owner is reading it. */
+  shareToken: string | null;
+  createdAt: string;
+  updatedAt: string;
 }

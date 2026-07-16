@@ -17,6 +17,8 @@ tags:
   - name: administrator-catalogue
   - name: garments
   - name: administrator-garments
+  - name: media
+  - name: administrator-media
 paths:
   /api/v1/auth/register:
     post:
@@ -569,6 +571,153 @@ paths:
         '400': { $ref: '#/components/responses/ApiError' }
         '401': { $ref: '#/components/responses/ApiError' }
         '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}/versions/{versionId}/media:
+    get:
+      operationId: listAdministratorArtworkMedia
+      tags: [administrator-media]
+      summary: List exact-version media and processing state
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+        - $ref: '#/components/parameters/ArtworkVersionId'
+      responses:
+        '200':
+          description: Exact-version media assets, including private originals and pending mockups.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaAssetsResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}/versions/{versionId}/media/original:
+    post:
+      operationId: uploadAdministratorArtworkOriginal
+      tags: [administrator-media]
+      summary: Ingest one immutable exact-version artwork original
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+        - $ref: '#/components/parameters/ArtworkVersionId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: The immutable original was stored and derivative processing queued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaAssetResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+        '422': { $ref: '#/components/responses/ApiError' }
+        '503': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}/versions/{versionId}/media/mockups:
+    post:
+      operationId: uploadAdministratorArtworkMockup
+      tags: [administrator-media]
+      summary: Ingest a generated garment mockup pending administrator approval
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+        - $ref: '#/components/parameters/ArtworkVersionId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, garmentTemplateId, garmentPlacementId]
+              properties:
+                file: { type: string, format: binary }
+                garmentTemplateId: { type: string, format: uuid }
+                garmentPlacementId: { type: string, format: uuid }
+      responses:
+        '201':
+          description: The mockup remains private pending approval.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaAssetResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+        '422': { $ref: '#/components/responses/ApiError' }
+        '503': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/media/mockups/{assetId}/approval:
+    patch:
+      operationId: decideAdministratorArtworkMockup
+      tags: [administrator-media]
+      summary: Approve or reject a mockup for public use
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MockupApprovalInput' }
+      responses:
+        '200':
+          description: The mockup decision was recorded.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaAssetResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/media/originals/{assetId}/retry:
+    post:
+      operationId: retryAdministratorArtworkMediaProcessing
+      tags: [administrator-media]
+      summary: Retry failed derivative processing
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Derivative processing was queued again.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaAssetResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+        '503': { $ref: '#/components/responses/ApiError' }
+  /api/v1/artworks/{slug}/media:
+    get:
+      operationId: listPublishedArtworkMedia
+      tags: [media]
+      summary: List ready media for the exact published artwork version
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      responses:
+        '200':
+          description: Ready web derivatives, thumbnails, and approved mockups; originals remain private.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaAssetsResponse' }
         '404': { $ref: '#/components/responses/ApiError' }
   /api/v1/collections:
     get:
@@ -1433,6 +1582,92 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /api/v1/designs:
+    get:
+      operationId: listCustomerDesigns
+      tags: [designs]
+      summary: List the saved designs you own
+      security: [{ tms_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/DesignList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: saveCustomerDesign
+      tags: [designs]
+      summary: Save an approved design configuration
+      security: [{ tms_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SaveDesignInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '201': { $ref: '#/components/responses/Design' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '422': { $ref: '#/components/responses/ApiError' }
+  /api/v1/designs/{id}:
+    get:
+      operationId: getCustomerDesign
+      tags: [designs]
+      summary: Read one design you own
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+    patch:
+      operationId: updateCustomerDesign
+      tags: [designs]
+      summary: Rename a design or change its visibility
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateDesignInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteCustomerDesign
+      tags: [designs]
+      summary: Delete a design you own
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      responses:
+        '204': { description: The design was deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/designs/{id}/share:
+    post:
+      operationId: rotateCustomerDesignShare
+      tags: [designs]
+      summary: Publish an unlisted share link, replacing any previous one
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/shared-designs/{token}:
+    get:
+      operationId: getSharedDesign
+      tags: [designs]
+      summary: Read an unlisted design by its stable share token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string, minLength: 32, maxLength: 64 }
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '404': { $ref: '#/components/responses/ApiError' }
 components:
   parameters:
     Cursor:
@@ -1444,6 +1679,11 @@ components:
       in: query
       schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
     CatalogueId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DesignId:
       name: id
       in: path
       required: true
@@ -1624,7 +1864,88 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/GarmentConfigurationValidationResponse' }
+    Design:
+      description: One saved design configuration.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DesignResponse' }
+    DesignList:
+      description: Saved designs owned by the authenticated customer.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DesignListResponse' }
   schemas:
+    MockupApprovalInput:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: { type: string, enum: [APPROVED, REJECTED] }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+    MediaAsset:
+      type: object
+      required:
+        [
+          id,
+          artworkVersionId,
+          kind,
+          variantKey,
+          originalFilename,
+          mimeType,
+          byteSize,
+          width,
+          height,
+          hasAlpha,
+          checksumSha256,
+          dominantHex,
+          lowResolution,
+          processingStatus,
+          approvalStatus,
+          failureCode,
+          failureMessage,
+          rejectionReason,
+          garmentTemplateId,
+          garmentPlacementId,
+          url,
+          createdAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        artworkVersionId: { type: string, format: uuid }
+        kind: { type: string, enum: [ORIGINAL, WEB_DERIVATIVE, THUMBNAIL, MOCKUP] }
+        variantKey: { type: string, maxLength: 160 }
+        originalFilename: { type: string, maxLength: 255 }
+        mimeType: { type: string, enum: [image/png, image/jpeg, image/webp] }
+        byteSize: { type: integer, minimum: 1, maximum: 26214400 }
+        width: { type: integer, minimum: 1, maximum: 20000 }
+        height: { type: integer, minimum: 1, maximum: 20000 }
+        hasAlpha: { type: boolean }
+        checksumSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        dominantHex: { type: [string, 'null'], pattern: '^#[0-9a-f]{6}$' }
+        lowResolution: { type: boolean }
+        processingStatus: { type: string, enum: [QUEUED, PROCESSING, READY, FAILED] }
+        approvalStatus: { type: string, enum: [NOT_REQUIRED, PENDING, APPROVED, REJECTED] }
+        failureCode: { type: [string, 'null'] }
+        failureMessage: { type: [string, 'null'] }
+        rejectionReason: { type: [string, 'null'] }
+        garmentTemplateId: { type: [string, 'null'], format: uuid }
+        garmentPlacementId: { type: [string, 'null'], format: uuid }
+        url: { type: [string, 'null'], format: uri }
+        createdAt: { type: string, format: date-time }
+    MediaAssetResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/MediaAsset' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    MediaAssetsResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/MediaAsset' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     CustomerRegistrationInput:
       type: object
       additionalProperties: false
@@ -2578,6 +2899,82 @@ components:
       properties:
         data: { $ref: '#/components/schemas/GarmentConfigurationValidation' }
         meta: { $ref: '#/components/schemas/ApiMeta' }
+    SaveDesignInput:
+      type: object
+      required: [artworkVersionId, garmentVariantId, placementId, scalePreset, view]
+      description: >
+        The approved tuple only. Quantity is deliberately absent because it is a cart concern,
+        not part of a design's identity. Freeform print geometry and crop are never accepted;
+        see ADR-013.
+      properties:
+        artworkVersionId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePreset: { type: string, maxLength: 64, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        view: { type: string, enum: [FRONT, BACK] }
+        name: { type: string, minLength: 1, maxLength: 120 }
+      additionalProperties: false
+    UpdateDesignInput:
+      type: object
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120, nullable: true }
+        visibility: { type: string, enum: [PRIVATE, UNLISTED] }
+      additionalProperties: false
+    DesignConfiguration:
+      type: object
+      required:
+        [
+          id,
+          artworkId,
+          artworkVersionId,
+          garmentTemplateId,
+          garmentVariantId,
+          placementId,
+          scalePresetId,
+          view,
+          configurationHash,
+          name,
+          visibility,
+          shareToken,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        artworkId: { type: string, format: uuid }
+        artworkVersionId: { type: string, format: uuid }
+        garmentTemplateId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePresetId: { type: string, format: uuid }
+        view: { type: string, enum: [FRONT, BACK] }
+        configurationHash:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: Deterministic SHA-256 of the approved tuple; identical designs share one hash.
+        name: { type: string, nullable: true, maxLength: 120 }
+        visibility: { type: string, enum: [PRIVATE, UNLISTED] }
+        shareToken:
+          type: string
+          nullable: true
+          description: Present only while the design is UNLISTED and its owner is reading it. A shared read never returns it.
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    DesignResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/DesignConfiguration' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    DesignListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/DesignConfiguration' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     HealthResponse:
       type: object
       required: [data, meta]
@@ -2624,6 +3021,9 @@ components:
                   IDEMPOTENCY_CONFLICT,
                   INVENTORY_UNAVAILABLE,
                   CONFIGURATION_NOT_APPROVED,
+                  MEDIA_VALIDATION_FAILED,
+                  MEDIA_INFECTED,
+                  MEDIA_PROCESSING_FAILED,
                   INTEGRATION_UNAVAILABLE,
                   INTERNAL_ERROR,
                 ]

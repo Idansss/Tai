@@ -6,9 +6,11 @@ import { AdminAuthModule } from './admin-auth/admin-auth.module.js';
 import { ArtworkModule } from './artworks/artwork.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { DesignModule } from './designs/design.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
 import { GarmentModule } from './garments/garment.module.js';
+import { MediaModule } from './media/media.module.js';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { GarmentModule } from './garments/garment.module.js';
     ArtworkModule,
     CatalogueModule,
     GarmentModule,
+    DesignModule,
+    MediaModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: loadEnvironment().LOG_LEVEL,

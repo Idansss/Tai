@@ -10,8 +10,14 @@ export {
   ArtworkVersionStatus,
   AuthAssuranceLevel,
   CompatibilityStatus,
+  DesignVisibility,
   GarmentType,
   GarmentView,
+  MalwareScanStatus,
+  MediaApprovalStatus,
+  MediaAssetKind,
+  MediaJobStatus,
+  MediaProcessingStatus,
   Prisma,
   SessionKind,
   StoryBlockType,
@@ -25,4 +31,4 @@ export function createDatabaseClient(connectionString: string): PrismaClient {
 
 export type DatabaseClient = ReturnType<typeof createDatabaseClient>;
 
-export const databasePackageStatus = 'garment-catalogue-in-progress' as const;
+export const databasePackageStatus = 'media-pipeline-in-progress' as const;

@@ -1,9 +1,9 @@
 {
-  "agent": "Codex",
+  "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
   "currentPhase": "B3",
   "lastVerifiedTask": "TMS-B3-002",
-  "nextRecommendedTask": "TMS-B3-003 (production renderer) or TMS-B4-001 (inventory), which is unblocked and can run in parallel",
+  "nextRecommendedTask": "TMS-B4-001",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -22,6 +22,9 @@
     "TMS-B2-001",
     "TMS-B2-002",
     "TMS-B2-003",
+    "TMS-B2-004",
+    "TMS-B2-004a",
+    "TMS-B3-001",
     "TMS-B3-002"
   ],
   "inProgressTasks": [],
@@ -29,7 +32,7 @@
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
-  "lastUpdated": "2026-07-16T17:30:00Z",
+  "lastUpdated": "2026-07-16T19:30:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -55,6 +58,17 @@
     "pullRequest": 19,
     "migration": "20260716160000_configuration_pricing",
     "qualityGate": "passed"
+  },
+  "mediaEndToEnd": {
+    "task": "TMS-B2-004a",
+    "branch": "codex/b2-004a-media-e2e",
+    "status": "verified-pr-open",
+    "pullRequest": 16,
+    "migration": "none-required",
+    "qualityGate": "passed",
+    "concerns": [
+      "Stacked on codex/b2-media-pipeline because PR #15 is not merged yet. Merge PR #15 first, or #16 will show the media implementation in its diff."
+    ]
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -129,9 +143,11 @@
   "garmentCatalogue": {
     "task": "TMS-B2-003",
     "branch": "codex/b2-garment-catalogue",
-    "status": "verified-pr-open-ci-passed",
+    "status": "verified-merged",
     "pullRequest": 14,
-    "ciRun": 29497257382,
+    "ciRun": 29497566759,
+    "commit": "4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79",
+    "mergedAt": "2026-07-16T12:20:15Z",
     "migration": "20260716112000_garment_catalogue",
     "qualityGate": "passed",
     "runtimeSmoke": "passed",
@@ -145,6 +161,25 @@
       "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001."
     ]
   },
+  "designConfigurations": {
+    "task": "TMS-B3-001",
+    "branch": "codex/b3-design-configurations",
+    "status": "verified-pr-open",
+    "pullRequest": 17,
+    "migration": "20260716150000_design_configurations",
+    "qualityGate": "passed",
+    "apiTests": 74,
+    "databaseTests": 8,
+    "decisions": [
+      "ADR-013 approved placements are the only design geometry",
+      "ADR-014 a saved design is identified by its approved tuple, not by quantity"
+    ],
+    "concerns": [
+      "Merged origin/main (TMS-B2-004 media). The persistence migration-count guard is 7 here; each remaining open PR that adds a migration must raise it again.",
+      "Guest designs are unsupported; anonymous save arrives with carts in TMS-B4-002.",
+      "The Design Studio UI must drop freeform placement and crop before it can consume this surface (ADR-013)."
+    ]
+  },
   "configurationPricing": {
     "task": "TMS-B3-002",
     "branch": "codex/b3-pricing-availability",
@@ -152,14 +187,11 @@
     "pullRequest": 19,
     "migration": "20260716160000_configuration_pricing",
     "qualityGate": "passed",
-    "apiTests": 53,
-    "databaseTests": 7,
-    "contractTests": 9,
     "decisions": [
       "ADR-015 price belongs to the approved artwork and garment pair; money is integer minor units (NGN kobo); no size surcharge"
     ],
     "concerns": [
-      "Four open PRs each bump the persistence suite migration-count guard (#15, #17, #19). Reconcile the value as they land: it equals the number of migration directories on main.",
+      "Merged origin/main (TMS-B2-004 media, TMS-B3-001 designs). The persistence migration-count guard is 8 here; TMS-B4-001 must raise it again.",
       "EDITION_EXHAUSTED is contract-defined but unreachable until sold quantities exist in TMS-B4-003.",
       "Availability is catalogue-level only; stock is TMS-B4-001.",
       "TMS-B4-003 order snapshots must copy the resolved amount and currency, never reference the compatibility, so a later price change cannot rewrite history."
