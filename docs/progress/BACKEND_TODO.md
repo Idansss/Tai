@@ -157,14 +157,14 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
 
 ## B3 — Design Studio services
 
-- [ ] TMS-B3-001 Implement versioned design configurations, compatibility, hashing, privacy, saves, and stable shares
-  - Status: Not started
-  - Owner: Codex
+- [x] TMS-B3-001 Implement versioned design configurations, compatibility, hashing, privacy, saves, and stable shares
+  - Status: Verified
+  - Owner: Claude Code
   - Dependencies: TMS-B2-003
   - Acceptance criteria: Exact artwork/variant/placement/scale/view persisted; availability, ownership, and share security tested.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: `apps/api/src/designs` (service, controllers, DTOs, module), migration `20260716150000_design_configurations` (`design_configurations` with hash, name, share-token, and visibility/token agreement check constraints, RESTRICT foreign keys to the exact artwork version/variant/placement/scale preset, and a unique owner+hash index), shared `SaveDesignInputSchema`/`UpdateDesignInputSchema`/`DesignConfigurationSummary` contracts, six OpenAPI operations under `/api/v1/designs` and `/api/v1/shared-designs/{token}`, ADR-013, and the `DesignVisibility` database export. Versioning is inherent: a design binds one immutable published `ArtworkVersion`, never a mutable artwork root.
+  - Tests: Seven real HTTP/PostgreSQL scenarios pass. They prove that an anonymous caller and an administrator-audience session are both rejected; that an unapproved placement, an unpublished artwork version, and an unknown scale preset are each refused with `CONFIGURATION_NOT_APPROVED` and that freeform geometry (`printX`) is rejected outright; that the exact tuple persists with a deterministic 64-hex hash and re-saving is idempotent (201 then 200, one row); that another customer cannot list, read, rename, share, or delete a design and receives 404 rather than 403; that a share token is unguessable, stable across reads, and never discloses the owner or re-discloses the token; that rotating invalidates the previous link and reverting to `PRIVATE` clears the token; and that deletion removes the design without touching the artwork version or garment. API suite: 13 files / 60 tests. Database persistence: 7 tests. `pnpm format:check`, `pnpm lint` (20/20), `pnpm typecheck` (20/20), `pnpm build` (13/13), and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: Approval is delegated to the existing `GarmentService.validateConfiguration` rather than re-derived, so there is one definition of an approved configuration. Quantity is deliberately excluded from a saved design and from the hash: it is a cart concern, and including it would split one design into two. `AuthModule` now exports `AUTH_CONFIG` so an importing module can construct `SessionGuard`, mirroring `AdminAuthModule`. Guest designs are not supported; anonymous save arrives with carts in TMS-B4-002. Pricing and availability remain TMS-B3-002 and production renders remain TMS-B3-003.
 - [ ] TMS-B3-002 Implement configuration pricing and availability services
   - Status: Not started
   - Owner: Codex

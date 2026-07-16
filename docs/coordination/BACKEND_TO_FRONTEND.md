@@ -161,3 +161,15 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Compatibility is approved against an exact immutable `artworkVersionId`, a template, and an allowlist of published placement IDs. Publishing a replacement artwork version does not inherit the prior version's approval. Published template structure cannot change until the template is archived; leaving publication archives its current approvals.
 - Configuration validation requires `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, quantity? }` and returns the resolved IDs with `valid: true`. Treat `422 CONFIGURATION_NOT_APPROVED` as an unavailable selection and refresh compatibility; never infer compatibility client-side.
 - Inventory quantities, stock status, price, and reservations remain TMS-B4. Media URLs, artwork originals, derivatives, and mockups remain TMS-B2-004. Continue typed adapters for those absent fields.
+
+## 2026-07-16 — TMS-B3-001 saved designs are available
+
+- Status: implemented on `codex/b3-design-configurations`; consume after its PR is merged.
+- Compatibility: additive. No existing operation changes. Six new operations: `GET/POST /api/v1/designs`, `GET/PATCH/DELETE /api/v1/designs/{id}`, `POST /api/v1/designs/{id}/share`, and public `GET /api/v1/shared-designs/{token}`.
+- **This replaces the saved-designs mock in `apps/storefront/lib/account.ts` and the share behaviour in the Design Studio.** Requires an authenticated customer session cookie (`tms_session`); an administrator session is a different audience and is rejected.
+- `POST /api/v1/designs` takes the approved tuple only: `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, name? }`. Sending `printX`/`printY`/`printWidth`/`crop*` is a `400`, and an unapproved placement, unpublished artwork version, or unknown scale preset is `422 CONFIGURATION_NOT_APPROVED`. See ADR-013.
+- Saving is idempotent: `201` for a new design, `200` with the existing design for an identical tuple. Do not treat `200` as an error or create a duplicate locally.
+- Quantity is not part of a saved design (ADR-014). Keep quantity in cart state; it arrives with the cart in TMS-B4-002.
+- Sharing: a design is `PRIVATE` (no `shareToken`) or `UNLISTED` (with one). `POST /designs/{id}/share` publishes or rotates a link — **rotating immediately breaks the previous URL**, so surface that in the UI. `PATCH { visibility: 'PRIVATE' }` revokes. `GET /shared-designs/{token}` is public, returns `shareToken: null`, and never exposes the owner.
+- Reading a design you do not own returns `404`, not `403`. Do not render a "forbidden" state; treat it as not found.
+- Still absent and not to be faked: price, availability, stock (TMS-B3-002 and TMS-B4-001) and production renders (TMS-B3-003). Keep typed adapters for those fields.
