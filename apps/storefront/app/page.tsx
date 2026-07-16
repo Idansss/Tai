@@ -26,6 +26,8 @@ export default async function HomePage() {
   const hero = artworks[0];
   const featured = artworks.slice(1, 7);
   const heroImage = hero ? resolveArtworkImage(hero.slug) : null;
+  // A heritage collective piece for the dark studio band (falls back to the plate).
+  const studioImage = resolveArtworkImage('flags-trio');
 
   return (
     <>
@@ -166,7 +168,12 @@ export default async function HomePage() {
           <Reveal from="none" className="lg:col-span-5">
             {hero ? (
               <Frame ratio="artwork" mat="canvas" interactive className="border-line">
-                <ArtworkMedia src={heroImage} seed={hero.slug} title={hero.title} label="Process" />
+                <ArtworkMedia
+                  src={studioImage}
+                  seed="flags-trio"
+                  title="From Africa, to you"
+                  label="The collective"
+                />
               </Frame>
             ) : null}
           </Reveal>

@@ -10,7 +10,7 @@ import { hasActiveFilters, parseArtworkFilters } from '@/lib/gallery-params';
 export const metadata: Metadata = {
   title: 'Artworks',
   description:
-    'Browse original drawings and comic-line illustrations. The gallery leads; garments follow.',
+    'Browse original African-heritage illustration — hand-drawn portraits, market scenes and symbols. The gallery leads; the garments follow.',
 };
 
 interface PageProps {
@@ -38,7 +38,7 @@ export default async function ArtworksPage({ searchParams }: PageProps) {
         index={1}
         title="Artworks"
         titleId="artworks-title"
-        lead="Original drawings and comic-line illustrations. The gallery leads; the garments follow."
+        lead="Original African-heritage illustration — hand-drawn portraits, market scenes and symbols. The gallery leads; the garments follow."
         meta={`${artworks.length} ${artworks.length === 1 ? 'piece' : 'pieces'}${
           active ? ' match your filters' : ' in view'
         }`}
