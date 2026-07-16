@@ -6,6 +6,7 @@ import { AdminAuthModule } from './admin-auth/admin-auth.module.js';
 import { ArtworkModule } from './artworks/artwork.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { CartModule } from './cart/cart.module.js';
 import { DesignModule } from './designs/design.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
@@ -20,6 +21,7 @@ import { MediaModule } from './media/media.module.js';
     ArtworkModule,
     CatalogueModule,
     GarmentModule,
+    CartModule,
     DesignModule,
     InventoryModule,
     MediaModule,

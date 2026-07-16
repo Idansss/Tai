@@ -1761,6 +1761,77 @@ paths:
         '401': { $ref: '#/components/responses/ApiError' }
         '403': { $ref: '#/components/responses/ApiError' }
         '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/cart:
+    get:
+      operationId: getCart
+      tags: [cart]
+      summary: Read the current cart with fresh totals
+      description: >
+        Open to anonymous shoppers. A guest cart cookie (tms_cart) is issued on first contact.
+        When a signed-in customer still carries a guest cookie, the guest cart is merged into
+        theirs once and the cookie is cleared. Prices and availability are recomputed on every
+        read, so a cart can never quote a stale price.
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+  /api/v1/cart/items:
+    post:
+      operationId: addCartItem
+      tags: [cart]
+      summary: Add an approved configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddCartLineInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+        '422': { $ref: '#/components/responses/ApiError' }
+  /api/v1/cart/items/{lineId}:
+    patch:
+      operationId: updateCartItem
+      tags: [cart]
+      summary: Change a line quantity
+      parameters: [{ $ref: '#/components/parameters/CartLineId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCartLineInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: removeCartItem
+      tags: [cart]
+      summary: Remove a line
+      parameters: [{ $ref: '#/components/parameters/CartLineId' }]
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/cart/promotion:
+    post:
+      operationId: applyCartPromotion
+      tags: [cart]
+      summary: Apply a promotion code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PromotionCodeInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '422': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: removeCartPromotion
+      tags: [cart]
+      summary: Remove the promotion code
+      responses:
+        '200': { $ref: '#/components/responses/Cart' }
 components:
   parameters:
     Cursor:
@@ -1780,6 +1851,11 @@ components:
       name: id
     VariantId:
       name: variantId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CartLineId:
+      name: lineId
       in: path
       required: true
       schema: { type: string, format: uuid }
@@ -1969,6 +2045,11 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/DesignListResponse' }
+    Cart:
+      description: The cart, repriced and rechecked against current stock.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/CartResponse' }
     StockLevel:
       description: One garment variant stock level.
       content:
@@ -3078,6 +3159,112 @@ components:
         data: { $ref: '#/components/schemas/DesignConfiguration' }
         meta: { $ref: '#/components/schemas/ApiMeta' }
     DesignListResponse:
+    AddCartLineInput:
+      type: object
+      additionalProperties: false
+      required: [artworkVersionId, garmentVariantId, placementId, scalePreset, view]
+      description: >
+        The approved tuple and a quantity. A price is deliberately absent: it is resolved from
+        the approved pair on the server and a browser-supplied amount is never accepted.
+      properties:
+        artworkVersionId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePreset: { type: string, maxLength: 64, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        view: { type: string, enum: [FRONT, BACK] }
+        quantity: { type: integer, minimum: 1, maximum: 20, default: 1 }
+    UpdateCartLineInput:
+      type: object
+      additionalProperties: false
+      required: [quantity]
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 20 }
+    PromotionCodeInput:
+      type: object
+      additionalProperties: false
+      required: [code]
+      properties:
+        code: { type: string, pattern: '^[A-Z0-9][A-Z0-9_-]{2,63}$', example: WELCOME10 }
+    CartLineIssue:
+      type: string
+      description: >
+        Why a line cannot be bought right now, resolved fresh on every read. Checkout must
+        refuse while any line has an issue.
+      enum:
+        [CONFIGURATION_NOT_APPROVED, OUT_OF_STOCK, INSUFFICIENT_STOCK, DROP_NOT_OPEN, DROP_ENDED]
+    CartLine:
+      type: object
+      required:
+        [
+          lineId,
+          artworkId,
+          artworkVersionId,
+          garmentTemplateId,
+          garmentVariantId,
+          placementId,
+          scalePresetId,
+          view,
+          quantity,
+          unitPrice,
+          lineTotal,
+          availableQuantity,
+          issue,
+        ]
+      properties:
+        lineId: { type: string, format: uuid }
+        artworkId: { type: string, format: uuid }
+        artworkVersionId: { type: string, format: uuid }
+        garmentTemplateId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePresetId: { type: string, format: uuid }
+        view: { type: string, enum: [FRONT, BACK] }
+        quantity: { type: integer, minimum: 1, maximum: 20 }
+        unitPrice:
+          allOf: [{ $ref: '#/components/schemas/Money' }]
+          nullable: true
+          description: Null when the configuration is no longer approved.
+        lineTotal:
+          allOf: [{ $ref: '#/components/schemas/Money' }]
+          nullable: true
+        availableQuantity:
+          type: integer
+          minimum: 0
+          description: Units currently sellable. Stock is only held at checkout, never by the cart.
+        issue:
+          allOf: [{ $ref: '#/components/schemas/CartLineIssue' }]
+          nullable: true
+    AppliedPromotion:
+      type: object
+      required: [code, label, discount]
+      properties:
+        code: { type: string }
+        label: { type: string }
+        discount: { $ref: '#/components/schemas/Money' }
+    CartData:
+      type: object
+      required: [id, currency, items, subtotal, promotion, total, hasIssues]
+      description: >
+        Delivery and tax are deliberately absent; they belong to the checkout quote. The
+        subtotal counts only lines without an issue, and the total never falls below zero.
+      properties:
+        id: { type: string, format: uuid }
+        currency: { $ref: '#/components/schemas/Currency' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CartLine' }
+        subtotal: { $ref: '#/components/schemas/Money' }
+        promotion:
+          allOf: [{ $ref: '#/components/schemas/AppliedPromotion' }]
+          nullable: true
+        total: { $ref: '#/components/schemas/Money' }
+        hasIssues: { type: boolean }
+    CartResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/CartData' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     InventoryReceiptInput:
       type: object
       additionalProperties: false
@@ -3199,6 +3386,7 @@ components:
                   RATE_LIMITED,
                   IDEMPOTENCY_CONFLICT,
                   INVENTORY_UNAVAILABLE,
+                  PROMOTION_INVALID,
                   CONFIGURATION_NOT_APPROVED,
                   MEDIA_VALIDATION_FAILED,
                   MEDIA_INFECTED,
