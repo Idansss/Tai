@@ -324,3 +324,11 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Implementation evidence:
   - Tests:
   - Notes:
+- [ ] TMS-B8-004 Host the shared development database and object storage on Supabase
+  - Status: Partially complete; awaiting migration deploy and presigned-URL verification
+  - Owner: Claude Code
+  - Dependencies: None for development use; production hosting remains TMS-B8-002
+  - Acceptance criteria: Tai owns an isolated schema with no collisions against pre-existing tables; media storage is private; connection mode suits interactive transactions; credentials are never committed; tests continue to use disposable containers.
+  - Implementation evidence: Supabase project `tmijjorpsvawxlpvpuil` (`eu-west-1`, PostgreSQL 17.6). Created schema `tai` and private bucket `tai-manic-media` (25 MB limit, `image/png`/`image/jpeg`/`image/webp` only, mirroring `packages/media` validation). Documented connection, deploy, storage, and limits in the "Supabase hosting" section of `docs/backend/DEPLOYMENT.md`; annotated `.env.example`.
+  - Tests: Verified `gen_random_uuid()` resolves from `pg_catalog` so the migration defaults apply under `search_path=tai`; confirmed the bucket is private with the expected limits; confirmed `tai` starts empty.
+  - Notes: **The project is shared, not empty.** `public` still holds two abandoned applications (Maxx Engage AI and ProofOS) with live seed data — `skill_paths` 12 rows, `tasks` 11 rows, `project_briefs` 4 rows — plus 3 `auth.users` and a public `avatars` bucket. `public.users` collides head-on with the identity foundation, and `public.reviews`/`public.notifications`/`public.tasks` collide with planned TMS-B7-001/B4-004/B6-001 tables. Nothing was deleted; the `tai` schema sidesteps every collision and is reversible with `DROP SCHEMA tai CASCADE`. Remaining: run `prisma migrate deploy` and the seed with a real `DATABASE_URL` (Prisma must own migration history, so do not apply DDL through the SQL editor or MCP), and verify presigned `GET` URLs against the Supabase S3 endpoint. Free tier `t3.nano` at roughly 60 percent memory with no backups configured: development and staging only. Supabase provides no Redis, so `REDIS_URL` still needs a separate provider. Supabase Auth and RLS are deliberately unused.
