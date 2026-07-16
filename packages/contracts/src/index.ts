@@ -16,6 +16,9 @@ export const errorCodes = [
   'RESOURCE_NOT_FOUND',
   'CONFLICT',
   'CONFIGURATION_NOT_APPROVED',
+  'MEDIA_VALIDATION_FAILED',
+  'MEDIA_INFECTED',
+  'MEDIA_PROCESSING_FAILED',
   'RATE_LIMITED',
   'IDEMPOTENCY_CONFLICT',
   'INVENTORY_UNAVAILABLE',
@@ -251,7 +254,56 @@ export interface ArtworkVersion {
   publishedAt: string | null;
   archivedAt: string | null;
   createdAt: string;
+  media?: MediaAsset[];
 }
+
+export const MediaAssetKindSchema = z.enum(['ORIGINAL', 'WEB_DERIVATIVE', 'THUMBNAIL', 'MOCKUP']);
+export type MediaAssetKind = z.infer<typeof MediaAssetKindSchema>;
+export const MediaProcessingStatusSchema = z.enum(['QUEUED', 'PROCESSING', 'READY', 'FAILED']);
+export type MediaProcessingStatus = z.infer<typeof MediaProcessingStatusSchema>;
+export const MediaApprovalStatusSchema = z.enum([
+  'NOT_REQUIRED',
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+]);
+export type MediaApprovalStatus = z.infer<typeof MediaApprovalStatusSchema>;
+
+export interface MediaAsset {
+  id: string;
+  artworkVersionId: string;
+  kind: MediaAssetKind;
+  variantKey: string;
+  originalFilename: string;
+  mimeType: string;
+  byteSize: number;
+  width: number;
+  height: number;
+  hasAlpha: boolean;
+  checksumSha256: string;
+  dominantHex: string | null;
+  lowResolution: boolean;
+  processingStatus: MediaProcessingStatus;
+  approvalStatus: MediaApprovalStatus;
+  failureCode: string | null;
+  failureMessage: string | null;
+  rejectionReason: string | null;
+  garmentTemplateId: string | null;
+  garmentPlacementId: string | null;
+  url: string | null;
+  createdAt: string;
+}
+
+export const MockupApprovalInputSchema = z
+  .object({
+    status: z.enum(['APPROVED', 'REJECTED']),
+    reason: z.string().trim().min(1).max(500).optional(),
+  })
+  .refine((value) => value.status !== 'REJECTED' || !!value.reason, {
+    message: 'A rejection reason is required.',
+    path: ['reason'],
+  });
+export type MockupApprovalInput = z.infer<typeof MockupApprovalInputSchema>;
 
 export interface Artwork {
   id: string;

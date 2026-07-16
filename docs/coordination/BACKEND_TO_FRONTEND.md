@@ -161,3 +161,13 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Compatibility is approved against an exact immutable `artworkVersionId`, a template, and an allowlist of published placement IDs. Publishing a replacement artwork version does not inherit the prior version's approval. Published template structure cannot change until the template is archived; leaving publication archives its current approvals.
 - Configuration validation requires `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, quantity? }` and returns the resolved IDs with `valid: true`. Treat `422 CONFIGURATION_NOT_APPROVED` as an unavailable selection and refresh compatibility; never infer compatibility client-side.
 - Inventory quantities, stock status, price, and reservations remain TMS-B4. Media URLs, artwork originals, derivatives, and mockups remain TMS-B2-004. Continue typed adapters for those absent fields.
+
+## 2026-07-16 — TMS-B2-004 exact-version media
+
+- Status: implemented on `codex/b2-media-pipeline`; consume after its focused PR is merged.
+- Compatibility: additive. Existing artwork/catalogue/garment fields and operations remain stable. Error codes add `MEDIA_VALIDATION_FAILED`, `MEDIA_INFECTED`, and `MEDIA_PROCESSING_FAILED`.
+- Public operation: `GET /api/v1/artworks/:slug/media` returns only `READY` web derivatives/thumbnails and `APPROVED` mockups for the exact published version. Originals, queued/failed assets, and pending/rejected mockups never appear.
+- Administrator operations list exact-version assets; upload one multipart `file` original; upload a multipart mockup with `file`, `garmentTemplateId`, and `garmentPlacementId`; approve/reject mockups; and retry failed originals. Reads require `catalogue.read`; writes require `catalogue.write`.
+- Each `MediaAsset` includes kind/variant, filename/MIME/bytes/dimensions, alpha, SHA-256, dominant colour, `lowResolution`, processing/approval/failure state, optional garment IDs, creation time, and a short-lived signed `url`. Do not persist or infer signed URLs.
+- A successful original upload means storage and the persistent derivative job were recorded; `QUEUED`/`PROCESSING` is expected until the worker creates `WEB_DERIVATIVE` and `THUMBNAIL`. Treat failures as retryable administration state, not as a usable preview.
+- Production-print assets and configuration renders are deliberately absent and remain TMS-B3-003. A browser derivative or approved mockup must never be sent to production.

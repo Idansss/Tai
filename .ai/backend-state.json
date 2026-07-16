@@ -3,7 +3,7 @@
   "area": "backend",
   "currentPhase": "B2",
   "lastVerifiedTask": "TMS-B2-003",
-  "nextRecommendedTask": "Merge PR #14, then start TMS-B2-004",
+  "nextRecommendedTask": "TMS-B2-004",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -23,7 +23,7 @@
     "TMS-B2-002",
     "TMS-B2-003"
   ],
-  "inProgressTasks": [],
+  "inProgressTasks": ["TMS-B2-004"],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
@@ -48,11 +48,9 @@
     "concerns": []
   },
   "activeTask": {
-    "task": "TMS-B2-003",
-    "branch": "codex/b2-garment-catalogue",
-    "status": "verified-pr-open-ci-passed",
-    "pullRequest": 14,
-    "ciRun": 29497257382
+    "task": "TMS-B2-004",
+    "branch": "codex/b2-media-pipeline",
+    "status": "in-progress"
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -127,9 +125,11 @@
   "garmentCatalogue": {
     "task": "TMS-B2-003",
     "branch": "codex/b2-garment-catalogue",
-    "status": "verified-pr-open-ci-passed",
+    "status": "verified-merged",
     "pullRequest": 14,
-    "ciRun": 29497257382,
+    "ciRun": 29497566759,
+    "commit": "4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79",
+    "mergedAt": "2026-07-16T12:20:15Z",
     "migration": "20260716112000_garment_catalogue",
     "qualityGate": "passed",
     "runtimeSmoke": "passed",

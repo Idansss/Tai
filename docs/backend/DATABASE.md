@@ -30,3 +30,9 @@ Migration `20260716112000_garment_catalogue` adds garment templates, colours, me
 - Reversible migrations where practical; destructive migrations require staged rollout notes
 
 Commands: `pnpm db:generate`, `pnpm db:validate`, `pnpm --filter @tms/database exec prisma migrate deploy`, and `pnpm --filter @tms/database exec prisma db seed`. Local PostgreSQL is defined in `infra/docker-compose.yml`.
+
+## Exact-version media
+
+`artwork_assets` binds every original, derivative, thumbnail, or mockup to one immutable `ArtworkVersion`. Originals have no source; derivatives and mockups reference the same version's original. Mockup garment placement must belong to its template. Checks constrain byte/pixel bounds, SHA-256 and colour formats, shape, approval lifecycle, and safe failure state. Asset bytes, storage keys, checksums, dimensions, scanner outcome, provenance, and creation identity are immutable, and assets cannot be deleted; processing and approval state are the only mutable lifecycle fields.
+
+`media_processing_jobs` persists queue state, bounded attempts, safe failures, and completion timestamps independently of Redis. The unique original/job and version/kind/variant keys make derivative processing retry-safe.

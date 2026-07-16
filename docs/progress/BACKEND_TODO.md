@@ -145,15 +145,15 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Acceptance criteria: Only administrator-approved configurations are valid; stock remains garment-variant based.
   - Implementation evidence: Normalized garment templates, colours, measured sizes, colour/size SKU variants, normalized view placements, scale presets, exact artwork-version/template compatibility decisions, and placement allowlists; lifecycle/geometry/membership/approval database constraints and triggers; published-structure locking and approval invalidation on archival; permission-scoped administrator CRUD; published-only public garment and compatible-garment reads; exact server-authoritative configuration validation; safe errors and mutation audits; shared Zod/domain contracts; 26 stable garment OpenAPI operations; ADR/architecture/database/security/testing/traceability/coordination documentation.
   - Tests: Six real HTTP/PostgreSQL garment scenarios verify authentication, `catalogue.read`/`catalogue.write` separation, incomplete publication rejection, strict colours and measured sizes, duplicate/cross-template variants, placement geometry, placement/scale publication order, public privacy, exact-version approval, replacement-version noninheritance, published-structure locking, placement allowlists, exact configuration validation, type filtering, safe errors, and audits. Seven direct PostgreSQL tests deploy all five migrations and verify garment indexes plus measurement, geometry, lifecycle, cross-template variant, and cross-template compatibility-placement constraints. The exact `pnpm check` passes 53 API tests across 12 files, every workspace test/build, and Prisma validation; frozen install, Compose validation, high-severity production audit, static OpenAPI validation, and compiled runtime Swagger/static parity also pass locally.
-  - Notes: Verified through PR #14 after GitHub Actions run 29497257382 passed on 2026-07-16. Implemented on `codex/b2-garment-catalogue` from the TMS-B2-002 merge commit `ce8bca4f7e7866cee698a77c9a94319418e8ca8a`. Migration: `20260716112000_garment_catalogue`. Static and runtime OpenAPI each expose 68 paths and 91 operations. The idempotent RBAC seed uses bounded interactive-transaction timeouts and the persistence suite uses a bounded five-minute aggregate setup allowance for concurrent full-workspace Docker runs. Stock quantities/movements/reservations remain TMS-B4-001; media bytes remain TMS-B2-004.
+  - Notes: Verified and squash-merged through PR #14 on 2026-07-16 as `4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79` after final GitHub Actions run 29497566759 passed. Migration: `20260716112000_garment_catalogue`. Static and runtime OpenAPI each expose 68 paths and 91 operations. The idempotent RBAC seed uses bounded interactive-transaction timeouts and the persistence suite uses a bounded five-minute aggregate setup allowance for concurrent full-workspace Docker runs. Stock quantities/movements/reservations remain TMS-B4-001; media bytes remain TMS-B2-004.
 - [ ] TMS-B2-004 Implement media ingestion, validation, immutable originals, derivatives, mockups, and approval workflow
-  - Status: Not started
+  - Status: In progress
   - Owner: Codex
   - Dependencies: TMS-B2-001
   - Acceptance criteria: File/MIME/dimension/size checks, malware hook, worker jobs, failure states, and admin approval tests.
   - Implementation evidence:
   - Tests:
-  - Notes:
+  - Notes: Started on `codex/b2-media-pipeline` from the TMS-B2-003 merge commit `4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79`. This slice owns exact artwork-version media, S3-compatible object storage, validation/scanning, derivative jobs, and mockup approval. Production renders remain TMS-B3-003.
 
 ## B3 — Design Studio services
 
