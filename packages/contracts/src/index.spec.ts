@@ -6,6 +6,7 @@ import {
   AdminMfaCodeInputSchema,
   AdminRoleAssignmentInputSchema,
   ArtworkCreateInputSchema,
+  ArtworkGarmentCompatibilityInputSchema,
   ArtworkVersionInputSchema,
   CatalogueEntryInputSchema,
   EditionInputSchema,
@@ -15,6 +16,12 @@ import {
   CustomerRegistrationInputSchema,
   DesignConfigurationInputSchema,
   ErrorCodeSchema,
+  GarmentColourInputSchema,
+  GarmentPlacementInputSchema,
+  GarmentSizeInputSchema,
+  GarmentTemplateInputSchema,
+  GarmentTemplateUpdateInputSchema,
+  GarmentVariantInputSchema,
   PaginationQuerySchema,
   PasswordResetConfirmationInputSchema,
   errorCodes,
@@ -103,6 +110,66 @@ describe('shared contracts', () => {
     ).toBe(true);
   });
 
+  it('enforces garment members, normalized geometry, and explicit compatibility boundaries', () => {
+    expect(
+      GarmentTemplateInputSchema.safeParse({
+        slug: 'studio-classic-tee',
+        title: 'Studio Classic Tee',
+        type: 'CLASSIC_TSHIRT',
+      }).success,
+    ).toBe(true);
+    expect(GarmentTemplateUpdateInputSchema.safeParse({}).success).toBe(false);
+    expect(
+      GarmentColourInputSchema.safeParse({
+        slug: 'washed-black',
+        name: 'Washed Black',
+        hex: '#111111',
+      }).success,
+    ).toBe(true);
+    expect(
+      GarmentSizeInputSchema.safeParse({
+        code: 'M',
+        label: 'Medium',
+        measurements: [{ key: 'chest_width', label: 'Chest width', valueMm: 540 }],
+      }).success,
+    ).toBe(true);
+    expect(
+      GarmentVariantInputSchema.safeParse({
+        colourId: 'b3d0887c-e246-4864-96f9-7ed74df4ad42',
+        sizeId: 'df185255-4800-443f-bc6b-790c4362ed18',
+        sku: 'TMS-TEE-BLK-M',
+      }).success,
+    ).toBe(true);
+    expect(
+      GarmentPlacementInputSchema.safeParse({
+        slug: 'outside',
+        name: 'Outside',
+        view: 'FRONT',
+        xPermille: 800,
+        yPermille: 100,
+        widthPermille: 300,
+        heightPermille: 500,
+        printWidthMm: 300,
+        printHeightMm: 400,
+      }).success,
+    ).toBe(false);
+    expect(
+      ArtworkGarmentCompatibilityInputSchema.safeParse({
+        status: 'APPROVED',
+        placementIds: ['974d56a9-fdc5-4365-8c46-c96fbe8d6c8d'],
+      }).success,
+    ).toBe(true);
+    expect(
+      ArtworkGarmentCompatibilityInputSchema.safeParse({
+        status: 'APPROVED',
+        placementIds: [
+          '974d56a9-fdc5-4365-8c46-c96fbe8d6c8d',
+          '974d56a9-fdc5-4365-8c46-c96fbe8d6c8d',
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
   it('keeps the public authentication contract and error catalogue in OpenAPI', () => {
     for (const operationId of [
       'registerCustomer',
@@ -166,6 +233,32 @@ describe('shared contracts', () => {
       'getPublishedDrop',
       'listPublishedStories',
       'getPublishedStory',
+      'listPublishedGarments',
+      'getPublishedGarment',
+      'listPublishedArtworkCompatibleGarments',
+      'validatePublishedGarmentConfiguration',
+      'listAdministratorGarments',
+      'getAdministratorGarment',
+      'createAdministratorGarment',
+      'updateAdministratorGarment',
+      'deleteAdministratorGarment',
+      'createAdministratorGarmentColour',
+      'updateAdministratorGarmentColour',
+      'deleteAdministratorGarmentColour',
+      'createAdministratorGarmentSize',
+      'updateAdministratorGarmentSize',
+      'deleteAdministratorGarmentSize',
+      'createAdministratorGarmentVariant',
+      'updateAdministratorGarmentVariant',
+      'deleteAdministratorGarmentVariant',
+      'createAdministratorGarmentPlacement',
+      'updateAdministratorGarmentPlacement',
+      'deleteAdministratorGarmentPlacement',
+      'createAdministratorGarmentScalePreset',
+      'updateAdministratorGarmentScalePreset',
+      'deleteAdministratorGarmentScalePreset',
+      'setAdministratorArtworkGarmentCompatibility',
+      'deleteAdministratorArtworkGarmentCompatibility',
     ]) {
       expect(openApi).toContain(`operationId: ${operationId}`);
     }

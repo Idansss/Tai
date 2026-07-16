@@ -15,6 +15,8 @@ tags:
   - name: catalogue
   - name: administrator-artworks
   - name: administrator-catalogue
+  - name: garments
+  - name: administrator-garments
 paths:
   /api/v1/auth/register:
     post:
@@ -999,6 +1001,390 @@ paths:
         '401': { $ref: '#/components/responses/ApiError' }
         '403': { $ref: '#/components/responses/ApiError' }
         '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/garments:
+    get:
+      operationId: listPublishedGarments
+      tags: [garments]
+      summary: List published approved garment canvases
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: type
+          in: query
+          schema: { $ref: '#/components/schemas/GarmentType' }
+      responses:
+        '200': { $ref: '#/components/responses/GarmentPage' }
+        '400': { $ref: '#/components/responses/ApiError' }
+  /api/v1/garments/{slug}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueSlug'
+    get:
+      operationId: getPublishedGarment
+      tags: [garments]
+      summary: Get a published garment canvas and its published options
+      responses:
+        '200': { $ref: '#/components/responses/Garment' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/artworks/{slug}/compatible-garments:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueSlug'
+    get:
+      operationId: listPublishedArtworkCompatibleGarments
+      tags: [garments]
+      summary: List explicitly approved garment canvases and placements for an artwork
+      responses:
+        '200': { $ref: '#/components/responses/ArtworkGarmentCompatibilityList' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/garment-configurations/validate:
+    post:
+      operationId: validatePublishedGarmentConfiguration
+      tags: [garments]
+      summary: Validate an exact immutable artwork and approved garment configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DesignConfigurationInput' }
+      responses:
+        '200': { $ref: '#/components/responses/GarmentConfigurationValidation' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '422': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/garments:
+    get:
+      operationId: listAdministratorGarments
+      tags: [administrator-garments]
+      summary: List garment canvases in every lifecycle state
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/GarmentList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: createAdministratorGarment
+      tags: [administrator-garments]
+      summary: Create a draft garment canvas
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GarmentTemplateInput' }
+      responses:
+        '201': { $ref: '#/components/responses/Garment' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/garments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    get:
+      operationId: getAdministratorGarment
+      tags: [administrator-garments]
+      summary: Get a garment canvas in any lifecycle state
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/Garment' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+    patch:
+      operationId: updateAdministratorGarment
+      tags: [administrator-garments]
+      summary: Update or transition a garment canvas
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GarmentTemplateUpdateInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Garment' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteAdministratorGarment
+      tags: [administrator-garments]
+      summary: Delete an unreferenced garment canvas
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Garment deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/garments/{templateId}/colours:
+    parameters:
+      - $ref: '#/components/parameters/GarmentTemplateId'
+    post:
+      operationId: createAdministratorGarmentColour
+      tags: [administrator-garments]
+      summary: Create a garment colour
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentColour' }
+      responses:
+        '201': { $ref: '#/components/responses/GarmentMember' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/garments/colours/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorGarmentColour
+      tags: [administrator-garments]
+      summary: Replace a garment colour
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentColour' }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+    delete:
+      operationId: deleteAdministratorGarmentColour
+      tags: [administrator-garments]
+      summary: Delete an unreferenced garment colour
+      security: [{ tms_admin_session: [] }]
+      responses:
+        {
+          '204': { description: Garment colour deleted. },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/{templateId}/sizes:
+    parameters:
+      - $ref: '#/components/parameters/GarmentTemplateId'
+    post:
+      operationId: createAdministratorGarmentSize
+      tags: [administrator-garments]
+      summary: Create a garment size and measurements
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentSize' }
+      responses:
+        {
+          '201': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/sizes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorGarmentSize
+      tags: [administrator-garments]
+      summary: Replace a garment size and measurements
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentSize' }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+    delete:
+      operationId: deleteAdministratorGarmentSize
+      tags: [administrator-garments]
+      summary: Delete an unreferenced garment size
+      security: [{ tms_admin_session: [] }]
+      responses:
+        {
+          '204': { description: Garment size deleted. },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/{templateId}/variants:
+    parameters:
+      - $ref: '#/components/parameters/GarmentTemplateId'
+    post:
+      operationId: createAdministratorGarmentVariant
+      tags: [administrator-garments]
+      summary: Create a colour and size garment variant
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentVariant' }
+      responses:
+        {
+          '201': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/variants/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorGarmentVariant
+      tags: [administrator-garments]
+      summary: Replace a garment variant
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentVariant' }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+    delete:
+      operationId: deleteAdministratorGarmentVariant
+      tags: [administrator-garments]
+      summary: Delete an unreferenced garment variant
+      security: [{ tms_admin_session: [] }]
+      responses:
+        {
+          '204': { description: Garment variant deleted. },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/{templateId}/placements:
+    parameters:
+      - $ref: '#/components/parameters/GarmentTemplateId'
+    post:
+      operationId: createAdministratorGarmentPlacement
+      tags: [administrator-garments]
+      summary: Create a normalized garment print placement
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentPlacement' }
+      responses:
+        {
+          '201': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/placements/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorGarmentPlacement
+      tags: [administrator-garments]
+      summary: Replace a normalized garment print placement
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentPlacement' }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+    delete:
+      operationId: deleteAdministratorGarmentPlacement
+      tags: [administrator-garments]
+      summary: Delete an unreferenced garment placement
+      security: [{ tms_admin_session: [] }]
+      responses:
+        {
+          '204': { description: Garment placement deleted. },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/placements/{placementId}/scale-presets:
+    parameters:
+      - $ref: '#/components/parameters/GarmentPlacementId'
+    post:
+      operationId: createAdministratorGarmentScalePreset
+      tags: [administrator-garments]
+      summary: Create an allowed artwork scale for a placement
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentScalePreset' }
+      responses:
+        {
+          '201': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/scale-presets/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorGarmentScalePreset
+      tags: [administrator-garments]
+      summary: Replace an allowed artwork scale
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentScalePreset' }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+    delete:
+      operationId: deleteAdministratorGarmentScalePreset
+      tags: [administrator-garments]
+      summary: Delete an unreferenced artwork scale
+      security: [{ tms_admin_session: [] }]
+      responses:
+        {
+          '204': { description: Garment scale preset deleted. },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+  /api/v1/admin/garments/{templateId}/compatibilities/{artworkVersionId}:
+    parameters:
+      - $ref: '#/components/parameters/GarmentTemplateId'
+      - $ref: '#/components/parameters/CompatibilityArtworkVersionId'
+    put:
+      operationId: setAdministratorArtworkGarmentCompatibility
+      tags: [administrator-garments]
+      summary: Set the artwork approval and placement allowlist for a garment
+      security: [{ tms_admin_session: [] }]
+      requestBody: { $ref: '#/components/requestBodies/GarmentCompatibility' }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/GarmentMember' },
+          '400': { $ref: '#/components/responses/ApiError' },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+          '409': { $ref: '#/components/responses/ApiError' },
+        }
+    delete:
+      operationId: deleteAdministratorArtworkGarmentCompatibility
+      tags: [administrator-garments]
+      summary: Delete an artwork and garment compatibility decision
+      security: [{ tms_admin_session: [] }]
+      responses:
+        {
+          '204': { description: Artwork garment compatibility deleted. },
+          '401': { $ref: '#/components/responses/ApiError' },
+          '403': { $ref: '#/components/responses/ApiError' },
+          '404': { $ref: '#/components/responses/ApiError' },
+        }
   /api/v1/health/liveness:
     get:
       operationId: getLiveness
@@ -1077,6 +1463,52 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    GarmentTemplateId:
+      name: templateId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    GarmentPlacementId:
+      name: placementId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CompatibilityArtworkVersionId:
+      name: artworkVersionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  requestBodies:
+    GarmentColour:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentColourInput' }
+    GarmentSize:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentSizeInput' }
+    GarmentVariant:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentVariantInput' }
+    GarmentPlacement:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentPlacementInput' }
+    GarmentScalePreset:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentScalePresetInput' }
+    GarmentCompatibility:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ArtworkGarmentCompatibilityInput' }
   securitySchemes:
     tms_session:
       type: apiKey
@@ -1162,6 +1594,36 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/AssociationResponse' }
+    Garment:
+      description: Garment canvas and options.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentResponse' }
+    GarmentList:
+      description: Garment canvases in every lifecycle state.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentListResponse' }
+    GarmentPage:
+      description: Cursor page of published garment canvases.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentPageResponse' }
+    GarmentMember:
+      description: A garment option or compatibility record.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentMemberResponse' }
+    ArtworkGarmentCompatibilityList:
+      description: Approved garment canvases and placements for an artwork.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ArtworkGarmentCompatibilityListResponse' }
+    GarmentConfigurationValidation:
+      description: Exact approved garment configuration validation result.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GarmentConfigurationValidationResponse' }
   schemas:
     CustomerRegistrationInput:
       type: object
@@ -1744,6 +2206,333 @@ components:
               items: { $ref: '#/components/schemas/AdminArtwork' }
             nextCursor: { type: [string, 'null'], format: uuid }
         meta: { $ref: '#/components/schemas/ApiMeta' }
+    GarmentType:
+      type: string
+      enum:
+        [
+          CLASSIC_TSHIRT,
+          OVERSIZED_TSHIRT,
+          LONG_SLEEVE,
+          HOODIE,
+          SWEATSHIRT,
+          TOTE_BAG,
+          CAP,
+          ART_PRINT,
+        ]
+    GarmentView:
+      type: string
+      enum: [FRONT, BACK, LEFT, RIGHT]
+    CompatibilityStatus:
+      type: string
+      enum: [DRAFT, APPROVED, ARCHIVED]
+    GarmentTemplateInput:
+      type: object
+      additionalProperties: false
+      required: [slug, title, type]
+      properties:
+        slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 10000 }
+        type: { $ref: '#/components/schemas/GarmentType' }
+        fabric: { type: [string, 'null'], maxLength: 500 }
+        fit: { type: [string, 'null'], maxLength: 500 }
+        care: { type: [string, 'null'], maxLength: 10000 }
+    GarmentTemplateUpdateInput:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 10000 }
+        type: { $ref: '#/components/schemas/GarmentType' }
+        fabric: { type: [string, 'null'], maxLength: 500 }
+        fit: { type: [string, 'null'], maxLength: 500 }
+        care: { type: [string, 'null'], maxLength: 10000 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    GarmentColourInput:
+      type: object
+      additionalProperties: false
+      required: [slug, name, hex]
+      properties:
+        slug: { type: string, maxLength: 100, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        hex: { type: string, pattern: '^#[0-9A-Fa-f]{6}$' }
+        position: { type: integer, minimum: 0, default: 0 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    GarmentMeasurementInput:
+      type: object
+      additionalProperties: false
+      required: [key, label, valueMm]
+      properties:
+        key: { type: string, maxLength: 64, pattern: '^[a-z][a-z0-9_]*$' }
+        label: { type: string, minLength: 1, maxLength: 100 }
+        valueMm: { type: integer, minimum: 1 }
+    GarmentSizeInput:
+      type: object
+      additionalProperties: false
+      required: [code, label]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 32 }
+        label: { type: string, minLength: 1, maxLength: 100 }
+        position: { type: integer, minimum: 0, default: 0 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+        measurements:
+          type: array
+          maxItems: 50
+          default: []
+          items: { $ref: '#/components/schemas/GarmentMeasurementInput' }
+    GarmentVariantInput:
+      type: object
+      additionalProperties: false
+      required: [colourId, sizeId, sku]
+      properties:
+        colourId: { type: string, format: uuid }
+        sizeId: { type: string, format: uuid }
+        sku: { type: string, minLength: 1, maxLength: 80 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    GarmentPlacementInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          slug,
+          name,
+          view,
+          xPermille,
+          yPermille,
+          widthPermille,
+          heightPermille,
+          printWidthMm,
+          printHeightMm,
+        ]
+      properties:
+        slug: { type: string, maxLength: 100, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        view: { $ref: '#/components/schemas/GarmentView' }
+        xPermille: { type: integer, minimum: 0, maximum: 999 }
+        yPermille: { type: integer, minimum: 0, maximum: 999 }
+        widthPermille: { type: integer, minimum: 1, maximum: 1000 }
+        heightPermille: { type: integer, minimum: 1, maximum: 1000 }
+        printWidthMm: { type: integer, minimum: 1 }
+        printHeightMm: { type: integer, minimum: 1 }
+        position: { type: integer, minimum: 0, default: 0 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    GarmentScalePresetInput:
+      type: object
+      additionalProperties: false
+      required: [slug, name, scalePercent]
+      properties:
+        slug: { type: string, maxLength: 64, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        scalePercent: { type: integer, minimum: 1, maximum: 100 }
+        position: { type: integer, minimum: 0, default: 0 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    ArtworkGarmentCompatibilityInput:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: { $ref: '#/components/schemas/CompatibilityStatus' }
+        placementIds:
+          type: array
+          maxItems: 50
+          default: []
+          uniqueItems: true
+          items: { type: string, format: uuid }
+    DesignConfigurationInput:
+      type: object
+      additionalProperties: false
+      required: [artworkVersionId, garmentVariantId, placementId, scalePreset, view]
+      properties:
+        artworkVersionId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePreset:
+          { type: string, minLength: 1, maxLength: 64, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        view: { $ref: '#/components/schemas/GarmentView' }
+        quantity: { type: integer, minimum: 1, maximum: 100, default: 1 }
+    GarmentMeasurement:
+      allOf:
+        - $ref: '#/components/schemas/GarmentMeasurementInput'
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+    GarmentColour:
+      allOf:
+        - $ref: '#/components/schemas/GarmentColourInput'
+        - type: object
+          required: [id, templateId, status]
+          properties:
+            id: { type: string, format: uuid }
+            templateId: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+    GarmentSize:
+      allOf:
+        - $ref: '#/components/schemas/GarmentSizeInput'
+        - type: object
+          required: [id, templateId, status, measurements]
+          properties:
+            id: { type: string, format: uuid }
+            templateId: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+            measurements:
+              type: array
+              items: { $ref: '#/components/schemas/GarmentMeasurement' }
+    GarmentVariant:
+      allOf:
+        - $ref: '#/components/schemas/GarmentVariantInput'
+        - type: object
+          required: [id, templateId, status]
+          properties:
+            id: { type: string, format: uuid }
+            templateId: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+    GarmentScalePreset:
+      allOf:
+        - $ref: '#/components/schemas/GarmentScalePresetInput'
+        - type: object
+          required: [id, placementId, status]
+          properties:
+            id: { type: string, format: uuid }
+            placementId: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+    GarmentPlacement:
+      allOf:
+        - $ref: '#/components/schemas/GarmentPlacementInput'
+        - type: object
+          required: [id, templateId, status, scalePresets]
+          properties:
+            id: { type: string, format: uuid }
+            templateId: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+            scalePresets:
+              type: array
+              items: { $ref: '#/components/schemas/GarmentScalePreset' }
+    GarmentTemplate:
+      allOf:
+        - $ref: '#/components/schemas/GarmentTemplateInput'
+        - type: object
+          required:
+            [
+              id,
+              status,
+              colours,
+              sizes,
+              variants,
+              placements,
+              publishedAt,
+              archivedAt,
+              createdAt,
+              updatedAt,
+            ]
+          properties:
+            id: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+            colours:
+              type: array
+              items: { $ref: '#/components/schemas/GarmentColour' }
+            sizes:
+              type: array
+              items: { $ref: '#/components/schemas/GarmentSize' }
+            variants:
+              type: array
+              items: { $ref: '#/components/schemas/GarmentVariant' }
+            placements:
+              type: array
+              items: { $ref: '#/components/schemas/GarmentPlacement' }
+            publishedAt: { type: [string, 'null'], format: date-time }
+            archivedAt: { type: [string, 'null'], format: date-time }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    GarmentResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/GarmentTemplate' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    GarmentListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/GarmentTemplate' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    GarmentPageResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items, nextCursor]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/GarmentTemplate' }
+            nextCursor: { type: [string, 'null'], format: uuid }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    GarmentMemberResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: object, additionalProperties: true }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ArtworkGarmentCompatibility:
+      type: object
+      required: [id, artworkVersionId, templateId, status, placements, template]
+      properties:
+        id: { type: string, format: uuid }
+        artworkVersionId: { type: string, format: uuid }
+        templateId: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/CompatibilityStatus' }
+        placements:
+          type: array
+          items:
+            type: object
+            required: [placement]
+            properties:
+              placement: { $ref: '#/components/schemas/GarmentPlacement' }
+        template: { $ref: '#/components/schemas/GarmentTemplate' }
+    ArtworkGarmentCompatibilityListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/ArtworkGarmentCompatibility' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    GarmentConfigurationValidation:
+      type: object
+      required:
+        [
+          valid,
+          artworkId,
+          artworkVersionId,
+          garmentTemplateId,
+          garmentVariantId,
+          placementId,
+          scalePresetId,
+          view,
+          quantity,
+        ]
+      properties:
+        valid: { type: boolean, const: true }
+        artworkId: { type: string, format: uuid }
+        artworkVersionId: { type: string, format: uuid }
+        garmentTemplateId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePresetId: { type: string, format: uuid }
+        view: { $ref: '#/components/schemas/GarmentView' }
+        quantity: { type: integer, minimum: 1, maximum: 100 }
+    GarmentConfigurationValidationResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/GarmentConfigurationValidation' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     HealthResponse:
       type: object
       required: [data, meta]
@@ -1789,6 +2578,7 @@ components:
                   RATE_LIMITED,
                   IDEMPOTENCY_CONFLICT,
                   INVENTORY_UNAVAILABLE,
+                  CONFIGURATION_NOT_APPROVED,
                   INTEGRATION_UNAVAILABLE,
                   INTERNAL_ERROR,
                 ]

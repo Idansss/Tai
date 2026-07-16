@@ -2,8 +2,8 @@
   "agent": "Codex",
   "area": "backend",
   "currentPhase": "B2",
-  "lastVerifiedTask": "TMS-B2-002",
-  "nextRecommendedTask": "TMS-B2-003",
+  "lastVerifiedTask": "TMS-B2-003",
+  "nextRecommendedTask": "Merge PR #14, then start TMS-B2-004",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -20,14 +20,15 @@
     "TMS-B1-002",
     "TMS-B1-003",
     "TMS-B2-001",
-    "TMS-B2-002"
+    "TMS-B2-002",
+    "TMS-B2-003"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
-  "lastUpdated": "2026-07-16T11:06:00Z",
+  "lastUpdated": "2026-07-16T13:15:51+01:00",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -47,9 +48,11 @@
     "concerns": []
   },
   "activeTask": {
-    "task": "TMS-B2-002",
-    "branch": "codex/b2-catalogue-content",
-    "status": "verified-awaiting-pr"
+    "task": "TMS-B2-003",
+    "branch": "codex/b2-garment-catalogue",
+    "status": "verified-pr-open-ci-passed",
+    "pullRequest": 14,
+    "ciRun": 29497257382
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -102,7 +105,11 @@
   "catalogueContent": {
     "task": "TMS-B2-002",
     "branch": "codex/b2-catalogue-content",
-    "status": "verified-awaiting-pr",
+    "status": "verified-merged",
+    "pullRequest": 13,
+    "commit": "ce8bca4f7e7866cee698a77c9a94319418e8ca8a",
+    "mergedAt": "2026-07-16T10:10:19Z",
+    "ciRun": 29489686858,
     "migration": "20260716084000_catalogue_content",
     "qualityGate": "passed",
     "runtimeSmoke": "passed",
@@ -115,6 +122,25 @@
       "Garment templates, variants, placements, and compatibility remain TMS-B2-003.",
       "Exact-version media assets and ingestion remain TMS-B2-004.",
       "Waitlists, preorder rules, purchase limits, and inventory remain later commerce/growth tasks."
+    ]
+  },
+  "garmentCatalogue": {
+    "task": "TMS-B2-003",
+    "branch": "codex/b2-garment-catalogue",
+    "status": "verified-pr-open-ci-passed",
+    "pullRequest": 14,
+    "ciRun": 29497257382,
+    "migration": "20260716112000_garment_catalogue",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "openApiValidation": "passed",
+    "apiTests": 53,
+    "databaseTests": 7,
+    "openApiPaths": 68,
+    "openApiOperations": 91,
+    "concerns": [
+      "Exact-version media assets, ingestion, derivatives, and mockups remain TMS-B2-004.",
+      "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001."
     ]
   }
 }

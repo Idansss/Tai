@@ -9,6 +9,9 @@ export {
   ArtworkStatus,
   ArtworkVersionStatus,
   AuthAssuranceLevel,
+  CompatibilityStatus,
+  GarmentType,
+  GarmentView,
   Prisma,
   SessionKind,
   StoryBlockType,
@@ -22,4 +25,4 @@ export function createDatabaseClient(connectionString: string): PrismaClient {
 
 export type DatabaseClient = ReturnType<typeof createDatabaseClient>;
 
-export const databasePackageStatus = 'artwork-versioning-verified' as const;
+export const databasePackageStatus = 'garment-catalogue-in-progress' as const;

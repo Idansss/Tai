@@ -8,6 +8,7 @@ import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
+import { GarmentModule } from './garments/garment.module.js';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { HealthService } from './health/health.service.js';
     AdminAuthModule,
     ArtworkModule,
     CatalogueModule,
+    GarmentModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: loadEnvironment().LOG_LEVEL,

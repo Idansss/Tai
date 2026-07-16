@@ -18,6 +18,8 @@ Migration `20260716030500_artwork_versioning` adds artwork roots and ordered art
 
 Migration `20260716084000_catalogue_content` adds typed tags and normalized artwork-tag joins, curated collections and ordered membership, timed drops and ordered membership, artwork editions, editorial stories, and ordered story blocks. Database checks enforce slugs, lifecycle timestamps, valid drop windows, positive/required numbered-edition quantities, one optional story parent, object-shaped block content, and non-negative/unique block positions. Creator relationships remain restrictive; association and block rows cascade only with their owning catalogue record or artwork root.
 
+Migration `20260716112000_garment_catalogue` adds garment templates, colours, measured sizes, colour/size SKU variants, normalized view placements, scale presets, exact artwork-version/template compatibility decisions, and compatibility placement allowlists. Checks enforce lifecycle ordering, slugs, positive measurements and physical print sizes, normalized geometry inside a 1000-by-1000 canvas, bounded scale percentages, and approval timestamps. Database triggers reject variants whose colour or size belongs to another template and reject compatibility placements from another template. Garment variants are the stable future inventory key, but this migration intentionally adds no stock quantities, movements, or reservations.
+
 ## Rules
 
 - UUID identifiers, UTC timestamps, explicit foreign keys, useful indexes, and unique constraints

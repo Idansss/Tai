@@ -121,7 +121,7 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
 
     database = new Client({ connectionString: databaseUrl });
     await database.connect();
-  }, 180_000);
+  }, 300_000);
 
   afterAll(async () => {
     if (database) {
@@ -153,7 +153,7 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'SELECT count(*)::int AS count FROM permissions',
     );
 
-    expect(migrationResult.rows[0]?.count).toBe(4);
+    expect(migrationResult.rows[0]?.count).toBe(5);
     expect(permissionResult.rows[0]?.count).toBe(12);
     expect(roleResult.rows).toEqual([
       { code: 'ANALYST', is_system: true, grant_count: 2 },
@@ -189,6 +189,10 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
           'drops_status_starts_at_idx',
           'stories_status_published_at_idx',
           'artwork_tags_tag_artwork_idx',
+          'garment_templates_status_created_at_idx',
+          'garment_variants_template_status_idx',
+          'garment_placements_template_status_position_idx',
+          'artwork_garment_compatibilities_template_status_idx',
           'users_normalized_email_key',
         ],
       ],
@@ -196,6 +200,7 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
 
     expect(result.rows.map(({ indexname }) => indexname)).toEqual([
       'admin_auth_challenges_user_state_idx',
+      'artwork_garment_compatibilities_template_status_idx',
       'artwork_tags_tag_artwork_idx',
       'artwork_versions_artwork_status_version_idx',
       'artwork_versions_one_published_idx',
@@ -205,6 +210,9 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'collections_status_published_at_idx',
       'drops_status_starts_at_idx',
       'email_verification_tokens_user_state_idx',
+      'garment_placements_template_status_position_idx',
+      'garment_templates_status_created_at_idx',
+      'garment_variants_template_status_idx',
       'password_reset_tokens_user_state_idx',
       'sessions_user_kind_state_idx',
       'sessions_user_revoked_expires_idx',
@@ -334,6 +342,116 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
         [randomUUID(), storyId],
       ),
       'story_blocks_story_position_key',
+    );
+  });
+
+  it('enforces garment geometry, size charts, variant membership, and compatibility approval', async () => {
+    const userId = randomUUID();
+    const artworkId = randomUUID();
+    const artworkVersionId = randomUUID();
+    const firstTemplateId = randomUUID();
+    const secondTemplateId = randomUUID();
+    const firstSizeId = randomUUID();
+    const firstColourId = randomUUID();
+    const secondColourId = randomUUID();
+    const secondPlacementId = randomUUID();
+    const compatibilityId = randomUUID();
+    await database.query(
+      `INSERT INTO users (id, email, normalized_email, updated_at)
+       VALUES ($1, $2, $2, CURRENT_TIMESTAMP)`,
+      [userId, `garment-${userId}@example.com`],
+    );
+    await database.query(
+      `INSERT INTO artworks (id, slug, created_by_user_id, updated_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
+      [artworkId, `garment-artwork-${artworkId}`, userId],
+    );
+    await database.query(
+      `INSERT INTO artwork_versions
+         (id, artwork_id, version_number, title, created_by_user_id)
+       VALUES ($1, $2, 1, 'Garment constraint artwork', $3)`,
+      [artworkVersionId, artworkId, userId],
+    );
+    for (const [id, slug] of [
+      [firstTemplateId, `first-garment-${firstTemplateId}`],
+      [secondTemplateId, `second-garment-${secondTemplateId}`],
+    ]) {
+      await database.query(
+        `INSERT INTO garment_templates
+           (id, slug, title, type, created_by_user_id, updated_at)
+         VALUES ($1, $2, 'Constraint garment', 'CLASSIC_TSHIRT', $3, CURRENT_TIMESTAMP)`,
+        [id, slug, userId],
+      );
+    }
+    await database.query(
+      `INSERT INTO garment_colours
+         (id, template_id, slug, name, hex, updated_at)
+       VALUES ($1, $2, 'black', 'Black', '#111111', CURRENT_TIMESTAMP),
+              ($3, $4, 'white', 'White', '#FFFFFF', CURRENT_TIMESTAMP)`,
+      [firstColourId, firstTemplateId, secondColourId, secondTemplateId],
+    );
+    await database.query(
+      `INSERT INTO garment_sizes (id, template_id, code, label, updated_at)
+       VALUES ($1, $2, 'M', 'Medium', CURRENT_TIMESTAMP)`,
+      [firstSizeId, firstTemplateId],
+    );
+
+    await expectConstraint(
+      database.query(
+        `INSERT INTO garment_size_measurements (id, size_id, key, label, value_mm)
+         VALUES ($1, $2, 'chest', 'Chest', 0)`,
+        [randomUUID(), firstSizeId],
+      ),
+      'garment_size_measurements_value_check',
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO garment_variants
+           (id, template_id, colour_id, size_id, sku, updated_at)
+         VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+        [randomUUID(), firstTemplateId, secondColourId, firstSizeId, `SKU-${randomUUID()}`],
+      ),
+      'garment_variants_template_membership_check',
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO garment_placements
+           (id, template_id, slug, name, view, x_permille, y_permille, width_permille,
+            height_permille, print_width_mm, print_height_mm, updated_at)
+         VALUES ($1, $2, 'outside', 'Outside', 'FRONT', 800, 100, 300, 300, 200, 200, CURRENT_TIMESTAMP)`,
+        [randomUUID(), firstTemplateId],
+      ),
+      'garment_placements_geometry_check',
+    );
+    await database.query(
+      `INSERT INTO garment_placements
+         (id, template_id, slug, name, view, x_permille, y_permille, width_permille,
+          height_permille, print_width_mm, print_height_mm, updated_at)
+       VALUES ($1, $2, 'front', 'Front', 'FRONT', 100, 100, 500, 500, 250, 300, CURRENT_TIMESTAMP)`,
+      [secondPlacementId, secondTemplateId],
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO artwork_garment_compatibilities
+           (id, artwork_version_id, template_id, status, created_by_user_id, updated_at)
+         VALUES ($1, $2, $3, 'APPROVED', $4, CURRENT_TIMESTAMP)`,
+        [randomUUID(), artworkVersionId, firstTemplateId, userId],
+      ),
+      'artwork_garment_compatibilities_lifecycle_check',
+    );
+    await database.query(
+      `INSERT INTO artwork_garment_compatibilities
+         (id, artwork_version_id, template_id, created_by_user_id, updated_at)
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
+      [compatibilityId, artworkVersionId, firstTemplateId, userId],
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO artwork_garment_placements (compatibility_id, placement_id)
+         VALUES ($1, $2)`,
+        [compatibilityId, secondPlacementId],
+      ),
+      'artwork_garment_placements_template_membership_check',
     );
   });
 
