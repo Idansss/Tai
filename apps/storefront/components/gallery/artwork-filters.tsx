@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge, IconButton, Select, cn } from '@tms/ui';
+import { Badge, IconButton, Select } from '@tms/ui';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useRef } from 'react';

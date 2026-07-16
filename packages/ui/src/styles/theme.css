@@ -1,8 +1,8 @@
 /*
  * Tailwind theme mapping + base layer. Import AFTER `@import "tailwindcss"` and
  * `@import "@tms/ui/tokens.css"`. `@theme inline` hooks utilities to the raw token
- * variables (so bg-canvas / text-ink / text-success resolve to tokens and switch
- * with [data-theme="dark"]). `inline` suppresses duplicate :root emission.
+ * variables (so bg-canvas / text-ink / shadow-md resolve to tokens and switch with
+ * [data-theme="dark"]). `inline` suppresses duplicate :root emission.
  */
 
 @theme inline {
@@ -35,12 +35,22 @@
 
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
   --radius-pill: var(--radius-pill);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --ease-emphasis: var(--ease-emphasis);
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
 }
 
 @layer base {
@@ -55,6 +65,7 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern' 1, 'liga' 1;
   }
 
   h1,
@@ -68,6 +79,12 @@
     text-wrap: balance;
   }
 
+  /* Editorial: tabular, lining numerals in meta/mono contexts read as "press". */
+  .font-mono,
+  [data-numeric] {
+    font-feature-settings: 'tnum' 1, 'zero' 1;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-focus-ring);
     outline-offset: 2px;
@@ -75,8 +92,26 @@
   }
 
   ::selection {
-    background-color: color-mix(in srgb, var(--color-accent-primary) 22%, transparent);
+    background-color: color-mix(in srgb, var(--color-accent-secondary) 24%, transparent);
   }
+}
+
+/* ---- Editorial utilities (Gallery Press rhythm) ---- */
+
+/* A hairline rule that adapts to theme. */
+@utility rule {
+  border-color: var(--color-border-default);
+}
+
+/* Motion: reveal-on-scroll. Elements start hidden; JS adds data-revealed="true".
+   Reduced-motion users get the final state immediately with no transform. */
+@utility reveal-base {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity var(--duration-slower) var(--ease-out),
+    transform var(--duration-slower) var(--ease-out);
+  will-change: opacity, transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -87,5 +122,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Marquee (announcement ticker). Pauses on hover; disabled under reduced motion. */
+@keyframes tms-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }

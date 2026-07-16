@@ -57,12 +57,12 @@ export function SiteHeader() {
     pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur">
-      <Container>
-        <nav className="flex h-16 items-center justify-between gap-4" aria-label="Primary">
+    <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md">
+      <Container width="wide">
+        <nav className="flex h-16 items-center justify-between gap-4 lg:h-[4.5rem]" aria-label="Primary">
           <Link
             href="/"
-            className="rounded-sm font-display text-lg font-semibold tracking-tight text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            className="rounded-sm font-display text-lg font-semibold tracking-[-0.01em] text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
           >
             Tai Manic Studios
           </Link>
@@ -74,11 +74,18 @@ export function SiteHeader() {
                   href={item.href}
                   aria-current={isActive(item.href) ? 'page' : undefined}
                   className={cn(
-                    'rounded-sm text-xs font-medium uppercase tracking-[0.08em] outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                    'group relative rounded-sm py-1 text-xs font-medium uppercase tracking-[0.1em] outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
                     isActive(item.href) ? 'text-ink' : 'text-muted',
                   )}
                 >
                   {item.label}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'absolute -bottom-0.5 left-0 h-px bg-accent-2 transition-all duration-[var(--duration-base)] ease-[var(--ease-out)]',
+                      isActive(item.href) ? 'w-full' : 'w-0 group-hover:w-full',
+                    )}
+                  />
                 </Link>
               </li>
             ))}

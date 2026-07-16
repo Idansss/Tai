@@ -1,9 +1,9 @@
 {
   "agent": "Claude Code",
   "area": "frontend",
-  "currentPhase": "F5 complete → F6 next",
-  "lastVerifiedTask": "TMS-F5-010",
-  "nextRecommendedTask": "F5 (growth & AI) COMPLETE — all of 001–010 Verified. Next: F6 (hardening) — audit-and-fix + real-API cutover (several tasks depend on Codex delivering endpoints TMS-FBR-001/002/004/005/007/008/009). F0–F4 merged to main; TMS-F1-DEF-001 fixed for production.",
+  "currentPhase": "F6 premium UI overhaul (Gallery Press) — in progress",
+  "lastVerifiedTask": "TMS-UX2-006",
+  "nextRecommendedTask": "Continue F6. Immediate: TMS-UX3 (propagate Gallery Press across storefront routes — artworks index/detail, shop, product detail, collections, drops, stories, community, search, info pages), then finish TMS-UX1-004 (migrate remaining cards → Frame objects), TMS-UX1-005 (form primitives), TMS-UX1-006 (Select portal + Combobox + dropdown audit), TMS-UX2-007 (axe + production Lighthouse on new home), then UX4 (Design Studio), UX5 (commerce/account), UX6 (admin), UX7 (hardening + Playwright before/after PNGs). Screenshot capture via storefront Playwright (in-app Browser pane capture times out in this env).",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-002",
@@ -47,9 +47,32 @@
     "TMS-F5-005",
     "TMS-F5-008",
     "TMS-F5-009",
-    "TMS-F5-010"
+    "TMS-F5-010",
+    "TMS-UX0-001",
+    "TMS-UX0-002",
+    "TMS-UX0-003",
+    "TMS-UX0-004",
+    "TMS-UX0-005",
+    "TMS-UX0-006",
+    "TMS-UX0-007",
+    "TMS-UX1-001",
+    "TMS-UX1-002",
+    "TMS-UX1-007",
+    "TMS-UX1-008",
+    "TMS-UX2-001",
+    "TMS-UX2-002",
+    "TMS-UX2-003",
+    "TMS-UX2-004",
+    "TMS-UX2-005",
+    "TMS-UX2-006"
   ],
-  "inProgressTasks": [],
+  "inProgressTasks": [
+    "TMS-UX1-003",
+    "TMS-UX1-004",
+    "TMS-UX1-006",
+    "TMS-UX1-009",
+    "TMS-UX2-007"
+  ],
   "implementedNotVerified": [],
   "blockedTasks": [],
   "knownDefects": [
@@ -89,7 +112,8 @@
     "storefront:studio guide (/studio-guide) — deterministic mock assistant (lib/studio-guide.ts), no LLM/live tools; guardrails deflect stock/price/delivery; order-status = tool_error + retry; real assistant endpoint + tool results are backend (TMS-FBR-009)",
     "storefront:loyalty & referrals (/account/loyalty) — illustrative email-derived points/tier + rewards + referral code (lib/loyalty.ts); redeem/share are preview-only; real ledger/earn/redeem + referral attribution are backend (TMS-FBR-008)"
   ],
-  "branch": "claude/f5-post-merge",
+  "branch": "claude/f6-premium-ui-overhaul",
+  "f6Note": "Premium UI overhaul 'The Gallery Press'. Branch off newest F5 frontend state, merged origin/main (backend auth B1-001/002, clean). Design system reconstructed in packages/ui: neutral gallery paper + near-black ink primary + teal signature; added IBM Plex Mono; elevation + motion + image ratio tokens; new primitives Reveal/Frame/SectionIndex/Rule/Marquee. 28/28 AA contrast pairs pass. Landing page fully recomposed (art-led hero, marquee, numbered sections, dark studio band, reveal motion). Header/footer widened to editorial 90rem + refined. Verified live: body #f4f3f0 / ink #131417 / accent #16171a / mono loaded / h1 89.6px desktop 44px mobile / no horizontal overflow at 375 & 1280 / 8 affected routes all HTTP 200 no error overlay. UI package rebuilt (dist). storefront typecheck clean. Screenshot capture deferred to Playwright (Browser-pane capture times out in this env).",
   "buildStatusNote": "F5 (growth & AI) COMPLETE — all of TMS-F5-001…010 Verified (pnpm check green). Storefront: 001 drops, 002 waitlist, 003 pre-order/made-to-order, 004 reviews, 005 community gallery, 006 artwork passport, 007 shoppable stories, 008 studio guide, 010 loyalty & referrals. Admin: 009 brand storyteller. F0–F4 Verified AND MERGED TO MAIN (2026-07-15). The F0→F4 PR stack (#4→#8) was merged bottom-up with merge commits (main HEAD e919e7e; merge commits 9599d35/190d8c7/d0201a1/f0de066/e919e7e) and all five phase branches deleted; pnpm check re-run green on the integrated main (13/13 build tasks, all unit tests, format/lint/typecheck/db:validate). Recovery note: PR #5 auto-closed when gh's --delete-branch removed its base (f0) before the auto-retarget fired; recovered by recreating the f0 branch, reopening #5, retargeting to main — thereafter each next PR was retargeted to main BEFORE merge and branches were deleted only as final cleanup. Only open item is defect TMS-F1-DEF-001 (soft 404, SEO-only). Admin Vitest 125 tests (was 116 — +9 storyteller); storefront 195 (was 89 — +24 drops, +6 waitlist, +10 fulfilment, +11 passport, +11 stories, +13 reviews, +12 community, +8 studio-guide, +11 loyalty). Note: pnpm audit 410 outage since F3-004 (this is the only failing CI 'quality' check — a retired npm endpoint, not a code issue); no new deps added.",
-  "lastUpdated": "2026-07-16T03:30:00Z"
+  "lastUpdated": "2026-07-16T04:10:00Z"
 }

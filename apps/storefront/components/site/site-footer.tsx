@@ -5,10 +5,10 @@ import { footerNav } from '@/lib/nav';
 export function SiteFooter() {
   return (
     <footer className="border-t border-line bg-canvas-2">
-      <Container className="py-14">
-        <div className="grid gap-10 lg:grid-cols-[1.5fr_repeat(4,1fr)]">
-          <div className="max-w-xs">
-            <span className="font-display text-lg font-semibold tracking-tight text-ink">
+      <Container width="wide" className="py-16">
+        <div className="grid gap-10 lg:grid-cols-[1.6fr_repeat(4,1fr)]">
+          <div className="max-w-sm">
+            <span className="font-display text-2xl font-semibold tracking-[-0.01em] text-ink">
               Tai Manic Studios
             </span>
             <p className="mt-3 text-sm text-muted">
@@ -59,9 +59,9 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-2 border-t border-line pt-6 text-xs text-muted sm:flex-row">
-          <span>© {new Date().getFullYear()} Tai Manic Studios. All rights reserved.</span>
-          <span className="uppercase tracking-[0.08em]">Made for the artwork</span>
+        <div className="mt-14 flex flex-col items-center justify-between gap-2 border-t border-line pt-6 font-mono text-xs uppercase tracking-[0.1em] text-muted sm:flex-row">
+          <span>© {new Date().getFullYear()} Tai Manic Studios</span>
+          <span>Made for the artwork</span>
         </div>
       </Container>
     </footer>

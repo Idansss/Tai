@@ -556,3 +556,45 @@ follow-ups (Base44 PNGs, Playwright baselines), then start TMS-F1-001 (global na
 accessible mobile menu), TMS-F1-002 (homepage sections), TMS-F1-003 (footer). Use the mock data
 adapter, record any new API needs in FRONTEND_TO_BACKEND.md, add tests, run `pnpm check`, and
 mark tasks Verified only when all acceptance criteria pass.
+
+---
+
+## F6 — Premium UI overhaul ("The Gallery Press") — session 1
+
+**Branch:** `claude/f6-premium-ui-overhaul` (from newest F5 frontend state; `origin/main` backend
+auth merged clean — no frontend files touched). Merge commit is the pre-overhaul checkpoint.
+
+**Direction selected:** A · "The Gallery Press" (49/50) — see `docs/frontend/PREMIUM_UI_RESEARCH.md`
+(24-ref matrix, pattern synthesis, three scored directions) and `PREMIUM_UI_AUDIT.md` (all routes).
+
+**Shipped & verified this session**
+- Design-system reconstruction in `packages/ui` (source of truth `src/styles/tokens.css` +
+  `src/tokens.ts`): neutral gallery paper `#f4f3f0`, warm-neutral ink `#131417`, near-black ink
+  primary accent `#16171a`, teal signature `#0f6b63`; charcoal dark gallery with paper-white
+  primary; **28/28 AA contrast pairs pass** (`tokens.spec.ts`). Added `--font-mono` (IBM Plex Mono
+  via `next/font`), `--shadow-xs/-sm/-md/-lg`, `--duration-slower`, `--ease-out/-in-out`, image
+  ratio tokens, and editorial numerals in `theme.css`.
+- New shared primitives (exported from `@tms/ui`): `Reveal` (scroll-in, SSR-/reduced-motion-/CLS-
+  safe), `Frame` (image system — mat + hairline + hover zoom, no stretch/CLS), `SectionIndex`,
+  `Rule`, `Marquee`. `packages/ui` dist rebuilt.
+- Landing page (`apps/storefront/app/page.tsx`) fully recomposed: marquee, art-led asymmetric
+  hero, numbered sections (01 Gallery / 02 Studio dark focus band / 03 Design Studio / closing),
+  framed `ArtworkCard` grid with reveal stagger. Removed the dev "Design system" band from the
+  public page. New `ArtworkVisual` renders deterministic gallery plates (no fake stock imagery).
+- Shared chrome: header + footer widened to editorial `Container width="wide"` (90rem), refined
+  nav underline/active states, mono footer meta.
+
+**Verification (this env):** UI build + storefront `typecheck` clean. Live on dev (port 3010):
+computed body `#f4f3f0` / ink `#131417` / accent tokens present / IBM Plex Mono loaded / h1
+89.6px desktop & 44px mobile / no horizontal overflow at 375 or 1280 / `/artworks /shop
+/collections /drops /design-studio /cart /about /stories` all HTTP 200, no dev error overlay.
+**Screenshot artifacts deferred to the storefront Playwright config** (`docs/reference/premium-ui/
+{before,research,after}/` folders created) — the in-app Browser-pane capture path times out in
+this environment, so on-disk PNGs should be produced via Playwright in UX7.
+
+**Next (continuation):** UX3 — propagate the Gallery Press system across the remaining storefront
+routes (artwork index/detail, shop, product detail, collections, drops, stories, community, search,
+info pages), reframing cards as `Frame` objects and adding `Reveal`/`SectionIndex` rhythm; finish
+UX1-004/005/006 (form primitives, `Select` portal + `Combobox`, dropdown audit) and UX2-007 (axe +
+production Lighthouse). Then UX4 Design Studio, UX5 commerce/account, UX6 admin, UX7 hardening.
+Do NOT re-run the full palette change — it is done and AA-verified; build on it.

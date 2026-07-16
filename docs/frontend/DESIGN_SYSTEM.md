@@ -2,6 +2,28 @@
 
 Owner: Claude Code · Location: `packages/ui` · Consumers: `apps/storefront`, `apps/admin`.
 
+> ## F6 update — "The Gallery Press" (authoritative)
+>
+> The F6 premium overhaul refines this system into **The Gallery Press** (see
+> `docs/frontend/PREMIUM_UI_RESEARCH.md`). The **source of truth for token values is
+> `packages/ui/src/styles/tokens.css` mirrored by `src/tokens.ts`** (the AA gate); the tables
+> below record the earlier F5 values and are superseded where they differ. Key F6 changes:
+>
+> - **Palette:** neutral gallery paper (`#f4f3f0`), warm-neutral ink (`#131417`), **near-black
+>   ink as the dominant accent** (`#16171a`, primary buttons/brand), teal print-shop signature
+>   (`#0f6b63`) used sparingly. Dark gallery neutralised to charcoal; dark primary accent is
+>   paper-white. All 28 contrast pairs pass WCAG 2.2 AA in both themes (`tokens.spec.ts`).
+> - **Type:** kept Space Grotesk (display) + IBM Plex Sans (body); **added IBM Plex Mono**
+>   (`--font-mono`) for meta/numerals/countdowns/specs. Editorial numerals via `tnum`/`zero`.
+> - **Elevation:** `--shadow-xs/-sm/-md/-lg` (subtle, neutral; dark leans on border + glow).
+> - **Motion:** added `--duration-slower`, `--ease-out`, `--ease-in-out`; `Reveal` scroll-in
+>   (SSR-/reduced-motion-/CLS-safe) and `Marquee` (CSS, pause-on-hover, reduced-motion halt).
+> - **Image system:** ratio tokens `--ratio-artwork/-product/-collection/-wide/-square`;
+>   `Frame` primitive (paper mat + hairline + hover zoom, no stretch/CLS).
+> - **New primitives:** `Reveal`, `Frame`, `SectionIndex`, `Rule`, `Marquee` (exported from
+>   `@tms/ui`). Editorial rhythm = numbered section indices + hairline rules + wide canvas
+>   (`Container width="wide"`, 90rem) + framed gallery objects instead of shadow-box app cards.
+
 ## 1. Design direction: "Gallery + Studio"
 
 An art-led, gallery-neutral system where the artwork is always the hero. Chrome is quiet and

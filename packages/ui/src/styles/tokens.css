@@ -1,31 +1,33 @@
 /*
  * Tai Manic Studios, semantic design tokens (master prompt §7).
  * Raw CSS custom properties. Light gallery on :root, dark gallery on [data-theme="dark"].
- * These exact semantic names are the token contract; globals.css aliases them to Tailwind.
+ * These exact semantic names are the token contract; theme.css aliases them to Tailwind.
  *
- * Direction: cool gallery neutrals + deep ink + teal secondary (print-shop cyan family).
- * Avoids warm cream / terracotta clustering.
+ * F6 "Gallery Press" direction (docs/frontend/PREMIUM_UI_RESEARCH.md):
+ * neutral gallery paper + near-black ink primary + teal print-shop signature.
+ * Chrome recedes so the artwork carries the colour. All pairs re-verified for WCAG 2.2 AA
+ * in tokens.ts / tokens.spec.ts (the gate of record). Keep the two files in sync.
  */
 
 :root {
-  /* Backgrounds & surfaces */
-  --color-background-primary: #f4f6f8;
-  --color-background-secondary: #e8ecf0;
+  /* Backgrounds & surfaces — neutral gallery paper, layered */
+  --color-background-primary: #f4f3f0;
+  --color-background-secondary: #eae8e3;
   --color-background-elevated: #ffffff;
   --color-surface-primary: #ffffff;
-  --color-surface-secondary: #e8ecf0;
+  --color-surface-secondary: #eae8e3;
 
-  /* Text */
-  --color-text-primary: #0c1017;
-  --color-text-secondary: #3a4454;
-  --color-text-muted: #5a6575;
+  /* Text — warm-neutral ink */
+  --color-text-primary: #131417;
+  --color-text-secondary: #3b3f47;
+  --color-text-muted: #5c606a;
 
-  /* Borders */
-  --color-border-default: #d5dbe3;
-  --color-border-strong: #b4becb;
+  /* Borders / hairlines */
+  --color-border-default: #dcd9d2;
+  --color-border-strong: #bcb8ae;
 
-  /* Accents */
-  --color-accent-primary: #152238;
+  /* Accents — near-black brand ink (dominant) + teal signature (sparing) */
+  --color-accent-primary: #16171a;
   --color-accent-secondary: #0f6b63;
 
   /* Status */
@@ -36,17 +38,18 @@
 
   /* Interaction */
   --color-focus-ring: #2f6fdb;
-  --color-disabled-background: #e2e6eb;
-  --color-disabled-text: #8a93a0;
+  --color-disabled-background: #e2e0da;
+  --color-disabled-text: #9a968c;
 
   /* On-accent foregrounds (text placed on accent fills) */
-  --color-on-accent-primary: #f4f6f8;
-  --color-on-accent-secondary: #f4f6f8;
+  --color-on-accent-primary: #f4f3f0;
+  --color-on-accent-secondary: #f4f3f0;
 
   /* Typography families. Apps inject the loaded faces via next/font as
-     --font-space-grotesk / --font-ibm-plex-sans; these fall back gracefully. */
+     --font-space-grotesk / --font-ibm-plex-sans / --font-ibm-plex-mono. */
   --font-display: var(--font-space-grotesk, 'Space Grotesk', ui-sans-serif, system-ui, sans-serif);
   --font-sans: var(--font-ibm-plex-sans, 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-ibm-plex-mono, 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace);
 
   /* Radius */
   --radius-sm: 4px;
@@ -55,31 +58,47 @@
   --radius-xl: 20px;
   --radius-pill: 999px;
 
+  /* Elevation — subtle, neutral; overlays a touch deeper. Dark mode leans on border + glow. */
+  --shadow-xs: 0 1px 2px -1px rgb(19 20 23 / 0.08);
+  --shadow-sm: 0 1px 2px rgb(19 20 23 / 0.06), 0 2px 6px -2px rgb(19 20 23 / 0.08);
+  --shadow-md: 0 6px 16px -6px rgb(19 20 23 / 0.14), 0 2px 6px -2px rgb(19 20 23 / 0.08);
+  --shadow-lg: 0 24px 48px -18px rgb(19 20 23 / 0.24), 0 8px 20px -12px rgb(19 20 23 / 0.16);
+
   /* Motion */
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --duration-slow: 320ms;
+  --duration-slower: 520ms;
   --ease-emphasis: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Image ratios (image-treatment system) */
+  --ratio-artwork: 4 / 5;
+  --ratio-product: 3 / 4;
+  --ratio-collection: 16 / 9;
+  --ratio-wide: 3 / 2;
+  --ratio-square: 1 / 1;
 
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --color-background-primary: #0b0e13;
-  --color-background-secondary: #131821;
-  --color-background-elevated: #1a212c;
-  --color-surface-primary: #131821;
-  --color-surface-secondary: #1a212c;
+  --color-background-primary: #0d0e10;
+  --color-background-secondary: #151619;
+  --color-background-elevated: #1c1e22;
+  --color-surface-primary: #151619;
+  --color-surface-secondary: #1c1e22;
 
-  --color-text-primary: #eef2f6;
-  --color-text-secondary: #c0c8d4;
-  --color-text-muted: #939cab;
+  --color-text-primary: #f1f0ec;
+  --color-text-secondary: #c3c2bc;
+  --color-text-muted: #96958e;
 
-  --color-border-default: #2a3340;
-  --color-border-strong: #445064;
+  --color-border-default: #2b2d31;
+  --color-border-strong: #474a50;
 
-  --color-accent-primary: #8eb4d8;
-  --color-accent-secondary: #4db8ad;
+  --color-accent-primary: #edebe4;
+  --color-accent-secondary: #43bbb0;
 
   --color-success: #4ecf95;
   --color-warning: #d6a044;
@@ -90,8 +109,13 @@
   --color-disabled-background: #1c222c;
   --color-disabled-text: #6b7380;
 
-  --color-on-accent-primary: #0b0e13;
-  --color-on-accent-secondary: #0b0e13;
+  --color-on-accent-primary: #0d0e10;
+  --color-on-accent-secondary: #0d0e10;
+
+  --shadow-xs: 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5), 0 2px 8px -2px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 28px 56px -20px rgb(0 0 0 / 0.7);
 
   color-scheme: dark;
 }

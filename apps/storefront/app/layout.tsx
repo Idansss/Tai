@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans, Space_Grotesk } from 'next/font/google';
+import { IBM_Plex_Mono, IBM_Plex_Sans, Space_Grotesk } from 'next/font/google';
 import { AuthProvider } from '@/components/account/auth-provider';
 import { WishlistProvider } from '@/components/account/wishlist-provider';
 import { CartDrawer } from '@/components/cart/cart-drawer';
@@ -22,6 +22,13 @@ const sans = IBM_Plex_Sans({
   display: 'swap',
 });
 
+const mono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-ibm-plex-mono',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://taimanicstudios.com'),
   title: {
@@ -40,7 +47,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#fafaf7',
+  themeColor: '#f4f3f0',
   // Do not restrict zoom (accessibility): omit maximumScale / userScalable.
   width: 'device-width',
   initialScale: 1,
@@ -48,7 +55,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body className="min-h-dvh bg-canvas text-ink antialiased">
         <a
           href="#main"
