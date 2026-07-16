@@ -2,7 +2,7 @@
 
 ## Current backend phase
 
-B2 — Artwork and catalogue is active. TMS-B2-001 and TMS-B2-002 are Verified and merged. TMS-B2-003 is fully implemented and locally validated on `codex/b2-garment-catalogue`; its focused PR and CI are pending.
+B2 — Artwork and catalogue is active. TMS-B2-001 and TMS-B2-002 are Verified and merged. TMS-B2-003 is Verified on `codex/b2-garment-catalogue`; PR #14 is clean and GitHub Actions run 29497257382 passed.
 
 ## Work completed
 
@@ -12,7 +12,7 @@ Published garment structure is locked until the template leaves publication. Lea
 
 ## Tasks verified
 
-TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 through TMS-B2-002. TMS-B2-003 remains unchecked until focused PR CI passes.
+TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 through TMS-B2-003.
 
 ## Merge record
 
@@ -25,7 +25,7 @@ TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 thr
 
 ## Next task
 
-Publish TMS-B2-003, resolve its CI, mark it Verified, and merge it. Then start TMS-B2-004 media ingestion and derivative processing from the latest `main`.
+Merge clean PR #14, then start TMS-B2-004 media ingestion and derivative processing from the latest `main`.
 
 ## API contracts added or changed
 
@@ -55,7 +55,7 @@ Readiness still reports process readiness only. Authentication throttling remain
 
 ## Blockers
 
-No implementation blocker remains. TMS-B2-003 requires focused PR CI before verification. Live Flutterwave and GIGL verification remains credential-blocked later in B5.
+No TMS-B2-003 blocker remains. Live Flutterwave and GIGL verification remains credential-blocked later in B5.
 
 ## Requests for Claude Code
 
@@ -67,4 +67,4 @@ Do not recreate B0/B1 foundations, authentication/RBAC, artwork roots/versioning
 
 ## Exact continuation instruction
 
-Commit and push `codex/b2-garment-catalogue`, open its focused PR, resolve CI, mark TMS-B2-003 Verified, merge it, then continue TMS-B2-004 from current `main` without modifying frontend-owned files.
+Push the Verified ledger commit, confirm PR #14 remains green, merge it, then continue TMS-B2-004 from current `main` without modifying frontend-owned files.

@@ -2,8 +2,8 @@
   "agent": "Codex",
   "area": "backend",
   "currentPhase": "B2",
-  "lastVerifiedTask": "TMS-B2-002",
-  "nextRecommendedTask": "Publish TMS-B2-003, then start TMS-B2-004",
+  "lastVerifiedTask": "TMS-B2-003",
+  "nextRecommendedTask": "Merge PR #14, then start TMS-B2-004",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -20,14 +20,15 @@
     "TMS-B1-002",
     "TMS-B1-003",
     "TMS-B2-001",
-    "TMS-B2-002"
+    "TMS-B2-002",
+    "TMS-B2-003"
   ],
-  "inProgressTasks": ["TMS-B2-003"],
+  "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
-  "lastUpdated": "2026-07-16T13:08:14+01:00",
+  "lastUpdated": "2026-07-16T13:15:51+01:00",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -49,7 +50,9 @@
   "activeTask": {
     "task": "TMS-B2-003",
     "branch": "codex/b2-garment-catalogue",
-    "status": "implemented-local-validation-passed-pr-ci-pending"
+    "status": "verified-pr-open-ci-passed",
+    "pullRequest": 14,
+    "ciRun": 29497257382
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -124,7 +127,9 @@
   "garmentCatalogue": {
     "task": "TMS-B2-003",
     "branch": "codex/b2-garment-catalogue",
-    "status": "implemented-local-validation-passed-pr-ci-pending",
+    "status": "verified-pr-open-ci-passed",
+    "pullRequest": 14,
+    "ciRun": 29497257382,
     "migration": "20260716112000_garment_catalogue",
     "qualityGate": "passed",
     "runtimeSmoke": "passed",
@@ -135,8 +140,7 @@
     "openApiOperations": 91,
     "concerns": [
       "Exact-version media assets, ingestion, derivatives, and mockups remain TMS-B2-004.",
-      "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001.",
-      "Focused PR CI must pass before TMS-B2-003 is marked Verified."
+      "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001."
     ]
   }
 }
