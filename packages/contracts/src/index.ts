@@ -5,6 +5,10 @@ export const apiVersion = 'v1' as const;
 export const errorCodes = [
   'VALIDATION_FAILED',
   'AUTHENTICATION_REQUIRED',
+  'AUTHENTICATION_INVALID',
+  'EMAIL_VERIFICATION_REQUIRED',
+  'TOKEN_INVALID_OR_EXPIRED',
+  'SESSION_INVALID',
   'PERMISSION_DENIED',
   'RESOURCE_NOT_FOUND',
   'CONFLICT',
@@ -105,6 +109,51 @@ export interface ApiErrorResponse {
 export interface CursorPage<T> {
   items: T[];
   nextCursor: string | null;
+}
+
+export const CustomerRegistrationInputSchema = z.object({
+  email: z.string().trim().email().max(320),
+  password: z.string().min(12).max(128),
+  displayName: z.string().trim().min(1).max(100).optional(),
+});
+export type CustomerRegistrationInput = z.infer<typeof CustomerRegistrationInputSchema>;
+
+export const CustomerLoginInputSchema = z.object({
+  email: z.string().trim().email().max(320),
+  password: z.string().min(1).max(128),
+});
+export type CustomerLoginInput = z.infer<typeof CustomerLoginInputSchema>;
+
+export const AuthEmailInputSchema = z.object({
+  email: z.string().trim().email().max(320),
+});
+export type AuthEmailInput = z.infer<typeof AuthEmailInputSchema>;
+
+export const AuthTokenInputSchema = z.object({
+  token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+});
+export type AuthTokenInput = z.infer<typeof AuthTokenInputSchema>;
+
+export const PasswordResetConfirmationInputSchema = AuthTokenInputSchema.extend({
+  password: z.string().min(12).max(128),
+});
+export type PasswordResetConfirmationInput = z.infer<typeof PasswordResetConfirmationInputSchema>;
+
+export const AuthUserStatusSchema = z.enum(['PENDING_VERIFICATION', 'ACTIVE']);
+export type AuthUserStatus = z.infer<typeof AuthUserStatusSchema>;
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  status: AuthUserStatus;
+  emailVerifiedAt: string | null;
+  displayName: string | null;
+}
+
+export interface AuthSession {
+  id: string;
+  expiresAt: string;
+  user: AuthUser;
 }
 
 export const DesignConfigurationInputSchema = z.object({

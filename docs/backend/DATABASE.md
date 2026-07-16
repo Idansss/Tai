@@ -8,6 +8,8 @@ Migration `20260714142500_identity_foundation` models users, customer/admin prof
 
 The seed is idempotent and establishes Owner, Store Administrator, Content Manager, Production Operator, Fulfilment Operator, Customer Support, and Analyst roles with explicit permissions. No administrator user or credential is seeded.
 
+TMS-B1-002 uses the merged identity tables without a new migration. Passwords use salted scrypt encodings. Session, verification, reset, and IP values use deployment-peppered HMAC-SHA-256 digests; raw values exist only in the cookie or one-time email link. Verification and reset consumption, session creation/revocation, password changes, and their audit records execute transactionally.
+
 ## Rules
 
 - UUID identifiers, UTC timestamps, explicit foreign keys, useful indexes, and unique constraints

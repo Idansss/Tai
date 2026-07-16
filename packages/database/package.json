@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
-    "build": "rimraf dist && prisma generate && tsc -p tsconfig.build.json",
+    "build": "rimraf dist tsconfig.tsbuildinfo && prisma generate && tsc -p tsconfig.build.json",
     "clean": "rimraf dist generated tsconfig.tsbuildinfo",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",

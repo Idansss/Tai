@@ -8,7 +8,169 @@ servers:
     description: Local development
 tags:
   - name: health
+  - name: authentication
 paths:
+  /api/v1/auth/register:
+    post:
+      operationId: registerCustomer
+      tags: [authentication]
+      summary: Register a customer account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomerRegistrationInput' }
+      responses:
+        '201':
+          description: The customer account was created and requires email verification.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthRegistrationResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+        '503': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/login:
+    post:
+      operationId: loginCustomer
+      tags: [authentication]
+      summary: Create a customer session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomerLoginInput' }
+      responses:
+        '200':
+          description: The session was created and returned as a secure HttpOnly cookie.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: HttpOnly, SameSite=Lax customer session cookie; Secure in production.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSessionResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/logout:
+    post:
+      operationId: logoutCustomer
+      tags: [authentication]
+      summary: Revoke the current customer session when present
+      responses:
+        '204': { description: The session was revoked when present. }
+  /api/v1/auth/email-verification/request:
+    post:
+      operationId: requestCustomerEmailVerification
+      tags: [authentication]
+      summary: Request an email-verification link without disclosing account state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthEmailInput' }
+      responses:
+        '202':
+          description: The request was accepted.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthAcceptedResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/email-verification/confirm:
+    post:
+      operationId: confirmCustomerEmailVerification
+      tags: [authentication]
+      summary: Verify a customer email address and create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthTokenInput' }
+      responses:
+        '200':
+          description: The email address was verified and a session was created.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: HttpOnly, SameSite=Lax customer session cookie; Secure in production.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSessionResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/password-reset/request:
+    post:
+      operationId: requestCustomerPasswordReset
+      tags: [authentication]
+      summary: Request a password-reset link without disclosing account state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthEmailInput' }
+      responses:
+        '202':
+          description: The request was accepted.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthAcceptedResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/password-reset/confirm:
+    post:
+      operationId: confirmCustomerPasswordReset
+      tags: [authentication]
+      summary: Reset a password and revoke all customer sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetConfirmationInput' }
+      responses:
+        '204': { description: The password was reset and every session was revoked. }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/session:
+    get:
+      operationId: getCustomerSession
+      tags: [authentication]
+      summary: Read the current customer session
+      security: [{ tms_session: [] }]
+      responses:
+        '200':
+          description: The current customer session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSessionResponse' }
+        '401': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/sessions:
+    delete:
+      operationId: revokeAllCustomerSessions
+      tags: [authentication]
+      summary: Revoke every session owned by the current customer
+      security: [{ tms_session: [] }]
+      responses:
+        '204': { description: Every customer session was revoked. }
+        '401': { $ref: '#/components/responses/ApiError' }
+  /api/v1/auth/sessions/{sessionId}:
+    delete:
+      operationId: revokeCustomerSession
+      tags: [authentication]
+      summary: Revoke one session owned by the current customer
+      security: [{ tms_session: [] }]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: The owned session was revoked. }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
   /api/v1/health/liveness:
     get:
       operationId: getLiveness
@@ -58,7 +220,99 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 components:
+  securitySchemes:
+    tms_session:
+      type: apiKey
+      in: cookie
+      name: tms_session
+  responses:
+    ApiError:
+      description: The request could not be completed.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
   schemas:
+    CustomerRegistrationInput:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 320 }
+        password: { type: string, format: password, minLength: 12, maxLength: 128 }
+        displayName: { type: string, minLength: 1, maxLength: 100 }
+    CustomerLoginInput:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 320 }
+        password: { type: string, format: password, minLength: 1, maxLength: 128 }
+    AuthEmailInput:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email: { type: string, format: email, maxLength: 320 }
+    AuthTokenInput:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: { type: string, minLength: 43, maxLength: 43, pattern: '^[A-Za-z0-9_-]{43}$' }
+    PasswordResetConfirmationInput:
+      type: object
+      additionalProperties: false
+      required: [token, password]
+      properties:
+        token: { type: string, minLength: 43, maxLength: 43, pattern: '^[A-Za-z0-9_-]{43}$' }
+        password: { type: string, format: password, minLength: 12, maxLength: 128 }
+    AuthUser:
+      type: object
+      required: [id, email, status, emailVerifiedAt, displayName]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        status: { type: string, enum: [PENDING_VERIFICATION, ACTIVE] }
+        emailVerifiedAt: { type: [string, 'null'], format: date-time }
+        displayName: { type: [string, 'null'] }
+    AuthSession:
+      type: object
+      required: [id, expiresAt, user]
+      properties:
+        id: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+        user: { $ref: '#/components/schemas/AuthUser' }
+    AuthSessionResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [session]
+          properties:
+            session: { $ref: '#/components/schemas/AuthSession' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AuthRegistrationResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [user, verificationRequired]
+          properties:
+            user: { $ref: '#/components/schemas/AuthUser' }
+            verificationRequired: { type: boolean, const: true }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AuthAcceptedResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [accepted]
+          properties:
+            accepted: { type: boolean, const: true }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     HealthResponse:
       type: object
       required: [data, meta]
@@ -91,6 +345,10 @@ components:
                 [
                   VALIDATION_FAILED,
                   AUTHENTICATION_REQUIRED,
+                  AUTHENTICATION_INVALID,
+                  EMAIL_VERIFICATION_REQUIRED,
+                  TOKEN_INVALID_OR_EXPIRED,
+                  SESSION_INVALID,
                   PERMISSION_DENIED,
                   RESOURCE_NOT_FOUND,
                   CONFLICT,
