@@ -16,6 +16,8 @@ Migration `20260716015000_admin_authentication` adds explicit customer/admin ses
 
 Migration `20260716030500_artwork_versioning` adds artwork roots and ordered artwork versions with draft, published, and archived lifecycle states. Slugs and `(artwork_id, version_number)` are unique; a partial unique index allows at most one published version per artwork. Check constraints enforce slug, title, sequence, timestamp, and lifecycle validity. A database trigger rejects changes to version identity/content/metadata, while a separate trigger rejects all version deletion; lifecycle columns remain transitionable by the service. Artwork/version creator references are restrictive so operational history cannot be removed by deleting its actor.
 
+Migration `20260716084000_catalogue_content` adds typed tags and normalized artwork-tag joins, curated collections and ordered membership, timed drops and ordered membership, artwork editions, editorial stories, and ordered story blocks. Database checks enforce slugs, lifecycle timestamps, valid drop windows, positive/required numbered-edition quantities, one optional story parent, object-shaped block content, and non-negative/unique block positions. Creator relationships remain restrictive; association and block rows cascade only with their owning catalogue record or artwork root.
+
 ## Rules
 
 - UUID identifiers, UTC timestamps, explicit foreign keys, useful indexes, and unique constraints

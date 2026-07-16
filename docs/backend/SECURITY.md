@@ -35,3 +35,6 @@ Webhook work must validate signatures, persist raw events safely, reject amount/
 - Artwork/version identifiers are checked as a pair before lifecycle changes, preventing a valid version ID from being replayed against another artwork.
 - PostgreSQL rejects version content updates and every version delete independently of the HTTP layer. Publication locks the artwork row and a partial unique index enforces one published version under concurrent requests.
 - Lifecycle commands append actor/correlation-aware audit records. Browser input cannot set version numbers, status, publication timestamps, creator IDs, or audit outcome.
+- Catalogue lists and details suppress draft/archived containers and suppress draft/archived artwork members nested in otherwise published collections or drops.
+- Catalogue administrator reads require `catalogue.read`; tag, collection, drop, edition, association, and story mutations require `catalogue.write` and append actor/correlation-aware audit records.
+- DTO validation and PostgreSQL checks both enforce drop windows, edition quantities, story ownership, and ordered blocks. Unique/foreign-key conflicts are mapped to stable safe errors without exposing SQL details.

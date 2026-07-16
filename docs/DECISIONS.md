@@ -35,3 +35,7 @@ Status: Accepted. Administration sessions have a distinct cookie and persisted `
 ## ADR-009 — Insert-only artwork content with explicit lifecycle transitions
 
 Status: Accepted. An `Artwork` is the stable catalogue root and `ArtworkVersion` is the exact creative/content snapshot. Content changes insert the next ordered draft; version identity, content, metadata, creator, and creation time are immutable in PostgreSQL, and versions cannot be deleted. Only lifecycle status/timestamps may transition. Publishing locks the root, archives the previous publication, and relies on a partial unique index to guarantee one published version. Exact-version asset relations arrive in the media slice without weakening this invariant.
+
+## ADR-010 — Normalized catalogue facets around the artwork root
+
+Status: Accepted. Tags, curated collections, timed drops, editions, and editorial stories are normalized records associated with `Artwork`; none replaces artwork as the creative root or stores mutable discovery state inside an immutable version's metadata. Typed tag kinds support explicit theme, mood, and colour-family filters. Collection/drop membership and story blocks have deterministic ordering. Public discovery composes filters with AND semantics and exposes only published containers, published artwork roots, exact published versions, and published editions. Waitlists, preorders, purchase limits, media, garments, and inventory remain separate dependent domains.

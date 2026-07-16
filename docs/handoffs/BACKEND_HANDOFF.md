@@ -2,74 +2,74 @@
 
 ## Current backend phase
 
-B2 — Artwork and catalogue is active. TMS-B1-003 is Verified and merged. TMS-B2-001 is Verified on `codex/b2-artwork-versions` and awaits its focused PR and CI before TMS-B2-002 begins.
+B2 — Artwork and catalogue is active. TMS-B2-001 is Verified and merged. TMS-B2-002 is Verified locally on `codex/b2-catalogue-content`; its focused PR, CI, and merge are pending. The next dependency-ready task after merge is TMS-B2-003.
 
 ## Work completed
 
-The B0 workspace, backend skeletons, shared packages, Prisma foundation, local infrastructure, CI, OpenAPI baseline, and project-control documents are merged. B1 identity, customer authentication, administrator authentication/TOTP/RBAC, and their migrations/contracts are Verified and merged.
+The B0 foundation and all B1 identity/customer/admin authentication work are Verified and merged. TMS-B2-001 establishes `Artwork` as the stable creative root and ordered immutable `ArtworkVersion` snapshots with database-enforced immutability and exact publication.
 
-TMS-B2-001 establishes `Artwork` as the stable creative root and `ArtworkVersion` as ordered immutable content. Creating or replacing content always inserts a draft version. PostgreSQL rejects version content changes and all deletion, validates lifecycle/timestamps, and allows only one published version per artwork. Version allocation and publication lock the artwork row; publishing archives the prior publication transactionally. Public list/detail return only published roots with the exact published version. Administrator list/detail/create/version/publish/archive operations enforce `catalogue.read` or `catalogue.write`, validate artwork/version pairs, and append actor/correlation-aware audit evidence.
+TMS-B2-002 adds normalized typed tags, curated collections, timed drops, limited-edition declarations, and ordered-block editorial stories around artwork roots. Public collection/drop/story reads and canonical artwork search expose only published containers, published artwork roots, exact published versions, and published editions. Artwork search composes narrative text, collection, drop, tag, theme, mood, colour-family, and limited-edition filters with cursor pagination. Administrator CRUD and artwork associations require `catalogue.read` or `catalogue.write` and successful mutations append audit evidence.
 
 ## Tasks verified
 
-TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001.
+TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 through TMS-B2-002.
 
 ## Merge record
 
-PR #1 was squash-merged at `2026-07-14T14:11:22Z` as `88a00912d8e5a0f5c05c07e9269add663f1c4fdf`. Main-branch GitHub Actions run 29339734452 passed.
-
-PR #3 was squash-merged at `2026-07-16T00:37:27Z` as `5c6da304223b3aec7c3fdeb2a31178c90c4343ae` after GitHub Actions run 29461825758 passed.
-
-PR #10 was squash-merged at `2026-07-16T01:44:51Z` as `88801c1374415eddf318a95e56ac3be7ab864c98` after GitHub Actions run 29464793865 passed.
-
-PR #11 was squash-merged at `2026-07-16T02:59:00Z` as `30bd5c087baf0f9b281f5422d43e5c54e26ace94` after GitHub Actions run 29467786313 passed.
+- PR #1: `88a00912d8e5a0f5c05c07e9269add663f1c4fdf`, main CI 29339734452.
+- PR #3: `5c6da304223b3aec7c3fdeb2a31178c90c4343ae`, CI 29461825758.
+- PR #10: `88801c1374415eddf318a95e56ac3be7ab864c98`, CI 29464793865.
+- PR #11: `30bd5c087baf0f9b281f5422d43e5c54e26ace94`, CI 29467786313.
+- PR #12: `daae9f37ea6119fdf8d4cc387fdd701d80a2de6c`, CI 29483761718.
 
 ## Next task
 
-Publish and merge the focused TMS-B2-001 PR, then start TMS-B2-002 — collections, drops, editions, stories, tags, and catalogue search — from the resulting latest `main`.
+Commit and publish the focused TMS-B2-002 branch, open its PR, resolve CI, and squash-merge it when clean and green. Then branch from the latest `main`, record the TMS-B2-002 merge evidence, mark TMS-B2-003 In progress, and implement garment templates, colours, sizes, variants, size charts, placements, and approved artwork/garment compatibility.
 
 ## API contracts added or changed
 
-TMS-B2-001 adds public `GET /api/v1/artworks` and `GET /api/v1/artworks/:slug`, plus seven administrator artwork operations under `/api/v1/admin/artworks`. Shared contracts define artwork/version lifecycle, version input, creation input, public/admin records, and cursor pages. The administrator contract uses the existing separate admin cookie; reads require `catalogue.read` and writes require `catalogue.write`. There is intentionally no version update/delete endpoint.
+`GET /api/v1/artworks` now accepts `q`, `collection`, `drop`, `tag`, `theme`, `mood`, `colourFamily`, `limitedEdition`, and `sort=newest` in addition to cursor pagination. Search records add typed `tags`, published `collections`, published `drops`, and published `editions` while preserving the exact `publishedVersion`.
 
-`docs/contracts/openapi.yaml` remains the source of truth and `packages/contracts` is aligned and tested. Frontend response fields, lifecycle behavior, permission requirements, and the explicit TMS-B2-002/TMS-B2-004 delivery boundary are recorded in `docs/coordination/BACKEND_TO_FRONTEND.md`.
+New public cursor-list/detail routes are `/api/v1/collections`, `/api/v1/drops`, and `/api/v1/stories`. New administrator operations under `/api/v1/admin/catalogue` cover tags, collections, drops, editions, stories, and tag/collection/drop artwork associations. Reads require `catalogue.read`; mutations require `catalogue.write`. The static OpenAPI source and `packages/contracts` are aligned. The compiled runtime now uses the same stable operation IDs as all 65 static operations.
 
 ## Database migrations
 
-Migration `20260714142500_identity_foundation` and `20260716015000_admin_authentication` are merged. Migration `20260716030500_artwork_versioning` is Verified locally. It adds artwork roots/versions, lifecycle enums, unique and lookup indexes, restrictive creator/parent foreign keys, lifecycle/content constraints, one-published-version partial uniqueness, an immutable-content update trigger, and a no-delete trigger. The integration suite applies all three migrations twice and runs the canonical seed twice.
+Migrations `20260714142500_identity_foundation`, `20260716015000_admin_authentication`, and `20260716030500_artwork_versioning` are merged. Verified migration `20260716084000_catalogue_content` adds tags/artwork joins, collections/ordered members, drops/ordered members, editions, stories, and ordered story blocks. Checks enforce lifecycle timestamps, drop windows, edition quantity rules, optional single story ownership, object block content, and deterministic non-negative positions. The persistence suite deploys all four migrations and seeds twice.
 
 ## Environment variables added
 
-TMS-B2-001 adds no environment variables.
+TMS-B2-002 adds no environment variables.
 
 ## Files changed
 
-TMS-B2-001 changes backend-owned API artwork/database code and tests, shared contracts, OpenAPI, backend documentation, coordination/state ledgers, and the minimal administrator-auth module export needed by the new service. It does not modify frontend-owned implementation, documentation, UI packages, or frontend state.
+The slice changes backend API/database code and tests, the shared contract package, OpenAPI, backend/contract documentation, coordination/TODO/handoff/state ledgers, and an API-only Vitest resource-bound configuration. It makes a minimal compatible operation-ID correction in backend auth/admin-auth/health decorators after compiled Swagger exposed pre-existing drift. It does not modify frontend-owned implementation, UI packages, frontend documentation, or frontend state.
 
 ## Commands run
 
-`pnpm check`, targeted/full API tests, database integration tests, contract tests, clean database/API builds, `pnpm db:validate`, `pnpm install --frozen-lockfile`, `docker compose -f infra/docker-compose.yml config --quiet`, `corepack pnpm@11.13.0 --pm-on-fail=ignore audit --audit-level high --prod`, static OpenAPI reference/operation validation, and a compiled API/runtime Swagger smoke. A concurrent single-attempt `docker info` race found by the first exact gate was fixed with bounded prerequisite retries in every PostgreSQL suite; the exact gate then passed.
+`pnpm check`, targeted/full API tests, direct database integration tests, contract tests/build, API/database lint/type checks/builds, `pnpm install --frozen-lockfile`, `docker compose -f infra/docker-compose.yml config --quiet`, `corepack pnpm@11.13.0 --pm-on-fail=ignore audit --audit-level high --prod`, static OpenAPI YAML/reference/operation validation, and compiled runtime Swagger/static parity validation.
 
 ## Test results
 
-The exact full workspace gate passes formatting, linting, strict type checking, every automated test, production builds, and Prisma validation. The API has 41 passing tests across ten files, including six real HTTP/PostgreSQL artwork scenarios; the database package has five PostgreSQL migration/constraint/trigger tests. Static OpenAPI validation reports 31 paths, 33 unique operations, 155 valid references, and nine artwork operations. The compiled API boots, liveness returns `ok`, and runtime Swagger exposes 33 operations including all nine stable artwork operation IDs and the admin cookie scheme.
+The final exact `pnpm check` passes formatting, linting, strict type checking, every workspace test, all production builds, and Prisma validation. The API has 47 passing tests across 11 files; six catalogue HTTP/PostgreSQL scenarios cover RBAC, CRUD, filters, lifecycle/privacy, constraints, safe failures, and audits. The database package has six tests applying four migrations and directly checking catalogue constraints/indexes. Static OpenAPI reports 51 paths, 65 unique operations, and 376 resolved references. Compiled runtime Swagger reports the same 51 paths and 65 operation IDs with both session-cookie schemes.
+
+Frozen install and Compose validation pass. The high-severity production audit exits successfully with one moderate advisory reported below the configured failure threshold.
 
 ## Known defects and deferred scope
 
-Readiness still reports process readiness only. Authentication throttling is process-local; replace it with Redis before horizontal scaling. The encrypted MFA format needs a multi-key rotation path before changing the production key. TMS-B2-001 intentionally does not invent the collection/tag/edition/search fields assigned to TMS-B2-002 or the media/preview/original/derivative fields assigned to TMS-B2-004.
+Readiness still reports process readiness only. Authentication throttling remains process-local and must move to Redis before horizontal scaling. MFA encryption needs multi-key rotation before changing the production key. TMS-B2-003 owns garment configuration/compatibility; TMS-B2-004 owns exact-version media ingestion and derivatives. Drops/editions in this slice do not imply waitlists, preorder rules, purchase limits, or inventory.
 
 ## Blockers
 
-No B2-001 blocker remains. Live Flutterwave and GIGL verification will remain credential-blocked in B5.
+No TMS-B2-002 blocker remains. Live Flutterwave and GIGL verification will remain credential-blocked in B5.
 
 ## Requests for Claude Code
 
-Continue to own `apps/storefront`, `apps/admin`, `packages/ui`, frontend documentation, and `.ai/frontend-state.json`. Consume the B2-001 artwork contract only after its focused PR merges. Public list/detail are ready for the immutable core, but keep typed mocks for collection/filter/media fields until TMS-B2-002 and TMS-B2-004; do not synthesize them from generic version metadata.
+Continue to own the frontend directories identified by `AGENTS.md`. Consume the TMS-B2-002 contract only after its focused PR merges. Catalogue discovery/editorial fields are ready; continue typed mocks for garment compatibility and media fields until TMS-B2-003/TMS-B2-004. Do not synthesize those missing domains from generic artwork metadata.
 
 ## Do not redo
 
-Do not recreate B0/B1 foundations, authentication, RBAC, artwork roots, immutable version rules, or their migrations/contracts.
+Do not recreate B0/B1 foundations, authentication/RBAC, artwork roots/versioning, or TMS-B2-002 catalogue discovery/editorial models and contracts.
 
 ## Exact continuation instruction
 
-Publish `codex/b2-artwork-versions` as the focused TMS-B2-001 PR, resolve CI, and squash-merge it when clean and green. Then branch from the latest `main`, mark TMS-B2-002 In progress, and implement collections, drops, editions, stories, tags, and filterable/paginated public catalogue plus permissioned administrator APIs, migrations, OpenAPI/contracts, bypass/search tests, and current coordination/state evidence.
+Publish `codex/b2-catalogue-content`, resolve its focused PR/CI, and squash-merge it when green. Update merge evidence on the next branch, then start TMS-B2-003 from the resulting latest `main` without modifying frontend-owned files.

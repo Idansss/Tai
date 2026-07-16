@@ -7,6 +7,10 @@ import {
   AdminRoleAssignmentInputSchema,
   ArtworkCreateInputSchema,
   ArtworkVersionInputSchema,
+  CatalogueEntryInputSchema,
+  EditionInputSchema,
+  StoryInputSchema,
+  TagInputSchema,
   AuthTokenInputSchema,
   CustomerRegistrationInputSchema,
   DesignConfigurationInputSchema,
@@ -80,6 +84,25 @@ describe('shared contracts', () => {
     expect(ArtworkVersionInputSchema.safeParse({ title: '   ' }).success).toBe(false);
   });
 
+  it('enforces catalogue content, edition, tag, and story boundaries', () => {
+    expect(
+      CatalogueEntryInputSchema.safeParse({ slug: 'night-city', title: 'Night City' }).success,
+    ).toBe(true);
+    expect(
+      TagInputSchema.safeParse({ slug: 'night-city', name: 'Night City', kind: 'THEME' }).success,
+    ).toBe(true);
+    expect(
+      EditionInputSchema.safeParse({ name: 'First', totalQuantity: 50, numbered: true }).success,
+    ).toBe(true);
+    expect(
+      StoryInputSchema.safeParse({
+        slug: 'making-art',
+        title: 'Making Art',
+        blocks: [{ type: 'TEXT', content: { text: 'Hello' } }],
+      }).success,
+    ).toBe(true);
+  });
+
   it('keeps the public authentication contract and error catalogue in OpenAPI', () => {
     for (const operationId of [
       'registerCustomer',
@@ -111,6 +134,38 @@ describe('shared contracts', () => {
       'publishAdministratorArtworkVersion',
       'archiveAdministratorArtworkVersion',
       'archiveAdministratorArtwork',
+      'listAdministratorTags',
+      'createAdministratorTag',
+      'updateAdministratorTag',
+      'deleteAdministratorTag',
+      'attachAdministratorArtworkTag',
+      'detachAdministratorArtworkTag',
+      'listAdministratorCollections',
+      'createAdministratorCollection',
+      'updateAdministratorCollection',
+      'deleteAdministratorCollection',
+      'attachAdministratorCollectionArtwork',
+      'detachAdministratorCollectionArtwork',
+      'listAdministratorDrops',
+      'createAdministratorDrop',
+      'updateAdministratorDrop',
+      'deleteAdministratorDrop',
+      'attachAdministratorDropArtwork',
+      'detachAdministratorDropArtwork',
+      'listAdministratorEditions',
+      'createAdministratorEdition',
+      'updateAdministratorEdition',
+      'deleteAdministratorEdition',
+      'listAdministratorStories',
+      'createAdministratorStory',
+      'updateAdministratorStory',
+      'deleteAdministratorStory',
+      'listPublishedCollections',
+      'getPublishedCollection',
+      'listPublishedDrops',
+      'getPublishedDrop',
+      'listPublishedStories',
+      'getPublishedStory',
     ]) {
       expect(openApi).toContain(`operationId: ${operationId}`);
     }

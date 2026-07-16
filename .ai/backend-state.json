@@ -2,8 +2,8 @@
   "agent": "Codex",
   "area": "backend",
   "currentPhase": "B2",
-  "lastVerifiedTask": "TMS-B2-001",
-  "nextRecommendedTask": "TMS-B2-002",
+  "lastVerifiedTask": "TMS-B2-002",
+  "nextRecommendedTask": "TMS-B2-003",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -19,14 +19,15 @@
     "TMS-B1-001",
     "TMS-B1-002",
     "TMS-B1-003",
-    "TMS-B2-001"
+    "TMS-B2-001",
+    "TMS-B2-002"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-verified-local",
-  "lastUpdated": "2026-07-16T08:26:55Z",
+  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
+  "lastUpdated": "2026-07-16T11:06:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -46,9 +47,9 @@
     "concerns": []
   },
   "activeTask": {
-    "task": "TMS-B2-001",
-    "branch": "codex/b2-artwork-versions",
-    "status": "verified-local-awaiting-pr"
+    "task": "TMS-B2-002",
+    "branch": "codex/b2-catalogue-content",
+    "status": "verified-awaiting-pr"
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -82,7 +83,11 @@
   "artworkVersioning": {
     "task": "TMS-B2-001",
     "branch": "codex/b2-artwork-versions",
-    "status": "verified-local-awaiting-pr",
+    "status": "verified-merged",
+    "pullRequest": 12,
+    "commit": "daae9f37ea6119fdf8d4cc387fdd701d80a2de6c",
+    "mergedAt": "2026-07-16T08:33:48Z",
+    "ciRun": 29483761718,
     "migration": "20260716030500_artwork_versioning",
     "qualityGate": "passed",
     "runtimeSmoke": "passed",
@@ -92,6 +97,24 @@
     "concerns": [
       "Collection, tag, edition, filtering, and search enrichment remains TMS-B2-002.",
       "Exact-version media assets and ingestion remain TMS-B2-004."
+    ]
+  },
+  "catalogueContent": {
+    "task": "TMS-B2-002",
+    "branch": "codex/b2-catalogue-content",
+    "status": "verified-awaiting-pr",
+    "migration": "20260716084000_catalogue_content",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "openApiValidation": "passed",
+    "apiTests": 47,
+    "databaseTests": 6,
+    "openApiPaths": 51,
+    "openApiOperations": 65,
+    "concerns": [
+      "Garment templates, variants, placements, and compatibility remain TMS-B2-003.",
+      "Exact-version media assets and ingestion remain TMS-B2-004.",
+      "Waitlists, preorder rules, purchase limits, and inventory remain later commerce/growth tasks."
     ]
   }
 }

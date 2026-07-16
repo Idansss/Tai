@@ -67,6 +67,20 @@ enum ArtworkVersionStatus {
   ARCHIVED
 }
 
+enum TagKind {
+  GENERAL
+  THEME
+  MOOD
+  COLOUR_FAMILY
+}
+
+enum StoryBlockType {
+  TEXT
+  IMAGE
+  QUOTE
+  EMBED
+}
+
 model User {
   id                     String                   @id @default(uuid()) @db.Uuid
   email                  String                   @db.VarChar(320)
@@ -90,6 +104,9 @@ model User {
   adminAuthChallenges    AdminAuthChallenge[]
   artworksCreated        Artwork[]                @relation("ArtworkCreator")
   artworkVersionsCreated ArtworkVersion[]         @relation("ArtworkVersionCreator")
+  collectionsCreated     Collection[]             @relation("CollectionCreator")
+  dropsCreated           Drop[]                   @relation("DropCreator")
+  storiesCreated         Story[]                  @relation("StoryCreator")
 
   @@index([status, deletedAt], map: "users_status_deleted_at_idx")
   @@index([createdAt], map: "users_created_at_idx")
@@ -233,16 +250,21 @@ model AdminAuthChallenge {
 }
 
 model Artwork {
-  id              String           @id @default(uuid()) @db.Uuid
-  slug            String           @unique(map: "artworks_slug_key") @db.VarChar(160)
-  status          ArtworkStatus    @default(DRAFT)
-  createdByUserId String           @map("created_by_user_id") @db.Uuid
-  publishedAt     DateTime?        @map("published_at") @db.Timestamptz(3)
-  archivedAt      DateTime?        @map("archived_at") @db.Timestamptz(3)
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
-  createdBy       User             @relation("ArtworkCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  id              String              @id @default(uuid()) @db.Uuid
+  slug            String              @unique(map: "artworks_slug_key") @db.VarChar(160)
+  status          ArtworkStatus       @default(DRAFT)
+  createdByUserId String              @map("created_by_user_id") @db.Uuid
+  publishedAt     DateTime?           @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?           @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       User                @relation("ArtworkCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
   versions        ArtworkVersion[]
+  tags            ArtworkTag[]
+  collections     CollectionArtwork[]
+  drops           DropArtwork[]
+  editions        Edition[]
+  stories         Story[]
 
   @@index([status, createdAt], map: "artworks_status_created_at_idx")
   @@index([createdByUserId], map: "artworks_created_by_user_id_idx")
@@ -271,6 +293,151 @@ model ArtworkVersion {
   @@index([status, publishedAt], map: "artwork_versions_status_published_at_idx")
   @@index([createdByUserId], map: "artwork_versions_created_by_user_id_idx")
   @@map("artwork_versions")
+}
+
+model Tag {
+  id        String       @id @default(uuid()) @db.Uuid
+  slug      String       @unique(map: "tags_slug_key") @db.VarChar(100)
+  name      String       @db.VarChar(100)
+  kind      TagKind      @default(GENERAL)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  artworks  ArtworkTag[]
+
+  @@index([kind, name], map: "tags_kind_name_idx")
+  @@map("tags")
+}
+
+model ArtworkTag {
+  artworkId String   @map("artwork_id") @db.Uuid
+  tagId     String   @map("tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([artworkId, tagId])
+  @@index([tagId, artworkId], map: "artwork_tags_tag_artwork_idx")
+  @@map("artwork_tags")
+}
+
+model Collection {
+  id              String              @id @default(uuid()) @db.Uuid
+  slug            String              @unique(map: "collections_slug_key") @db.VarChar(160)
+  title           String              @db.VarChar(200)
+  description     String?             @db.Text
+  status          ArtworkStatus       @default(DRAFT)
+  createdByUserId String              @map("created_by_user_id") @db.Uuid
+  publishedAt     DateTime?           @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?           @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       User                @relation("CollectionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  artworks        CollectionArtwork[]
+  stories         Story[]
+
+  @@index([status, publishedAt], map: "collections_status_published_at_idx")
+  @@map("collections")
+}
+
+model CollectionArtwork {
+  collectionId String     @map("collection_id") @db.Uuid
+  artworkId    String     @map("artwork_id") @db.Uuid
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  artwork      Artwork    @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, artworkId])
+  @@index([artworkId, collectionId], map: "collection_artworks_artwork_collection_idx")
+  @@index([collectionId, position], map: "collection_artworks_collection_position_idx")
+  @@map("collection_artworks")
+}
+
+model Drop {
+  id              String        @id @default(uuid()) @db.Uuid
+  slug            String        @unique(map: "drops_slug_key") @db.VarChar(160)
+  title           String        @db.VarChar(200)
+  description     String?       @db.Text
+  status          ArtworkStatus @default(DRAFT)
+  startsAt        DateTime?     @map("starts_at") @db.Timestamptz(3)
+  endsAt          DateTime?     @map("ends_at") @db.Timestamptz(3)
+  createdByUserId String        @map("created_by_user_id") @db.Uuid
+  publishedAt     DateTime?     @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?     @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       User          @relation("DropCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  artworks        DropArtwork[]
+
+  @@index([status, startsAt], map: "drops_status_starts_at_idx")
+  @@map("drops")
+}
+
+model DropArtwork {
+  dropId    String   @map("drop_id") @db.Uuid
+  artworkId String   @map("artwork_id") @db.Uuid
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  drop      Drop     @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@id([dropId, artworkId])
+  @@index([artworkId, dropId], map: "drop_artworks_artwork_drop_idx")
+  @@index([dropId, position], map: "drop_artworks_drop_position_idx")
+  @@map("drop_artworks")
+}
+
+model Edition {
+  id            String        @id @default(uuid()) @db.Uuid
+  artworkId     String        @map("artwork_id") @db.Uuid
+  name          String        @db.VarChar(120)
+  totalQuantity Int?          @map("total_quantity")
+  numbered      Boolean       @default(false)
+  status        ArtworkStatus @default(DRAFT)
+  releasedAt    DateTime?     @map("released_at") @db.Timestamptz(3)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  artwork       Artwork       @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+
+  @@unique([artworkId, name], map: "editions_artwork_name_key")
+  @@index([status, releasedAt], map: "editions_status_released_at_idx")
+  @@map("editions")
+}
+
+model Story {
+  id              String        @id @default(uuid()) @db.Uuid
+  slug            String        @unique(map: "stories_slug_key") @db.VarChar(160)
+  title           String        @db.VarChar(200)
+  excerpt         String?       @db.VarChar(500)
+  status          ArtworkStatus @default(DRAFT)
+  artworkId       String?       @map("artwork_id") @db.Uuid
+  collectionId    String?       @map("collection_id") @db.Uuid
+  createdByUserId String        @map("created_by_user_id") @db.Uuid
+  publishedAt     DateTime?     @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?     @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  artwork         Artwork?      @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+  collection      Collection?   @relation(fields: [collectionId], references: [id], onDelete: Restrict)
+  createdBy       User          @relation("StoryCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  blocks          StoryBlock[]
+
+  @@index([status, publishedAt], map: "stories_status_published_at_idx")
+  @@index([artworkId], map: "stories_artwork_id_idx")
+  @@index([collectionId], map: "stories_collection_id_idx")
+  @@map("stories")
+}
+
+model StoryBlock {
+  id        String         @id @default(uuid()) @db.Uuid
+  storyId   String         @map("story_id") @db.Uuid
+  position  Int
+  type      StoryBlockType
+  content   Json           @db.JsonB
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  story     Story          @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, position], map: "story_blocks_story_position_key")
+  @@map("story_blocks")
 }
 
 model EmailVerificationToken {

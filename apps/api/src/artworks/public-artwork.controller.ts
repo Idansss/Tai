@@ -3,14 +3,19 @@ import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/sw
 import type { ApiResponse, Artwork, CursorPage } from '@tms/contracts';
 import type { Request } from 'express';
 
-import { ArtworkSlugDto, PublicArtworkListQueryDto } from './artwork.dto.js';
+import { ArtworkCatalogueQueryDto } from '../catalogue/catalogue.dto.js';
+import { CatalogueService } from '../catalogue/catalogue.service.js';
+import { ArtworkSlugDto } from './artwork.dto.js';
 import { ArtworkService } from './artwork.service.js';
 
 @ApiTags('artworks')
-@ApiExtraModels(ArtworkSlugDto, PublicArtworkListQueryDto)
+@ApiExtraModels(ArtworkSlugDto, ArtworkCatalogueQueryDto)
 @Controller('artworks')
 export class PublicArtworkController {
-  constructor(@Inject(ArtworkService) private readonly artworkService: ArtworkService) {}
+  constructor(
+    @Inject(ArtworkService) private readonly artworkService: ArtworkService,
+    @Inject(CatalogueService) private readonly catalogueService: CatalogueService,
+  ) {}
 
   @Get()
   @ApiOperation({
@@ -19,10 +24,10 @@ export class PublicArtworkController {
   })
   @ApiOkResponse({ description: 'A cursor page containing only published artworks.' })
   async list(
-    @Query() query: PublicArtworkListQueryDto,
+    @Query() query: ArtworkCatalogueQueryDto,
     @Req() request: Request,
   ): Promise<ApiResponse<CursorPage<Artwork>>> {
-    return this.respond(request, await this.artworkService.listPublishedArtworks(query));
+    return this.respond(request, await this.catalogueService.searchArtworks(query));
   }
 
   @Get(':slug')
