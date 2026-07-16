@@ -1,44 +1,47 @@
 /*
- * Tai Manic Studios — semantic design tokens (master prompt §7).
+ * Tai Manic Studios, semantic design tokens (master prompt §7).
  * Raw CSS custom properties. Light gallery on :root, dark gallery on [data-theme="dark"].
  * These exact semantic names are the token contract; globals.css aliases them to Tailwind.
+ *
+ * Direction: cool gallery neutrals + deep ink + teal secondary (print-shop cyan family).
+ * Avoids warm cream / terracotta clustering.
  */
 
 :root {
   /* Backgrounds & surfaces */
-  --color-background-primary: #fafaf7;
-  --color-background-secondary: #f1f1ec;
+  --color-background-primary: #f4f6f8;
+  --color-background-secondary: #e8ecf0;
   --color-background-elevated: #ffffff;
   --color-surface-primary: #ffffff;
-  --color-surface-secondary: #f1f1ec;
+  --color-surface-secondary: #e8ecf0;
 
   /* Text */
-  --color-text-primary: #17171a;
-  --color-text-secondary: #3d4450;
-  --color-text-muted: #565e6b;
+  --color-text-primary: #0c1017;
+  --color-text-secondary: #3a4454;
+  --color-text-muted: #5a6575;
 
   /* Borders */
-  --color-border-default: #e4e4dd;
-  --color-border-strong: #c7c7bc;
+  --color-border-default: #d5dbe3;
+  --color-border-strong: #b4becb;
 
   /* Accents */
-  --color-accent-primary: #2d3e4e;
-  --color-accent-secondary: #a2461f;
+  --color-accent-primary: #152238;
+  --color-accent-secondary: #0f6b63;
 
   /* Status */
-  --color-success: #2e7d57;
+  --color-success: #1f7a52;
   --color-warning: #8a5a00;
   --color-error: #b3261e;
-  --color-information: #2d5aa0;
+  --color-information: #1f5aa8;
 
   /* Interaction */
-  --color-focus-ring: #3b6fd4;
-  --color-disabled-background: #e8e8e2;
-  --color-disabled-text: #8c8c82;
+  --color-focus-ring: #2f6fdb;
+  --color-disabled-background: #e2e6eb;
+  --color-disabled-text: #8a93a0;
 
   /* On-accent foregrounds (text placed on accent fills) */
-  --color-on-accent-primary: #fafaf7;
-  --color-on-accent-secondary: #fafaf7;
+  --color-on-accent-primary: #f4f6f8;
+  --color-on-accent-secondary: #f4f6f8;
 
   /* Typography families. Apps inject the loaded faces via next/font as
      --font-space-grotesk / --font-ibm-plex-sans; these fall back gracefully. */
@@ -62,33 +65,33 @@
 }
 
 [data-theme='dark'] {
-  --color-background-primary: #121316;
-  --color-background-secondary: #1a1c20;
-  --color-background-elevated: #22252b;
-  --color-surface-primary: #1a1c20;
-  --color-surface-secondary: #22252b;
+  --color-background-primary: #0b0e13;
+  --color-background-secondary: #131821;
+  --color-background-elevated: #1a212c;
+  --color-surface-primary: #131821;
+  --color-surface-secondary: #1a212c;
 
-  --color-text-primary: #f4f4f0;
-  --color-text-secondary: #c4c7ce;
-  --color-text-muted: #9aa0ab;
+  --color-text-primary: #eef2f6;
+  --color-text-secondary: #c0c8d4;
+  --color-text-muted: #939cab;
 
-  --color-border-default: #2e3238;
-  --color-border-strong: #474c55;
+  --color-border-default: #2a3340;
+  --color-border-strong: #445064;
 
-  --color-accent-primary: #a9c4dc;
-  --color-accent-secondary: #e08a5f;
+  --color-accent-primary: #8eb4d8;
+  --color-accent-secondary: #4db8ad;
 
-  --color-success: #56c596;
+  --color-success: #4ecf95;
   --color-warning: #d6a044;
   --color-error: #ef6a63;
   --color-information: #7aa7e6;
 
   --color-focus-ring: #6fa0ff;
-  --color-disabled-background: #24272d;
-  --color-disabled-text: #6b7079;
+  --color-disabled-background: #1c222c;
+  --color-disabled-text: #6b7380;
 
-  --color-on-accent-primary: #121316;
-  --color-on-accent-secondary: #121316;
+  --color-on-accent-primary: #0b0e13;
+  --color-on-accent-secondary: #0b0e13;
 
   color-scheme: dark;
 }
