@@ -10,9 +10,9 @@ import { waitlistKey } from '@/lib/waitlist';
 
 /**
  * Early-access / membership + waitlist panel for a drop (TMS-F5-001 / F5-002).
- * UI only — it surfaces the membership story and routes guests to sign in, but
+ * UI only, it surfaces the membership story and routes guests to sign in, but
  * does NOT enforce access (there is no real membership tier yet). The waitlist
- * capture is a client-side preview (TMS-F5-002 / TMS-FBR-008) — no real
+ * capture is a client-side preview (TMS-F5-002 / TMS-FBR-008), no real
  * notification is sent. Every promise is framed as a preview.
  */
 export function DropEarlyAccess({
@@ -35,7 +35,7 @@ export function DropEarlyAccess({
   if (status === 'live') {
     return (
       <Alert tone="success" title="This drop is live">
-        Every piece below is available to order now — made to order and shipped when the drop
+        Every piece below is available to order now, made to order and shipped when the drop
         closes.
       </Alert>
     );
@@ -65,11 +65,11 @@ export function DropEarlyAccess({
       <p>
         Signed in as <span className="font-medium text-ink">{user.name}</span>.{' '}
         {earlyOpen
-          ? 'Your early access is open — browse the pieces below before the public release.'
+          ? 'Your early access is open, browse the pieces below before the public release.'
           : "We'll open early access to members first when this drop goes live."}
       </p>
       <p className="mt-2 text-xs text-muted">
-        Preview — early-access gating and notifications are not enforced yet (TMS-FBR-008).
+        Preview, early-access gating and notifications are not enforced yet (TMS-FBR-008).
       </p>
     </Alert>
   ) : (

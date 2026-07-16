@@ -80,8 +80,8 @@ export function ProductionView() {
     );
     setNotice(
       nextStage
-        ? `Preview build — “${actionLabel}” would call the fulfilment API. ${job.reference} moved to “${stageLabel(nextStage)}” locally (not saved).`
-        : `Preview build — “${actionLabel}” would call the fulfilment API. ${job.reference} left the board locally (not saved).`,
+        ? `Preview build, “${actionLabel}” would call the fulfilment API. ${job.reference} moved to “${stageLabel(nextStage)}” locally (not saved).`
+        : `Preview build, “${actionLabel}” would call the fulfilment API. ${job.reference} left the board locally (not saved).`,
     );
   }
 
@@ -99,7 +99,7 @@ export function ProductionView() {
       </div>
 
       <Alert tone="info" title="Preview data">
-        Jobs are derived from representative sample orders — the admin fulfilment API isn’t
+        Jobs are derived from representative sample orders, the admin fulfilment API isn’t
         connected, so stage changes update the board locally and aren’t saved.
       </Alert>
 

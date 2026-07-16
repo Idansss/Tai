@@ -46,7 +46,7 @@ export default function Page() {
       ]}
     >
       <Heading as={2} size="md" className="mb-3 text-xs uppercase tracking-[0.12em] text-muted">
-        Classic tee — measurements (cm)
+        Classic tee, measurements (cm)
       </Heading>
       <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-line">
         <table className="w-full min-w-[28rem] text-sm">

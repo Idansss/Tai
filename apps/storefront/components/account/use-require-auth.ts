@@ -9,7 +9,7 @@ import { useAuth } from './auth-provider';
  * sign in with a `?next=` back to the current page. Returns the auth state so
  * the caller can render a loading skeleton until `ready` and `user` are set.
  *
- * Pass `enabled: false` to temporarily suspend the guard — used during an
+ * Pass `enabled: false` to temporarily suspend the guard, used during an
  * explicit sign-out so the "no user" state navigates home instead of bouncing
  * to the login page.
  */

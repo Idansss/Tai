@@ -1,5 +1,5 @@
 /**
- * Pure order helpers for the admin order table + detail — search, status
+ * Pure order helpers for the admin order table + detail, search, status
  * filtering, pagination and the lifecycle timeline. Framework-free so they can
  * be unit-tested and reused by the mock provider and the views.
  */

@@ -1,5 +1,5 @@
 /**
- * Pure analytics helpers — bucket orders into a daily sales trend and an order
+ * Pure analytics helpers, bucket orders into a daily sales trend and an order
  * status breakdown, and scale values for the lightweight CSS bar charts.
  * Framework-free so it can be unit-tested and shared by the analytics view.
  */

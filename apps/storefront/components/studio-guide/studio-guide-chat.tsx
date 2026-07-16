@@ -20,7 +20,7 @@ interface Message {
   prompt?: string;
 }
 
-/** Resolve after a short delay so the typing state is visible. Never rejects —
+/** Resolve after a short delay so the typing state is visible. Never rejects -
  *  a failed "tool call" is modelled as a `tool_error` outcome. */
 function ask(prompt: string): Promise<GuideOutcome> {
   return new Promise((resolve) => {
@@ -83,7 +83,7 @@ export function StudioGuideChat() {
           </p>
           <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted">
             <ShieldCheck className="size-3.5 text-accent" aria-hidden />
-            Preview — a mock assistant. It won’t confirm live stock, price or delivery, and never
+            Preview, a mock assistant. It won’t confirm live stock, price or delivery, and never
             places orders (TMS-FBR-009).
           </p>
         </div>

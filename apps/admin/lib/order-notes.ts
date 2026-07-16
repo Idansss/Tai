@@ -62,6 +62,6 @@ export function writeNotes(reference: string, notes: InternalNote[]): void {
     all[reference] = notes;
     window.localStorage.setItem(NOTES_KEY, JSON.stringify(all));
   } catch {
-    // storage unavailable — notes live for this tab only
+    // storage unavailable, notes live for this tab only
   }
 }

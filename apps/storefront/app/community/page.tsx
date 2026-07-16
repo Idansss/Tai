@@ -5,7 +5,7 @@ import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Community gallery',
-  description: 'See how the community styles their pieces — and share your own photo.',
+  description: 'See how the community styles their pieces, and share your own photo.',
 };
 
 export default async function CommunityPage() {

@@ -81,19 +81,19 @@ export function GarmentDetailView({ id }: { id: string }) {
     const next = applyGarmentAction(status, action);
     setStatus(next);
     setNotice(
-      `Preview build — this would call the catalogue API. Status set to “${formatGarmentStatus(next)}” locally.`,
+      `Preview build, this would call the catalogue API. Status set to “${formatGarmentStatus(next)}” locally.`,
     );
   }
 
   function editStock(colourId: string, size: string, value: string) {
     const parsed = Number.parseInt(value, 10);
     setVariants((current) => setVariantStock(current, colourId, size, parsed));
-    setNotice('Preview build — stock edits update the table locally and are not saved.');
+    setNotice('Preview build, stock edits update the table locally and are not saved.');
   }
 
   function toggleColour(colourId: string, available: boolean) {
     setColours((current) => setColourAvailability(current, colourId, available));
-    setNotice('Preview build — colour availability changes are not saved.');
+    setNotice('Preview build, colour availability changes are not saved.');
   }
 
   if (!loaded) {
@@ -199,7 +199,7 @@ export function GarmentDetailView({ id }: { id: string }) {
               </div>
             </div>
             <Text size="sm" tone="muted" className="mt-3">
-              Flat-lay media is uploaded once the catalogue API lands — placeholders shown for now.
+              Flat-lay media is uploaded once the catalogue API lands, placeholders shown for now.
             </Text>
           </Panel>
 
@@ -383,7 +383,7 @@ export function GarmentDetailView({ id }: { id: string }) {
               </div>
             ) : (
               <Text size="sm" tone="muted">
-                One-size garment — no size chart.
+                One-size garment, no size chart.
               </Text>
             )}
           </Panel>

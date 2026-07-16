@@ -1,5 +1,5 @@
 /**
- * Pure customer helpers — derive a customer directory from order history
+ * Pure customer helpers, derive a customer directory from order history
  * (customers reconcile on their contact email, mirroring the storefront's
  * guest-order association), classify lifecycle status, and filter/sort.
  * Framework-free so it can be unit-tested and shared by the customer views.

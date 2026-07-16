@@ -18,7 +18,7 @@ export default function Page() {
           body: (
             <p>
               If your piece arrives faulty, misprinted, or not what you ordered, we will put it
-              right — a remake or a full refund, your choice. Contact us within 7 days of delivery
+              right, a remake or a full refund, your choice. Contact us within 7 days of delivery
               with your order reference and a photo, and we will sort it quickly.
             </p>
           ),
@@ -62,7 +62,7 @@ export default function Page() {
                 contact
               </a>{' '}
               page with your order reference. This policy sits alongside your rights under Nigerian
-              consumer law — it never limits them.
+              consumer law, it never limits them.
             </p>
           ),
         },

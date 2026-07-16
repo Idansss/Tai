@@ -25,7 +25,7 @@ const sans = IBM_Plex_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL('https://taimanicstudios.com'),
   title: {
-    default: 'Tai Manic Studios — Art-led apparel',
+    default: 'Tai Manic Studios, Art-led apparel',
     template: '%s · Tai Manic Studios',
   },
   description:
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: 'Tai Manic Studios',
-    title: 'Tai Manic Studios — Art-led apparel',
+    title: 'Tai Manic Studios, Art-led apparel',
     description: 'A premium digital art gallery and interactive clothing-design experience.',
   },
   robots: { index: true, follow: true },

@@ -1,5 +1,5 @@
 /**
- * Pure error-centre helpers — safe presentation of integration failures and the
+ * Pure error-centre helpers, safe presentation of integration failures and the
  * resolution lifecycle. **No stack traces or secrets ever pass through here**
  * (spec §18): an entry only carries a correlation ID and a human summary.
  * Framework-free so it can be unit-tested and shared by the error-centre view.
@@ -68,7 +68,7 @@ export function resolutionTone(resolution: ErrorResolution): StatusTone {
     case 'investigating':
       return 'info';
     default:
-      // open — needs attention.
+      // open, needs attention.
       return 'warning';
   }
 }

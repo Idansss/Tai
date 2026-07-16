@@ -23,7 +23,7 @@ const fmtDate = (iso: string) =>
 /**
  * Reviews & ratings section (TMS-F5-004). Renders the aggregate summary + star
  * distribution, the review list (with a verified-purchase badge), and a
- * write-a-review form. Writes are preview-only — a submitted review is prepended
+ * write-a-review form. Writes are preview-only, a submitted review is prepended
  * locally so the customer sees it, but nothing is sent to the server or
  * moderated yet (TMS-FBR-008). The verified-purchase badge is never granted to a
  * locally-added review.
@@ -291,7 +291,7 @@ function WriteReviewForm({
               Submit review
             </Button>
             <p className="text-xs text-muted">
-              Preview — stored on this device only, not sent or moderated yet (TMS-FBR-008).
+              Preview, stored on this device only, not sent or moderated yet (TMS-FBR-008).
             </p>
           </div>
         </form>

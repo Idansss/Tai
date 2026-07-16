@@ -6,7 +6,7 @@ import { dataProvider } from '@/lib/data';
 export const metadata: Metadata = {
   title: 'Stories',
   description:
-    'Shoppable notes from the studio: process, lookbooks and the ideas behind the work — with every piece a click away.',
+    'Shoppable notes from the studio: process, lookbooks and the ideas behind the work, with every piece a click away.',
 };
 
 export default async function StoriesPage() {
@@ -20,7 +20,7 @@ export default async function StoriesPage() {
           Stories
         </Heading>
         <Text size="lg" tone="secondary" className="mt-3">
-          Notes from the studio — how a drawing becomes a piece you can wear, and how we style each
+          Notes from the studio, how a drawing becomes a piece you can wear, and how we style each
           release. Tap a hotspot in any story to shop the piece.
         </Text>
       </div>
@@ -35,7 +35,7 @@ export default async function StoriesPage() {
         </ul>
       ) : (
         <Text tone="muted" className="mt-10">
-          No stories yet — check back soon.
+          No stories yet, check back soon.
         </Text>
       )}
     </Container>

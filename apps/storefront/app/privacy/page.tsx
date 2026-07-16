@@ -18,7 +18,7 @@ export default function Page() {
           heading: 'What we collect',
           body: (
             <ul className="list-disc space-y-1.5 pl-5">
-              <li>Contact details you give us — name, email, phone and delivery address.</li>
+              <li>Contact details you give us, name, email, phone and delivery address.</li>
               <li>Order and payment information needed to fulfil and support your purchases.</li>
               <li>Designs you save and items you wishlist when signed in.</li>
               <li>Basic usage data (via cookies) to keep the site working and improve it.</li>
@@ -30,7 +30,7 @@ export default function Page() {
           body: (
             <p>
               We use your data to process and deliver orders, provide support, keep your account and
-              saved designs, and — only if you opt in — send you news about releases. We do not sell
+              saved designs, and, only if you opt in, send you news about releases. We do not sell
               your personal data.
             </p>
           ),
@@ -65,7 +65,7 @@ export default function Page() {
           heading: 'Cookies',
           body: (
             <p>
-              We use a small number of cookies — see our{' '}
+              We use a small number of cookies, see our{' '}
               <a
                 href="/cookies"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"

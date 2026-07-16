@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Eyebrow, Heading, Select, Skeleton, Text, cn } from '@tms/ui';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -73,7 +73,7 @@ export function ErrorCentreView() {
       (current ?? []).map((e) => (e.id === entry.id ? { ...e, resolution: next } : e)),
     );
     setNotice(
-      `Preview build — “${label}” would call the operations API. ${entry.correlationId} set to “${formatResolution(next)}” locally (not saved).`,
+      `Preview build, “${label}” would call the operations API. ${entry.correlationId} set to “${formatResolution(next)}” locally (not saved).`,
     );
   }
 
@@ -85,13 +85,13 @@ export function ErrorCentreView() {
           Error centre
         </Heading>
         <Text tone="secondary" className="mt-2">
-          Integration failures across payments, webhooks, shipping, media, email, AI and jobs — with
+          Integration failures across payments, webhooks, shipping, media, email, AI and jobs, with
           a correlation ID and resolution state. No stack traces or secrets are shown.
         </Text>
       </div>
 
       <Alert tone="info" title="Preview data">
-        Entries are representative sample failures — the operations API isn’t connected, so
+        Entries are representative sample failures, the operations API isn’t connected, so
         resolution changes update the list locally and aren’t saved.
       </Alert>
 
@@ -126,37 +126,29 @@ export function ErrorCentreView() {
           <label htmlFor="error-source" className="sr-only">
             Filter by source
           </label>
-          <select
+          <Select
             id="error-source"
             value={source}
-            onChange={(e) => setSource(e.target.value as ErrorSource | 'all')}
-            className={controlClass}
-          >
-            <option value="all">All sources</option>
-            {SOURCES.map((s) => (
-              <option key={s} value={s}>
-                {formatErrorSource(s)}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setSource(next as ErrorSource | 'all')}
+            options={[
+              { value: 'all', label: 'All sources' },
+              ...SOURCES.map((s) => ({ value: s, label: formatErrorSource(s) })),
+            ]}
+          />
         </div>
         <div>
           <label htmlFor="error-resolution" className="sr-only">
             Filter by resolution
           </label>
-          <select
+          <Select
             id="error-resolution"
             value={resolution}
-            onChange={(e) => setResolution(e.target.value as ErrorResolution | 'all')}
-            className={controlClass}
-          >
-            <option value="all">All states</option>
-            {RESOLUTIONS.map((r) => (
-              <option key={r} value={r}>
-                {formatResolution(r)}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setResolution(next as ErrorResolution | 'all')}
+            options={[
+              { value: 'all', label: 'All states' },
+              ...RESOLUTIONS.map((r) => ({ value: r, label: formatResolution(r) })),
+            ]}
+          />
         </div>
       </div>
 

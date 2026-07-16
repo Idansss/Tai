@@ -6,7 +6,7 @@ import { StudioGuideChat } from '@/components/studio-guide/studio-guide-chat';
 export const metadata: Metadata = {
   title: 'Studio Guide',
   description:
-    'Chat with the Studio Guide — your AI assistant for the artworks, the Design Studio, sizing and policies.',
+    'Chat with the Studio Guide, your AI assistant for the artworks, the Design Studio, sizing and policies.',
 };
 
 export default function StudioGuidePage() {

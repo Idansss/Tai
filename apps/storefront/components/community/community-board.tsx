@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Button, EmptyState, Heading, Text } from '@tms/ui';
+import { Alert, Button, EmptyState, Heading, Select, Text } from '@tms/ui';
 import { Camera, ImagePlus } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import type { CommunityPhoto } from '@/lib/data';
@@ -19,7 +19,7 @@ interface ArtworkRef {
 
 /**
  * The community gallery board (TMS-F5-005): the approved photo grid plus a
- * moderation-aware submit-a-photo form. Submissions are preview-only — no file
+ * moderation-aware submit-a-photo form. Submissions are preview-only, no file
  * is uploaded and nothing is published; a submitted photo is shown back to the
  * customer as "In review" locally so they see it entered the queue
  * (TMS-FBR-008). Pass `fixedArtwork` to scope the form to one artwork (the
@@ -139,10 +139,10 @@ function SubmitPhoto({
       </Text>
 
       {done ? (
-        <Alert tone="success" title="Thanks — your photo is in review" className="mt-4">
+        <Alert tone="success" title="Thanks, your photo is in review" className="mt-4">
           <p>
             We’ve added it to your submissions above. As a preview it isn’t uploaded or published
-            yet — our team reviews every photo before it appears publicly (TMS-FBR-008).
+            yet, our team reviews every photo before it appears publicly (TMS-FBR-008).
           </p>
           <Button
             type="button"
@@ -161,18 +161,14 @@ function SubmitPhoto({
               <label htmlFor={artworkId} className="text-sm font-medium text-ink">
                 Which piece?
               </label>
-              <select
+              <Select
                 id={artworkId}
+                className="mt-1"
                 value={artworkSlug}
-                onChange={(e) => setArtworkSlug(e.target.value)}
-                className="mt-1 w-full rounded-[var(--radius-sm)] border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-              >
-                {artworks.map((a) => (
-                  <option key={a.slug} value={a.slug}>
-                    {a.title}
-                  </option>
-                ))}
-              </select>
+                onChange={setArtworkSlug}
+                options={artworks.map((a) => ({ value: a.slug, label: a.title }))}
+                placeholder="Choose a piece"
+              />
             </div>
           ) : null}
 
@@ -252,7 +248,7 @@ function SubmitPhoto({
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit">Submit for review</Button>
             <p className="text-xs text-muted">
-              Preview — the photo isn’t uploaded or published yet, and all photos are moderated
+              Preview, the photo isn’t uploaded or published yet, and all photos are moderated
               (TMS-FBR-008).
             </p>
           </div>

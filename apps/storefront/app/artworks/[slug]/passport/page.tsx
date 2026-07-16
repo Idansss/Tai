@@ -10,8 +10,8 @@ interface Params {
   params: Promise<{ slug: string }>;
 }
 
-// The passport set is finite and enumerable (one per artwork), so — like the
-// artwork detail route — every page is statically generated and any slug
+// The passport set is finite and enumerable (one per artwork), so, like the
+// artwork detail route, every page is statically generated and any slug
 // outside the catalogue is a genuine routing-layer 404 (TMS-F1-DEF-001).
 // generateStaticParams enumerates from the real catalogue once TMS-FBR-001 lands.
 export const dynamicParams = false;
@@ -25,11 +25,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const passport = await dataProvider.getArtworkPassport(slug);
   if (!passport) notFound();
-  const description = `Authenticity & provenance for ${passport.title} — version ${passport.versionId}.`;
+  const description = `Authenticity & provenance for ${passport.title}, version ${passport.versionId}.`;
   return {
-    title: `${passport.title} — Passport`,
+    title: `${passport.title}, Passport`,
     description,
-    openGraph: { title: `${passport.title} — Artwork Passport`, description },
+    openGraph: { title: `${passport.title}, Artwork Passport`, description },
   };
 }
 
@@ -99,7 +99,7 @@ export default async function ArtworkPassportPage({ params }: Params) {
           </dl>
 
           <p className="mt-5 rounded-[var(--radius-md)] border border-line bg-canvas-2 p-3 text-xs text-muted">
-            The version ID is derived from this artwork’s content and stays fixed for this release —
+            The version ID is derived from this artwork’s content and stays fixed for this release -
             any change to the piece issues a new version. A per-piece serial ledger and a
             tamper-evident record are server-authoritative once the catalogue backend lands
             (TMS-FBR-001).
@@ -120,7 +120,7 @@ export default async function ArtworkPassportPage({ params }: Params) {
               assigned when a piece is purchased.
             </Text>
             <p className="mt-3 text-xs text-muted">
-              Placeholder — the ownership ledger is a backend feature (TMS-FBR-001). Nothing is
+              Placeholder, the ownership ledger is a backend feature (TMS-FBR-001). Nothing is
               stored on this device.
             </p>
           </section>

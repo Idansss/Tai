@@ -34,7 +34,7 @@ export function ShoppableScene({ scene }: { scene: StoryScene }) {
       <div
         className="relative aspect-[16/9] w-full rounded-[var(--radius-lg)] border border-line bg-gradient-to-br from-canvas-2 to-surface-2"
         role="img"
-        aria-label={`${scene.caption} — with shoppable hotspots`}
+        aria-label={`${scene.caption}, with shoppable hotspots`}
       >
         {scene.hotspots.map((hotspot, index) => {
           const isOpen = openId === hotspot.id;

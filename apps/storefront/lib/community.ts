@@ -48,7 +48,7 @@ const HANDLE_RE = /^@?[a-z0-9._]{2,30}$/i;
 export interface PhotoSubmission {
   handle: string;
   caption: string;
-  /** Whether the customer attached a photo (mock — no real file is uploaded). */
+  /** Whether the customer attached a photo (mock, no real file is uploaded). */
   hasPhoto: boolean;
 }
 
@@ -56,7 +56,7 @@ export type SubmissionFieldErrors = Partial<Record<keyof PhotoSubmission, string
 
 export type SubmissionValidation = { ok: true } | { ok: false; errors: SubmissionFieldErrors };
 
-/** Validate a submit-a-photo submission. Pure — the form and any API share it. */
+/** Validate a submit-a-photo submission. Pure, the form and any API share it. */
 export function validatePhotoSubmission(input: PhotoSubmission): SubmissionValidation {
   const errors: SubmissionFieldErrors = {};
   if (!HANDLE_RE.test(input.handle.trim())) {

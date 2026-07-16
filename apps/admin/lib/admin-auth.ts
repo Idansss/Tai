@@ -6,7 +6,7 @@
  * - Sign-in validates the email/password *shape* only; with nothing to check
  *   credentials against, any well-formed sign-in starts a demo session. The UI
  *   says so plainly.
- * - The session is a `{ email, name }` object in `localStorage` — **no password
+ * - The session is a `{ email, name }` object in `localStorage`, **no password
  *   is ever stored**.
  *
  * Replace with real staff auth + role-based access control (RBAC) and an
@@ -73,6 +73,6 @@ export function writeStaffSession(user: StaffUser | null): void {
     if (user) window.localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     else window.localStorage.removeItem(SESSION_KEY);
   } catch {
-    // storage unavailable — session still works for this tab
+    // storage unavailable, session still works for this tab
   }
 }

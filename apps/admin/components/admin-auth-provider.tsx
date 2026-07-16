@@ -13,7 +13,7 @@ interface AdminAuthContextValue {
   user: StaffUser | null;
   /** True once the session has hydrated from storage. */
   ready: boolean;
-  /** Start a demo staff session (no real credential check — preview only). */
+  /** Start a demo staff session (no real credential check, preview only). */
   login: (input: { email: string }) => void;
   logout: () => void;
 }

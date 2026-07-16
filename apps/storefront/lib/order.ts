@@ -1,7 +1,7 @@
 /**
  * Placed-order model. Until the orders API exists (TMS-FBR-004) a completed
  * checkout snapshots the bag + details client-side so the confirmation page
- * can render. This is NOT a real payment — the mock flow marks the order
+ * can render. This is NOT a real payment, the mock flow marks the order
  * "awaiting payment"; Flutterwave + payment states arrive in TMS-F3-003.
  */
 
@@ -43,7 +43,7 @@ export function saveLastOrder(order: PlacedOrder): void {
   try {
     window.localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(order));
   } catch {
-    // Storage unavailable — the confirmation page will show its empty state.
+    // Storage unavailable, the confirmation page will show its empty state.
   }
 }
 

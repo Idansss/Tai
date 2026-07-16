@@ -8,7 +8,7 @@ import { useState } from 'react';
  * Share an Artwork Passport (TMS-F5-006). Uses the Web Share API when the
  * browser/OS offers it (native sheet), otherwise copies the passport URL to the
  * clipboard, with an address-bar fallback message if even that is blocked. No
- * data leaves the device — this only shares the public passport link.
+ * data leaves the device, this only shares the public passport link.
  */
 export function PassportShare({ title }: { title: string }) {
   const [status, setStatus] = useState<string | null>(null);
@@ -16,14 +16,14 @@ export function PassportShare({ title }: { title: string }) {
 
   async function handleShare() {
     const url = window.location.href;
-    const shareData = { title: `${title} — Artwork Passport`, url };
+    const shareData = { title: `${title}, Artwork Passport`, url };
 
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share(shareData);
         return;
       } catch {
-        // User cancelled or the share sheet failed — fall through to copy.
+        // User cancelled or the share sheet failed, fall through to copy.
       }
     }
 

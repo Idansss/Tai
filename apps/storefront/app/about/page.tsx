@@ -12,7 +12,7 @@ export default function Page() {
     <ContentPage
       eyebrow="Studio"
       title="About the studio"
-      intro="Tai Manic Studios is an art-led label. Every piece begins as an original drawing — the garment is simply how the work travels into the world."
+      intro="Tai Manic Studios is an art-led label. Every piece begins as an original drawing, the garment is simply how the work travels into the world."
       sections={[
         {
           heading: 'What we make',
@@ -20,7 +20,7 @@ export default function Page() {
             <>
               <p>
                 We start with the artwork, not the product. Each design is drawn by hand, given a
-                title and a short story, then matched to a small set of approved garments — the
+                title and a short story, then matched to a small set of approved garments, the
                 cuts, fabrics and print methods we know do the work justice.
               </p>
               <p>
@@ -46,7 +46,7 @@ export default function Page() {
           body: (
             <p>
               We design, print and ship from Lagos, delivering across Nigeria. Prices are in Naira,
-              payment runs through Flutterwave, and orders travel with our delivery partners — the
+              payment runs through Flutterwave, and orders travel with our delivery partners, the
               details are on our{' '}
               <a
                 href="/delivery"

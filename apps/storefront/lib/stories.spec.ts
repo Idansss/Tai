@@ -17,7 +17,7 @@ const artwork: StoryHotspotTarget = {
 const product: StoryHotspotTarget = {
   kind: 'product',
   slug: 'midnight-in-lagos-classic-tee',
-  label: 'Midnight in Lagos — Classic T-shirt',
+  label: 'Midnight in Lagos, Classic T-shirt',
   priceMinor: 1200000,
   currency: 'NGN',
 };

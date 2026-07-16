@@ -15,7 +15,7 @@ export interface ContentPageProps {
   title: string;
   /** Lead paragraph under the title. */
   intro: string;
-  /** For policies — the last-updated date, shown under the intro. */
+  /** For policies, the last-updated date, shown under the intro. */
   updated?: string;
   sections?: ContentSection[];
   /** Extra content rendered after the sections (tables, forms, FAQs…). */

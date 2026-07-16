@@ -12,6 +12,7 @@ export { Alert, type AlertProps } from './components/alert.js';
 export { EmptyState, type EmptyStateProps } from './components/empty-state.js';
 export { ErrorState, type ErrorStateProps } from './components/error-state.js';
 export { VisuallyHidden, type VisuallyHiddenProps } from './components/visually-hidden.js';
+export { Select, type SelectOption, type SelectProps } from './components/select.js';
 export { Container, type ContainerProps } from './components/container.js';
 export { Stack, type StackProps } from './components/stack.js';
 export {

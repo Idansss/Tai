@@ -1,5 +1,5 @@
 /**
- * Pure domain logic for the Artwork Passport (TMS-F5-006) — authenticity &
+ * Pure domain logic for the Artwork Passport (TMS-F5-006), authenticity &
  * provenance for a specific artwork *version*. Everything here is a pure,
  * deterministic function of the artwork's stable content, so the "immutable
  * version id" is reproducible and unit-testable. The real version id + a
@@ -41,7 +41,7 @@ export function artworkVersionId(input: VersionIdInput): string {
 
 /**
  * A formatted edition serial, e.g. `No. 007 / 100`. The number is zero-padded to
- * the width of the run size so serials line up. Illustrative only — the real
+ * the width of the run size so serials line up. Illustrative only, the real
  * serial is assigned to a piece at purchase (TMS-FBR-001).
  */
 export function passportSerial(index: number, editionSize: number): string {

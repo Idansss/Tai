@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Eyebrow, Heading, Select, Skeleton, Text, cn } from '@tms/ui';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -63,7 +63,7 @@ export function ArtworksView() {
       </div>
 
       <Alert tone="info" title="Preview data">
-        Artworks below are representative sample data — the admin catalogue API isn’t connected yet.
+        Artworks below are representative sample data, the admin catalogue API isn’t connected yet.
       </Alert>
 
       {/* Controls */}
@@ -89,19 +89,15 @@ export function ArtworksView() {
           <label htmlFor="artwork-status" className="sr-only">
             Filter by status
           </label>
-          <select
+          <Select
             id="artwork-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value as ArtworkStatus | 'all')}
-            className={controlClass}
-          >
-            <option value="all">All statuses</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {formatArtworkStatus(s)}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setStatus(next as ArtworkStatus | 'all')}
+            options={[
+              { value: 'all', label: 'All statuses' },
+              ...STATUS_OPTIONS.map((s) => ({ value: s, label: formatArtworkStatus(s) })),
+            ]}
+          />
         </div>
         {all ? (
           <span className="text-sm text-muted" aria-live="polite">

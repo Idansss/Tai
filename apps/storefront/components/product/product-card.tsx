@@ -26,7 +26,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
           <div
             className="aspect-[3/4] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
             role="img"
-            aria-label={`${product.title} — product preview placeholder`}
+            aria-label={`${product.title}, product preview placeholder`}
           />
           <div className="space-y-2 p-5">
             <div className="flex items-center justify-between gap-2">

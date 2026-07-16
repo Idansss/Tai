@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, EmptyState, Heading, Price, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, EmptyState, Heading, Price, Select, Skeleton, Text, cn } from '@tms/ui';
 import { Lock, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -259,22 +259,18 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
               />
             </Field>
             <Field id="state" label="State" error={err('delivery.state')}>
-              <select
+              <Select
                 id="state"
-                autoComplete="address-level1"
                 value={form.delivery.state}
-                onChange={(e) => setDelivery('state', e.target.value)}
-                aria-invalid={err('delivery.state') ? true : undefined}
+                onChange={(next) => setDelivery('state', next)}
+                invalid={Boolean(err('delivery.state'))}
                 aria-describedby={err('delivery.state') ? 'state-error' : undefined}
-                className={cn(inputClass, err('delivery.state') ? 'border-error' : 'border-line-2')}
-              >
-                <option value="">Select a state…</option>
-                {NIGERIAN_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select a state…"
+                options={[
+                  { value: '', label: 'Select a state…' },
+                  ...NIGERIAN_STATES.map((s) => ({ value: s, label: s })),
+                ]}
+              />
             </Field>
           </div>
         </section>
@@ -366,7 +362,7 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
             ))}
           </fieldset>
           <Alert tone="info" title="Test checkout" className="mt-4">
-            This is a preview checkout — placing the order records it but does not take payment.
+            This is a preview checkout, placing the order records it but does not take payment.
             Secure Flutterwave payment and success/pending/failure states arrive in the next
             release.
           </Alert>

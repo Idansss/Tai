@@ -1,5 +1,5 @@
 /**
- * Pure artwork-manager helpers — status presentation, the publishing lifecycle,
+ * Pure artwork-manager helpers, status presentation, the publishing lifecycle,
  * mockup approval and upload validation. Framework-free so they can be
  * unit-tested and reused by the list, detail and upload surfaces.
  */
@@ -190,10 +190,10 @@ export function validateUpload(fileName: string, sizeBytes: number): UploadValid
   }
   const mb = sizeBytes / (1024 * 1024);
   if (mb > MAX_MB) {
-    errors.push(`File is ${mb.toFixed(1)}MB — the limit is ${MAX_MB}MB.`);
+    errors.push(`File is ${mb.toFixed(1)}MB, the limit is ${MAX_MB}MB.`);
   }
   if (ext === 'png' && mb > 0 && mb < 2) {
-    warnings.push('This PNG is small — check it’s high-resolution enough for large prints.');
+    warnings.push('This PNG is small, check it’s high-resolution enough for large prints.');
   }
 
   return { ok: errors.length === 0, errors, warnings };

@@ -10,7 +10,7 @@ test.describe('storefront foundation', () => {
     await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
   });
 
-  test('visual baseline — homepage', async ({ page }) => {
+  test('visual baseline, homepage', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveScreenshot('home.png', { fullPage: true });

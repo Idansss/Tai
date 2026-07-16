@@ -18,7 +18,7 @@ interface WaitlistFormProps {
 type Status = 'idle' | 'joined' | 'already';
 
 /**
- * Reusable waitlist / back-in-stock capture (TMS-F5-002). Preview only — the
+ * Reusable waitlist / back-in-stock capture (TMS-F5-002). Preview only, the
  * email is stored client-side (`lib/waitlist.ts`) and **no real notification is
  * sent** (TMS-FBR-008). Prefills from the signed-in session when available.
  */
@@ -61,7 +61,7 @@ export function WaitlistForm({
         <p>
           {status === 'already'
             ? `We already have ${email} down for this.`
-            : `We’ll email ${email} — as a preview, so no message is actually sent yet.`}
+            : `We’ll email ${email}, as a preview, so no message is actually sent yet.`}
         </p>
       </Alert>
     );
@@ -105,7 +105,7 @@ export function WaitlistForm({
         </p>
       ) : null}
       <p className="mt-3 text-xs text-muted">
-        Preview — sign-ups are stored on this device and no notification is sent yet (TMS-FBR-008).
+        Preview, sign-ups are stored on this device and no notification is sent yet (TMS-FBR-008).
       </p>
     </form>
   );

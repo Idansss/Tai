@@ -8,7 +8,7 @@ describe('artworkVersionId', () => {
     expect(artworkVersionId(base)).toMatch(/^AP-[0-9A-F]{4}-[0-9A-F]{4}$/);
   });
 
-  it('is deterministic — same content yields the same id', () => {
+  it('is deterministic, same content yields the same id', () => {
     expect(artworkVersionId(base)).toBe(artworkVersionId({ ...base }));
   });
 

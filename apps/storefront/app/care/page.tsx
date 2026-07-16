@@ -19,7 +19,7 @@ export default function Page() {
             <ul className="list-disc space-y-1.5 pl-5">
               <li>Turn the garment inside out before washing to protect the print.</li>
               <li>Machine wash cold (30°C or below) on a gentle cycle, with similar colours.</li>
-              <li>Use a mild detergent — skip bleach and fabric softener.</li>
+              <li>Use a mild detergent, skip bleach and fabric softener.</li>
             </ul>
           ),
         },
@@ -27,7 +27,7 @@ export default function Page() {
           heading: 'Drying',
           body: (
             <p>
-              Avoid the tumble dryer — the heat is what ages a print fastest. Reshape while damp and
+              Avoid the tumble dryer, the heat is what ages a print fastest. Reshape while damp and
               dry flat or on a line, away from direct sun.
             </p>
           ),

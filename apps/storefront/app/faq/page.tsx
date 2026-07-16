@@ -12,7 +12,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     q: 'Are pieces made to order?',
     a: (
       <p>
-        Yes. Nothing is pre-printed — we print and finish your piece once you order, which is why a
+        Yes. Nothing is pre-printed, we print and finish your piece once you order, which is why a
         short production window applies before dispatch.
       </p>
     ),
@@ -53,7 +53,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     a: (
       <p>
         We’ll always fix a faulty or incorrect order. Because pieces are made to order, we can’t
-        take change-of-mind returns — see{' '}
+        take change-of-mind returns, see{' '}
         <a
           href="/returns"
           className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
@@ -68,7 +68,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     q: 'How do I pay?',
     a: (
       <p>
-        Payments are in Naira through Flutterwave — card or bank transfer. You’ll see the full
+        Payments are in Naira through Flutterwave, card or bank transfer. You’ll see the full
         total, including delivery and VAT, before you confirm.
       </p>
     ),
@@ -77,7 +77,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     q: 'Can I put any artwork on any garment?',
     a: (
       <p>
-        Almost — each artwork is approved for a specific set of garments, colours and placements so
+        Almost, each artwork is approved for a specific set of garments, colours and placements so
         the print always looks its best. The{' '}
         <a
           href="/design-studio"

@@ -36,7 +36,7 @@ export interface ArtworkDetail extends ArtworkSummary {
 }
 
 /**
- * Artwork Passport (TMS-F5-006) — authenticity & provenance for a specific
+ * Artwork Passport (TMS-F5-006), authenticity & provenance for a specific
  * artwork *version*. The `versionId` is a deterministic, content-addressed id
  * (see `lib/passport.ts`): same content → same id, and it is meant to be
  * immutable for a given release. Today it is derived on the frontend from the
@@ -46,7 +46,7 @@ export interface ArtworkDetail extends ArtworkSummary {
 export interface ProvenanceEvent {
   label: string;
   detail: string;
-  /** A year or human date — textual, not machine-parsed. */
+  /** A year or human date, textual, not machine-parsed. */
   date: string;
 }
 
@@ -74,7 +74,7 @@ export interface ArtworkPassport {
  * Loyalty & referrals (TMS-F5-010). The tier is *derived* from points by the
  * pure helpers in `lib/loyalty.ts` (single source of truth), so the provider
  * returns raw points + the rewards catalogue + a referral code. All of it is
- * illustrative preview data — real earning, tiers, redemption, and referral
+ * illustrative preview data, real earning, tiers, redemption, and referral
  * attribution are server-authoritative (TMS-FBR-008).
  */
 export interface LoyaltyReward {
@@ -97,7 +97,7 @@ export interface LoyaltyProfile {
 }
 
 /**
- * Community gallery (TMS-F5-005) — customer photos of pieces in the wild. Every
+ * Community gallery (TMS-F5-005), customer photos of pieces in the wild. Every
  * photo carries a `status`; only `approved` photos are ever shown publicly. The
  * mock's public methods return approved photos only, and the pure helpers in
  * `lib/community.ts` enforce that filter. Real UGC intake + moderation is
@@ -120,7 +120,7 @@ export interface CommunityPhoto {
 /**
  * Reviews & ratings (TMS-F5-004). Reviews attach to a product or an artwork by
  * slug. `verifiedPurchase` is a server-vouched flag (a real order backs the
- * review) — the client never sets it. Aggregate stats are derived by the pure
+ * review), the client never sets it. Aggregate stats are derived by the pure
  * helpers in `lib/reviews.ts`. Read + write + moderation are backend
  * (TMS-FBR-008); today the mock seeds a deterministic set and writes are
  * preview-only.

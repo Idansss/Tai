@@ -9,7 +9,7 @@ import type { StorefrontDataProvider } from './types';
  */
 const notImplemented = (name: string): never => {
   throw new Error(
-    `apiProvider.${name} is not implemented yet — catalogue endpoints are pending (TMS-FBR-001). Use DATA_SOURCE=mock.`,
+    `apiProvider.${name} is not implemented yet, catalogue endpoints are pending (TMS-FBR-001). Use DATA_SOURCE=mock.`,
   );
 };
 

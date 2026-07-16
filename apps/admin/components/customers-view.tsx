@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Eyebrow, Heading, Select, Skeleton, Text, cn } from '@tms/ui';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -63,7 +63,7 @@ export function CustomersView() {
       </div>
 
       <Alert tone="info" title="Preview data">
-        Customers are derived from representative sample orders — the admin customer API isn’t
+        Customers are derived from representative sample orders, the admin customer API isn’t
         connected yet.
       </Alert>
 
@@ -90,19 +90,15 @@ export function CustomersView() {
           <label htmlFor="customer-status" className="sr-only">
             Filter by status
           </label>
-          <select
+          <Select
             id="customer-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value as CustomerStatus | 'all')}
-            className={controlClass}
-          >
-            <option value="all">All customers</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABEL[s]}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setStatus(next as CustomerStatus | 'all')}
+            options={[
+              { value: 'all', label: 'All customers' },
+              ...STATUS_OPTIONS.map((s) => ({ value: s, label: STATUS_LABEL[s] })),
+            ]}
+          />
         </div>
         {all ? (
           <span className="text-sm text-muted" aria-live="polite">

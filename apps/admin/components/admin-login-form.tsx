@@ -96,7 +96,7 @@ export function AdminLoginForm() {
       </form>
 
       <Alert tone="info" title="Preview console" className="mt-6">
-        This is a preview build — no staff accounts, roles or passwords exist yet. Any well-formed
+        This is a preview build, no staff accounts, roles or passwords exist yet. Any well-formed
         sign-in starts a demo session stored only in your browser. Real staff auth and role-based
         access arrive with the admin auth backend.
       </Alert>

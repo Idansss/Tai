@@ -4,7 +4,7 @@ import type { LoyaltyReward } from './data/types';
  * Pure domain logic for loyalty & referrals (TMS-F5-010). The tier ladder and
  * the progress toward the next tier are derived here from a point balance, so
  * the account display and any future API agree on one definition. Referral URL
- * construction and redemption eligibility live here too. All illustrative — the
+ * construction and redemption eligibility live here too. All illustrative, the
  * real ledger, tiers, and referral attribution are server-side (TMS-FBR-008).
  */
 

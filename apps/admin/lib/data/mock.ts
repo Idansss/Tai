@@ -184,7 +184,7 @@ const SEEDS: OrderSeed[] = [
     email: 'ngozi.balogun@example.com',
     phone: '08063334444',
     city: 'Abuja',
-    state: 'FCT — Abuja',
+    state: 'FCT, Abuja',
     placedAt: '2026-07-14T11:05:00.000Z',
     status: 'PAYMENT_FAILED',
     method: 'card',
@@ -404,7 +404,7 @@ function toProductionJob(o: AdminOrderDetail): AdminProductionJob | null {
   };
 }
 
-/** Active jobs, oldest first — the studio works the production queue FIFO. */
+/** Active jobs, oldest first, the studio works the production queue FIFO. */
 const PRODUCTION_JOBS: AdminProductionJob[] = ORDERS.map(toProductionJob)
   .filter((j): j is AdminProductionJob => j !== null)
   .sort((a, b) => a.placedAt.localeCompare(b.placedAt));
@@ -538,17 +538,17 @@ const ARTWORKS: AdminArtworkDetail[] = [
     versionCount: 2,
     mockupCount: 2,
     updatedAt: '2026-07-14T10:00:00.000Z',
-    story: 'A neon-soaked ode to Lagos after dark — okadas streaking past shuttered stalls.',
+    story: 'A neon-soaked ode to Lagos after dark, okadas streaking past shuttered stalls.',
     tags: ['lagos', 'night', 'comic-line'],
-    seoTitle: 'Midnight in Lagos — art-led apparel',
+    seoTitle: 'Midnight in Lagos, art-led apparel',
     seoDescription: 'Original comic-line artwork of Lagos at night, printed on considered apparel.',
     limitedEdition: true,
     editionSize: 100,
     compatibleGarments: GARMENTS,
     placements: ['Centre chest', 'Full front', 'Back'],
     versions: [
-      { id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] },
-      { id: 'v2', label: 'v2 — recolour', processing: 'ready', issues: [] },
+      { id: 'v1', label: 'v1, master', processing: 'ready', issues: [] },
+      { id: 'v2', label: 'v2, recolour', processing: 'ready', issues: [] },
     ],
     mockups: [
       { id: 'm1', label: 'Black · front', view: 'front', approval: 'approved' },
@@ -571,7 +571,7 @@ const ARTWORKS: AdminArtworkDetail[] = [
     limitedEdition: false,
     compatibleGarments: GARMENTS,
     placements: ['Centre chest', 'Full front'],
-    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    versions: [{ id: 'v1', label: 'v1, master', processing: 'ready', issues: [] }],
     mockups: [
       { id: 'm1', label: 'Bone · front', view: 'front', approval: 'approved' },
       { id: 'm2', label: 'Bone · back', view: 'back', approval: 'pending' },
@@ -586,7 +586,7 @@ const ARTWORKS: AdminArtworkDetail[] = [
     versionCount: 1,
     mockupCount: 1,
     updatedAt: '2026-07-15T08:05:00.000Z',
-    story: 'A blur of motion — the everyday sprint of the okada rider.',
+    story: 'A blur of motion, the everyday sprint of the okada rider.',
     tags: ['okada', 'motion', 'street'],
     seoTitle: 'Okada Run',
     seoDescription: 'Motion-blur comic artwork of a Lagos okada rider.',
@@ -596,7 +596,7 @@ const ARTWORKS: AdminArtworkDetail[] = [
     versions: [
       {
         id: 'v1',
-        label: 'v1 — master',
+        label: 'v1, master',
         processing: 'failed',
         issues: ['Resolution below 300dpi at print size', 'Transparent background not detected'],
       },
@@ -621,7 +621,7 @@ const ARTWORKS: AdminArtworkDetail[] = [
     compatibleGarments: GARMENTS,
     placements: PLACEMENTS,
     scheduledFor: '2026-07-20T09:00:00.000Z',
-    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    versions: [{ id: 'v1', label: 'v1, master', processing: 'ready', issues: [] }],
     mockups: [
       { id: 'm1', label: 'Bone · front', view: 'front', approval: 'approved' },
       { id: 'm2', label: 'Bone · back', view: 'back', approval: 'approved' },
@@ -643,7 +643,7 @@ const ARTWORKS: AdminArtworkDetail[] = [
     limitedEdition: false,
     compatibleGarments: ['Oversized T-shirt'],
     placements: ['Full front'],
-    versions: [{ id: 'v1', label: 'v1 — master', processing: 'processing', issues: [] }],
+    versions: [{ id: 'v1', label: 'v1, master', processing: 'processing', issues: [] }],
     mockups: [],
   },
   {
@@ -662,7 +662,7 @@ const ARTWORKS: AdminArtworkDetail[] = [
     limitedEdition: false,
     compatibleGarments: GARMENTS,
     placements: ['Centre chest', 'Full front'],
-    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    versions: [{ id: 'v1', label: 'v1, master', processing: 'ready', issues: [] }],
     mockups: [
       { id: 'm1', label: 'Sand · front', view: 'front', approval: 'pending' },
       { id: 'm2', label: 'Sand · back', view: 'back', approval: 'pending' },
@@ -684,7 +684,7 @@ const ARTWORKS: AdminArtworkDetail[] = [
     limitedEdition: false,
     compatibleGarments: GARMENTS,
     placements: ['Centre chest'],
-    versions: [{ id: 'v1', label: 'v1 — master', processing: 'ready', issues: [] }],
+    versions: [{ id: 'v1', label: 'v1, master', processing: 'ready', issues: [] }],
     mockups: [
       { id: 'm1', label: 'Black · front', view: 'front', approval: 'approved' },
       { id: 'm2', label: 'Black · back', view: 'back', approval: 'approved' },
@@ -777,7 +777,7 @@ const GARMENT_SEEDS: GarmentSeed[] = [
     status: 'active',
     priceMinor: 1_200_000,
     updatedAt: '2026-07-14T10:00:00.000Z',
-    description: 'The studio staple — a mid-weight crew tee cut for an everyday, true-to-size fit.',
+    description: 'The studio staple, a mid-weight crew tee cut for an everyday, true-to-size fit.',
     fabric: '100% combed ring-spun cotton, 180gsm',
     fit: 'Regular, true to size',
     care: ['Machine wash cold, inside out', 'Do not tumble dry', 'Warm iron, avoid the print'],
@@ -797,7 +797,7 @@ const GARMENT_SEEDS: GarmentSeed[] = [
     priceMinor: 1_500_000,
     updatedAt: '2026-07-13T09:30:00.000Z',
     description:
-      'A relaxed, boxy tee with dropped shoulders — the gallery canvas for full-front art.',
+      'A relaxed, boxy tee with dropped shoulders, the gallery canvas for full-front art.',
     fabric: '100% heavyweight cotton, 240gsm',
     fit: 'Oversized, size down for a regular fit',
     care: ['Machine wash cold, inside out', 'Do not tumble dry', 'Cool iron, avoid the print'],
@@ -838,7 +838,7 @@ const GARMENT_SEEDS: GarmentSeed[] = [
     priceMinor: 2_400_000,
     updatedAt: '2026-07-11T11:45:00.000Z',
     description:
-      'A brushed-back crewneck in development — colours and stock still being finalised.',
+      'A brushed-back crewneck in development, colours and stock still being finalised.',
     fabric: '80% cotton / 20% polyester fleece, 320gsm',
     fit: 'Regular, true to size',
     care: ['Machine wash cold', 'Do not tumble dry', 'Do not iron the print'],
@@ -893,7 +893,7 @@ const GARMENT_SEEDS: GarmentSeed[] = [
     status: 'active',
     priceMinor: 900_000,
     updatedAt: '2026-07-10T08:00:00.000Z',
-    description: 'A six-panel cotton cap with an adjustable strap — one size fits most.',
+    description: 'A six-panel cotton cap with an adjustable strap, one size fits most.',
     fabric: '100% cotton twill',
     fit: 'One size, adjustable',
     care: ['Spot clean only', 'Do not machine wash', 'Reshape while damp'],
@@ -912,7 +912,7 @@ const GARMENT_SEEDS: GarmentSeed[] = [
     status: 'archived',
     priceMinor: 700_000,
     updatedAt: '2026-06-28T12:00:00.000Z',
-    description: 'A retired heavyweight canvas tote — kept for reference and reprints.',
+    description: 'A retired heavyweight canvas tote, kept for reference and reprints.',
     fabric: '100% cotton canvas, 340gsm',
     fit: 'One size',
     care: ['Machine wash cold', 'Do not tumble dry', 'Iron inside out'],
@@ -968,8 +968,8 @@ function buildGarment(seed: GarmentSeed): AdminGarmentDetail {
     fabric: seed.fabric,
     fit: seed.fit,
     care: seed.care,
-    frontMediaLabel: `${seed.name} — front (flat lay)`,
-    backMediaLabel: `${seed.name} — back (flat lay)`,
+    frontMediaLabel: `${seed.name}, front (flat lay)`,
+    backMediaLabel: `${seed.name}, back (flat lay)`,
     colours,
     sizes: seed.sizes.map((label) => ({ label })),
     variants,
@@ -1005,7 +1005,7 @@ const GARMENT_SUMMARIES: AdminGarmentSummary[] = GARMENT_RECORDS.map(toGarmentSu
 // --- Error centre (F4-006) -----------------------------------------------------
 
 /**
- * Representative integration failures. **Safe by construction** — each carries a
+ * Representative integration failures. **Safe by construction**, each carries a
  * correlation ID + human summary only, never a stack trace, payload or secret.
  */
 const ERRORS: AdminErrorEntry[] = [
@@ -1119,7 +1119,7 @@ const ERRORS: AdminErrorEntry[] = [
 
 // --- Customers + analytics (F4-006, derived from orders) -----------------------
 
-/** The dataset's "today" — anchors derivations to the sample data, not the wall clock. */
+/** The dataset's "today", anchors derivations to the sample data, not the wall clock. */
 const DATASET_NOW = new Date(
   ORDERS.reduce((latest, o) => (o.placedAt > latest ? o.placedAt : latest), ORDERS[0]!.placedAt),
 );

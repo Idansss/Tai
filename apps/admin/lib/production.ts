@@ -1,5 +1,5 @@
 /**
- * Pure production / QC / fulfilment helpers — the board's stage model, the stage
+ * Pure production / QC / fulfilment helpers, the board's stage model, the stage
  * transition machine (advance / QC pass / reprint / flag exception), grouping,
  * counts, and age formatting. Framework-free so they can be unit-tested and
  * shared by the board view.
@@ -71,7 +71,7 @@ export function stageTone(stage: ProductionStage): StatusTone {
     case 'paid':
       return 'info';
     default:
-      // queued / printing — work in progress.
+      // queued / printing, work in progress.
       return 'warning';
   }
 }

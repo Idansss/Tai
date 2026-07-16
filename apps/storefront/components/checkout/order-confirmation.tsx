@@ -33,7 +33,7 @@ export function OrderConfirmation() {
   const [order, setOrder] = useState<PlacedOrder | null>(null);
   const [ready, setReady] = useState(false);
 
-  // Read once on mount — the order was persisted by the checkout flow.
+  // Read once on mount, the order was persisted by the checkout flow.
   useEffect(() => {
     setOrder(readLastOrder());
     setReady(true);
@@ -80,7 +80,7 @@ export function OrderConfirmation() {
 
       {paid ? (
         <Alert tone="success" title="Payment received">
-          This is a preview build — payment is simulated, so no real charge was made. Your order is
+          This is a preview build, payment is simulated, so no real charge was made. Your order is
           recorded as paid and would now move into production.
         </Alert>
       ) : (
@@ -123,7 +123,7 @@ export function OrderConfirmation() {
               −<Price amountMinor={totals.discountMinor} currency={currency} />
             </Row>
           ) : null}
-          <Row label={`Delivery — ${order.deliveryOptionLabel}`}>
+          <Row label={`Delivery, ${order.deliveryOptionLabel}`}>
             {totals.deliveryMinor === 0 ? (
               'Free'
             ) : (

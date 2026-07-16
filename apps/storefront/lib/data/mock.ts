@@ -125,7 +125,7 @@ function toProductSummary(seed: ProductSeed): ProductSummary {
   return {
     id: seed.slug,
     slug: seed.slug,
-    title: `${seed.artworkTitle} — ${seed.garment}`,
+    title: `${seed.artworkTitle}, ${seed.garment}`,
     artworkSlug: seed.artworkSlug,
     artworkTitle: seed.artworkTitle,
     collection: seed.collection,
@@ -143,7 +143,7 @@ function toProductDetail(seed: ProductSeed): ProductDetail {
     description: `${seed.artworkTitle} printed on our ${seed.garment.toLowerCase()}. A gallery piece you can wear.`,
     fabric: '100% organic combed cotton, 180gsm.',
     fit: seed.garment.includes('Oversized')
-      ? 'Relaxed, boxy fit — size down for a classic cut.'
+      ? 'Relaxed, boxy fit, size down for a classic cut.'
       : 'True to size, regular fit.',
     printMethod: 'Water-based screen print, cured for durability.',
     care: 'Machine wash cold, inside out. Do not tumble dry.',
@@ -311,7 +311,7 @@ const dropSeeds: DropSeed[] = [
     title: 'Night Market',
     tagline: 'The Night Studies drop, live now.',
     story:
-      'Four pieces pulled from the quietest hours of the city — ink, neon and the last warm light on the street. Made to order in a limited run.',
+      'Four pieces pulled from the quietest hours of the city, ink, neon and the last warm light on the street. Made to order in a limited run.',
     collection: 'Night Studies',
     earlyOffset: -2 * DAY_MS,
     releaseOffset: -1 * DAY_MS,
@@ -344,10 +344,10 @@ const dropSeeds: DropSeed[] = [
   },
   {
     slug: 'comic-line-reprint',
-    title: 'Comic Line — Reprint',
+    title: 'Comic Line, Reprint',
     tagline: 'Sold out in record time.',
     story:
-      'A one-week reprint of the Comic Line favourites. This run has fully sold through — join the waitlist for the next one.',
+      'A one-week reprint of the Comic Line favourites. This run has fully sold through, join the waitlist for the next one.',
     collection: 'Comic Line',
     earlyOffset: -6 * DAY_MS,
     releaseOffset: -5 * DAY_MS,
@@ -357,7 +357,7 @@ const dropSeeds: DropSeed[] = [
   {
     slug: 'first-light',
     title: 'First Light',
-    tagline: 'The drop that started it all — now closed.',
+    tagline: 'The drop that started it all, now closed.',
     story:
       'The studio’s first limited release, archived here for the record. Closed to new orders.',
     collection: 'Night Studies',
@@ -404,7 +404,7 @@ function productTarget(slug: string): StoryHotspotTarget {
   return {
     kind: 'product',
     slug,
-    label: p ? `${p.artworkTitle} — ${p.garment}` : slug,
+    label: p ? `${p.artworkTitle}, ${p.garment}` : slug,
     priceMinor: p?.priceMinor ?? 0,
     currency: 'NGN',
   };
@@ -425,7 +425,7 @@ const storySeeds: StorySeed[] = [
     title: 'How Midnight in Lagos came together',
     category: 'Process',
     excerpt:
-      'From a blurred phone photo on a night bus to a single unbroken line — the making of our most-worn piece.',
+      'From a blurred phone photo on a night bus to a single unbroken line, the making of our most-worn piece.',
     readMinutes: 5,
     publishedOn: '2026-06-20',
     intro:
@@ -434,7 +434,7 @@ const storySeeds: StorySeed[] = [
       { kind: 'heading', text: 'From a photograph to a line' },
       {
         kind: 'paragraph',
-        text: 'The first sketches chased the neon — too much of it. Stripping the scene back to one continuous line was what finally made the city feel awake rather than lit up.',
+        text: 'The first sketches chased the neon, too much of it. Stripping the scene back to one continuous line was what finally made the city feel awake rather than lit up.',
       },
       {
         kind: 'scene',
@@ -494,7 +494,7 @@ const storySeeds: StorySeed[] = [
     title: 'Styling the City Portraits drop',
     category: 'Lookbook',
     excerpt:
-      'Three street scenes, three ways to wear them — from the market run to the evening out.',
+      'Three street scenes, three ways to wear them, from the market run to the evening out.',
     readMinutes: 4,
     publishedOn: '2026-07-02',
     intro:
@@ -574,7 +574,7 @@ const storySeeds: StorySeed[] = [
     readMinutes: 6,
     publishedOn: '2026-05-15',
     intro:
-      'Comic Line is a self-imposed constraint — every panel drawn in a single continuous stroke. The constraint is the point.',
+      'Comic Line is a self-imposed constraint, every panel drawn in a single continuous stroke. The constraint is the point.',
     blocks: [
       { kind: 'heading', text: 'One line, no lifting the pen' },
       {
@@ -673,7 +673,7 @@ const reviewSeeds: Record<string, Review[]> = {
       id: 'rv-pt-1',
       rating: 5,
       title: 'Bold and comfortable',
-      body: 'The oversized cut is exactly right and the ink sits flat — no cracking after several washes.',
+      body: 'The oversized cut is exactly right and the ink sits flat, no cracking after several washes.',
       author: 'Kelechi N.',
       createdAt: '2026-07-01T08:00:00.000Z',
       verifiedPurchase: true,
@@ -712,7 +712,7 @@ const reviewSeeds: Record<string, Review[]> = {
 
 /**
  * Community photo seeds (TMS-F5-005). Includes a couple of non-approved photos
- * on purpose so the moderation-aware filter is exercised — the public methods
+ * on purpose so the moderation-aware filter is exercised, the public methods
  * must never surface them. Real UGC + moderation is server-side (TMS-FBR-008).
  */
 const communityPhotoSeeds: CommunityPhoto[] = [
@@ -761,7 +761,7 @@ const communityPhotoSeeds: CommunityPhoto[] = [
     status: 'approved',
     createdAt: '2026-06-20T11:00:00.000Z',
   },
-  // Non-approved — must never appear in the public gallery.
+  // Non-approved, must never appear in the public gallery.
   {
     id: 'cp-6',
     artworkSlug: 'paper-tigers',
@@ -783,7 +783,7 @@ const communityPhotoSeeds: CommunityPhoto[] = [
 ];
 
 /**
- * Loyalty rewards catalogue (TMS-F5-010). Illustrative — real earning/redemption
+ * Loyalty rewards catalogue (TMS-F5-010). Illustrative, real earning/redemption
  * is server-authoritative (TMS-FBR-008).
  */
 const loyaltyRewards: LoyaltyReward[] = [
@@ -870,7 +870,7 @@ export const mockProvider: StorefrontDataProvider = {
     const provenance: ProvenanceEvent[] = [
       {
         label: 'Drawn in the studio',
-        detail: `${detail.title} — original linework by the Tai Manic Studios team.`,
+        detail: `${detail.title}, original linework by the Tai Manic Studios team.`,
         date: release,
       },
       {
@@ -881,7 +881,7 @@ export const mockProvider: StorefrontDataProvider = {
       editionSize
         ? {
             label: 'Edition opened',
-            detail: `A numbered run of ${editionSize} — each piece is serialised when it is purchased.`,
+            detail: `A numbered run of ${editionSize}, each piece is serialised when it is purchased.`,
             date: release,
           }
         : {
@@ -898,7 +898,7 @@ export const mockProvider: StorefrontDataProvider = {
       versionId,
       edition,
       editionSize,
-      // Illustrative only — a real serial is assigned to a piece at purchase.
+      // Illustrative only, a real serial is assigned to a piece at purchase.
       serialExample: editionSize ? passportSerial(42, editionSize) : null,
       releasedOn: release,
       issuedBy: 'Tai Manic Studios',
@@ -981,7 +981,7 @@ export const mockProvider: StorefrontDataProvider = {
       },
       {
         id: 'pickup',
-        label: 'Studio pickup — Lagos',
+        label: 'Studio pickup, Lagos',
         description: 'Collect from the studio in Lagos. We email when it is ready.',
         priceMinor: 0,
         currency: 'NGN',

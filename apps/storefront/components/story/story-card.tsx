@@ -19,7 +19,7 @@ export function StoryCard({ story }: { story: StorySummary }) {
         <div
           className="relative aspect-[16/9] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
           role="img"
-          aria-label={`${story.title} — story cover placeholder`}
+          aria-label={`${story.title}, story cover placeholder`}
         >
           {story.shoppableCount > 0 ? (
             <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-medium text-ink">

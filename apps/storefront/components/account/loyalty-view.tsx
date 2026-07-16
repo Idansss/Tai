@@ -18,7 +18,7 @@ import { useRequireAuth } from './use-require-auth';
 const HOW_IT_WORKS = [
   'Earn 1 point for every ₦100 you spend.',
   'Get bonus points for reviews and referrals.',
-  'Redeem points for rewards — and climb tiers as you go.',
+  'Redeem points for rewards, and climb tiers as you go.',
 ];
 
 export function LoyaltyView() {
@@ -63,7 +63,7 @@ function LoyaltyContent({ profile, origin }: { profile: LoyaltyProfile; origin: 
   return (
     <div className="space-y-8">
       <p className="rounded-[var(--radius-md)] border border-line bg-canvas-2 p-3 text-xs text-muted">
-        Preview — points, tiers and rewards shown here are illustrative. Earning, redeeming and
+        Preview, points, tiers and rewards shown here are illustrative. Earning, redeeming and
         referral tracking arrive with the loyalty backend (TMS-FBR-008).
       </p>
 
@@ -114,7 +114,7 @@ function LoyaltyContent({ profile, origin }: { profile: LoyaltyProfile; origin: 
           <p className="mt-2 text-sm text-ink-2">
             {toNext !== null && next
               ? `${toNext.toLocaleString()} points to ${next.label}.`
-              : "You're at the top tier — thank you."}
+              : "You're at the top tier, thank you."}
           </p>
         </div>
       </section>
@@ -175,7 +175,7 @@ function RewardCard({ reward, points }: { reward: LoyaltyReward; points: number 
       <p className="mt-1 flex-1 text-sm text-muted">{reward.description}</p>
       {redeemed ? (
         <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-success">
-          <Check className="size-4" aria-hidden /> Saved — redeem at checkout once live
+          <Check className="size-4" aria-hidden /> Saved, redeem at checkout once live
         </p>
       ) : (
         <Button
@@ -287,7 +287,7 @@ function ReferralCard({ profile, origin }: { profile: LoyaltyProfile; origin: st
         {note}
       </p>
       <p className="mt-1 text-xs text-muted">
-        Preview — the link is shareable, but referrals aren’t tracked and no reward is granted yet
+        Preview, the link is shareable, but referrals aren’t tracked and no reward is granted yet
         (TMS-FBR-008).
       </p>
     </section>

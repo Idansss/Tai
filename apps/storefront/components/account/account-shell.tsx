@@ -7,7 +7,7 @@ import Link from 'next/link';
 /**
  * Presentational frame for the signed-in account sub-pages: a consistent back
  * link, title, optional description and action. When `loading` is set it renders
- * a skeleton instead of its children — callers pass this while the session or
+ * a skeleton instead of its children, callers pass this while the session or
  * page data is still hydrating (auth guarding lives in `useRequireAuth`).
  */
 export function AccountShell({

@@ -6,7 +6,7 @@ import { sortDrops } from '@/lib/drops';
 
 export const metadata: Metadata = {
   title: 'Drops',
-  description: 'Limited releases from the studio — early access, live drops, and past editions.',
+  description: 'Limited releases from the studio, early access, live drops, and past editions.',
 };
 
 // Time-sensitive (live statuses + countdowns) → render at request time so the

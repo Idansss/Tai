@@ -1,7 +1,7 @@
 import type { AdminDataProvider } from './types';
 
 /**
- * Real admin API adapter — a loud-failing stub until Codex publishes the admin
+ * Real admin API adapter, a loud-failing stub until Codex publishes the admin
  * read endpoints (dashboard metrics, orders, production, etc.). Selecting it via
  * DATA_SOURCE=api before the endpoints exist should fail obviously rather than
  * silently returning empty data.

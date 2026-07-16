@@ -68,7 +68,7 @@ describe('artworkActions + applyArtworkAction', () => {
     expect(applyArtworkAction('archived', 'restore')).toBe('draft');
   });
   it('ignores invalid transitions', () => {
-    // published can't be "published" again — publish isn't an allowed action there
+    // published can't be "published" again, publish isn't an allowed action there
     expect(applyArtworkAction('published', 'publish')).toBe('published');
     expect(applyArtworkAction('needs_review', 'publish')).toBe('needs_review');
   });

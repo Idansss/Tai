@@ -83,7 +83,7 @@ describe('generateVariants', () => {
 });
 
 describe('draftFromVariant', () => {
-  it('always produces a draft — never a published status', () => {
+  it('always produces a draft, never a published status', () => {
     const [variant] = generateVariants(input(), NOW);
     const draft = draftFromVariant(variant!, input(), variant!.text, NOW);
     expect(draft.status).toBe('draft');

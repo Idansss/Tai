@@ -1,9 +1,9 @@
 /**
- * Brand Storyteller — admin AI draft generation, mock generator (TMS-F5-009).
+ * Brand Storyteller, admin AI draft generation, mock generator (TMS-F5-009).
  * A deterministic, pure stand-in for the real generation endpoint
  * (TMS-FBR-009). The hard rule: this **never publishes**. It produces draft
  * variants with generation metadata; a human selects, edits, and approves a
- * draft, and even an approved draft is only ever a saved *draft* here — going
+ * draft, and even an approved draft is only ever a saved *draft* here, going
  * live is a separate, human, publish action elsewhere.
  */
 
@@ -69,7 +69,7 @@ export interface GeneratedVariant {
   meta: GenerationMeta;
 }
 
-/** A saved draft — always a draft. This tool never publishes (TMS-F5-009). */
+/** A saved draft, always a draft. This tool never publishes (TMS-F5-009). */
 export interface ContentDraft {
   id: string;
   sourceKind: SourceKind;
@@ -111,7 +111,7 @@ const TEMPLATES: Record<ContentType, ToneTemplate[]> = {
     {
       tone: 'Editorial',
       build: (t) =>
-        `${t} began as a single drawing and now lives on premium cotton. Wear it like a piece from the gallery — considered, quietly bold, and made to last.`,
+        `${t} began as a single drawing and now lives on premium cotton. Wear it like a piece from the gallery, considered, quietly bold, and made to last.`,
     },
     {
       tone: 'Punchy',
@@ -142,7 +142,7 @@ const TEMPLATES: Record<ContentType, ToneTemplate[]> = {
     {
       tone: 'Editorial',
       build: (t) =>
-        `${t} gathers the pieces we kept coming back to — a set of drawings that share a mood more than a subject. Read them as a series, or find the one that’s yours.`,
+        `${t} gathers the pieces we kept coming back to, a set of drawings that share a mood more than a subject. Read them as a series, or find the one that’s yours.`,
     },
     {
       tone: 'Punchy',

@@ -10,7 +10,7 @@ interface Params {
   params: Promise<{ slug: string }>;
 }
 
-// Stories are a finite, enumerable set, so — like the catalogue detail routes —
+// Stories are a finite, enumerable set, so, like the catalogue detail routes -
 // every page is statically generated and an unknown slug is a genuine
 // routing-layer 404 (TMS-F1-DEF-001). A real CMS feed would enumerate here.
 export const dynamicParams = false;

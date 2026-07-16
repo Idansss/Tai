@@ -80,7 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
-      // Storage full or unavailable (private mode) — cart still works in-session.
+      // Storage full or unavailable (private mode), cart still works in-session.
     }
   }, [items, promotion, ready]);
 

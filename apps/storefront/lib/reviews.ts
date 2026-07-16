@@ -36,7 +36,7 @@ export function distributionPercents(stats: ReviewStats): Record<number, number>
   return out;
 }
 
-/** Average rounded to one decimal place, e.g. 4.3 — for display. */
+/** Average rounded to one decimal place, e.g. 4.3, for display. */
 export function formatAverage(average: number): string {
   return average.toFixed(1);
 }
@@ -57,7 +57,7 @@ export type ReviewFieldErrors = Partial<Record<keyof ReviewInput, string>>;
 
 export type ReviewValidation = { ok: true } | { ok: false; errors: ReviewFieldErrors };
 
-/** Validate a write-a-review submission. Pure — the form and any API share it. */
+/** Validate a write-a-review submission. Pure, the form and any API share it. */
 export function validateReviewInput(input: ReviewInput): ReviewValidation {
   const errors: ReviewFieldErrors = {};
   if (!RATING_VALUES.includes(input.rating as (typeof RATING_VALUES)[number])) {

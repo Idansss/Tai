@@ -1,9 +1,9 @@
 'use client';
 
-import { Badge, IconButton, cn } from '@tms/ui';
+import { Badge, IconButton, Select, cn } from '@tms/ui';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useCallback, useRef } from 'react';
+import { type ReactNode, useCallback, useMemo, useRef } from 'react';
 import type { ArtworkFilters as Filters } from '@/lib/gallery-params';
 import { buildArtworkQuery, hasActiveFilters } from '@/lib/gallery-params';
 
@@ -24,9 +24,6 @@ const availabilityLabel: Record<string, string> = {
   limited: 'Limited edition',
   sold_out: 'Sold out',
 };
-
-const selectClass =
-  'h-10 w-full rounded-md border border-line-2 bg-surface px-3 text-sm text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]';
 
 export function ArtworkFilters({
   collections,
@@ -52,61 +49,55 @@ export function ArtworkFilters({
 
   const clear = useCallback(() => navigate({ sort: 'newest' }), [navigate]);
 
+  const collectionOptions = useMemo(
+    () => [
+      { value: '', label: 'All collections' },
+      ...collections.map((c) => ({ value: c, label: c })),
+    ],
+    [collections],
+  );
+
   const controls = (idPrefix: string): ReactNode => (
     <>
       <div>
         <label htmlFor={`${idPrefix}-collection`} className="text-xs font-medium text-ink-2">
           Collection
         </label>
-        <select
+        <Select
           id={`${idPrefix}-collection`}
-          className={cn(selectClass, 'mt-1')}
+          className="mt-1"
           value={filters.collection ?? ''}
-          onChange={(e) => set({ collection: e.target.value || undefined })}
-        >
-          <option value="">All collections</option>
-          {collections.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => set({ collection: next || undefined })}
+          options={collectionOptions}
+          placeholder="All collections"
+        />
       </div>
       <div>
         <label htmlFor={`${idPrefix}-availability`} className="text-xs font-medium text-ink-2">
           Availability
         </label>
-        <select
+        <Select
           id={`${idPrefix}-availability`}
-          className={cn(selectClass, 'mt-1')}
+          className="mt-1"
           value={filters.availability ?? ''}
-          onChange={(e) =>
-            set({ availability: (e.target.value || undefined) as Filters['availability'] })
+          onChange={(next) =>
+            set({ availability: (next || undefined) as Filters['availability'] })
           }
-        >
-          {availabilityOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          options={availabilityOptions}
+          placeholder="Any availability"
+        />
       </div>
       <div>
         <label htmlFor={`${idPrefix}-sort`} className="text-xs font-medium text-ink-2">
           Sort
         </label>
-        <select
+        <Select
           id={`${idPrefix}-sort`}
-          className={cn(selectClass, 'mt-1')}
+          className="mt-1"
           value={filters.sort}
-          onChange={(e) => set({ sort: e.target.value as Filters['sort'] })}
-        >
-          {sortOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => set({ sort: next as Filters['sort'] })}
+          options={sortOptions}
+        />
       </div>
     </>
   );

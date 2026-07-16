@@ -43,7 +43,7 @@ export function WishlistView() {
               <Link
                 href={`/products/${item.slug}`}
                 className="block aspect-[3/4] w-full bg-gradient-to-br from-canvas-2 to-surface-2 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-                aria-label={`${item.title} — view product`}
+                aria-label={`${item.title}, view product`}
               />
               <div className="flex flex-1 flex-col gap-1 p-4">
                 <Eyebrow>{item.garment}</Eyebrow>

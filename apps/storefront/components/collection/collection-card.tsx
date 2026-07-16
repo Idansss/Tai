@@ -13,7 +13,7 @@ export function CollectionCard({ collection }: { collection: CollectionSummary }
         <div
           className="aspect-[16/9] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
           role="img"
-          aria-label={`${collection.name} — collection cover placeholder`}
+          aria-label={`${collection.name}, collection cover placeholder`}
         />
         <div className="space-y-2 p-5">
           <Eyebrow>

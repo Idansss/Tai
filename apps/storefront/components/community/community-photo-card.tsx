@@ -5,7 +5,7 @@ import { moderationLabel, moderationTone } from '@/lib/community';
 
 /**
  * A single community photo tile (TMS-F5-005). Placeholder imagery (no real
- * uploads yet). Pass `showStatus` to surface the moderation badge — used only
+ * uploads yet). Pass `showStatus` to surface the moderation badge, used only
  * for the submitter's own in-review preview, never for the public feed.
  */
 export function CommunityPhotoCard({
@@ -20,7 +20,7 @@ export function CommunityPhotoCard({
       <div
         className="relative aspect-square w-full bg-gradient-to-br from-canvas-2 to-surface-2"
         role="img"
-        aria-label={`Community photo by ${photo.handle} — placeholder`}
+        aria-label={`Community photo by ${photo.handle}, placeholder`}
       >
         {showStatus ? (
           <span className="absolute left-3 top-3">

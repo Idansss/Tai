@@ -31,7 +31,7 @@ export function CartView() {
       <EmptyState
         icon={<ShoppingBag className="size-6" aria-hidden />}
         title="Your bag is empty"
-        description="Browse the gallery or design your own piece — everything you add is saved here."
+        description="Browse the gallery or design your own piece, everything you add is saved here."
         action={
           <div className="flex flex-wrap justify-center gap-3">
             <Link

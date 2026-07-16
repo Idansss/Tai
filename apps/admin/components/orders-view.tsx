@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Eyebrow, Heading, Select, Skeleton, Text, cn } from '@tms/ui';
 import type { OrderStatus } from '@tms/contracts';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
@@ -82,7 +82,7 @@ export function OrdersView() {
       </div>
 
       <Alert tone="info" title="Preview data">
-        Orders below are representative sample data — the admin order API isn’t connected yet.
+        Orders below are representative sample data, the admin order API isn’t connected yet.
       </Alert>
 
       {/* Controls */}
@@ -108,19 +108,15 @@ export function OrdersView() {
           <label htmlFor="order-status" className="sr-only">
             Filter by status
           </label>
-          <select
+          <Select
             id="order-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className={controlClass}
-          >
-            <option value="all">All statuses</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {formatOrderStatus(s)}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setStatus(next as StatusFilter)}
+            options={[
+              { value: 'all', label: 'All statuses' },
+              ...STATUS_OPTIONS.map((s) => ({ value: s, label: formatOrderStatus(s) })),
+            ]}
+          />
         </div>
         {result ? (
           <span className="text-sm text-muted" aria-live="polite">

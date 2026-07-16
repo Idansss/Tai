@@ -6,7 +6,7 @@ function reply(outcome: GuideOutcome) {
   return outcome.reply;
 }
 
-describe('studioGuideRespond — guardrails', () => {
+describe('studioGuideRespond, guardrails', () => {
   it('never invents a price and points to the authoritative source', () => {
     const r = reply(studioGuideRespond('how much does the tee cost?'));
     expect(r.guardrail).toBe(true);
@@ -28,7 +28,7 @@ describe('studioGuideRespond — guardrails', () => {
   });
 });
 
-describe('studioGuideRespond — tool failure', () => {
+describe('studioGuideRespond, tool failure', () => {
   it('returns a recoverable tool_error for order-status questions', () => {
     const outcome = studioGuideRespond('where is my order?');
     expect(outcome.kind).toBe('tool_error');
@@ -39,7 +39,7 @@ describe('studioGuideRespond — tool failure', () => {
   });
 });
 
-describe('studioGuideRespond — topic answers', () => {
+describe('studioGuideRespond, topic answers', () => {
   it('routes design questions to the Design Studio', () => {
     const r = reply(studioGuideRespond('how do I design my own piece?'));
     expect(r.guardrail).toBe(false);

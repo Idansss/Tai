@@ -85,7 +85,7 @@ export function ArtworkDetailView({ id }: { id: string }) {
     setStatus(next);
     setNotice({
       tone: 'info',
-      text: `Preview build — this would call the catalogue API. Status set to “${formatArtworkStatus(next)}” locally.`,
+      text: `Preview build, this would call the catalogue API. Status set to “${formatArtworkStatus(next)}” locally.`,
     });
   }
 
@@ -190,7 +190,7 @@ export function ArtworkDetailView({ id }: { id: string }) {
             </div>
             {mockups.length === 0 ? (
               <Text size="sm" tone="muted">
-                No mockups yet — they’re generated after the artwork is processed.
+                No mockups yet, they’re generated after the artwork is processed.
               </Text>
             ) : (
               <ul className="space-y-2">

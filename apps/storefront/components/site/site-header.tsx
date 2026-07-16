@@ -94,7 +94,7 @@ export function SiteHeader() {
             </Link>
             <Link
               href={authReady && user ? '/account' : '/login'}
-              aria-label={authReady && user ? `Account — ${user.name}` : 'Sign in'}
+              aria-label={authReady && user ? `Account, ${user.name}` : 'Sign in'}
               className="inline-flex size-11 items-center justify-center rounded-[var(--radius-md)] text-ink outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
             >
               <User className="size-5" aria-hidden />

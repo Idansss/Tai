@@ -1,5 +1,5 @@
 /**
- * Cart domain logic — pure and framework-free so it can be unit-tested and
+ * Cart domain logic, pure and framework-free so it can be unit-tested and
  * shared between the cart drawer, the cart page and (later) checkout.
  *
  * Money is authoritative on the server (see MASTER_PRODUCT_SPEC §"server is
@@ -10,7 +10,7 @@
  */
 
 export interface CartItem {
-  /** Stable line id — identical configurations merge into one line. */
+  /** Stable line id, identical configurations merge into one line. */
   id: string;
   /** Slug of the product this line represents (used for the default link). */
   productSlug: string;
@@ -30,7 +30,7 @@ export interface CartItem {
   view?: string;
 }
 
-/** A configuration a caller wants to add — everything but the derived id. */
+/** A configuration a caller wants to add, everything but the derived id. */
 export type CartItemInput = Omit<CartItem, 'id' | 'quantity'> & { quantity?: number };
 
 export const MAX_LINE_QUANTITY = 20;

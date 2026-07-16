@@ -121,7 +121,7 @@ describe('mockProvider artwork passport', () => {
     expect(passport?.edition).toBe('Open edition');
   });
 
-  it('is deterministic — the version id does not change between reads', async () => {
+  it('is deterministic, the version id does not change between reads', async () => {
     const a = await mockProvider.getArtworkPassport('market-day');
     const b = await mockProvider.getArtworkPassport('market-day');
     expect(a?.versionId).toBe(b?.versionId);

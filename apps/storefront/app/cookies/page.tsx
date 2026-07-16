@@ -46,7 +46,7 @@ export default function Page() {
           body: (
             <p>
               You can clear or block cookies in your browser settings. Blocking essential cookies
-              will stop parts of the site — like your bag and checkout — from working properly.
+              will stop parts of the site, like your bag and checkout, from working properly.
             </p>
           ),
         },

@@ -63,7 +63,7 @@ export function DashboardView() {
       </div>
 
       <Alert tone="info" title="Preview data">
-        Figures below are representative sample data — the admin read endpoints aren’t connected
+        Figures below are representative sample data, the admin read endpoints aren’t connected
         yet, so nothing here reflects real orders.
       </Alert>
 
@@ -71,7 +71,7 @@ export function DashboardView() {
 
       {state.phase === 'error' ? (
         <Alert tone="error" title="Couldn’t load the dashboard">
-          Something went wrong loading the operational summary. Your data is safe — refresh to try
+          Something went wrong loading the operational summary. Your data is safe, refresh to try
           again.
         </Alert>
       ) : null}

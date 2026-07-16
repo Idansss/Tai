@@ -97,7 +97,7 @@ export function ArtworkUpload() {
       </div>
 
       <Alert tone="info" title="Preview build">
-        No file is uploaded or stored — this simulates the upload, processing and validation states.
+        No file is uploaded or stored, this simulates the upload, processing and validation states.
       </Alert>
 
       {phase === 'idle' ? (
@@ -209,7 +209,7 @@ export function ArtworkUpload() {
           )}
 
           <Text size="sm" tone="muted">
-            In the preview build the draft isn’t persisted — once the catalogue API is connected
+            In the preview build the draft isn’t persisted, once the catalogue API is connected
             this opens the new artwork for review.
           </Text>
 

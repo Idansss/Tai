@@ -26,7 +26,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
  * A live drop countdown. The ticking digits are `aria-hidden`; a `role="timer"`
  * element carries an accessible summary so a screen reader gets a stable,
  * non-spammy label. Digits render only after mount to avoid a hydration
- * mismatch (server clock ≠ client clock). No animation library — reduced-motion
+ * mismatch (server clock ≠ client clock). No animation library, reduced-motion
  * safe by construction.
  */
 export function Countdown({ target, label, onComplete, size = 'sm' }: CountdownProps) {

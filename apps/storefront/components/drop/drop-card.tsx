@@ -20,7 +20,7 @@ export function DropCard({ drop, now }: { drop: DropSummary; now: number }) {
         <div
           className="relative aspect-[16/9] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
           role="img"
-          aria-label={`${drop.title} — drop cover placeholder`}
+          aria-label={`${drop.title}, drop cover placeholder`}
         >
           <div className="absolute left-4 top-4">
             <DropStatusBadge status={status} />

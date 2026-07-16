@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Eyebrow, Heading, Select, Skeleton, Text, cn } from '@tms/ui';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -51,7 +51,7 @@ export function GarmentsView() {
       </div>
 
       <Alert tone="info" title="Preview data">
-        Garments below are representative sample data — the admin catalogue API isn’t connected yet.
+        Garments below are representative sample data, the admin catalogue API isn’t connected yet.
       </Alert>
 
       {/* Controls */}
@@ -77,19 +77,15 @@ export function GarmentsView() {
           <label htmlFor="garment-status" className="sr-only">
             Filter by status
           </label>
-          <select
+          <Select
             id="garment-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value as GarmentStatus | 'all')}
-            className={controlClass}
-          >
-            <option value="all">All statuses</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {formatGarmentStatus(s)}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => setStatus(next as GarmentStatus | 'all')}
+            options={[
+              { value: 'all', label: 'All statuses' },
+              ...STATUS_OPTIONS.map((s) => ({ value: s, label: formatGarmentStatus(s) })),
+            ]}
+          />
         </div>
         {all ? (
           <span className="text-sm text-muted" aria-live="polite">

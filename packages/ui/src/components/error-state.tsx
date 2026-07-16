@@ -3,7 +3,7 @@ import { cn } from '../lib/cn.js';
 
 export interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   title?: ReactNode;
-  /** What happened, in plain language — never a raw error payload. */
+  /** What happened, in plain language, never a raw error payload. */
   description?: ReactNode;
   /** Whether the customer's data/work was preserved (master prompt §21). */
   dataPreservedNote?: ReactNode;

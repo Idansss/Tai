@@ -28,7 +28,7 @@ const iconButtonVariants = cva(
 
 export interface IconButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof iconButtonVariants> {
-  /** Required accessible name — icon-only controls have no visible text. */
+  /** Required accessible name, icon-only controls have no visible text. */
   label: string;
   icon: ReactNode;
   loading?: boolean;

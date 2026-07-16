@@ -24,7 +24,7 @@ export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
         <div
           className="aspect-[4/5] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
           role="img"
-          aria-label={`${artwork.title} — artwork preview placeholder`}
+          aria-label={`${artwork.title}, artwork preview placeholder`}
         />
         <div className="space-y-2 p-5">
           <div className="flex items-center justify-between gap-2">

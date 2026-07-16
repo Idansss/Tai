@@ -55,7 +55,7 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {/* Featured artworks (mock adapter — TMS-FBR-001 pending) */}
+      {/* Featured artworks (mock adapter, TMS-FBR-001 pending) */}
       <section aria-labelledby="gallery-title">
         <Container className="py-16">
           <div className="flex items-end justify-between gap-4">
@@ -83,7 +83,7 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {/* Design system showcase — proves tokens, states, and both themes */}
+      {/* Design system showcase, proves tokens, states, and both themes */}
       <section id="system" className="border-t border-line bg-canvas-2">
         <Container className="py-16">
           <Eyebrow>Foundation</Eyebrow>
@@ -205,7 +205,7 @@ export default async function HomePage() {
                 Design your own piece
               </Heading>
               <Text tone="secondary" className="mt-1">
-                Choose an artwork, a garment, colour, size and placement — with a live preview.
+                Choose an artwork, a garment, colour, size and placement, with a live preview.
               </Text>
             </div>
             <Link href="/design-studio" className={buttonVariants({ size: 'lg' })}>

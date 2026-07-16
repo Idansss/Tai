@@ -28,7 +28,7 @@ export default function Page() {
           body: (
             <p>
               Placing an order is an offer to buy; a contract forms when we confirm it. Because
-              pieces are made to order, production begins shortly after payment — see{' '}
+              pieces are made to order, production begins shortly after payment, see{' '}
               <a
                 href="/returns"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
@@ -53,8 +53,8 @@ export default function Page() {
           heading: 'Availability',
           body: (
             <p>
-              Availability and limited editions can change. If we can’t fulfil an order — for
-              example a sold-out edition — we’ll let you know and refund you in full.
+              Availability and limited editions can change. If we can’t fulfil an order, for
+              example a sold-out edition, we’ll let you know and refund you in full.
             </p>
           ),
         },

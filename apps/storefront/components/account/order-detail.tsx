@@ -126,7 +126,7 @@ export function OrderDetail({ reference }: { reference: string }) {
                 </ol>
               ) : null}
               <Text size="sm" tone="muted" className="mt-2">
-                Preview build — production status is simulated and will update live once the orders
+                Preview build, production status is simulated and will update live once the orders
                 API is connected.
               </Text>
             </section>

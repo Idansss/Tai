@@ -8,7 +8,7 @@ import type { StatusTone } from '../order-status';
  * (order/payment/shipping status) come from @tms/contracts so the mock and the
  * real backend speak the same language.
  *
- * The admin platform has **no backend yet** — every screen runs on the typed
+ * The admin platform has **no backend yet**, every screen runs on the typed
  * mock adapter and is recorded in FRONTEND_HANDOFF.md until it is swapped.
  */
 
@@ -245,7 +245,7 @@ export interface SizeChartRow {
   sleeveCm: number;
 }
 
-/** A print-safe area — the maximum printable box on the front or back. */
+/** A print-safe area, the maximum printable box on the front or back. */
 export interface PrintArea {
   id: string;
   view: 'front' | 'back';
@@ -254,7 +254,7 @@ export interface PrintArea {
   heightCm: number;
 }
 
-/** A placement rule — where artwork may sit, and whether it's currently allowed. */
+/** A placement rule, where artwork may sit, and whether it's currently allowed. */
 export interface PlacementRule {
   id: string;
   label: string;
@@ -351,16 +351,16 @@ export type ErrorResolution = 'open' | 'investigating' | 'retrying' | 'resolved'
 
 /**
  * A single integration failure. **Safe by construction** (spec §18): it carries a
- * correlation ID and a human summary only — never a stack trace, payload or secret.
+ * correlation ID and a human summary only, never a stack trace, payload or secret.
  */
 export interface AdminErrorEntry {
   id: string;
-  /** Correlation ID for cross-system tracing — safe to display, not a secret. */
+  /** Correlation ID for cross-system tracing, safe to display, not a secret. */
   correlationId: string;
   source: ErrorSource;
   severity: ErrorSeverity;
   resolution: ErrorResolution;
-  /** A safe, human-readable summary — no stack traces or secrets. */
+  /** A safe, human-readable summary, no stack traces or secrets. */
   message: string;
   occurredAt: string;
   /** Order reference this failure affected, when applicable (links to the order). */

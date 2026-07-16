@@ -2,7 +2,7 @@
  * Mock authentication for the preview storefront. There is no auth backend yet
  * (TMS-FBR-005), so this models a **demo session** entirely client-side:
  *
- * - Accounts are a local list of `{ email, name }` — **no passwords are ever
+ * - Accounts are a local list of `{ email, name }`, **no passwords are ever
  *   stored** (client-side password storage would be a bad pattern to model).
  * - Register adds an account (rejecting duplicate emails) and starts a session.
  * - Login looks the email up and starts a session; the password is validated
@@ -92,7 +92,7 @@ export function writeAccounts(accounts: Account[]): void {
   try {
     window.localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
   } catch {
-    // storage unavailable — session still works for this tab
+    // storage unavailable, session still works for this tab
   }
 }
 

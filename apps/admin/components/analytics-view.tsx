@@ -59,7 +59,7 @@ export function AnalyticsView() {
       </div>
 
       <Alert tone="info" title="Preview data">
-        Figures are computed from representative sample orders — the admin analytics API isn’t
+        Figures are computed from representative sample orders, the admin analytics API isn’t
         connected yet.
       </Alert>
 
@@ -67,7 +67,7 @@ export function AnalyticsView() {
 
       {state.phase === 'error' ? (
         <Alert tone="error" title="Couldn’t load analytics">
-          Something went wrong loading the report. Your data is safe — refresh to try again.
+          Something went wrong loading the report. Your data is safe, refresh to try again.
         </Alert>
       ) : null}
 

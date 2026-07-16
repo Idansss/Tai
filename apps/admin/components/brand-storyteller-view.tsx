@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Badge, Button, cn, Eyebrow, Heading, Skeleton, Text } from '@tms/ui';
+import { Alert, Badge, Button, cn, Eyebrow, Heading, Select, Skeleton, Text } from '@tms/ui';
 import { Check, Sparkles, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { adminDataProvider, type AdminArtworkSummary } from '@/lib/data';
@@ -32,7 +32,7 @@ function fmtDateTime(iso: string): string {
 /**
  * Brand Storyteller (TMS-F5-009). Select an artwork or collection + a content
  * type, generate mock variants, compare, edit, and approve into a saved draft.
- * It **never publishes** — approving only saves a draft; going live is a
+ * It **never publishes**, approving only saves a draft; going live is a
  * separate human action. The real generation endpoint lands under TMS-FBR-009.
  */
 export function BrandStorytellerView() {
@@ -92,7 +92,7 @@ export function BrandStorytellerView() {
     setVariants(null);
     setSelectedId(null);
     setSavedNote(null);
-    // Simulated generation latency — the real call hits TMS-FBR-009.
+    // Simulated generation latency, the real call hits TMS-FBR-009.
     await new Promise((r) => setTimeout(r, 600));
     setActiveInput(input);
     setVariants(generateVariants(input));
@@ -126,11 +126,11 @@ export function BrandStorytellerView() {
         </Heading>
         <Text tone="secondary" className="mt-2">
           Generate on-brand copy drafts for an artwork or collection. Review, edit, and approve into
-          a draft — nothing is published automatically.
+          a draft, nothing is published automatically.
         </Text>
         <p className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-canvas-2 px-2.5 py-1 text-xs text-muted">
           <Sparkles className="size-3.5 text-accent" aria-hidden />
-          Preview — a mock generator. Output is a draft only and never goes live on its own
+          Preview, a mock generator. Output is a draft only and never goes live on its own
           (TMS-FBR-009).
         </p>
       </header>
@@ -174,25 +174,18 @@ export function BrandStorytellerView() {
             {artworks === null ? (
               <Skeleton className="mt-1 h-10 w-full" />
             ) : (
-              <select
+              <Select
                 id="source-select"
                 value={sourceId}
-                onChange={(e) => setSourceId(e.target.value)}
-                className={cn(controlClass, 'mt-1')}
-              >
-                <option value="">Choose…</option>
-                {sourceKind === 'artwork'
-                  ? artworks.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.title}
-                      </option>
-                    ))
-                  : collections.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-              </select>
+                onChange={setSourceId}
+                placeholder="Choose…"
+                className="mt-1"
+                options={
+                  sourceKind === 'artwork'
+                    ? artworks.map((a) => ({ value: a.id, label: a.title }))
+                    : collections.map((c) => ({ value: c, label: c }))
+                }
+              />
             )}
           </div>
 
@@ -200,18 +193,13 @@ export function BrandStorytellerView() {
             <label htmlFor="content-type" className="text-sm font-medium text-ink">
               Content type
             </label>
-            <select
+            <Select
               id="content-type"
               value={contentType}
-              onChange={(e) => setContentType(e.target.value as ContentType)}
-              className={cn(controlClass, 'mt-1')}
-            >
-              {CONTENT_TYPES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => setContentType(next as ContentType)}
+              className="mt-1"
+              options={CONTENT_TYPES.map((t) => ({ value: t.id, label: t.label }))}
+            />
             <p className="mt-1 text-xs text-muted">
               {CONTENT_TYPES.find((t) => t.id === contentType)?.description}
             </p>
@@ -242,7 +230,7 @@ export function BrandStorytellerView() {
 
       {savedNote ? (
         <Alert tone="success" title="Draft saved" className="mt-6">
-          <p>{savedNote} It’s in the drafts list below — publishing is a separate step.</p>
+          <p>{savedNote} It’s in the drafts list below, publishing is a separate step.</p>
         </Alert>
       ) : null}
 
@@ -344,7 +332,7 @@ export function BrandStorytellerView() {
             {drafts.map((draft) => (
               <li key={draft.id} className="rounded-lg border border-line bg-surface p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone="neutral">Draft — not published</Badge>
+                  <Badge tone="neutral">Draft, not published</Badge>
                   <span className="text-sm font-medium text-ink">
                     {contentTypeLabel(draft.contentType)}
                   </span>

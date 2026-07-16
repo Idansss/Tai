@@ -46,7 +46,7 @@ export function MadeToOrderNote({
       <div>
         <p className="text-ink">
           {isPreOrder
-            ? 'Pre-order — reserved now and made to order once the drop opens.'
+            ? 'Pre-order, reserved now and made to order once the drop opens.'
             : madeToOrderSummary()}
         </p>
         {window ? (

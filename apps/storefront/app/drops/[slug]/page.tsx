@@ -17,7 +17,7 @@ interface Params {
 }
 
 // Drops are time-sensitive (live status + countdown), so they render at request
-// time rather than being statically prerendered with a frozen clock — a
+// time rather than being statically prerendered with a frozen clock, a
 // deliberate divergence from the stable catalogue detail routes, which are
 // static with `dynamicParams=false` for a CDN-genuine 404 (TMS-F1-DEF-001).
 // The trade-off: an unknown drop slug is a soft 404 under self-hosted
@@ -60,7 +60,7 @@ export default async function DropDetailPage({ params }: Params) {
           <div
             className="aspect-[4/5] w-full rounded-[var(--radius-lg)] border border-line bg-gradient-to-br from-canvas-2 to-surface-2"
             role="img"
-            aria-label={`${drop.title} — drop presentation placeholder`}
+            aria-label={`${drop.title}, drop presentation placeholder`}
           />
 
           <div>

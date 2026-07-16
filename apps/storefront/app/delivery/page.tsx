@@ -46,7 +46,7 @@ export default function Page() {
           heading: 'Cost',
           body: (
             <p>
-              Delivery is charged per order and calculated at checkout for your address — you will
+              Delivery is charged per order and calculated at checkout for your address, you will
               always see it, along with VAT, before confirming. Prices are in Naira (₦).
             </p>
           ),
@@ -55,8 +55,8 @@ export default function Page() {
           heading: 'Tracking your order',
           body: (
             <p>
-              Once your order is placed you can follow its progress — production, dispatch and
-              delivery — from your{' '}
+              Once your order is placed you can follow its progress, production, dispatch and
+              delivery, from your{' '}
               <a
                 href="/account/orders"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"

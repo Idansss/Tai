@@ -34,7 +34,7 @@ export function ProfileView() {
           </dl>
 
           <Alert tone="info" title="Preview account">
-            This is a preview build — profile editing, email verification, password reset,
+            This is a preview build, profile editing, email verification, password reset,
             notification preferences and data-export or deletion requests arrive with secure server
             authentication.
           </Alert>

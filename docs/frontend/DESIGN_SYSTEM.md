@@ -1,14 +1,14 @@
-# Tai Manic Studios — Design System
+# Tai Manic Studios Design System
 
 Owner: Claude Code · Location: `packages/ui` · Consumers: `apps/storefront`, `apps/admin`.
 
-## 1. Design direction — "Gallery + Studio"
+## 1. Design direction: "Gallery + Studio"
 
 An art-led, gallery-neutral system where the artwork is always the hero. Chrome is quiet and
 recessive; type is editorial; imagery and colour come from the art itself. Two surface modes:
 
-- **Light gallery** (default) — warm paper neutrals, ink text. For catalogue, editorial, admin.
-- **Dark gallery** — deep charcoal surfaces for artwork-focus bands and the Design Studio, so
+- **Light gallery** (default): cool paper neutrals, ink text. For catalogue, editorial, admin.
+- **Dark gallery**: deep charcoal surfaces for artwork-focus bands and the Design Studio, so
   colourful art reads with maximum contrast.
 
 This preserves Base44's strongest qualities (Space Grotesk + IBM Plex Sans, uppercase
@@ -41,32 +41,32 @@ Tokens are CSS custom properties (the exact names required by master prompt §7)
 
 | Token                          | Value     | Notes                                             |
 | ------------------------------ | --------- | ------------------------------------------------- |
-| `--color-background-primary`   | `#FAFAF7` | warm paper                                        |
-| `--color-background-secondary` | `#F1F1EC` |                                                   |
+| `--color-background-primary`   | `#F4F6F8` | cool paper                                        |
+| `--color-background-secondary` | `#E8ECF0` |                                                   |
 | `--color-background-elevated`  | `#FFFFFF` |                                                   |
 | `--color-surface-primary`      | `#FFFFFF` |                                                   |
-| `--color-surface-secondary`    | `#F1F1EC` |                                                   |
-| `--color-text-primary`         | `#17171A` | ink, ~15:1 on paper                               |
-| `--color-text-secondary`       | `#3D4450` | ~9:1                                              |
-| `--color-text-muted`           | `#565E6B` | darkened from Base44 `#607685` for AA (~5.8:1)    |
-| `--color-border-default`       | `#E4E4DD` |                                                   |
-| `--color-border-strong`        | `#C7C7BC` |                                                   |
-| `--color-accent-primary`       | `#2D3E4E` | deep slate (from Base44); white-on ~10:1          |
-| `--color-accent-secondary`     | `#A2461F` | burnt sienna / studio-ink warmth; white-on ~4.7:1 |
-| `--color-success`              | `#2E7D57` | AA on white                                       |
+| `--color-surface-secondary`    | `#E8ECF0` |                                                   |
+| `--color-text-primary`         | `#0C1017` | ink, ~15:1 on paper                               |
+| `--color-text-secondary`       | `#3A4454` | ~9:1                                              |
+| `--color-text-muted`           | `#5A6575` | AA on cool paper (~5.8:1)                         |
+| `--color-border-default`       | `#D5DBE3` |                                                   |
+| `--color-border-strong`        | `#B4BECB` |                                                   |
+| `--color-accent-primary`       | `#152238` | deep navy ink; light-on ~12:1                     |
+| `--color-accent-secondary`     | `#0F6B63` | teal (print-shop); light-on ~4.7:1                |
+| `--color-success`              | `#1F7A52` | AA on white                                       |
 | `--color-warning`              | `#8A5A00` | AA on white                                       |
 | `--color-error`                | `#B3261E` | AA on white                                       |
-| `--color-information`          | `#2D5AA0` | AA on white                                       |
-| `--color-focus-ring`           | `#3B6FD4` | high-visibility, ≥3:1 vs adjacent                 |
-| `--color-disabled-background`  | `#E8E8E2` |                                                   |
-| `--color-disabled-text`        | `#8C8C82` | disabled text exempt from minima                  |
+| `--color-information`          | `#1F5AA8` | AA on white                                       |
+| `--color-focus-ring`           | `#2F6FDB` | high-visibility, ≥3:1 vs adjacent                 |
+| `--color-disabled-background`  | `#E2E6EB` |                                                   |
+| `--color-disabled-text`        | `#8A93A0` | disabled text exempt from minima                  |
 
 ### Dark gallery (`[data-theme="dark"]`)
 
-background-primary `#121316` · background-secondary `#1A1C20` · background-elevated `#22252B` ·
-surface-primary `#1A1C20` · surface-secondary `#22252B` · text-primary `#F4F4F0` ·
-text-secondary `#C4C7CE` · text-muted `#9AA0AB` (≥4.5 on bg) · border-default `#2E3238` ·
-border-strong `#474C55` · accent-primary `#A9C4DC` · accent-secondary `#E08A5F` ·
+background-primary `#0B0E13` · background-secondary `#131821` · background-elevated `#1A212C` ·
+surface-primary `#131821` · surface-secondary `#1A212C` · text-primary `#EEF2F6` ·
+text-secondary `#C0C8D4` · text-muted `#939CAB` (≥4.5 on bg) · border-default `#2A3340` ·
+border-strong `#445064` · accent-primary `#8EB4D8` · accent-secondary `#4DB8AD` ·
 status colours lightened for dark contrast · focus-ring `#6FA0FF`.
 
 > All contrast ratios are targets; an automated token-contrast test plus axe checks
@@ -111,11 +111,11 @@ text, or shape.
 ## 7. Component library plan (`packages/ui`)
 
 **Built in F0 (foundation set):** `cn` util, tokens/globals, Button, IconButton, Link, Badge,
-Card, Price, Skeleton, Spinner, Alert, EmptyState, ErrorState, VisuallyHidden, plus type &
+Card, Price, Skeleton, Spinner, Alert, EmptyState, ErrorState, VisuallyHidden, Select, plus type &
 layout primitives (Container, Stack, Eyebrow, Heading, Text). These prove the token system and
 unblock F1.
 
-**Later phases (F1–F5):** Input, Textarea, Select, Combobox, Checkbox, Radio, Switch, FormField,
+**Later phases (F1–F5):** Input, Textarea, Combobox, Checkbox, Radio, Switch, FormField,
 ValidationMessage, Modal, Drawer, Dropdown, Tabs, Accordion, Tooltip, Toast, ArtworkCard,
 ProductCard, CollectionCard, QuantityControl, Breadcrumb, Pagination, DataTable,
 ConfirmationDialog, FileUploader, ImageGallery, ColourSwatch, SizeSelector, StatusTimeline,

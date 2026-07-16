@@ -3,7 +3,7 @@ import { isValidEmail } from './checkout';
 
 /**
  * Waitlist / back-in-stock capture (TMS-F5-002). This is a **client-side preview
- * store** — joined emails live in `localStorage`, keyed by a list id, and no real
+ * store**, joined emails live in `localStorage`, keyed by a list id, and no real
  * notification is ever sent. The server owns the real waitlist + notify pipeline
  * (TMS-FBR-008). The pure helpers here (validation, add/has) are unit-tested; the
  * thin `localStorage` wrappers are guarded for SSR.
@@ -67,7 +67,7 @@ function writeWaitlist(key: string, entries: WaitlistEntry[]): void {
     map[key] = entries;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
   } catch {
-    // ignore quota / disabled storage — preview only
+    // ignore quota / disabled storage, preview only
   }
 }
 

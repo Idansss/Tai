@@ -1,5 +1,5 @@
 /**
- * Pure garment-manager helpers — status presentation, the catalogue lifecycle,
+ * Pure garment-manager helpers, status presentation, the catalogue lifecycle,
  * and inventory maths (stock levels, low-stock counting, variant edits).
  * Framework-free so they can be unit-tested and shared by the list and detail
  * surfaces.
@@ -161,7 +161,7 @@ export function totalStock(variants: GarmentVariant[]): number {
 }
 
 /**
- * Count variants that need attention (out or low) — restricted to colours that
+ * Count variants that need attention (out or low), restricted to colours that
  * are actually offered, so a discontinued colourway never inflates the count.
  */
 export function countLowStock(variants: GarmentVariant[], colours: GarmentColour[]): number {

@@ -25,9 +25,9 @@ export function addWorkingDays(fromMs: number, days: number): number {
 }
 
 export interface ShipWindow {
-  /** Earliest ship date (epoch ms) — production min. */
+  /** Earliest ship date (epoch ms), production min. */
   earliestMs: number;
-  /** Latest ship date (epoch ms) — production max. */
+  /** Latest ship date (epoch ms), production max. */
   latestMs: number;
 }
 
@@ -62,5 +62,5 @@ export function isPreOrderStatus(status: DropStatus): boolean {
 
 /** Concise, clock-free made-to-order summary for a persistent notice. */
 export function madeToOrderSummary(lead = PRODUCTION_LEAD): string {
-  return `Made to order — printed and finished in ${lead.minDays}–${lead.maxDays} working days, then shipped.`;
+  return `Made to order, printed and finished in ${lead.minDays}–${lead.maxDays} working days, then shipped.`;
 }

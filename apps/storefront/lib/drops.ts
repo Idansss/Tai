@@ -4,7 +4,7 @@ import type { DropSummary } from './data/types';
  * Pure domain logic for limited drops (TMS-F5-001). Everything here is a pure
  * function of the drop data + an explicit `now` (epoch ms), so status and
  * countdowns are deterministic and unit-testable. The UI passes `Date.now()`;
- * tests pass fixed clocks. The server owns the real timeline (TMS-FBR-008) —
+ * tests pass fixed clocks. The server owns the real timeline (TMS-FBR-008) -
  * the client never invents a "live"/"sold out" state.
  */
 
@@ -116,7 +116,7 @@ export function countdownParts(remainingMs: number): CountdownParts {
   };
 }
 
-/** A spoken form of the remaining time, e.g. "2 days, 4 hours" — for screen readers. */
+/** A spoken form of the remaining time, e.g. "2 days, 4 hours", for screen readers. */
 export function countdownLabel(remainingMs: number): string {
   const { days, hours, minutes, seconds } = countdownParts(remainingMs);
   const units: [number, string][] = [

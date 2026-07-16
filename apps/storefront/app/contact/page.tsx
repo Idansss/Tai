@@ -70,7 +70,7 @@ export default function Page() {
           body: (
             <p>
               We aim to reply within one to two working days. A contact form and live chat are on
-              the way — for now, email is the fastest route to the studio.
+              the way, for now, email is the fastest route to the studio.
             </p>
           ),
         },

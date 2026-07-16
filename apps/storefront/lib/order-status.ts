@@ -82,7 +82,7 @@ function buildSteps(reached: number, finished = false): TrackingStep[] {
   }));
 }
 
-/** A short, human status label for lists — never a raw provider code. */
+/** A short, human status label for lists, never a raw provider code. */
 export function friendlyOrderStatus(status: OrderStatus): string {
   switch (status) {
     case 'DRAFT':
@@ -143,7 +143,7 @@ export function orderTracking(status: OrderStatus): OrderTracking {
   const headline = friendlyOrderStatus(status);
 
   // Pre-confirmation and terminal/exception states don't show the linear
-  // production timeline — they get their own honest explanation instead.
+  // production timeline, they get their own honest explanation instead.
   switch (status) {
     case 'DRAFT':
     case 'AWAITING_PAYMENT':

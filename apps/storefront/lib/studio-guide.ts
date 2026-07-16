@@ -1,12 +1,12 @@
 /**
- * Studio Guide — customer AI assistant, mock responder (TMS-F5-008). This is a
+ * Studio Guide, customer AI assistant, mock responder (TMS-F5-008). This is a
  * deterministic, pure stand-in for the real assistant endpoint (TMS-FBR-009).
  * Two rules matter most:
  *
- *  1. **Guardrails** — the guide must never invent live stock, price, or
+ *  1. **Guardrails**, the guide must never invent live stock, price, or
  *     delivery facts. Those questions get a deflection that points to the
  *     authoritative source (the product page / the studio), never a number.
- *  2. **No auto-actions** — it only ever answers and links; it never places
+ *  2. **No auto-actions**, it only ever answers and links; it never places
  *     orders, changes carts, or promises anything on the customer's behalf.
  *
  * Order-status questions need a live tool the preview can't call, so they return
@@ -102,14 +102,14 @@ const REF = {
 const match = (text: string, re: RegExp) => re.test(text);
 
 /**
- * Produce a deterministic outcome for a customer prompt. Pure — the chat UI
+ * Produce a deterministic outcome for a customer prompt. Pure, the chat UI
  * awaits a thin async wrapper around this, and any unit test can call it
  * directly.
  */
 export function studioGuideRespond(prompt: string): GuideOutcome {
   const text = prompt.toLowerCase().trim();
 
-  // Order status needs a live tool the preview can't reach — surface a
+  // Order status needs a live tool the preview can't reach, surface a
   // recoverable tool error (with a human-support route), never a made-up status.
   if (
     match(text, /\b(my order|order status|where('| i)s my order|track|tracking|order number)\b/)
@@ -129,7 +129,7 @@ export function studioGuideRespond(prompt: string): GuideOutcome {
       kind: 'reply',
       reply: {
         guardrail: true,
-        text: "I can't quote prices in this preview — but every product page shows its current price, and the Design Studio prices your piece as you build it.",
+        text: "I can't quote prices in this preview, but every product page shows its current price, and the Design Studio prices your piece as you build it.",
         references: [REF.shop, REF.studio],
       },
     };
@@ -139,7 +139,7 @@ export function studioGuideRespond(prompt: string): GuideOutcome {
       kind: 'reply',
       reply: {
         guardrail: true,
-        text: "I can't confirm live stock here. Each product page shows whether an item is available, limited, or sold out — and you can join the waitlist if something's sold out.",
+        text: "I can't confirm live stock here. Each product page shows whether an item is available, limited, or sold out, and you can join the waitlist if something's sold out.",
         references: [REF.shop],
       },
     };
@@ -164,7 +164,7 @@ export function studioGuideRespond(prompt: string): GuideOutcome {
   }
   if (match(text, /\b(size|sizing|fit|measurement|true to size|small|large)\b/)) {
     return reply(
-      'Fit varies by garment — the size guide has measurements for each one, and every product page notes whether it runs true to size or relaxed.',
+      'Fit varies by garment, the size guide has measurements for each one, and every product page notes whether it runs true to size or relaxed.',
       [REF.sizeGuide, REF.shop],
     );
   }
@@ -176,7 +176,7 @@ export function studioGuideRespond(prompt: string): GuideOutcome {
   }
   if (match(text, /\b(return|refund|exchange)\b/)) {
     return reply(
-      'Returns are covered on the Returns page — it explains the window and how to start one. For a specific order, our team can help directly.',
+      'Returns are covered on the Returns page, it explains the window and how to start one. For a specific order, our team can help directly.',
       [REF.returns, REF.contact],
     );
   }
@@ -188,14 +188,14 @@ export function studioGuideRespond(prompt: string): GuideOutcome {
   }
   if (match(text, /\b(human|agent|someone|support|contact|talk to|person|team|help me)\b/)) {
     return reply(
-      'Happy to point you to a human — the studio team can help with anything I can’t. Use the contact page and they’ll get back to you.',
+      'Happy to point you to a human, the studio team can help with anything I can’t. Use the contact page and they’ll get back to you.',
       [REF.contact],
     );
   }
 
   // Fallback.
   return reply(
-    "I'm the Studio Guide — I can help you explore the artworks, design your own piece, and find the right size or policy. What would you like to do?",
+    "I'm the Studio Guide, I can help you explore the artworks, design your own piece, and find the right size or policy. What would you like to do?",
     [REF.artworks, REF.studio, REF.contact],
   );
 }

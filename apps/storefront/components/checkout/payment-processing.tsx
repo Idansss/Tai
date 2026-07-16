@@ -111,12 +111,12 @@ export function PaymentProcessing() {
             <Text tone="secondary" className="mt-1">
               We’re confirming your bank transfer for order{' '}
               <span className="font-medium text-ink">{reference}</span>. This can take a few minutes
-              — we’ll email {email} as soon as it clears. Nothing more is needed from you.
+             , we’ll email {email} as soon as it clears. Nothing more is needed from you.
             </Text>
           </div>
         </div>
         <Alert tone="info" title="Preview build">
-          Payment is simulated here — no real transfer was made. Live confirmation arrives with the
+          Payment is simulated here, no real transfer was made. Live confirmation arrives with the
           payment integration.
         </Alert>
         <div className="flex flex-wrap gap-3">

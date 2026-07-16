@@ -1,5 +1,5 @@
 /**
- * Account data model for the preview storefront — order history, saved Design
+ * Account data model for the preview storefront, order history, saved Design
  * Studio configurations, and the wishlist.
  *
  * There is no account/orders API yet (TMS-FBR-004 / TMS-FBR-005), so this
@@ -31,7 +31,7 @@ export interface SavedDesign {
   savedAt: string;
 }
 
-/** Configuration signature — identical designs collapse to one saved entry. */
+/** Configuration signature, identical designs collapse to one saved entry. */
 export function designSignature(config: StudioConfig): string {
   return [
     config.artwork,
@@ -141,7 +141,7 @@ function writeList<T>(key: string, email: string, list: T[]): void {
     map[normalizeEmail(email)] = list;
     window.localStorage.setItem(key, JSON.stringify(map));
   } catch {
-    // storage unavailable — data lives only for this tab
+    // storage unavailable, data lives only for this tab
   }
 }
 

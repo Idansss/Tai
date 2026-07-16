@@ -14,8 +14,8 @@ interface Params {
 
 // The artwork catalogue is a finite, enumerable set, so we statically generate
 // every detail page and reject any slug outside it. `dynamicParams = false`
-// makes an unknown slug a *genuine* 404 at the routing layer — resolved before
-// any streaming begins — which fixes TMS-F1-DEF-001 (the soft 404 where the
+// makes an unknown slug a *genuine* 404 at the routing layer, resolved before
+// any streaming begins, which fixes TMS-F1-DEF-001 (the soft 404 where the
 // streamed shell committed HTTP 200 before notFound() resolved under Turbopack).
 // When the real catalogue API lands (TMS-FBR-001), generateStaticParams will
 // enumerate from it; switch to ISR (`dynamicParams = true` + `revalidate`) only
@@ -61,7 +61,7 @@ export default async function ArtworkDetailPage({ params }: Params) {
           <div
             className="aspect-[4/5] w-full rounded-[var(--radius-lg)] border border-line bg-gradient-to-br from-canvas-2 to-surface-2"
             role="img"
-            aria-label={`${artwork.title} — artwork presentation placeholder`}
+            aria-label={`${artwork.title}, artwork presentation placeholder`}
           />
 
           <div>

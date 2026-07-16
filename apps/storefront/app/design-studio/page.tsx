@@ -28,7 +28,7 @@ export default async function DesignStudioPage({ searchParams }: PageProps) {
           Design Studio
         </Heading>
         <Text tone="secondary" className="mt-2">
-          Choose an artwork, then make it yours — garment, colour, size, placement and scale, with a
+          Choose an artwork, then make it yours, garment, colour, size, placement and scale, with a
           live preview. Share your design or save it for checkout.
         </Text>
       </header>

@@ -1,10 +1,10 @@
 /**
- * Checkout domain — pure and framework-free so validation and totals can be
+ * Checkout domain, pure and framework-free so validation and totals can be
  * unit-tested and reused by the checkout flow and review surfaces.
  *
  * Money remains server-authoritative (MASTER_PRODUCT_SPEC §"server is
  * authoritative for … tax, shipping, and totals"). Until the checkout API
- * exists these helpers compute a *preview* order total — delivery fees come
+ * exists these helpers compute a *preview* order total, delivery fees come
  * from the mock `getDeliveryOptions()` and VAT is a mock rate. Backend gap
  * tracked as TMS-FBR-004 in FRONTEND_TO_BACKEND.md.
  */
@@ -60,7 +60,7 @@ export const NIGERIAN_STATES = [
   'Edo',
   'Ekiti',
   'Enugu',
-  'FCT — Abuja',
+  'FCT, Abuja',
   'Gombe',
   'Imo',
   'Jigawa',

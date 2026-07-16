@@ -168,7 +168,7 @@ export function DesignStudio({
       return;
     }
     if (!user) {
-      // Saving belongs to an account — send guests to sign in and return here.
+      // Saving belongs to an account, send guests to sign in and return here.
       router.push(`/login?next=${encodeURIComponent(`/design-studio${buildStudioQuery(config)}`)}`);
       return;
     }
@@ -201,7 +201,7 @@ export function DesignStudio({
             aria-label={
               artwork
                 ? `${artwork.title} on ${config.colour} ${config.garment ?? 'garment'}, ${config.view} view`
-                : 'Design preview — choose an artwork to begin'
+                : 'Design preview, choose an artwork to begin'
             }
           >
             {/* Print-area guide */}
@@ -259,7 +259,7 @@ export function DesignStudio({
             ))}
           </div>
           <Text size="sm" tone="muted" className="mt-2">
-            A guide preview — the final print is produced to studio standards.
+            A guide preview, the final print is produced to studio standards.
           </Text>
         </div>
 
@@ -411,7 +411,7 @@ export function DesignStudio({
                 ).map(([label, value]) => (
                   <div key={label} className="flex gap-2">
                     <dt className="text-muted">{label}</dt>
-                    <dd className="text-ink-2">{value ?? '—'}</dd>
+                    <dd className="text-ink-2">{value ?? '-'}</dd>
                   </div>
                 ))}
               </dl>

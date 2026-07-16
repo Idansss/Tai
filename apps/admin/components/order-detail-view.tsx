@@ -284,7 +284,7 @@ export function OrderDetailView({ reference }: { reference: string }) {
                     order.shipment.trackingNumber ? (
                       <span className="font-mono text-xs">{order.shipment.trackingNumber}</span>
                     ) : (
-                      <span className="text-muted">—</span>
+                      <span className="text-muted">-</span>
                     )
                   }
                 />
@@ -404,7 +404,7 @@ export function OrderDetailView({ reference }: { reference: string }) {
                     type="button"
                     onClick={() =>
                       setActionNote(
-                        `“${label}” will be available once the admin order API is connected — no action was taken.`,
+                        `“${label}” will be available once the admin order API is connected, no action was taken.`,
                       )
                     }
                     className="inline-flex h-10 items-center justify-center rounded-md border border-line-2 px-3 text-sm text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
