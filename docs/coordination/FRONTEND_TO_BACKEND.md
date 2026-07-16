@@ -19,6 +19,13 @@ priority here. Until an endpoint exists, the frontend uses a typed mock adapter 
 - Reason: artwork-first gallery and gallery-style detail pages are core F1 surfaces.
 - Blocking: no (F0 uses mock adapter; F1 build proceeds on mock).
 - Suggested fallback: typed `mockProvider` fixtures; swap to `apiProvider` on delivery.
+- **SSG note (TMS-F1-DEF-001 fix):** `/artworks/[slug]` (and `/collections/[slug]`,
+  `/products/[slug]` under TMS-FBR-002) now enumerate valid slugs via `generateStaticParams` +
+  `dynamicParams = false` so unknown slugs 404 correctly. When these read endpoints land, the
+  build will call the **list** endpoint to enumerate slugs. If the catalogue must change without a
+  redeploy, we'll move to ISR (`dynamicParams = true` + `revalidate`, or on-demand revalidation) —
+  so the list endpoint should be buildtime-callable and, ideally, support a webhook/tag for
+  on-demand revalidation on publish/unpublish.
 
 ## Request TMS-FBR-002 — Product / garment read
 
@@ -219,5 +226,60 @@ email**. It needs, on top of the auth endpoints above:
 - Suggested fallback: keep the `AdminDataProvider` interface + view-model shapes; replace
   `mockAdminProvider` with `apiProvider` (env switch already wired). The error centre must **never**
   surface stack traces or secrets (spec §18) — expose correlation IDs + resolution state only.
+
+## Request TMS-FBR-008 — Limited drops (growth) [TMS-F5-001]
+
+- Frontend task: F5 drops surface (`/drops` index + `/drops/{slug}` detail), live countdowns,
+  early-access/membership gating, and (next) the waitlist/back-in-stock signup (TMS-F5-002).
+- Required endpoints (proposed): `GET /api/v1/drops` (list) and `GET /api/v1/drops/{slug}` (detail
+  with its released artworks). Later, for early access + waitlist: `POST /api/v1/drops/{slug}/waitlist`
+  (join) and a membership/early-access check on the session.
+- Required response fields (per drop): `slug`, `title`, `tagline`, `collection`, `earlyAccessAt`
+  (nullable ISO), `releaseAt` (ISO), `endsAt` (nullable ISO), `pieceCount`, `soldOut`. Detail adds
+  `story` and `artworks[]` (the released `ArtworkSummary`s). **Timestamps must be absolute,
+  server-authoritative UTC** — the frontend derives `upcoming/early_access/live/ended/sold_out`
+  from them in `lib/drops.ts` and **never trusts a client-supplied status**; `soldOut` (and real
+  inventory) is server-owned.
+- Reason: the drops surface currently runs on the typed mock provider (`listDrops`/`getDrop`) with
+  timestamps generated **relative to now** so the preview countdowns stay live. Real drops need a
+  server-authoritative timeline + inventory, and the early-access gate + waitlist are UI-only today
+  (no membership tier, no notify) — honest "preview" notices are shown.
+- Blocking: no (drops build on the typed mock; swap `apiProvider` on delivery).
+- Suggested fallback: keep `lib/drops.ts` (pure status/countdown/sort) + the `DropSummary`/`DropDetail`
+  shapes as the view model; replace `listDrops`/`getDrop` with the endpoints. Because these pages are
+  `force-dynamic` (time-sensitive), no build-time enumeration is needed. Membership/early-access
+  enforcement + the waitlist/notify endpoint pair with TMS-F5-002.
+
+### TMS-FBR-008 addendum — waitlist / back-in-stock / notify [TMS-F5-002]
+
+The waitlist capture (delivered) currently runs on a **client-side `localStorage` store**
+(`tms.waitlist.v1`, keyed `product:{slug}` / `drop:{slug}` / `artwork:{slug}`) and sends **no real
+notification**. It needs:
+
+- `POST /api/v1/waitlist` (join) with `{ kind: 'product'|'drop'|'artwork', id, email }` →
+  idempotent (`alreadyJoined`), plus `DELETE` (unsubscribe) and, once real email lands, double
+  opt-in. Optionally `GET /api/v1/account/waitlist` for a signed-in "things I'm waiting on" view.
+- A **notify pipeline**: back-in-stock (inventory crosses 0→available), drop-opening (release time
+  reached), and drop-restock triggers, de-duplicated per email. The frontend maps the same three
+  `kind`s used above.
+- Reason: the capture is UI-only preview today. Blocking: no. Suggested fallback: keep
+  `lib/waitlist.ts` + `WaitlistForm` as the client model; replace `joinWaitlist`'s storage with the
+  endpoint and treat the server as the source of truth.
+
+### TMS-FBR-008 addendum — pre-order & made-to-order lead time [TMS-F5-003]
+
+The storefront now shows a **made-to-order / pre-order ship estimate** on the product page, cart,
+checkout and drop detail, computed **client-side** in `lib/fulfilment.ts` (working-day production
+lead time; pre-order production starts at the drop's release). This is a **frontend estimate only**:
+
+- The **real ship timeline is server-authoritative** — the checkout quote / order response
+  (TMS-FBR-004) should return a production + delivery estimate (and per-item lead times if garments
+  diverge) so the UI stops guessing.
+- A real **pre-order reservation** (reserve a piece before a drop opens: hold, charge-now vs
+  charge-on-release, cancellation) is a backend concern for the drops API (TMS-FBR-008). Today the
+  UI only _labels_ upcoming/early-access drop pieces as pre-order and routes purchase through the
+  Design Studio / product flow.
+- Suggested fallback: keep `lib/fulfilment.ts` + `MadeToOrderNote` as the presentation; swap the
+  computed window for the server estimate on delivery.
 
 _No further requests yet. Add here as F1+ surfaces need contracts._

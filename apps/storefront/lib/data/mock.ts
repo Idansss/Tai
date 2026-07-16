@@ -1,16 +1,33 @@
 import type { CursorPage } from '@tms/contracts';
+import { artworkVersionId, passportSerial } from '../passport';
 import { artworkMatchesQuery } from '../search';
+import { filterApproved } from '../community';
+import { summariseReviews } from '../reviews';
+import { countShoppableItems } from '../stories';
 import type {
   ArtworkDetail,
+  ArtworkPassport,
   ArtworkSummary,
   Availability,
   CollectionDetail,
   CollectionSummary,
+  CommunityPhoto,
   DeliveryOption,
+  DropDetail,
+  DropSummary,
   ListArtworksParams,
+  LoyaltyProfile,
+  LoyaltyReward,
   ProductDetail,
   ProductSummary,
+  ProvenanceEvent,
+  Review,
+  ReviewCollection,
+  ReviewTargetType,
   StorefrontDataProvider,
+  StoryDetail,
+  StoryHotspotTarget,
+  StorySummary,
   StudioOptions,
 } from './types';
 
@@ -89,7 +106,7 @@ const productSeeds: ProductSeed[] = [
     collection: 'City Portraits',
     garment: 'Oversized T-shirt',
     priceMinor: 1250000,
-    availability: 'available',
+    availability: 'sold_out',
     colours: ['Black', 'Bone'],
   },
   {
@@ -267,6 +284,545 @@ const artworks: ArtworkSummary[] = [
   },
 ];
 
+const HOUR_MS = 3_600_000;
+const DAY_MS = 86_400_000;
+
+/**
+ * Drop seeds (TMS-F5-001). Timings are offsets in ms relative to "now" so the
+ * preview always shows a live countdown for each state; the real API
+ * (TMS-FBR-008) will send absolute server timestamps. `earlyOffset`/`endOffset`
+ * are null when there is no early window / the drop is open-ended.
+ */
+interface DropSeed {
+  slug: string;
+  title: string;
+  tagline: string;
+  story: string;
+  collection: string;
+  earlyOffset: number | null;
+  releaseOffset: number;
+  endOffset: number | null;
+  soldOut: boolean;
+}
+
+const dropSeeds: DropSeed[] = [
+  {
+    slug: 'night-market',
+    title: 'Night Market',
+    tagline: 'The Night Studies drop, live now.',
+    story:
+      'Four pieces pulled from the quietest hours of the city — ink, neon and the last warm light on the street. Made to order in a limited run.',
+    collection: 'Night Studies',
+    earlyOffset: -2 * DAY_MS,
+    releaseOffset: -1 * DAY_MS,
+    endOffset: 3 * DAY_MS,
+    soldOut: false,
+  },
+  {
+    slug: 'city-portraits-vol-1',
+    title: 'City Portraits, Vol. 1',
+    tagline: 'Early access is open for members.',
+    story:
+      'Street-level scenes rendered in confident, tangled linework. Members get first access before the public release.',
+    collection: 'City Portraits',
+    earlyOffset: -1 * HOUR_MS,
+    releaseOffset: 1 * DAY_MS,
+    endOffset: 8 * DAY_MS,
+    soldOut: false,
+  },
+  {
+    slug: 'harmattan-editions',
+    title: 'Harmattan Editions',
+    tagline: 'Dust-season florals, dropping soon.',
+    story:
+      'A short seasonal set drawn in single unbroken lines. Join early access to be first in the queue when it opens.',
+    collection: 'Season Sketches',
+    earlyOffset: 1 * DAY_MS,
+    releaseOffset: 2 * DAY_MS,
+    endOffset: 9 * DAY_MS,
+    soldOut: false,
+  },
+  {
+    slug: 'comic-line-reprint',
+    title: 'Comic Line — Reprint',
+    tagline: 'Sold out in record time.',
+    story:
+      'A one-week reprint of the Comic Line favourites. This run has fully sold through — join the waitlist for the next one.',
+    collection: 'Comic Line',
+    earlyOffset: -6 * DAY_MS,
+    releaseOffset: -5 * DAY_MS,
+    endOffset: 2 * DAY_MS,
+    soldOut: true,
+  },
+  {
+    slug: 'first-light',
+    title: 'First Light',
+    tagline: 'The drop that started it all — now closed.',
+    story:
+      'The studio’s first limited release, archived here for the record. Closed to new orders.',
+    collection: 'Night Studies',
+    earlyOffset: -12 * DAY_MS,
+    releaseOffset: -11 * DAY_MS,
+    endOffset: -2 * DAY_MS,
+    soldOut: false,
+  },
+];
+
+function dropArtworks(collection: string): ArtworkSummary[] {
+  return artworks.filter((a) => a.collection === collection);
+}
+
+function toDropSummary(seed: DropSeed, now: number): DropSummary {
+  const iso = (offset: number | null): string | null =>
+    offset === null ? null : new Date(now + offset).toISOString();
+  return {
+    slug: seed.slug,
+    title: seed.title,
+    tagline: seed.tagline,
+    collection: seed.collection,
+    earlyAccessAt: iso(seed.earlyOffset),
+    releaseAt: iso(seed.releaseOffset)!,
+    endsAt: iso(seed.endOffset),
+    pieceCount: dropArtworks(seed.collection).length,
+    soldOut: seed.soldOut,
+  };
+}
+
+/**
+ * Shoppable story seeds (TMS-F5-007). Hotspot targets are built from the same
+ * artwork/product/collection data the rest of the catalogue uses, so titles and
+ * prices never drift. `StorySummary` (index) is derived from each detail by
+ * dropping the body and counting shoppable hotspots.
+ */
+function artworkTarget(slug: string): StoryHotspotTarget {
+  const a = artworks.find((x) => x.slug === slug);
+  return { kind: 'artwork', slug, label: a?.title ?? slug };
+}
+
+function productTarget(slug: string): StoryHotspotTarget {
+  const p = productSeeds.find((x) => x.slug === slug);
+  return {
+    kind: 'product',
+    slug,
+    label: p ? `${p.artworkTitle} — ${p.garment}` : slug,
+    priceMinor: p?.priceMinor ?? 0,
+    currency: 'NGN',
+  };
+}
+
+function collectionTarget(slug: string): StoryHotspotTarget {
+  const c = collectionMeta.find((x) => x.slug === slug);
+  return { kind: 'collection', slug, label: c?.name ?? slug };
+}
+
+const studioTarget: StoryHotspotTarget = { kind: 'studio', label: 'Design Studio' };
+
+type StorySeed = Omit<StoryDetail, 'shoppableCount'>;
+
+const storySeeds: StorySeed[] = [
+  {
+    slug: 'how-midnight-in-lagos-came-together',
+    title: 'How Midnight in Lagos came together',
+    category: 'Process',
+    excerpt:
+      'From a blurred phone photo on a night bus to a single unbroken line — the making of our most-worn piece.',
+    readMinutes: 5,
+    publishedOn: '2026-06-20',
+    intro:
+      'Every piece starts on paper. Midnight in Lagos began as a photograph taken through a bus window and ended as a drawing we could not stop returning to.',
+    blocks: [
+      { kind: 'heading', text: 'From a photograph to a line' },
+      {
+        kind: 'paragraph',
+        text: 'The first sketches chased the neon — too much of it. Stripping the scene back to one continuous line was what finally made the city feel awake rather than lit up.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-drawing',
+          caption: 'The finished drawing, pinned in the studio',
+          hotspots: [
+            {
+              id: 'h-artwork',
+              x: 32,
+              y: 42,
+              caption: 'The finished piece in the gallery',
+              target: artworkTarget('midnight-in-lagos'),
+            },
+            {
+              id: 'h-collection',
+              x: 70,
+              y: 64,
+              caption: 'More drawings from after dark',
+              target: collectionTarget('night-studies'),
+            },
+          ],
+        },
+      },
+      { kind: 'heading', text: 'Onto the garment' },
+      {
+        kind: 'paragraph',
+        text: 'A water-based screen print keeps the line crisp without sitting heavy on the cotton. The first proof went straight onto our classic tee.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-proof',
+          caption: 'The first press proof on a classic tee',
+          hotspots: [
+            {
+              id: 'h-product',
+              x: 46,
+              y: 50,
+              caption: 'Wear the piece',
+              target: productTarget('midnight-in-lagos-classic-tee'),
+            },
+            {
+              id: 'h-studio',
+              x: 76,
+              y: 30,
+              caption: 'Place it your way',
+              target: studioTarget,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    slug: 'styling-the-city-portraits-drop',
+    title: 'Styling the City Portraits drop',
+    category: 'Lookbook',
+    excerpt:
+      'Three street scenes, three ways to wear them — from the market run to the evening out.',
+    readMinutes: 4,
+    publishedOn: '2026-07-02',
+    intro:
+      'The City Portraits drop is built for the everyday. Here is how we styled three of its pieces across a single Lagos day.',
+    blocks: [
+      { kind: 'heading', text: 'The street, by daylight' },
+      {
+        kind: 'paragraph',
+        text: 'Market Day wants room to breathe, so we paired the long-sleeve with soft neutrals and let the linework do the talking.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-day',
+          caption: 'Market Day, styled for the everyday',
+          hotspots: [
+            {
+              id: 'h-market',
+              x: 40,
+              y: 46,
+              caption: 'The long-sleeve',
+              target: productTarget('market-day-longsleeve'),
+            },
+            {
+              id: 'h-okada',
+              x: 66,
+              y: 60,
+              caption: 'Okada Run in the gallery',
+              target: artworkTarget('okada-run'),
+            },
+            {
+              id: 'h-collection',
+              x: 20,
+              y: 72,
+              caption: 'The full collection',
+              target: collectionTarget('city-portraits'),
+            },
+          ],
+        },
+      },
+      { kind: 'heading', text: 'Layered up for the evening' },
+      {
+        kind: 'paragraph',
+        text: 'As the light drops, the oversized cut takes over. Paper Tigers reads bolder at night.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-night',
+          caption: 'Layered up for the evening',
+          hotspots: [
+            {
+              id: 'h-paper',
+              x: 50,
+              y: 40,
+              caption: 'Paper Tigers, oversized',
+              target: productTarget('paper-tigers-oversized-tee'),
+            },
+            {
+              id: 'h-studio',
+              x: 78,
+              y: 66,
+              caption: 'Build your own look',
+              target: studioTarget,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    slug: 'comic-line-one-unbroken-line',
+    title: 'Comic Line, one unbroken line',
+    category: 'Studio notes',
+    excerpt:
+      'The rule behind the Comic Line collection: tell the whole story without lifting the pen.',
+    readMinutes: 6,
+    publishedOn: '2026-05-15',
+    intro:
+      'Comic Line is a self-imposed constraint — every panel drawn in a single continuous stroke. The constraint is the point.',
+    blocks: [
+      { kind: 'heading', text: 'One line, no lifting the pen' },
+      {
+        kind: 'paragraph',
+        text: 'Working in one unbroken line forces every decision to the front. There is no going back to fix a corner, so the corner has to be right the first time.',
+      },
+      {
+        kind: 'scene',
+        scene: {
+          id: 'scene-inking',
+          caption: 'Inking a Comic Line panel',
+          hotspots: [
+            {
+              id: 'h-paper',
+              x: 34,
+              y: 44,
+              caption: 'Paper Tigers',
+              target: artworkTarget('paper-tigers'),
+            },
+            {
+              id: 'h-getaway',
+              x: 64,
+              y: 54,
+              caption: 'The Getaway',
+              target: artworkTarget('the-getaway'),
+            },
+            {
+              id: 'h-collection',
+              x: 50,
+              y: 76,
+              caption: 'The whole Comic Line',
+              target: collectionTarget('comic-line'),
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+function toStoryDetail(seed: StorySeed): StoryDetail {
+  return { ...seed, shoppableCount: countShoppableItems(seed.blocks) };
+}
+
+function toStorySummary(seed: StorySeed): StorySummary {
+  const { slug, title, category, excerpt, readMinutes, publishedOn } = seed;
+  return {
+    slug,
+    title,
+    category,
+    excerpt,
+    readMinutes,
+    publishedOn,
+    shoppableCount: countShoppableItems(seed.blocks),
+  };
+}
+
+/**
+ * Review seeds (TMS-F5-004), keyed `${targetType}:${slug}`. Deterministic so the
+ * aggregate stars match the list. `verifiedPurchase` is a server-vouched flag in
+ * the seed data; some targets have no reviews to exercise the empty state. Real
+ * read/write/moderation is server-authoritative (TMS-FBR-008).
+ */
+const reviewSeeds: Record<string, Review[]> = {
+  'product:midnight-in-lagos-classic-tee': [
+    {
+      id: 'rv-mil-1',
+      rating: 5,
+      title: 'The print is the star',
+      body: 'Wore it to a gallery opening and got stopped three times. The line work holds up beautifully after a wash.',
+      author: 'Ada O.',
+      createdAt: '2026-06-28T10:00:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-mil-2',
+      rating: 4,
+      title: 'Lovely, runs a touch large',
+      body: 'Gorgeous heavyweight cotton and the neon reads exactly like the artwork. I would size down for a classic fit.',
+      author: 'Tunde A.',
+      createdAt: '2026-06-15T09:30:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-mil-3',
+      rating: 5,
+      title: 'My most-complimented tee',
+      body: 'Soft, well cut and the design feels like wearing a drawing. Delivery to Lagos took four days.',
+      author: 'Ngozi E.',
+      createdAt: '2026-05-30T14:00:00.000Z',
+      verifiedPurchase: false,
+    },
+  ],
+  'product:paper-tigers-oversized-tee': [
+    {
+      id: 'rv-pt-1',
+      rating: 5,
+      title: 'Bold and comfortable',
+      body: 'The oversized cut is exactly right and the ink sits flat — no cracking after several washes.',
+      author: 'Kelechi N.',
+      createdAt: '2026-07-01T08:00:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-pt-2',
+      rating: 3,
+      title: 'Great print, wanted heavier fabric',
+      body: 'The design is fantastic. The cotton is a little lighter than I expected for the price, but the fit is good.',
+      author: 'Bisi K.',
+      createdAt: '2026-06-20T11:15:00.000Z',
+      verifiedPurchase: true,
+    },
+  ],
+  'artwork:midnight-in-lagos': [
+    {
+      id: 'rv-a-mil-1',
+      rating: 5,
+      title: 'A piece with a mood',
+      body: 'Bought it on a longsleeve and the artwork carries the whole garment. It really does feel like the city after dark.',
+      author: 'Chidi M.',
+      createdAt: '2026-06-10T16:45:00.000Z',
+      verifiedPurchase: true,
+    },
+    {
+      id: 'rv-a-mil-2',
+      rating: 4,
+      title: 'Beautiful linework',
+      body: 'One of my favourite pieces in the collection. Would love to see it on more garment types.',
+      author: 'Zainab I.',
+      createdAt: '2026-05-22T12:00:00.000Z',
+      verifiedPurchase: false,
+    },
+  ],
+};
+
+/**
+ * Community photo seeds (TMS-F5-005). Includes a couple of non-approved photos
+ * on purpose so the moderation-aware filter is exercised — the public methods
+ * must never surface them. Real UGC + moderation is server-side (TMS-FBR-008).
+ */
+const communityPhotoSeeds: CommunityPhoto[] = [
+  {
+    id: 'cp-1',
+    artworkSlug: 'midnight-in-lagos',
+    artworkTitle: 'Midnight in Lagos',
+    handle: '@ada.wears',
+    caption: 'Caught the neon just right on the island bridge.',
+    status: 'approved',
+    createdAt: '2026-07-05T18:00:00.000Z',
+  },
+  {
+    id: 'cp-2',
+    artworkSlug: 'paper-tigers',
+    artworkTitle: 'Paper Tigers',
+    handle: '@kelechi.k',
+    caption: 'Oversized fit, all the confidence.',
+    status: 'approved',
+    createdAt: '2026-07-03T12:30:00.000Z',
+  },
+  {
+    id: 'cp-3',
+    artworkSlug: 'market-day',
+    artworkTitle: 'Market Day',
+    handle: '@bisi.styles',
+    caption: 'Market run in the long-sleeve.',
+    status: 'approved',
+    createdAt: '2026-06-29T09:15:00.000Z',
+  },
+  {
+    id: 'cp-4',
+    artworkSlug: 'midnight-in-lagos',
+    artworkTitle: 'Midnight in Lagos',
+    handle: '@tunde.a',
+    caption: 'Layered for the evening.',
+    status: 'approved',
+    createdAt: '2026-06-25T20:00:00.000Z',
+  },
+  {
+    id: 'cp-5',
+    artworkSlug: 'harmattan-bloom',
+    artworkTitle: 'Harmattan Bloom',
+    handle: '@ngozi.e',
+    caption: 'Soft neutrals for dust season.',
+    status: 'approved',
+    createdAt: '2026-06-20T11:00:00.000Z',
+  },
+  // Non-approved — must never appear in the public gallery.
+  {
+    id: 'cp-6',
+    artworkSlug: 'paper-tigers',
+    artworkTitle: 'Paper Tigers',
+    handle: '@pending.user',
+    caption: 'Awaiting moderation.',
+    status: 'pending',
+    createdAt: '2026-07-06T08:00:00.000Z',
+  },
+  {
+    id: 'cp-7',
+    artworkSlug: 'okada-run',
+    artworkTitle: 'Okada Run',
+    handle: '@rejected.user',
+    caption: 'Off-brand submission.',
+    status: 'rejected',
+    createdAt: '2026-07-02T08:00:00.000Z',
+  },
+];
+
+/**
+ * Loyalty rewards catalogue (TMS-F5-010). Illustrative — real earning/redemption
+ * is server-authoritative (TMS-FBR-008).
+ */
+const loyaltyRewards: LoyaltyReward[] = [
+  {
+    id: 'free-delivery',
+    name: 'Free standard delivery',
+    description: 'Standard delivery on your next order, on us.',
+    pointsCost: 250,
+  },
+  {
+    id: 'off-2k',
+    name: '₦2,000 off',
+    description: 'Money off your next order of ₦10,000 or more.',
+    pointsCost: 400,
+  },
+  {
+    id: 'early-access',
+    name: 'Early drop access',
+    description: 'A 48-hour head start on the next limited drop.',
+    pointsCost: 800,
+  },
+  {
+    id: 'studio-print',
+    name: 'Signed studio print',
+    description: 'A small signed print tucked into your next order.',
+    pointsCost: 1200,
+  },
+];
+
+/** Deterministic 32-bit hash so a customer's illustrative balance is stable. */
+function hashString(input: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
+}
+
 function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
@@ -299,6 +855,54 @@ export const mockProvider: StorefrontDataProvider = {
       edition: summary.limitedEdition ? 'Limited edition of 100' : 'Open edition',
       release: '2026',
       related: artworks.filter((a) => a.id !== summary.id).slice(0, 3),
+    });
+  },
+
+  async getArtworkPassport(slug: string): Promise<ArtworkPassport | null> {
+    const detail = await this.getArtwork(slug);
+    if (!detail) return delay(null);
+
+    const editionSize = detail.limitedEdition ? 100 : null;
+    const edition = detail.edition ?? 'Open edition';
+    const release = detail.release ?? '2026';
+    const versionId = artworkVersionId({ slug: detail.slug, edition, release });
+
+    const provenance: ProvenanceEvent[] = [
+      {
+        label: 'Drawn in the studio',
+        detail: `${detail.title} — original linework by the Tai Manic Studios team.`,
+        date: release,
+      },
+      {
+        label: 'Published',
+        detail: `Released into the ${detail.collection} collection.`,
+        date: release,
+      },
+      editionSize
+        ? {
+            label: 'Edition opened',
+            detail: `A numbered run of ${editionSize} — each piece is serialised when it is purchased.`,
+            date: release,
+          }
+        : {
+            label: 'Open edition',
+            detail: 'Printed to order with no fixed run size; every piece shares this passport.',
+            date: release,
+          },
+    ];
+
+    return delay({
+      artworkSlug: detail.slug,
+      title: detail.title,
+      collection: detail.collection,
+      versionId,
+      edition,
+      editionSize,
+      // Illustrative only — a real serial is assigned to a piece at purchase.
+      serialExample: editionSize ? passportSerial(42, editionSize) : null,
+      releasedOn: release,
+      issuedBy: 'Tai Manic Studios',
+      provenance,
     });
   },
 
@@ -384,5 +988,72 @@ export const mockProvider: StorefrontDataProvider = {
         eta: 'Ready in 2–4 working days',
       },
     ]);
+  },
+
+  async listDrops(): Promise<DropSummary[]> {
+    const now = Date.now();
+    return delay(dropSeeds.map((seed) => toDropSummary(seed, now)));
+  },
+
+  async getDrop(slug: string): Promise<DropDetail | null> {
+    const seed = dropSeeds.find((d) => d.slug === slug);
+    if (!seed) return delay(null);
+    return delay({
+      ...toDropSummary(seed, Date.now()),
+      story: seed.story,
+      artworks: dropArtworks(seed.collection),
+    });
+  },
+
+  async listStories(): Promise<StorySummary[]> {
+    // Newest first.
+    return delay(
+      storySeeds.map(toStorySummary).sort((a, b) => b.publishedOn.localeCompare(a.publishedOn)),
+    );
+  },
+
+  async getStory(slug: string): Promise<StoryDetail | null> {
+    const seed = storySeeds.find((s) => s.slug === slug);
+    return delay(seed ? toStoryDetail(seed) : null);
+  },
+
+  async getReviews(targetType: ReviewTargetType, slug: string): Promise<ReviewCollection> {
+    const items = (reviewSeeds[`${targetType}:${slug}`] ?? [])
+      .slice()
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return delay({ stats: summariseReviews(items), items });
+  },
+
+  async listCommunityPhotos(): Promise<CommunityPhoto[]> {
+    // Moderation-aware: approved only, newest first.
+    return delay(
+      filterApproved(communityPhotoSeeds).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
+  },
+
+  async listArtworkCommunityPhotos(slug: string): Promise<CommunityPhoto[]> {
+    return delay(
+      filterApproved(communityPhotoSeeds)
+        .filter((p) => p.artworkSlug === slug)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
+  },
+
+  async getLoyalty(email: string): Promise<LoyaltyProfile> {
+    // Deterministic, illustrative balance derived from the email so it is stable
+    // per customer across reloads. The real ledger lives server-side.
+    const h = hashString(email.trim().toLowerCase());
+    const points = 300 + (h % 1300); // 300–1599: spans the Silver/Gold bands
+    const lifetimePoints = points + (h % 600);
+    const referralCode = `TAI-${h.toString(36).toUpperCase().padStart(6, '0').slice(0, 6)}`;
+    return delay({
+      points,
+      lifetimePoints,
+      memberSince: '2026-01-15',
+      referralCode,
+      referralRewardText:
+        'You both get ₦2,000 off when a friend places their first order with your link.',
+      rewards: loyaltyRewards,
+    });
   },
 };

@@ -7,8 +7,10 @@ export interface NavItem {
 export const primaryNav: NavItem[] = [
   { href: '/artworks', label: 'Artworks' },
   { href: '/collections', label: 'Collections' },
+  { href: '/drops', label: 'Drops' },
   { href: '/shop', label: 'Shop' },
   { href: '/design-studio', label: 'Design Studio' },
+  { href: '/stories', label: 'Stories' },
   { href: '/about', label: 'About' },
 ];
 
@@ -19,8 +21,10 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
     items: [
       { href: '/artworks', label: 'Artworks' },
       { href: '/collections', label: 'Collections' },
+      { href: '/drops', label: 'Drops' },
       { href: '/shop', label: 'Shop' },
       { href: '/design-studio', label: 'Design Studio' },
+      { href: '/community', label: 'Community' },
     ],
   },
   {
@@ -34,6 +38,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
     heading: 'Help',
     items: [
+      { href: '/studio-guide', label: 'Studio Guide' },
       { href: '/delivery', label: 'Delivery' },
       { href: '/returns', label: 'Returns' },
       { href: '/size-guide', label: 'Size guide' },

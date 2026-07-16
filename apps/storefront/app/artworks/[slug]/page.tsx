@@ -1,13 +1,30 @@
 import { Badge, buttonVariants, Container, Eyebrow, Heading, Price, Text } from '@tms/ui';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { CommunityBoard } from '@/components/community/community-board';
+import { Reviews } from '@/components/review/reviews';
 import { dataProvider } from '@/lib/data';
 
 interface Params {
   params: Promise<{ slug: string }>;
+}
+
+// The artwork catalogue is a finite, enumerable set, so we statically generate
+// every detail page and reject any slug outside it. `dynamicParams = false`
+// makes an unknown slug a *genuine* 404 at the routing layer — resolved before
+// any streaming begins — which fixes TMS-F1-DEF-001 (the soft 404 where the
+// streamed shell committed HTTP 200 before notFound() resolved under Turbopack).
+// When the real catalogue API lands (TMS-FBR-001), generateStaticParams will
+// enumerate from it; switch to ISR (`dynamicParams = true` + `revalidate`) only
+// if on-demand slugs must resolve without a rebuild.
+export const dynamicParams = false;
+
+export async function generateStaticParams() {
+  const { items } = await dataProvider.listArtworks({ limit: 100 });
+  return items.map((artwork) => ({ slug: artwork.slug }));
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -25,6 +42,8 @@ export default async function ArtworkDetailPage({ params }: Params) {
   const { slug } = await params;
   const artwork = await dataProvider.getArtwork(slug);
   if (!artwork) notFound();
+  const reviews = await dataProvider.getReviews('artwork', slug);
+  const communityPhotos = await dataProvider.listArtworkCommunityPhotos(slug);
 
   return (
     <>
@@ -88,14 +107,38 @@ export default async function ArtworkDetailPage({ params }: Params) {
                 Design with this artwork <ArrowRight className="size-4" aria-hidden />
               </Link>
               <Link
-                href="/artworks"
+                href={`/artworks/${artwork.slug}/passport`}
                 className={buttonVariants({ size: 'lg', variant: 'secondary' })}
               >
+                <ShieldCheck className="size-4" aria-hidden /> View passport
+              </Link>
+              <Link href="/artworks" className={buttonVariants({ size: 'lg', variant: 'ghost' })}>
                 Back to gallery
               </Link>
             </div>
           </div>
         </div>
+
+        <div className="mt-14">
+          <Reviews targetType="artwork" targetLabel={artwork.title} initial={reviews} />
+        </div>
+
+        <section aria-labelledby="community-title" className="mt-14 border-t border-line pt-10">
+          <Heading id="community-title" as={2} size="md">
+            Styled by the community
+          </Heading>
+          <Text tone="secondary" className="mt-1">
+            How people are wearing {artwork.title}.
+          </Text>
+          <div className="mt-6">
+            <CommunityBoard
+              initialPhotos={communityPhotos}
+              artworks={[]}
+              fixedArtwork={{ slug: artwork.slug, title: artwork.title }}
+              emptyLabel={`Be the first to share how you style ${artwork.title}.`}
+            />
+          </div>
+        </section>
       </Container>
 
       {artwork.related.length > 0 ? (
