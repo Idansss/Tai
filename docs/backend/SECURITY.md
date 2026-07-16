@@ -16,3 +16,14 @@ Webhook work must validate signatures, persist raw events safely, reject amount/
 - Password reset consumes one token transactionally and revokes every active session.
 - Session deletion is restricted by the authenticated user ID; cross-customer attempts return not found.
 - Authentication attempts are bounded by a process-local, HMAC-keyed limiter. Replace its storage with Redis before running multiple API replicas.
+
+## Administrator authentication and authorization controls
+
+- Administration uses a separate `tms_admin_session` cookie and an `ADMIN` database audience; neither customer cookies nor customer-audience session rows satisfy the admin guard.
+- Active administrators must have an active user, verified email, active admin profile, password, and at least one unexpired role assignment.
+- TOTP implements RFC 6238 over RFC 4226 with a 30-second step, a one-step clock-skew window, attempt-bounded password challenges, transactional challenge consumption, and rejection of reused time steps.
+- TOTP shared secrets are encrypted with AES-256-GCM under `ADMIN_MFA_ENCRYPTION_KEY`; production rejects the checked-in local-only key. Raw secrets are returned only during enrollment and are never logged.
+- Effective permissions are loaded from PostgreSQL on every request. Decorator metadata is enforced by server-side permission guards; sensitive mutations additionally require an MFA-assured session.
+- A user may revoke their own admin session. Revoking another user's session requires `system.manage` and MFA. Assigning or revoking Owner requires an Owner actor, and the final active Owner is protected.
+- Bootstrap provisioning is an explicit environment-driven operator command. It creates no checked-in credential, validates the canonical role, hashes the supplied password, defaults MFA to required, and appends a system audit record.
+- Lost-device recovery is an explicit operator-only MFA reset command. It revokes the factor, every admin session and challenge, forces MFA to remain required, and appends a system audit record before the next enrollment.

@@ -64,7 +64,7 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 
 ## 2026-07-16 — TMS-B1-002 customer authentication
 
-- Status: implemented on `codex/b1-authentication`; consume after its focused PR is merged.
+- Status: Verified and merged through PR #10 as `88801c1374415eddf318a95e56ac3be7ab864c98`; ready for frontend consumption.
 - Compatibility: additive. Existing health and shared baseline contracts are unchanged.
 - Authentication transport: opaque `tms_session` HttpOnly cookie. Browser code must use credentialed same-origin requests and must not attempt to read or persist the token.
 - Added endpoints:
@@ -83,3 +83,25 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Verification/reset request endpoints always return `{ data: { accepted: true }, meta }` for known and unknown email addresses.
 - Added public error codes: `AUTHENTICATION_INVALID`, `EMAIL_VERIFICATION_REQUIRED`, `TOKEN_INVALID_OR_EXPIRED`, and `SESSION_INVALID`.
 - Frontend action: replace typed mock customer authentication when the PR merges; add `/account/verify-email` and `/account/reset-password` handlers that read the one-time `token` query parameter and submit it to the corresponding confirm endpoint. Do not expose different recovery UI for known vs unknown email addresses.
+
+## 2026-07-16 — TMS-B1-003 administrator authentication and RBAC
+
+- Status: implemented on `codex/b1-admin-auth`; consume after its focused PR is merged.
+- Compatibility: additive. Customer auth and health contracts are unchanged.
+- Authentication transport: opaque `tms_admin_session` HttpOnly cookie, distinct from `tms_session`. Use credentialed same-origin requests; never read, copy, or persist either session token in browser code.
+- Added auth endpoints:
+  - `POST /api/v1/admin/auth/login`
+  - `POST /api/v1/admin/auth/mfa/enroll`
+  - `POST /api/v1/admin/auth/mfa/enroll/confirm`
+  - `POST /api/v1/admin/auth/mfa/verify`
+  - `POST /api/v1/admin/auth/logout`
+  - `GET /api/v1/admin/auth/session`
+  - `DELETE /api/v1/admin/auth/sessions/:sessionId`
+- Added access endpoints:
+  - `GET /api/v1/admin/access/roles` (`users.read`)
+  - `PUT /api/v1/admin/access/users/:userId/roles/:roleCode` (`system.manage` + MFA)
+  - `DELETE /api/v1/admin/access/users/:userId/roles/:roleCode` (`system.manage` + MFA)
+- Login accepts `email`/`password` and returns either `{ data: { session }, meta }` with the cookie, or `{ data: { challenge }, meta }`. Challenge `status` is `MFA_ENROLLMENT_REQUIRED` or `MFA_REQUIRED`; submit its 43-character `challengeToken` to the corresponding MFA endpoint. Enrollment returns a one-time base32 `secret` and `otpauthUri`; confirmation/verification accepts a six-digit `code` and then sets the cookie.
+- The session includes `id`, `expiresAt`, `assuranceLevel`, and `user: { id, email, name, roles, permissions, mfaRequired, mfaEnrolled }`. Route and action visibility may use roles/permissions for UX, but the API remains authoritative.
+- Added error codes: `ADMIN_MFA_REQUIRED`, `MFA_CHALLENGE_INVALID`, and `MFA_CODE_INVALID`. Existing `AUTHENTICATION_INVALID`, `SESSION_INVALID`, `PERMISSION_DENIED`, `RESOURCE_NOT_FOUND`, `CONFLICT`, `VALIDATION_FAILED`, and `RATE_LIMITED` also apply.
+- Frontend action: replace the mock `localStorage` staff session with login/session/logout calls, delete `tms.admin.session.v1` during migration, render the MFA enrollment/challenge step when returned, and gate navigation from the session's permissions. Never treat client-side gating as authorization.

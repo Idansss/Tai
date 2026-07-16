@@ -110,15 +110,15 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Acceptance criteria: Secure cookies, hashing, throttling, safe recovery, OpenAPI, and positive/negative tests.
   - Implementation evidence: Customer auth controllers/services/guards, secure cookie and cryptography helpers, keyed request throttling, SMTP email adapter/templates, database client factory, configuration validation, additive OpenAPI and Zod contracts, audit records, and backend security/deployment/coordination documentation. The implementation is on `codex/b1-authentication` and uses the merged identity tables without a new migration.
   - Tests: Seven disposable-PostgreSQL HTTP scenarios cover registration validation and duplicate handling, non-reversible stored credentials/tokens, verification token one-time use, verified login and cookie attributes, enumeration-safe recovery, reset-driven session revocation, logout, session ownership, revoke-all, audit evidence, and throttling. Cryptography, cookies, email rendering, configuration, exception mapping, and contract/OpenAPI tests pass. `pnpm check`, frozen install, Prisma validation, Compose validation, a high-severity production dependency audit, static OpenAPI reference/operation validation, clean database/API builds, and a live compiled API plus runtime Swagger smoke all pass.
-  - Notes: Verified locally on 2026-07-16. Raw session, verification, and reset tokens leave the process only as cookies or email links; only peppered HMAC digests are persisted. The limiter is intentionally process-local for the single-instance phase and must move to Redis before horizontal scaling.
-- [ ] TMS-B1-003 Implement admin authentication, MFA-ready architecture, granular RBAC, and object-level authorization
-  - Status: Not started
+  - Notes: Verified and squash-merged through PR #10 on 2026-07-16 as `88801c1374415eddf318a95e56ac3be7ab864c98`. Raw session, verification, and reset tokens leave the process only as cookies or email links; only peppered HMAC digests are persisted. The limiter is intentionally process-local for the single-instance phase and must move to Redis before horizontal scaling.
+- [x] TMS-B1-003 Implement admin authentication, MFA-ready architecture, granular RBAC, and object-level authorization
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B1-001
   - Acceptance criteria: Every protected admin endpoint has server-side permission tests and bypass attempts fail.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: Separate customer/admin session audiences and cookies; password and MFA assurance levels; TOTP enrollment, verification, encrypted factor storage, bounded one-time challenges, and replay rejection; live database-backed permission guards; Owner-only Owner assignment and final-Owner preservation; owned and privileged cross-admin session revocation; provisioning and audited lost-device recovery commands; additive Prisma migration, OpenAPI, shared contracts, environment validation, audit events, and backend/coordination documentation.
+  - Tests: Eight MFA unit tests include the official RFC 6238 SHA-1 vectors, base32, encryption tamper detection, and `otpauth` URIs. Seven disposable-PostgreSQL HTTP scenarios cover provisioning, safe credential failures, customer/admin isolation, enrollment, encrypted storage, challenge lifecycle, TOTP replay, MFA assurance, live permissions, bypass denial, session boundaries, Owner elevation/final-Owner protection, logout, and audited MFA reset. The API has 35 passing tests across nine files and the database package has four passing migration/constraint tests. `pnpm check`, frozen install, Prisma validation, Compose validation, the high-severity production dependency audit, static OpenAPI reference/operation validation, and a live compiled API/runtime Swagger smoke pass.
+  - Notes: Verified locally on 2026-07-16 on `codex/b1-admin-auth` from the TMS-B1-002 merge commit `88801c1374415eddf318a95e56ac3be7ab864c98`; focused PR and CI are pending. The migration is `20260716015000_admin_authentication`. Administrative role mutations and cross-admin session revocations require both `system.manage` and MFA assurance; Owner elevation additionally requires an active Owner.
 
 ## B2 — Artwork and catalogue
 

@@ -20,6 +20,10 @@ describe('loadEnvironment', () => {
       AUTH_RESET_TTL_SECONDS: 3_600,
       AUTH_RATE_LIMIT_WINDOW_SECONDS: 60,
       AUTH_RATE_LIMIT_MAX_ATTEMPTS: 5,
+      ADMIN_AUTH_COOKIE_NAME: 'tms_admin_session',
+      ADMIN_AUTH_SESSION_TTL_SECONDS: 28_800,
+      ADMIN_MFA_CHALLENGE_TTL_SECONDS: 300,
+      ADMIN_MFA_ENCRYPTION_KEY: 'bG9jYWwtZGV2ZWxvcG1lbnQtbWZhLWtleS0xMjM0NTY',
     });
   });
 
@@ -31,5 +35,14 @@ describe('loadEnvironment', () => {
     expect(() => loadEnvironment({ NODE_ENV: 'production' })).toThrow(
       'AUTH_TOKEN_PEPPER must be replaced in production.',
     );
+  });
+
+  it('requires a deployment-specific MFA encryption key in production', () => {
+    expect(() =>
+      loadEnvironment({
+        NODE_ENV: 'production',
+        AUTH_TOKEN_PEPPER: 'a-production-authentication-pepper',
+      }),
+    ).toThrow('ADMIN_MFA_ENCRYPTION_KEY must be replaced in production.');
   });
 });

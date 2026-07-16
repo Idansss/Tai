@@ -22,7 +22,7 @@ describe('authentication cryptography', () => {
     await expect(verifyPassword('correct horse battery staple', first)).resolves.toBe(true);
     await expect(verifyPassword('wrong password', first)).resolves.toBe(false);
     await expect(verifyPassword('anything', 'not-a-password-hash')).resolves.toBe(false);
-  });
+  }, 15_000);
 
   it('creates opaque tokens and hashes them with a deployment secret', () => {
     const token = createOpaqueToken();

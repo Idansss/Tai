@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const localAuthPepper = 'local-development-auth-pepper-change-me';
+const localMfaEncryptionKey = 'bG9jYWwtZGV2ZWxvcG1lbnQtbWZhLWtleS0xMjM0NTY';
 
 const EnvironmentSchema = z
   .object({
@@ -24,6 +25,16 @@ const EnvironmentSchema = z
     AUTH_RESET_TTL_SECONDS: z.coerce.number().int().min(300).max(86_400).default(3_600),
     AUTH_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3_600).default(60),
     AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(100).default(5),
+    ADMIN_AUTH_COOKIE_NAME: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{1,64}$/)
+      .default('tms_admin_session'),
+    ADMIN_AUTH_SESSION_TTL_SECONDS: z.coerce.number().int().min(300).max(604_800).default(28_800),
+    ADMIN_MFA_CHALLENGE_TTL_SECONDS: z.coerce.number().int().min(60).max(1_800).default(300),
+    ADMIN_MFA_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{43}$/)
+      .default(localMfaEncryptionKey),
   })
   .superRefine((environment, context) => {
     if (
@@ -34,6 +45,16 @@ const EnvironmentSchema = z
         code: 'custom',
         path: ['AUTH_TOKEN_PEPPER'],
         message: 'AUTH_TOKEN_PEPPER must be replaced in production.',
+      });
+    }
+    if (
+      environment.NODE_ENV === 'production' &&
+      environment.ADMIN_MFA_ENCRYPTION_KEY === localMfaEncryptionKey
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ADMIN_MFA_ENCRYPTION_KEY'],
+        message: 'ADMIN_MFA_ENCRYPTION_KEY must be replaced in production.',
       });
     }
   });

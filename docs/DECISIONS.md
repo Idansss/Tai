@@ -27,3 +27,7 @@ Status: Accepted. Persist only hashes of sessions, verification tokens, reset to
 ## ADR-007 — Opaque customer sessions and provider-neutral email
 
 Status: Accepted. Hash passwords with parameterized scrypt and store only deployment-peppered HMAC digests for opaque session and one-time tokens. Deliver verification/recovery links through the shared email-provider boundary using SMTP locally and in compatible deployments. Authenticate browsers with an HttpOnly, SameSite=Lax cookie that is Secure in production. Keep throttling behind a dedicated service; the initial process-local implementation must move to Redis before horizontal scaling.
+
+## ADR-008 — Separate admin sessions with TOTP assurance and database-backed RBAC
+
+Status: Accepted. Administration sessions have a distinct cookie and persisted `ADMIN` audience so customer sessions cannot cross the trust boundary. Effective permissions are recalculated from non-expired database role assignments on every request. TOTP follows RFC 6238 with replayed time steps rejected; shared secrets are encrypted with deployment-specific AES-256-GCM key material and never returned after enrollment. Password and MFA challenges remain separate, short-lived, attempt-bounded records. Sensitive access mutations require both `system.manage` and MFA assurance, Owner elevation is Owner-only, and the final active Owner cannot be removed.

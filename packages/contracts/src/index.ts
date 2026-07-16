@@ -9,6 +9,9 @@ export const errorCodes = [
   'EMAIL_VERIFICATION_REQUIRED',
   'TOKEN_INVALID_OR_EXPIRED',
   'SESSION_INVALID',
+  'ADMIN_MFA_REQUIRED',
+  'MFA_CHALLENGE_INVALID',
+  'MFA_CODE_INVALID',
   'PERMISSION_DENIED',
   'RESOURCE_NOT_FOUND',
   'CONFLICT',
@@ -154,6 +157,61 @@ export interface AuthSession {
   id: string;
   expiresAt: string;
   user: AuthUser;
+}
+
+export const AdminLoginInputSchema = CustomerLoginInputSchema;
+export type AdminLoginInput = z.infer<typeof AdminLoginInputSchema>;
+
+export const AdminMfaChallengeInputSchema = z.object({
+  challengeToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+});
+export type AdminMfaChallengeInput = z.infer<typeof AdminMfaChallengeInputSchema>;
+
+export const AdminMfaCodeInputSchema = AdminMfaChallengeInputSchema.extend({
+  code: z.string().regex(/^\d{6}$/),
+});
+export type AdminMfaCodeInput = z.infer<typeof AdminMfaCodeInputSchema>;
+
+export const AdminRoleAssignmentInputSchema = z.object({
+  expiresAt: z.string().datetime({ offset: true }).nullable().optional(),
+});
+export type AdminRoleAssignmentInput = z.infer<typeof AdminRoleAssignmentInputSchema>;
+
+export type AdminAssuranceLevel = 'PASSWORD' | 'MFA';
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  roles: string[];
+  permissions: string[];
+  mfaRequired: boolean;
+  mfaEnrolled: boolean;
+}
+
+export interface AdminSession {
+  id: string;
+  expiresAt: string;
+  assuranceLevel: AdminAssuranceLevel;
+  user: AdminUser;
+}
+
+export interface AdminAuthChallenge {
+  status: 'MFA_ENROLLMENT_REQUIRED' | 'MFA_REQUIRED';
+  challengeToken: string;
+  expiresAt: string;
+}
+
+export interface AdminTotpEnrollment {
+  secret: string;
+  otpauthUri: string;
+}
+
+export interface AdminRole {
+  code: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
 }
 
 export const DesignConfigurationInputSchema = z.object({

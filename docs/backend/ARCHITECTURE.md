@@ -22,3 +22,7 @@ OpenAPI and `packages/contracts` are public platform boundaries. Provider packag
 ## Customer authentication
 
 `AuthModule` owns customer registration, login, email verification, password reset, secure-cookie sessions, and customer-owned session revocation. It uses the shared Prisma client factory, a provider-neutral SMTP email adapter, explicit public problem codes, and an isolated rate-limiter service. Authentication tokens are opaque browser/email values; only deployment-peppered HMAC digests reach PostgreSQL. The current limiter is process-local and replaceable; distributed Redis storage is required before horizontally scaling the API.
+
+## Administration authentication and authorization
+
+`AdminAuthModule` owns staff login/logout/session hydration, TOTP enrollment and verification, effective-role resolution, permission guards, MFA-assurance guards, staff-session revocation, and role assignments. Customer and admin sessions share lifecycle infrastructure but have different persisted audiences and cookie names. Every admin request reloads active, non-expired role grants from PostgreSQL, so revocation takes effect on the next request without trusting browser state. Object-level service checks distinguish an administrator's own session from another administrator's session; cross-admin revocation requires `system.manage` and MFA.

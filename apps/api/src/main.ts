@@ -38,6 +38,7 @@ const openApiConfig = new DocumentBuilder()
   .setDescription('Versioned backend contract for storefront and administration clients.')
   .setVersion('1.0.0')
   .addCookieAuth('tms_session', { type: 'apiKey', in: 'cookie' }, 'tms_session')
+  .addCookieAuth('tms_admin_session', { type: 'apiKey', in: 'cookie' }, 'tms_admin_session')
   .build();
 const openApiDocument = SwaggerModule.createDocument(app, openApiConfig);
 SwaggerModule.setup('api/docs', app, openApiDocument, { jsonDocumentUrl: 'api/docs/openapi.json' });
