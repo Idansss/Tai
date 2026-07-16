@@ -2332,6 +2332,9 @@ components:
       type: object
       additionalProperties: false
       required: [status]
+      description: >
+        unitPriceMinor and currency are required exactly when status is APPROVED and rejected
+        otherwise, so a configuration can never be sold at a price nobody approved. See ADR-015.
       properties:
         status: { $ref: '#/components/schemas/CompatibilityStatus' }
         placementIds:
@@ -2340,6 +2343,35 @@ components:
           default: []
           uniqueItems: true
           items: { type: string, format: uuid }
+        unitPriceMinor: { $ref: '#/components/schemas/MoneyMinor' }
+        currency: { $ref: '#/components/schemas/Currency' }
+    MoneyMinor:
+      type: integer
+      minimum: 1
+      maximum: 100000000
+      description: An amount in integer minor units, such as kobo. Money is never a float.
+    Currency:
+      type: string
+      pattern: '^[A-Z]{3}$'
+      example: NGN
+    Money:
+      type: object
+      required: [amountMinor, currency]
+      properties:
+        amountMinor: { $ref: '#/components/schemas/MoneyMinor' }
+        currency: { $ref: '#/components/schemas/Currency' }
+    ConfigurationAvailability:
+      type: object
+      required: [state, opensAt, closesAt]
+      description: >
+        Catalogue-level availability only. Stock is TMS-B4-001 and will refine this, so AVAILABLE
+        means the catalogue permits this sale, never that a unit is reserved.
+      properties:
+        state:
+          type: string
+          enum: [AVAILABLE, DROP_NOT_OPEN, DROP_ENDED, EDITION_EXHAUSTED]
+        opensAt: { type: string, format: date-time, nullable: true }
+        closesAt: { type: string, format: date-time, nullable: true }
     DesignConfigurationInput:
       type: object
       additionalProperties: false
@@ -2487,6 +2519,13 @@ components:
         artworkVersionId: { type: string, format: uuid }
         templateId: { type: string, format: uuid }
         status: { $ref: '#/components/schemas/CompatibilityStatus' }
+        unitPriceMinor:
+          allOf: [{ $ref: '#/components/schemas/MoneyMinor' }]
+          nullable: true
+          description: Non-null exactly when status is APPROVED.
+        currency:
+          allOf: [{ $ref: '#/components/schemas/Currency' }]
+          nullable: true
         placements:
           type: array
           items:
@@ -2516,6 +2555,9 @@ components:
           scalePresetId,
           view,
           quantity,
+          unitPrice,
+          totalPrice,
+          availability,
         ]
       properties:
         valid: { type: boolean, const: true }
@@ -2525,6 +2567,9 @@ components:
         garmentVariantId: { type: string, format: uuid }
         placementId: { type: string, format: uuid }
         scalePresetId: { type: string, format: uuid }
+        unitPrice: { $ref: '#/components/schemas/Money' }
+        totalPrice: { $ref: '#/components/schemas/Money' }
+        availability: { $ref: '#/components/schemas/ConfigurationAvailability' }
         view: { $ref: '#/components/schemas/GarmentView' }
         quantity: { type: integer, minimum: 1, maximum: 100 }
     GarmentConfigurationValidationResponse:

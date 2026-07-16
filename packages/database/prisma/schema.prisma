@@ -607,6 +607,9 @@ model ArtworkGarmentCompatibility {
   artworkVersionId String                    @map("artwork_version_id") @db.Uuid
   templateId       String                    @map("template_id") @db.Uuid
   status           CompatibilityStatus       @default(DRAFT)
+  /// Integer minor units (kobo). Required exactly when status is APPROVED. See ADR-015.
+  unitPriceMinor   Int?                      @map("unit_price_minor")
+  currency         String?                   @db.Char(3)
   createdByUserId  String                    @map("created_by_user_id") @db.Uuid
   approvedByUserId String?                   @map("approved_by_user_id") @db.Uuid
   approvedAt       DateTime?                 @map("approved_at") @db.Timestamptz(3)

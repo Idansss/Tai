@@ -506,15 +506,37 @@ export const GarmentScalePresetInputSchema = z.object({
 });
 export type GarmentScalePresetInput = z.infer<typeof GarmentScalePresetInputSchema>;
 
+/** Integer minor units only. Money is never a float. The base currency is NGN (kobo). */
+export const MoneyMinorSchema = z.number().int().positive().max(100_000_000);
+export const CurrencySchema = z.string().regex(/^[A-Z]{3}$/);
+
+export interface Money {
+  amountMinor: number;
+  currency: string;
+}
+
 export const ArtworkGarmentCompatibilityInputSchema = z
   .object({
     status: CompatibilityStatusSchema,
     placementIds: z.array(z.string().uuid()).max(50).default([]),
+    /** Required exactly when approving, and rejected otherwise. See ADR-015. */
+    unitPriceMinor: MoneyMinorSchema.optional(),
+    currency: CurrencySchema.optional(),
   })
   .refine((value) => new Set(value.placementIds).size === value.placementIds.length, {
     message: 'Compatibility placement identifiers must be unique.',
     path: ['placementIds'],
-  });
+  })
+  .refine(
+    (value) =>
+      value.status === 'APPROVED'
+        ? value.unitPriceMinor !== undefined && value.currency !== undefined
+        : value.unitPriceMinor === undefined && value.currency === undefined,
+    {
+      message: 'An approved compatibility requires a price and currency, and only then.',
+      path: ['unitPriceMinor'],
+    },
+  );
 export type ArtworkGarmentCompatibilityInput = z.infer<
   typeof ArtworkGarmentCompatibilityInputSchema
 >;
@@ -599,6 +621,26 @@ export const DesignConfigurationInputSchema = z.object({
 });
 export type DesignConfigurationInput = z.infer<typeof DesignConfigurationInputSchema>;
 
+/**
+ * Why a priced, approved configuration still cannot be bought right now. Stock is deliberately
+ * absent: garment inventory is TMS-B4-001 and will refine this, so `AVAILABLE` here means
+ * "the catalogue permits this sale", never "a unit is reserved for you".
+ */
+export const AvailabilityStateSchema = z.enum([
+  'AVAILABLE',
+  'DROP_NOT_OPEN',
+  'DROP_ENDED',
+  'EDITION_EXHAUSTED',
+]);
+export type AvailabilityState = z.infer<typeof AvailabilityStateSchema>;
+
+export interface ConfigurationAvailability {
+  state: AvailabilityState;
+  /** Present only when the state is time-bounded by a drop. */
+  opensAt: string | null;
+  closesAt: string | null;
+}
+
 export interface GarmentConfigurationValidation {
   valid: true;
   artworkId: string;
@@ -609,4 +651,9 @@ export interface GarmentConfigurationValidation {
   scalePresetId: string;
   view: GarmentView;
   quantity: number;
+  /** Server-authoritative. Never trust a browser-supplied price. */
+  unitPrice: Money;
+  /** unitPrice.amountMinor * quantity, computed server-side in integer minor units. */
+  totalPrice: Money;
+  availability: ConfigurationAvailability;
 }

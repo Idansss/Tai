@@ -221,6 +221,21 @@ export class GarmentCompatibilityDto {
   @ArrayMaxSize(50)
   @IsUUID('4', { each: true })
   placementIds: string[] = [];
+
+  // Required exactly when approving. The service and a database check constraint both enforce
+  // that an approved combination is priced and a non-approved one is not. See ADR-015.
+  @ApiPropertyOptional({ minimum: 1, maximum: 100000000, description: 'Integer minor units.' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100000000)
+  unitPriceMinor?: number;
+
+  @ApiPropertyOptional({ example: 'NGN' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{3}$/)
+  currency?: string;
 }
 
 export class GarmentConfigurationDto {
