@@ -105,6 +105,17 @@ enum CompatibilityStatus {
   ARCHIVED
 }
 
+enum PromotionKind {
+  PERCENT_OFF
+  FIXED_AMOUNT
+}
+
+enum PromotionStatus {
+  DRAFT
+  ACTIVE
+  DISABLED
+}
+
 enum InventoryMovementKind {
   RECEIPT
   ADJUSTMENT
@@ -189,6 +200,8 @@ model User {
   garmentCompatibilitiesCreated  ArtworkGarmentCompatibility[] @relation("GarmentCompatibilityCreator")
   garmentCompatibilitiesApproved ArtworkGarmentCompatibility[] @relation("GarmentCompatibilityApprover")
   inventoryMovements             InventoryMovement[]           @relation("InventoryMovementActor")
+  cart                           Cart?                         @relation("CartOwner")
+  promotionsCreated              Promotion[]                   @relation("PromotionCreator")
   designConfigurations           DesignConfiguration[]         @relation("DesignConfigurationOwner")
   mediaAssetsCreated             ArtworkAsset[]                @relation("MediaAssetCreator")
   mediaAssetsApproved            ArtworkAsset[]                @relation("MediaAssetApprover")
@@ -375,6 +388,7 @@ model ArtworkVersion {
   garmentCompatibilities ArtworkGarmentCompatibility[]
   designConfigurations   DesignConfiguration[]
   mediaAssets            ArtworkAsset[]
+  cartLines              CartLine[]
 
   @@unique([artworkId, versionNumber], map: "artwork_versions_artwork_version_key")
   @@index([artworkId, status, versionNumber], map: "artwork_versions_artwork_status_version_idx")
@@ -618,6 +632,7 @@ model GarmentVariant {
 
   inventoryItem InventoryItem?
   designConfigurations DesignConfiguration[]
+  cartLines            CartLine[]
 
   @@unique([templateId, colourId, sizeId], map: "garment_variants_template_colour_size_key")
   @@index([templateId, status], map: "garment_variants_template_status_idx")
@@ -646,6 +661,7 @@ model GarmentPlacement {
   mockupAssets    ArtworkAsset[]
 
   designConfigurations DesignConfiguration[]
+  cartLines            CartLine[]
 
   @@unique([templateId, slug], map: "garment_placements_template_slug_key")
   @@index([templateId, status, position], map: "garment_placements_template_status_position_idx")
@@ -665,6 +681,7 @@ model GarmentScalePreset {
   placement    GarmentPlacement @relation(fields: [placementId], references: [id], onDelete: Cascade)
 
   designConfigurations DesignConfiguration[]
+  cartLines            CartLine[]
 
   @@unique([placementId, slug], map: "garment_scale_presets_placement_slug_key")
   @@index([placementId, status, position], map: "garment_scale_presets_placement_status_position_idx")
@@ -850,6 +867,76 @@ model MediaProcessingJob {
 
   @@index([status, createdAt], map: "media_processing_jobs_status_created_idx")
   @@map("media_processing_jobs")
+}
+
+
+/// A cart belongs to exactly one owner: a signed-in customer or an anonymous guest token.
+/// Prices are never stored here; they are resolved from the approved pair on every read so a
+/// stale cart can never quote a price nobody approved (ADR-015).
+model Cart {
+  id             String     @id @default(uuid()) @db.Uuid
+  userId         String?    @unique(map: "carts_user_id_key") @map("user_id") @db.Uuid
+  guestToken     String?    @unique(map: "carts_guest_token_key") @map("guest_token") @db.VarChar(64)
+  promotionId    String?    @map("promotion_id") @db.Uuid
+  lastActivityAt DateTime   @default(now()) @map("last_activity_at") @db.Timestamptz(3)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user           User?      @relation("CartOwner", fields: [userId], references: [id], onDelete: Cascade)
+  promotion      Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  lines          CartLine[]
+
+  @@index([lastActivityAt], map: "carts_last_activity_idx")
+  @@map("carts")
+}
+
+/// One approved configuration and a quantity. Identical configurations merge onto one line,
+/// keyed by the same tuple hash a saved design uses (ADR-014).
+model CartLine {
+  id                String             @id @default(uuid()) @db.Uuid
+  cartId            String             @map("cart_id") @db.Uuid
+  artworkVersionId  String             @map("artwork_version_id") @db.Uuid
+  garmentVariantId  String             @map("garment_variant_id") @db.Uuid
+  placementId       String             @map("placement_id") @db.Uuid
+  scalePresetId     String             @map("scale_preset_id") @db.Uuid
+  view              GarmentView
+  quantity          Int
+  configurationHash String             @map("configuration_hash") @db.Char(64)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  cart              Cart               @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  artworkVersion    ArtworkVersion     @relation(fields: [artworkVersionId], references: [id], onDelete: Restrict)
+  garmentVariant    GarmentVariant     @relation(fields: [garmentVariantId], references: [id], onDelete: Restrict)
+  placement         GarmentPlacement   @relation(fields: [placementId], references: [id], onDelete: Restrict)
+  scalePreset       GarmentScalePreset @relation(fields: [scalePresetId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, configurationHash], map: "cart_lines_cart_hash_key")
+  @@index([cartId, createdAt], map: "cart_lines_cart_created_idx")
+  @@map("cart_lines")
+}
+
+/// A discount code. Money is integer minor units and the discount can never exceed the
+/// subtotal it applies to.
+model Promotion {
+  id              String          @id @default(uuid()) @db.Uuid
+  code            String          @unique(map: "promotions_code_key") @db.VarChar(64)
+  label           String          @db.VarChar(120)
+  kind            PromotionKind
+  /// Percent (1-100) for PERCENT_OFF, or minor units for FIXED_AMOUNT.
+  value           Int
+  currency        String?         @db.Char(3)
+  status          PromotionStatus @default(DRAFT)
+  startsAt        DateTime?       @map("starts_at") @db.Timestamptz(3)
+  endsAt          DateTime?       @map("ends_at") @db.Timestamptz(3)
+  minSubtotalMinor Int?           @map("min_subtotal_minor")
+  maxDiscountMinor Int?           @map("max_discount_minor")
+  createdByUserId String          @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       User            @relation("PromotionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  carts           Cart[]
+
+  @@index([status, startsAt], map: "promotions_status_starts_idx")
+  @@map("promotions")
 }
 
 model EmailVerificationToken {

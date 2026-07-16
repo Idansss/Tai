@@ -22,6 +22,7 @@ export const errorCodes = [
   'RATE_LIMITED',
   'IDEMPOTENCY_CONFLICT',
   'INVENTORY_UNAVAILABLE',
+  'PROMOTION_INVALID',
   'INTEGRATION_UNAVAILABLE',
   'INTERNAL_ERROR',
 ] as const;
@@ -759,4 +760,100 @@ export interface DesignConfigurationSummary {
   shareToken: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export const AddCartLineInputSchema = z.object({
+  artworkVersionId: z.string().uuid(),
+  garmentVariantId: z.string().uuid(),
+  placementId: z.string().uuid(),
+  scalePreset: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  view: GarmentViewSchema,
+  quantity: z.number().int().min(1).max(20).default(1),
+});
+export type AddCartLineInput = z.infer<typeof AddCartLineInputSchema>;
+
+export const UpdateCartLineInputSchema = z.object({
+  quantity: z.number().int().min(1).max(20),
+});
+export type UpdateCartLineInput = z.infer<typeof UpdateCartLineInputSchema>;
+
+export const PromotionCodeInputSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9][A-Z0-9_-]{2,63}$/),
+});
+export type PromotionCodeInput = z.infer<typeof PromotionCodeInputSchema>;
+
+/** Why a cart line cannot be bought right now. Resolved fresh on every cart read. */
+export const CartLineIssueSchema = z.enum([
+  'CONFIGURATION_NOT_APPROVED',
+  'OUT_OF_STOCK',
+  'INSUFFICIENT_STOCK',
+  'DROP_NOT_OPEN',
+  'DROP_ENDED',
+]);
+export type CartLineIssue = z.infer<typeof CartLineIssueSchema>;
+
+export interface CartLine {
+  lineId: string;
+  artworkId: string;
+  artworkVersionId: string;
+  garmentTemplateId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+  quantity: number;
+  /** Resolved from the approved pair on every read; a browser-supplied price is never used. */
+  unitPrice: Money | null;
+  lineTotal: Money | null;
+  /** Units currently sellable. Stock is only held at checkout, never by the cart. */
+  availableQuantity: number;
+  /** Null when the line is currently purchasable. */
+  issue: CartLineIssue | null;
+}
+
+export interface AppliedPromotion {
+  code: string;
+  label: string;
+  discount: Money;
+}
+
+export interface Cart {
+  id: string;
+  currency: string;
+  items: CartLine[];
+  subtotal: Money;
+  promotion: AppliedPromotion | null;
+  /** subtotal minus any discount, never below zero. Delivery and tax belong to checkout. */
+  total: Money;
+  /** True when any line has an issue; checkout must refuse until it is cleared. */
+  hasIssues: boolean;
+}
+
+/**
+ * The canonical identity of an approved configuration. A saved design and a cart line must
+ * agree on this, so it has exactly one definition. Quantity is deliberately excluded: it is
+ * not part of what the customer made (ADR-014).
+ */
+export function configurationCanonicalForm(input: {
+  artworkVersionId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+}): string {
+  return [
+    input.artworkVersionId,
+    input.garmentVariantId,
+    input.placementId,
+    input.scalePresetId,
+    input.view,
+  ].join('|');
 }

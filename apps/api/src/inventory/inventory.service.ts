@@ -348,6 +348,27 @@ export class InventoryService {
     return result.count;
   }
 
+  /**
+   * Sellable units, or zero when a variant has never been stocked. The cart asks this on every
+   * read, and a variant with no inventory row is out of stock rather than an error.
+   */
+  async availableQuantity(variantId: string): Promise<number> {
+    const item = await this.database.client.inventoryItem.findUnique({
+      where: { variantId },
+      select: { id: true, onHand: true },
+    });
+    if (!item) return 0;
+    const active = await this.database.client.inventoryReservation.aggregate({
+      where: {
+        itemId: item.id,
+        status: InventoryReservationStatus.ACTIVE,
+        expiresAt: { gt: new Date() },
+      },
+      _sum: { quantity: true },
+    });
+    return Math.max(item.onHand - (active._sum.quantity ?? 0), 0);
+  }
+
   async getLevel(variantId: string): Promise<StockLevel> {
     return this.level(this.database.client, variantId);
   }

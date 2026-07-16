@@ -153,7 +153,7 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'SELECT count(*)::int AS count FROM permissions',
     );
 
-    expect(migrationResult.rows[0]?.count).toBe(9);
+    expect(migrationResult.rows[0]?.count).toBe(10);
     expect(permissionResult.rows[0]?.count).toBe(14);
     expect(roleResult.rows).toEqual([
       { code: 'ANALYST', is_system: true, grant_count: 3 },

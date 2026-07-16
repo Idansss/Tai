@@ -20,6 +20,8 @@ export {
   MediaAssetKind,
   MediaJobStatus,
   MediaProcessingStatus,
+  PromotionKind,
+  PromotionStatus,
   Prisma,
   SessionKind,
   StoryBlockType,

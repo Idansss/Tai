@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import type { DesignConfigurationSummary } from '@tms/contracts';
+import { configurationCanonicalForm, type DesignConfigurationSummary } from '@tms/contracts';
 import { DesignVisibility, Prisma, type GarmentView } from '@tms/database';
 
 import type { AuthenticatedSession } from '../auth/auth.types.js';
@@ -40,14 +40,8 @@ export class DesignService {
    * collapses onto one row regardless of name, visibility, or when it was saved.
    */
   private hash(tuple: ResolvedTuple): string {
-    const canonical = [
-      tuple.artworkVersionId,
-      tuple.garmentVariantId,
-      tuple.placementId,
-      tuple.scalePresetId,
-      tuple.view,
-    ].join('|');
-    return createHash('sha256').update(canonical).digest('hex');
+    // One definition, shared with cart lines, so a saved design and its cart line agree.
+    return createHash('sha256').update(configurationCanonicalForm(tuple)).digest('hex');
   }
 
   private async resolve(input: SaveDesignDto): Promise<ResolvedTuple> {
