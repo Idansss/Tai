@@ -95,22 +95,22 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
 
 ## B1 — Identity and platform security
 
-- [ ] TMS-B1-001 Model users, customer/admin profiles, sessions, verification, reset tokens, roles, permissions, and audit logs
-  - Status: Not started
+- [x] TMS-B1-001 Model users, customer/admin profiles, sessions, verification, reset tokens, roles, permissions, and audit logs
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B0-011
   - Acceptance criteria: Reviewed migration with constraints/indexes; seed roles/permissions; database tests pass.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B1-002 Implement customer registration, login, logout, verification, password reset, and session invalidation
-  - Status: Not started
+  - Implementation evidence: `packages/database/prisma/schema.prisma`, migration `20260714142500_identity_foundation`, the idempotent role/permission seed in `packages/database/prisma/seed.ts`, and `packages/database/src/identity-foundation.integration.spec.ts`.
+  - Tests: A fresh PostgreSQL 17 container applies the migration twice, runs the seed twice, verifies 7 roles/12 permissions/34 grants and required indexes, exercises identity/session/token constraints, and proves audit update/delete and actor deletion are rejected. `pnpm check`, Prisma validation, production builds, Compose validation, and the production dependency audit pass.
+  - Notes: Verified on 2026-07-14 and squash-merged through PR #3 on 2026-07-16 as `5c6da304223b3aec7c3fdeb2a31178c90c4343ae`. This persistence-only slice adds no public API contract; TMS-B1-002 owns the authentication endpoints.
+- [x] TMS-B1-002 Implement customer registration, login, logout, verification, password reset, and session invalidation
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B1-001
   - Acceptance criteria: Secure cookies, hashing, throttling, safe recovery, OpenAPI, and positive/negative tests.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: Customer auth controllers/services/guards, secure cookie and cryptography helpers, keyed request throttling, SMTP email adapter/templates, database client factory, configuration validation, additive OpenAPI and Zod contracts, audit records, and backend security/deployment/coordination documentation. The implementation is on `codex/b1-authentication` and uses the merged identity tables without a new migration.
+  - Tests: Seven disposable-PostgreSQL HTTP scenarios cover registration validation and duplicate handling, non-reversible stored credentials/tokens, verification token one-time use, verified login and cookie attributes, enumeration-safe recovery, reset-driven session revocation, logout, session ownership, revoke-all, audit evidence, and throttling. Cryptography, cookies, email rendering, configuration, exception mapping, and contract/OpenAPI tests pass. `pnpm check`, frozen install, Prisma validation, Compose validation, a high-severity production dependency audit, static OpenAPI reference/operation validation, clean database/API builds, and a live compiled API plus runtime Swagger smoke all pass.
+  - Notes: Verified locally on 2026-07-16. Raw session, verification, and reset tokens leave the process only as cookies or email links; only peppered HMAC digests are persisted. The limiter is intentionally process-local for the single-instance phase and must move to Redis before horizontal scaling.
 - [ ] TMS-B1-003 Implement admin authentication, MFA-ready architecture, granular RBAC, and object-level authorization
   - Status: Not started
   - Owner: Codex

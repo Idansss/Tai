@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Logger, type ArgumentsHost } from '@nestjs/c
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiExceptionFilter } from './api-exception.filter.js';
+import { ApiProblemException } from './api-problem.exception.js';
 
 function createHost() {
   const response = {
@@ -52,6 +53,24 @@ describe('ApiExceptionFilter', () => {
       error: {
         code: 'RESOURCE_NOT_FOUND',
         message: 'Artwork not found.',
+        correlationId: 'error-test',
+      },
+    });
+  });
+
+  it('preserves an explicitly safe public problem code', () => {
+    const { host, response } = createHost();
+
+    new ApiExceptionFilter().catch(
+      new ApiProblemException('TOKEN_INVALID_OR_EXPIRED', 400, 'This link is invalid or expired.'),
+      host,
+    );
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({
+      error: {
+        code: 'TOKEN_INVALID_OR_EXPIRED',
+        message: 'This link is invalid or expired.',
         correlationId: 'error-test',
       },
     });

@@ -55,3 +55,31 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Added the OpenAPI baseline at `docs/contracts/openapi.yaml`.
 - Compatibility: additive; no previous contract existed.
 - Frontend action: create `claude/f0-visual-foundation` from the latest `main` and use typed mock adapters for unimplemented domain APIs.
+
+## 2026-07-14 — TMS-B1-001 identity persistence
+
+- Added backend-only persistence for users, profiles, sessions, verification/reset tokens, RBAC, and immutable audit records.
+- Compatibility: no public endpoint, OpenAPI, or `packages/contracts` change.
+- Frontend action: none. Continue using typed mock authentication adapters until TMS-B1-002 publishes the authentication contract.
+
+## 2026-07-16 — TMS-B1-002 customer authentication
+
+- Status: implemented on `codex/b1-authentication`; consume after its focused PR is merged.
+- Compatibility: additive. Existing health and shared baseline contracts are unchanged.
+- Authentication transport: opaque `tms_session` HttpOnly cookie. Browser code must use credentialed same-origin requests and must not attempt to read or persist the token.
+- Added endpoints:
+  - `POST /api/v1/auth/register`
+  - `POST /api/v1/auth/login`
+  - `POST /api/v1/auth/logout`
+  - `POST /api/v1/auth/email-verification/request`
+  - `POST /api/v1/auth/email-verification/confirm`
+  - `POST /api/v1/auth/password-reset/request`
+  - `POST /api/v1/auth/password-reset/confirm`
+  - `GET /api/v1/auth/session`
+  - `DELETE /api/v1/auth/sessions/:sessionId`
+  - `DELETE /api/v1/auth/sessions`
+- Registration requires `email`, a 12–128 character `password`, and optional `displayName`. It returns the customer plus `verificationRequired: true`.
+- Login and verification confirmation return `{ data: { session }, meta }` and set the cookie. Logout and session deletion return `204`.
+- Verification/reset request endpoints always return `{ data: { accepted: true }, meta }` for known and unknown email addresses.
+- Added public error codes: `AUTHENTICATION_INVALID`, `EMAIL_VERIFICATION_REQUIRED`, `TOKEN_INVALID_OR_EXPIRED`, and `SESSION_INVALID`.
+- Frontend action: replace typed mock customer authentication when the PR merges; add `/account/verify-email` and `/account/reset-password` handlers that read the one-time `token` query parameter and submit it to the corresponding confirm endpoint. Do not expose different recovery UI for known vs unknown email addresses.

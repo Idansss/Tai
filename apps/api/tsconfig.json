@@ -1,6 +1,7 @@
 {
   "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
+    "emitDecoratorMetadata": true,
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo"

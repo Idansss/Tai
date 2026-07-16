@@ -1,6 +1,14 @@
 # Database
 
-PostgreSQL is the system of record and Prisma is the schema/migration tool. The B0 schema intentionally contains no domain tables; B1 creates the first reviewed migration so the identity model is not accidentally treated as foundation boilerplate.
+PostgreSQL is the system of record and Prisma is the schema/migration tool. B1 introduces the first domain migration through TMS-B1-001.
+
+## B1 identity foundation
+
+Migration `20260714142500_identity_foundation` models users, customer/admin profiles, sessions, email-verification and password-reset tokens, roles, permissions, role grants, user assignments, and audit logs. Session and one-time-token values are stored only as hashes. Database checks enforce normalized emails and valid lifecycle timestamps; audit logs are append-only.
+
+The seed is idempotent and establishes Owner, Store Administrator, Content Manager, Production Operator, Fulfilment Operator, Customer Support, and Analyst roles with explicit permissions. No administrator user or credential is seeded.
+
+TMS-B1-002 uses the merged identity tables without a new migration. Passwords use salted scrypt encodings. Session, verification, reset, and IP values use deployment-peppered HMAC-SHA-256 digests; raw values exist only in the cookie or one-time email link. Verification and reset consumption, session creation/revocation, password changes, and their audit records execute transactionally.
 
 ## Rules
 
@@ -11,4 +19,4 @@ PostgreSQL is the system of record and Prisma is the schema/migration tool. The 
 - Append-only movements/events where history matters
 - Reversible migrations where practical; destructive migrations require staged rollout notes
 
-Commands: `pnpm db:generate` and `pnpm db:validate`. Local PostgreSQL is defined in `infra/docker-compose.yml`.
+Commands: `pnpm db:generate`, `pnpm db:validate`, `pnpm --filter @tms/database exec prisma migrate deploy`, and `pnpm --filter @tms/database exec prisma db seed`. Local PostgreSQL is defined in `infra/docker-compose.yml`.

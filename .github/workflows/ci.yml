@@ -28,4 +28,6 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm db:validate
-      - run: pnpm audit --audit-level high --prod
+      # pnpm 10 uses npm audit endpoints that were retired in 2026. Keep the
+      # workspace install pinned while using pnpm 11's bulk-advisory client.
+      - run: corepack pnpm@11.13.0 --pm-on-fail=ignore audit --audit-level high --prod
