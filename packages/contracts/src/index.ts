@@ -610,3 +610,54 @@ export interface GarmentConfigurationValidation {
   view: GarmentView;
   quantity: number;
 }
+
+export const DesignVisibilitySchema = z.enum(['PRIVATE', 'UNLISTED']);
+export type DesignVisibility = z.infer<typeof DesignVisibilitySchema>;
+
+/**
+ * A saved design is the approved tuple only. Quantity is deliberately absent: it is a cart
+ * concern, not part of a design's identity, so re-saving the same design at a different
+ * quantity must not create a second design. See ADR-013.
+ */
+export const SaveDesignInputSchema = z.object({
+  artworkVersionId: z.string().uuid(),
+  garmentVariantId: z.string().uuid(),
+  placementId: z.string().uuid(),
+  scalePreset: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  view: GarmentViewSchema,
+  name: z.string().trim().min(1).max(120).optional(),
+});
+export type SaveDesignInput = z.infer<typeof SaveDesignInputSchema>;
+
+export const UpdateDesignInputSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).nullable().optional(),
+    visibility: DesignVisibilitySchema.optional(),
+  })
+  .refine((value) => value.name !== undefined || value.visibility !== undefined, {
+    message: 'Provide a name or a visibility to update.',
+  });
+export type UpdateDesignInput = z.infer<typeof UpdateDesignInputSchema>;
+
+export interface DesignConfigurationSummary {
+  id: string;
+  artworkId: string;
+  artworkVersionId: string;
+  garmentTemplateId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+  /** Deterministic SHA-256 of the approved tuple; identical designs share one hash. */
+  configurationHash: string;
+  name: string | null;
+  visibility: DesignVisibility;
+  /** Present only while the design is UNLISTED and the owner is reading it. */
+  shareToken: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

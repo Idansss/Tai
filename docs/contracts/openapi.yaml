@@ -1433,6 +1433,92 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /api/v1/designs:
+    get:
+      operationId: listCustomerDesigns
+      tags: [designs]
+      summary: List the saved designs you own
+      security: [{ tms_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/DesignList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: saveCustomerDesign
+      tags: [designs]
+      summary: Save an approved design configuration
+      security: [{ tms_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SaveDesignInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '201': { $ref: '#/components/responses/Design' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '422': { $ref: '#/components/responses/ApiError' }
+  /api/v1/designs/{id}:
+    get:
+      operationId: getCustomerDesign
+      tags: [designs]
+      summary: Read one design you own
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+    patch:
+      operationId: updateCustomerDesign
+      tags: [designs]
+      summary: Rename a design or change its visibility
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateDesignInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteCustomerDesign
+      tags: [designs]
+      summary: Delete a design you own
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      responses:
+        '204': { description: The design was deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/designs/{id}/share:
+    post:
+      operationId: rotateCustomerDesignShare
+      tags: [designs]
+      summary: Publish an unlisted share link, replacing any previous one
+      security: [{ tms_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/DesignId' }]
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/shared-designs/{token}:
+    get:
+      operationId: getSharedDesign
+      tags: [designs]
+      summary: Read an unlisted design by its stable share token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string, minLength: 32, maxLength: 64 }
+      responses:
+        '200': { $ref: '#/components/responses/Design' }
+        '404': { $ref: '#/components/responses/ApiError' }
 components:
   parameters:
     Cursor:
@@ -1444,6 +1530,11 @@ components:
       in: query
       schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
     CatalogueId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DesignId:
       name: id
       in: path
       required: true
@@ -1624,6 +1715,16 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/GarmentConfigurationValidationResponse' }
+    Design:
+      description: One saved design configuration.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DesignResponse' }
+    DesignList:
+      description: Saved designs owned by the authenticated customer.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DesignListResponse' }
   schemas:
     CustomerRegistrationInput:
       type: object
@@ -2532,6 +2633,82 @@ components:
       required: [data, meta]
       properties:
         data: { $ref: '#/components/schemas/GarmentConfigurationValidation' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    SaveDesignInput:
+      type: object
+      required: [artworkVersionId, garmentVariantId, placementId, scalePreset, view]
+      description: >
+        The approved tuple only. Quantity is deliberately absent because it is a cart concern,
+        not part of a design's identity. Freeform print geometry and crop are never accepted;
+        see ADR-013.
+      properties:
+        artworkVersionId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePreset: { type: string, maxLength: 64, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        view: { type: string, enum: [FRONT, BACK] }
+        name: { type: string, minLength: 1, maxLength: 120 }
+      additionalProperties: false
+    UpdateDesignInput:
+      type: object
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120, nullable: true }
+        visibility: { type: string, enum: [PRIVATE, UNLISTED] }
+      additionalProperties: false
+    DesignConfiguration:
+      type: object
+      required:
+        [
+          id,
+          artworkId,
+          artworkVersionId,
+          garmentTemplateId,
+          garmentVariantId,
+          placementId,
+          scalePresetId,
+          view,
+          configurationHash,
+          name,
+          visibility,
+          shareToken,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        artworkId: { type: string, format: uuid }
+        artworkVersionId: { type: string, format: uuid }
+        garmentTemplateId: { type: string, format: uuid }
+        garmentVariantId: { type: string, format: uuid }
+        placementId: { type: string, format: uuid }
+        scalePresetId: { type: string, format: uuid }
+        view: { type: string, enum: [FRONT, BACK] }
+        configurationHash:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: Deterministic SHA-256 of the approved tuple; identical designs share one hash.
+        name: { type: string, nullable: true, maxLength: 120 }
+        visibility: { type: string, enum: [PRIVATE, UNLISTED] }
+        shareToken:
+          type: string
+          nullable: true
+          description: Present only while the design is UNLISTED and its owner is reading it. A shared read never returns it.
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    DesignResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/DesignConfiguration' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    DesignListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/DesignConfiguration' }
         meta: { $ref: '#/components/schemas/ApiMeta' }
     HealthResponse:
       type: object
