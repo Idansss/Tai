@@ -89,3 +89,15 @@ Expiry is evaluated on the reservation path itself: stale holds are expired befo
 Defence in depth: the application refuses to oversell, and a `CHECK (on_hand >= 0)` constraint rejects a negative value even for a direct database write. The movement ledger is append-only through a trigger that rejects UPDATE and DELETE, so stock history is auditable but never rewritable. An adjustment cannot take stock below the quantity already promised to live reservations, which would otherwise send a holder to checkout against stock that no longer exists.
 
 Consequences: `reserve`, `release`, and `commit` are service operations rather than HTTP endpoints, because reservation lifetime belongs to the cart (TMS-B4-002) and checkout (TMS-B4-003) that own the hold. Callers supply the hold duration, so TMS-B4-002 must choose and document a cart hold TTL. Availability in TMS-B3-002 currently reports catalogue permission only; exposing stock publicly and adding an `OUT_OF_STOCK` state is a follow-up once both land.
+
+## ADR-017 — Stock is held at checkout, never by the cart
+
+Status: Accepted. Adding to a cart checks that stock is available but holds nothing. The expiring reservation from ADR-016 is taken when checkout begins.
+
+Context: a hold has to start somewhere, and the two candidates trade the same scarcity against each other. Holding on add-to-cart guarantees that what a customer sees in their cart is genuinely theirs, but every abandoned cart then sits on stock until it expires — on a limited drop that can make the store look sold out while nothing is actually selling. Holding at checkout keeps every unit sellable until someone commits to buying it.
+
+Decision: the cart checks availability on add and on every read, and refuses a quantity stock cannot fulfil, but takes no reservation. TMS-B4-003 checkout takes the hold with a short TTL.
+
+Consequences: a customer can lose the last unit between cart and checkout. That is the deliberate trade, and it obliges the cart to be honest rather than optimistic: every read recomputes availability, a line that can no longer be bought carries an explicit issue, and an unavailable line is excluded from the subtotal instead of being billed for. `hasIssues` exists so checkout can refuse before payment rather than failing at it, and so the interface can say "no longer available" at the cart instead of at the card. Because nothing is held, the cart never needs a countdown, and cart lifetime is a retention question rather than an inventory one.
+
+A future change to hold scarce items — limited drops and numbered editions — on add-to-cart remains open. It is additive: it would call the existing reservation service from the cart without changing how a cart line is stored.

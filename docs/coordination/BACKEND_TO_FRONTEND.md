@@ -214,3 +214,16 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Adjustments require a `reason`; the API rejects a zero `quantityDelta`, an adjustment below zero (`400 VALIDATION_FAILED`), and an adjustment that would drop stock below what is already reserved (`409 INVENTORY_UNAVAILABLE`). Surface that conflict as a real message: it means someone is mid-purchase, not that the input was malformed.
 - `GET /api/v1/admin/inventory/{variantId}/movements` is an append-only ledger. There is deliberately no edit or delete: stock history cannot be rewritten. Do not build an edit affordance.
 - **Stock is not public yet.** There is no customer-facing stock endpoint, and `availability` from `garment-configurations/validate` still means "the catalogue permits this sale", not "in stock". Keep any storefront stock display on typed adapters until that follow-up lands.
+
+## 2026-07-16 — TMS-B4-002 the cart API is available
+
+- Status: implemented on `codex/b4-cart`; consume after its PR is merged. This answers request TMS-FBR-003.
+- **This replaces `apps/storefront/lib/cart.ts` mock state and the cart drawer/page data.** Six operations: `GET /api/v1/cart`, `POST /api/v1/cart/items`, `PATCH|DELETE /api/v1/cart/items/{lineId}`, `POST|DELETE /api/v1/cart/promotion`.
+- **Anonymous carts work.** No session needed; the API issues a `tms_cart` guest cookie on first contact. Send credentials/cookies on every cart call. Signing in merges the guest cart into the customer's automatically on the next cart request — no explicit merge call.
+- **Never send a price.** `POST /cart/items` takes the approved tuple plus `quantity`; an extra `unitPriceMinor` is a `400`. Totals are server-computed. The existing `subtotalMinor`/`discountMinor` preview helpers may stay for optimistic rendering, but the cart page must show the server's numbers.
+- Line identity is the approved tuple, so adding the same configuration twice merges quantities onto one line. Your `lineId()` helper keys on `printX`/`crop*`, which no longer exist (ADR-013) — drop them.
+- **`issue` on a line is the important field.** It is `OUT_OF_STOCK`, `INSUFFICIENT_STOCK`, `CONFIGURATION_NOT_APPROVED`, `DROP_NOT_OPEN`, or `DROP_ENDED`, and `null` when purchasable. Unavailable lines are **kept and excluded from the subtotal**, not deleted — render them as "no longer available" with the reason. `hasIssues` tells you to block checkout.
+- **Nothing is reserved by the cart (ADR-017).** `availableQuantity` is what is sellable right now, not what is held for this shopper. Do not show a countdown or promise the units; the hold happens at checkout.
+- Promotions: `POST /cart/promotion` with `{ code }`. An invalid code is `422 PROMOTION_INVALID` with one message for unknown/ended/unlaunched — do not try to distinguish them in the UI. A valid code that does not qualify (below its minimum) returns `200` with `promotion: null`; say "code doesn't apply to this order" rather than showing an error.
+- `total` is `subtotal - discount`, never below zero. **Delivery and tax are deliberately absent** and belong to the checkout quote (TMS-B4-003), exactly as TMS-FBR-003 requested.
+- A line you do not own returns `404`, not `403`.
