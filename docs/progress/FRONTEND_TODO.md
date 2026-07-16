@@ -867,9 +867,27 @@ times out in this environment, so on-disk capture is deferred to Playwright, not
 - [ ] **TMS-UX2-007** Homepage a11y & performance audit — In progress. AA tokens + no-overflow +
   no console errors confirmed; remaining: axe run on the new DOM + production Lighthouse (LCP/INP/CLS).
 
-### UX3 — Storefront overhaul (Not started)
-Navigation refinements done for header/footer; remaining per-route work: search, artwork index+detail,
-collections, shop, product detail, drops, stories, community, studio-guide, informational pages.
+### UX3 — Storefront overhaul (Implemented, verifying)
+Gallery Press propagated across the storefront. New shared `PageHeading` (editorial masthead:
+numbered index + mono eyebrow + display title + lead + meta). Cards reframed as `Frame` gallery
+objects (`ArtworkCard`, `ProductCard`, `CollectionCard`, `DropCard`, `StoryCard`,
+`CommunityPhotoCard`). Routes updated to wide canvas + reveal grids + mono meta:
+- `/artworks` (editorial header + sticky filter bar + 4-col framed grid) and `/artworks/[slug]`
+  (sticky gallery presentation, mono spec list, framed related grid).
+- `/shop`, `/collections` + `/collections/[slug]` (editorial cover), `/products/[slug]`
+  (configurator now composites the artwork onto the selected garment colour, sticky preview,
+  mono spec list; sticky mobile purchase bar preserved).
+- `/drops` + `/drops/[slug]`, `/stories` + `/stories/[slug]` (shoppable scene now has an artwork
+  backdrop), `/community`, `/search` (larger field + framed results), `/studio-guide`.
+- Informational/policy pages via the upgraded `ContentPage` (mono eyebrow + hairline section
+  heads); `/about`, `/artist` inherit it. Header + footer done in session 1.
+- Verified: typecheck + lint + 195 tests green; live dev — every index + detail route HTTP 200,
+  no console errors; `/artworks` renders 8 framed plates + sticky filters + gallery paper, no
+  overflow; `/products/[slug]` mobile has composited preview + sticky bar + 3 swatches/6 sizes,
+  no overflow at 375. Remaining before Verified: axe pass + production build (folded into UX7).
+- Note: interactive/link colour standardised to the teal signature (`accent-2`) since the
+  primary accent is now near-black ink. `TMS-UX1-004` (cards → framed objects) now effectively
+  complete for the storefront.
 
 ### UX4 — Design Studio overhaul (Not started)
 Stage system, configuration controls, preview, summary, responsive, motion, save/share/cart, a11y.

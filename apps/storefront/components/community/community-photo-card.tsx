@@ -1,7 +1,8 @@
-import { Badge, Card } from '@tms/ui';
+import { Badge, Frame } from '@tms/ui';
 import Link from 'next/link';
-import type { CommunityPhoto } from '@/lib/data';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import { moderationLabel, moderationTone } from '@/lib/community';
+import type { CommunityPhoto } from '@/lib/data';
 
 /**
  * A single community photo tile (TMS-F5-005). Placeholder imagery (no real
@@ -16,28 +17,25 @@ export function CommunityPhotoCard({
   showStatus?: boolean;
 }) {
   return (
-    <Card variant="surface" padded={false} className="overflow-hidden">
-      <div
-        className="relative aspect-square w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-        role="img"
-        aria-label={`Community photo by ${photo.handle}, placeholder`}
-      >
+    <div>
+      <Frame ratio="square" mat="canvas" role="img" aria-label={`Community photo by ${photo.handle}`}>
+        <ArtworkVisual seed={`community-${photo.id}`} title={photo.artworkTitle} label={photo.handle} />
         {showStatus ? (
           <span className="absolute left-3 top-3">
             <Badge tone={moderationTone(photo.status)}>{moderationLabel(photo.status)}</Badge>
           </span>
         ) : null}
-      </div>
-      <div className="space-y-1 p-4">
+      </Frame>
+      <div className="mt-3 space-y-1">
         <p className="text-sm font-medium text-ink">{photo.handle}</p>
         <p className="text-sm text-muted">{photo.caption}</p>
         <Link
           href={`/artworks/${photo.artworkSlug}`}
-          className="inline-block rounded-sm text-xs text-accent underline underline-offset-2 hover:text-ink"
+          className="inline-block rounded-sm font-mono text-xs uppercase tracking-[0.08em] text-accent-2 underline underline-offset-2 transition-colors hover:text-ink"
         >
           {photo.artworkTitle}
         </Link>
       </div>
-    </Card>
+    </div>
   );
 }

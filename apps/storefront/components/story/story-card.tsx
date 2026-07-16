@@ -1,6 +1,7 @@
-import { Card, Eyebrow, Heading, Text } from '@tms/ui';
+import { Eyebrow, Frame, Heading, Text } from '@tms/ui';
 import { ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import type { StorySummary } from '@/lib/data';
 
 const fmtDate = (iso: string) =>
@@ -15,42 +16,37 @@ export function StoryCard({ story }: { story: StorySummary }) {
       href={`/stories/${story.slug}`}
       className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
     >
-      <Card variant="surface" interactive padded={false} className="overflow-hidden">
-        <div
-          className="relative aspect-[16/9] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-          role="img"
-          aria-label={`${story.title}, story cover placeholder`}
-        >
-          {story.shoppableCount > 0 ? (
-            <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-medium text-ink">
-              <ShoppingBag className="size-3.5 text-accent" aria-hidden />
-              {story.shoppableCount} shoppable
-            </span>
-          ) : null}
+      <Frame ratio="collection" mat="canvas" interactive>
+        <ArtworkVisual seed={`story-${story.slug}`} title={story.title} label={story.category} />
+        {story.shoppableCount > 0 ? (
+          <span className="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-surface/95 px-2.5 py-1 font-mono text-[0.7rem] uppercase tracking-[0.08em] text-ink shadow-sm">
+            <ShoppingBag className="size-3.5 text-accent-2" aria-hidden />
+            {story.shoppableCount} shoppable
+          </span>
+        ) : null}
+      </Frame>
+      <div className="mt-4 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <Eyebrow>{story.category}</Eyebrow>
+          <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-muted">
+            {story.readMinutes} min
+          </span>
         </div>
-        <div className="space-y-2 p-5">
-          <div className="flex items-center justify-between gap-2">
-            <Eyebrow>{story.category}</Eyebrow>
-            <Text size="sm" tone="muted">
-              {story.readMinutes} min read
-            </Text>
-          </div>
-          <Heading as={3} size="md">
-            {story.title}
-          </Heading>
-          <Text size="sm" tone="muted">
-            {story.excerpt}
-          </Text>
-          <div className="flex items-center justify-between pt-2">
-            <Text size="sm" tone="muted">
-              {fmtDate(story.publishedOn)}
-            </Text>
-            <span className="inline-flex items-center gap-1 text-sm text-accent group-hover:gap-2">
-              Read story <ArrowRight className="size-4" aria-hidden />
-            </span>
-          </div>
+        <Heading as={3} size="md" className="transition-colors group-hover:text-accent-2">
+          {story.title}
+        </Heading>
+        <Text size="sm" tone="muted" className="line-clamp-2">
+          {story.excerpt}
+        </Text>
+        <div className="flex items-center justify-between pt-1">
+          <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-muted">
+            {fmtDate(story.publishedOn)}
+          </span>
+          <span className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-[0.1em] text-ink transition-all group-hover:gap-2 group-hover:text-accent-2">
+            Read <ArrowRight className="size-3.5" aria-hidden />
+          </span>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }

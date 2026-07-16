@@ -1,9 +1,10 @@
-import { Badge, buttonVariants, Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { Badge, buttonVariants, Container, Eyebrow, Frame, Heading, Reveal, Text } from '@tms/ui';
 import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import { Countdown } from '@/components/drop/countdown';
 import { DropEarlyAccess } from '@/components/drop/drop-early-access';
 import { DropStatusBadge } from '@/components/drop/drop-status-badge';
@@ -47,23 +48,30 @@ export default async function DropDetailPage({ params }: Params) {
 
   return (
     <>
-      <Container className="py-10">
-        <nav aria-label="Breadcrumb" className="text-xs uppercase tracking-[0.08em] text-muted">
-          <Link href="/drops" className="rounded-sm hover:text-ink">
+      <Container width="wide" className="py-10 sm:py-12">
+        <nav
+          aria-label="Breadcrumb"
+          className="font-mono text-xs uppercase tracking-[0.12em] text-muted"
+        >
+          <Link href="/drops" className="rounded-sm transition-colors hover:text-ink">
             Drops
           </Link>
-          <span aria-hidden> / </span>
+          <span aria-hidden className="px-2 text-line-2">
+            /
+          </span>
           <span className="text-ink-2">{drop.title}</span>
         </nav>
 
-        <div className="mt-6 grid gap-10 lg:grid-cols-2">
-          <div
-            className="aspect-[4/5] w-full rounded-[var(--radius-lg)] border border-line bg-gradient-to-br from-canvas-2 to-surface-2"
-            role="img"
-            aria-label={`${drop.title}, drop presentation placeholder`}
-          />
+        <div className="mt-8 grid gap-10 lg:grid-cols-12 lg:gap-12">
+          <div className="lg:col-span-7">
+            <Reveal from="none">
+              <Frame ratio="artwork" className="shadow-md">
+                <ArtworkVisual seed={`drop-${drop.slug}`} title={drop.title} label={drop.collection} />
+              </Frame>
+            </Reveal>
+          </div>
 
-          <div>
+          <div className="lg:col-span-5">
             <div className="flex flex-wrap items-center gap-3">
               <Eyebrow className="m-0">{drop.collection}</Eyebrow>
               <DropStatusBadge status={status} />
@@ -116,16 +124,16 @@ export default async function DropDetailPage({ params }: Params) {
 
       {drop.artworks.length > 0 ? (
         <section aria-labelledby="drop-pieces-title" className="border-t border-line bg-canvas-2">
-          <Container className="py-14">
+          <Container width="wide" className="py-16">
             <Eyebrow>In this drop</Eyebrow>
             <Heading id="drop-pieces-title" as={2} size="lg" className="mt-2">
               {drop.pieceCount} {drop.pieceCount === 1 ? 'piece' : 'pieces'}
             </Heading>
-            <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {drop.artworks.map((art) => (
-                <li key={art.id}>
+            <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+              {drop.artworks.map((art, i) => (
+                <Reveal as="li" key={art.id} delay={(i % 4) * 60}>
                   <ArtworkCard artwork={art} />
-                </li>
+                </Reveal>
               ))}
             </ul>
           </Container>

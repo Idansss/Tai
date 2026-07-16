@@ -4,6 +4,7 @@ import { Price } from '@tms/ui';
 import { ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import type { StoryHotspot, StoryScene } from '@/lib/data';
 import { hotspotActionLabel, hotspotHref, hotspotKindLabel } from '@/lib/stories';
 
@@ -32,10 +33,13 @@ export function ShoppableScene({ scene }: { scene: StoryScene }) {
   return (
     <figure className="my-8">
       <div
-        className="relative aspect-[16/9] w-full rounded-[var(--radius-lg)] border border-line bg-gradient-to-br from-canvas-2 to-surface-2"
+        className="relative aspect-[16/9] w-full overflow-hidden rounded-[var(--radius-lg)] border border-line"
         role="img"
         aria-label={`${scene.caption}, with shoppable hotspots`}
       >
+        <div aria-hidden className="absolute inset-0">
+          <ArtworkVisual seed={`scene-${scene.id}`} title={scene.caption} />
+        </div>
         {scene.hotspots.map((hotspot, index) => {
           const isOpen = openId === hotspot.id;
           // Flip the card above the marker when it sits low in the scene, and
@@ -100,7 +104,7 @@ export function ShoppableScene({ scene }: { scene: StoryScene }) {
                   ) : null}
                   <Link
                     href={hotspotHref(hotspot.target)}
-                    className="mt-3 inline-flex items-center gap-1 text-sm text-accent hover:gap-2"
+                    className="mt-3 inline-flex items-center gap-1 text-sm text-accent-2 hover:gap-2"
                   >
                     {hotspotActionLabel(hotspot.target)}{' '}
                     <ArrowRight className="size-4" aria-hidden />
@@ -138,7 +142,7 @@ export function ShoppableScene({ scene }: { scene: StoryScene }) {
                   ) : null}
                   <Link
                     href={hotspotHref(hotspot.target)}
-                    className="inline-flex items-center gap-1 text-sm text-accent hover:gap-2"
+                    className="inline-flex items-center gap-1 text-sm text-accent-2 hover:gap-2"
                   >
                     {hotspotActionLabel(hotspot.target)}{' '}
                     <ArrowRight className="size-3.5" aria-hidden />

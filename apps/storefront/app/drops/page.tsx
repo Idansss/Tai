@@ -1,6 +1,7 @@
-import { Container, EmptyState, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container, EmptyState, Reveal } from '@tms/ui';
 import type { Metadata } from 'next';
 import { DropCard } from '@/components/drop/drop-card';
+import { PageHeading } from '@/components/site/page-heading';
 import { dataProvider } from '@/lib/data';
 import { sortDrops } from '@/lib/drops';
 
@@ -18,31 +19,32 @@ export default async function DropsPage() {
   const drops = sortDrops(await dataProvider.listDrops(), now);
 
   return (
-    <Container className="py-14">
-      <header>
-        <Eyebrow>Limited releases</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Drops
-        </Heading>
-        <Text tone="secondary" className="mt-2 max-w-prose">
-          Small, timed releases of new artwork. Members get early access; live drops are made to
-          order and close when the window ends.
-        </Text>
-      </header>
+    <Container width="wide" className="py-14 sm:py-16">
+      <PageHeading
+        eyebrow="Limited releases"
+        index={1}
+        title="Drops"
+        titleId="drops-title"
+        lead="Small, timed releases of new artwork. Members get early access; live drops are made to order and close when the window ends."
+        meta={`${drops.length} ${drops.length === 1 ? 'release' : 'releases'}`}
+      />
 
       {drops.length === 0 ? (
-        <div className="mt-10">
+        <div className="mt-16">
           <EmptyState
             title="No drops right now"
             description="The next release is being prepared. Check back soon."
           />
         </div>
       ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {drops.map((drop) => (
-            <li key={drop.slug}>
+        <ul
+          aria-labelledby="drops-title"
+          className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {drops.map((drop, i) => (
+            <Reveal as="li" key={drop.slug} delay={(i % 3) * 70}>
               <DropCard drop={drop} now={now} />
-            </li>
+            </Reveal>
           ))}
         </ul>
       )}

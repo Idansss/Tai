@@ -1,4 +1,4 @@
-import { buttonVariants, Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { buttonVariants, Container, Heading, Text } from '@tms/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
@@ -36,10 +36,10 @@ export function ContentPage({
   children,
 }: ContentPageProps) {
   return (
-    <Container className="py-16 sm:py-24">
+    <Container width="wide" className="py-16 sm:py-24">
       <div className="max-w-2xl">
         <header>
-          <Eyebrow>{eyebrow}</Eyebrow>
+          <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted">{eyebrow}</p>
           <Heading as={1} size="display-lg" className="mt-3">
             {title}
           </Heading>
@@ -47,7 +47,7 @@ export function ContentPage({
             {intro}
           </Text>
           {updated ? (
-            <Text size="sm" tone="muted" className="mt-3">
+            <Text size="sm" tone="muted" className="mt-3 font-mono uppercase tracking-[0.1em]">
               Last updated {updated}
             </Text>
           ) : null}
@@ -62,12 +62,12 @@ export function ContentPage({
                     as={2}
                     size="md"
                     id={section.id}
-                    className="mb-3 text-xs uppercase tracking-[0.12em] text-muted"
+                    className="mb-3 border-t border-line pt-4 font-mono text-xs uppercase tracking-[0.12em] text-muted"
                   >
                     {section.heading}
                   </Heading>
                 ) : null}
-                <div className="space-y-3 text-ink-2 leading-relaxed">{section.body}</div>
+                <div className="space-y-3 leading-relaxed text-ink-2">{section.body}</div>
               </section>
             ))}
           </div>

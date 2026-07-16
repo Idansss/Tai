@@ -598,3 +598,31 @@ info pages), reframing cards as `Frame` objects and adding `Reveal`/`SectionInde
 UX1-004/005/006 (form primitives, `Select` portal + `Combobox`, dropdown audit) and UX2-007 (axe +
 production Lighthouse). Then UX4 Design Studio, UX5 commerce/account, UX6 admin, UX7 hardening.
 Do NOT re-run the full palette change — it is done and AA-verified; build on it.
+
+## F6 — UX3 storefront overhaul — session 2
+
+Propagated "The Gallery Press" across every storefront route. New shared `PageHeading`
+(numbered index + mono eyebrow + display title + lead + meta). All catalogue/editorial cards
+reframed as `Frame` gallery objects with the deterministic `ArtworkVisual` plate: `ArtworkCard`,
+`ProductCard`, `CollectionCard`, `DropCard`, `StoryCard`, `CommunityPhotoCard`.
+
+Routes: `/artworks` (sticky filter bar + 4-col framed grid), `/artworks/[slug]` (sticky gallery
+presentation + mono spec list + framed related), `/shop`, `/collections` + `/collections/[slug]`
+(editorial cover), `/products/[slug]` (**configurator now composites the artwork onto the selected
+garment colour**, sticky preview, mono specs; sticky mobile purchase bar preserved), `/drops` +
+`/drops/[slug]`, `/stories` + `/stories/[slug]` (shoppable scene gained an artwork backdrop),
+`/community`, `/search` (larger field + framed results), `/studio-guide`, and all info/policy
+pages via the upgraded `ContentPage`. Interactive/link colour standardised to `accent-2` (teal)
+since the primary accent is now near-black ink. No purple/AI gradients exist in the storefront.
+
+Verified: typecheck + lint + 195 tests green; live dev — all index + detail routes HTTP 200, no
+console errors; `/artworks` = 8 framed plates + sticky filters + gallery paper, no overflow;
+`/products/[slug]` mobile keeps sticky purchase bar + composited preview + 3 swatches/6 sizes, no
+overflow at 375. Deferred to UX7: axe pass + production build + Playwright before/after PNGs.
+
+Next: **UX4 — Design Studio overhaul** (`components/studio/design-studio.tsx`): stage system,
+configuration controls, live preview composition, front/back + zoom, summary, save/share/cart,
+responsive, motion, a11y — reuse `Frame`/`ArtworkVisual`/`SectionIndex`/`Reveal`. Then UX5
+(commerce/account — also reframe the remaining token-gradient placeholders in `wishlist-view` and
+the studio preview), UX6 (admin), UX1-005/006 (form primitives, Select portal + Combobox +
+dropdown audit), UX7 (hardening). Do not redo the palette.

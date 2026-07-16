@@ -1,6 +1,7 @@
-import { Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container } from '@tms/ui';
 import type { Metadata } from 'next';
 import { CommunityBoard } from '@/components/community/community-board';
+import { PageHeading } from '@/components/site/page-heading';
 import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
@@ -16,19 +17,15 @@ export default async function CommunityPage() {
   const artworks = artworkPage.items.map((a) => ({ slug: a.slug, title: a.title }));
 
   return (
-    <Container className="py-10">
-      <div className="max-w-2xl">
-        <Eyebrow>Community</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Styled by you
-        </Heading>
-        <Text size="lg" tone="secondary" className="mt-3">
-          Photos from people wearing their pieces out in the world. Share yours and, once our team
-          has had a look, it joins the gallery.
-        </Text>
-      </div>
+    <Container width="wide" className="py-14 sm:py-16">
+      <PageHeading
+        eyebrow="Community"
+        index={1}
+        title="Styled by you"
+        lead="Photos from people wearing their pieces out in the world. Share yours and, once our team has had a look, it joins the gallery."
+      />
 
-      <div className="mt-10">
+      <div className="mt-12">
         <CommunityBoard
           initialPhotos={photos}
           artworks={artworks}

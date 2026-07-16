@@ -1,4 +1,4 @@
-import { Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container, Heading, Text } from '@tms/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { StudioGuideChat } from '@/components/studio-guide/studio-guide-chat';
@@ -14,8 +14,8 @@ export default function StudioGuidePage() {
     <Container className="py-10">
       <div className="mx-auto max-w-2xl">
         <div className="max-w-xl">
-          <Eyebrow>Help</Eyebrow>
-          <Heading as={1} size="display-lg" className="mt-2">
+          <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted">Help</p>
+          <Heading as={1} size="display-lg" className="mt-3">
             Studio Guide
           </Heading>
           <Text size="lg" tone="secondary" className="mt-3">
@@ -23,7 +23,7 @@ export default function StudioGuidePage() {
             anything about a specific order, our{' '}
             <Link
               href="/contact"
-              className="rounded-sm text-accent underline underline-offset-2 hover:text-ink"
+              className="rounded-sm text-accent-2 underline underline-offset-2 transition-colors hover:text-ink"
             >
               team
             </Link>{' '}

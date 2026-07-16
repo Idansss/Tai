@@ -1,8 +1,9 @@
-import { Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container, Eyebrow, Frame, Heading, Reveal, Text } from '@tms/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import { dataProvider } from '@/lib/data';
 
 interface Params {
@@ -39,32 +40,48 @@ export default async function CollectionDetailPage({ params }: Params) {
   if (!collection) notFound();
 
   return (
-    <Container className="py-14">
-      <nav aria-label="Breadcrumb" className="text-xs uppercase tracking-[0.08em] text-muted">
-        <Link href="/collections" className="rounded-sm hover:text-ink">
+    <Container width="wide" className="py-12 sm:py-16">
+      <nav
+        aria-label="Breadcrumb"
+        className="font-mono text-xs uppercase tracking-[0.12em] text-muted"
+      >
+        <Link href="/collections" className="rounded-sm transition-colors hover:text-ink">
           Collections
         </Link>
-        <span aria-hidden> / </span>
+        <span aria-hidden className="px-2 text-line-2">
+          /
+        </span>
         <span className="text-ink-2">{collection.name}</span>
       </nav>
 
-      <header className="mt-6 max-w-2xl">
-        <Eyebrow>
-          {collection.artworkCount} {collection.artworkCount === 1 ? 'piece' : 'pieces'}
-        </Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          {collection.name}
-        </Heading>
-        <Text size="lg" tone="secondary" className="mt-4">
-          {collection.description}
-        </Text>
-      </header>
+      <Reveal className="mt-8 grid gap-8 lg:grid-cols-12 lg:items-end">
+        <header className="lg:col-span-6">
+          <Eyebrow>
+            {collection.artworkCount} {collection.artworkCount === 1 ? 'piece' : 'pieces'}
+          </Eyebrow>
+          <Heading as={1} size="display-lg" className="mt-3">
+            {collection.name}
+          </Heading>
+          <Text size="lg" tone="secondary" className="mt-4 max-w-prose">
+            {collection.description}
+          </Text>
+        </header>
+        <div className="lg:col-span-6">
+          <Frame ratio="collection" mat="canvas">
+            <ArtworkVisual
+              seed={`collection-${collection.slug}`}
+              title={collection.name}
+              label={collection.name}
+            />
+          </Frame>
+        </div>
+      </Reveal>
 
-      <ul className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {collection.artworks.map((art) => (
-          <li key={art.id}>
+      <ul className="mt-14 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+        {collection.artworks.map((art, i) => (
+          <Reveal as="li" key={art.id} delay={(i % 4) * 60}>
             <ArtworkCard artwork={art} />
-          </li>
+          </Reveal>
         ))}
       </ul>
     </Container>

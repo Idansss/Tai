@@ -1,8 +1,9 @@
-import { buttonVariants, Container, EmptyState, Eyebrow, Heading, Text } from '@tms/ui';
+import { buttonVariants, Container, EmptyState, Reveal } from '@tms/ui';
 import { Search } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { PageHeading } from '@/components/site/page-heading';
 import { dataProvider } from '@/lib/data';
 import { normalizeQuery } from '@/lib/search';
 
@@ -25,19 +26,16 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const results = query ? await dataProvider.searchArtworks(q) : [];
 
   return (
-    <Container className="py-14">
-      <Eyebrow>Search</Eyebrow>
-      <Heading as={1} size="display-lg" className="mt-2">
-        Search the studio
-      </Heading>
+    <Container width="wide" className="py-14 sm:py-16">
+      <PageHeading eyebrow="Search" index={1} title="Search the studio" />
 
-      <form action="/search" method="get" role="search" className="mt-6 flex max-w-xl gap-2">
+      <form action="/search" method="get" role="search" className="mt-8 flex max-w-2xl gap-2">
         <label htmlFor="search-q" className="sr-only">
           Search artworks and collections
         </label>
         <div className="relative flex-1">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted"
+            className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted"
             aria-hidden
           />
           <input
@@ -48,19 +46,22 @@ export default async function SearchPage({ searchParams }: PageProps) {
             autoFocus
             enterKeyHint="search"
             placeholder="Search artworks, collections…"
-            className="h-11 w-full rounded-md border border-line-2 bg-surface pl-10 pr-3 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            className="h-12 w-full rounded-md border border-line-2 bg-surface pl-11 pr-3 text-base text-ink outline-none transition-colors placeholder:text-muted hover:border-ink-2/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
           />
         </div>
-        <button type="submit" className={buttonVariants()}>
+        <button type="submit" className={buttonVariants({ size: 'lg' })}>
           Search
         </button>
       </form>
 
       {query ? (
-        <section aria-labelledby="results-heading" className="mt-10">
-          <Heading id="results-heading" as={2} size="md">
+        <section aria-labelledby="results-heading" className="mt-12">
+          <h2
+            id="results-heading"
+            className="font-mono text-xs uppercase tracking-[0.12em] text-muted"
+          >
             {results.length} {results.length === 1 ? 'result' : 'results'} for “{q.trim()}”
-          </Heading>
+          </h2>
           {results.length === 0 ? (
             <div className="mt-6">
               <EmptyState
@@ -74,24 +75,24 @@ export default async function SearchPage({ searchParams }: PageProps) {
               />
             </div>
           ) : (
-            <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {results.map((art) => (
-                <li key={art.id}>
+            <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+              {results.map((art, i) => (
+                <Reveal as="li" key={art.id} delay={(i % 4) * 60}>
                   <ArtworkCard artwork={art} />
-                </li>
+                </Reveal>
               ))}
             </ul>
           )}
         </section>
       ) : (
-        <div className="mt-8">
-          <Text tone="muted">Try one of these:</Text>
-          <ul className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-10">
+          <p className="font-mono text-xs uppercase tracking-[0.12em] text-muted">Try one of these</p>
+          <ul className="mt-4 flex flex-wrap gap-2">
             {suggestions.map((s) => (
               <li key={s}>
                 <Link
                   href={`/search?q=${encodeURIComponent(s)}`}
-                  className="inline-flex items-center rounded-[var(--radius-pill)] border border-line bg-surface px-3 py-1.5 text-sm text-ink-2 outline-none hover:border-line-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+                  className="inline-flex items-center rounded-[var(--radius-pill)] border border-line bg-surface px-4 py-2 text-sm text-ink-2 outline-none transition-colors hover:border-line-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
                 >
                   {s}
                 </Link>

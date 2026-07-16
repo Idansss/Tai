@@ -41,12 +41,17 @@ export default async function ProductPage({ params }: Params) {
   const reviews = await dataProvider.getReviews('product', slug);
 
   return (
-    <Container className="py-10 pb-24 sm:pb-14">
-      <nav aria-label="Breadcrumb" className="text-xs uppercase tracking-[0.08em] text-muted">
-        <Link href="/shop" className="rounded-sm hover:text-ink">
+    <Container width="wide" className="py-10 pb-24 sm:pb-14 sm:pt-12">
+      <nav
+        aria-label="Breadcrumb"
+        className="font-mono text-xs uppercase tracking-[0.12em] text-muted"
+      >
+        <Link href="/shop" className="rounded-sm transition-colors hover:text-ink">
           Shop
         </Link>
-        <span aria-hidden> / </span>
+        <span aria-hidden className="px-2 text-line-2">
+          /
+        </span>
         <span className="text-ink-2">{product.title}</span>
       </nav>
 
@@ -55,11 +60,11 @@ export default async function ProductPage({ params }: Params) {
         <Heading as={1} size="display-lg" className="mt-2">
           {product.artworkTitle}
         </Heading>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-3 text-sm text-muted">
           From the{' '}
           <Link
             href={`/artworks/${product.artworkSlug}`}
-            className="rounded-sm text-accent underline underline-offset-2 hover:text-ink"
+            className="rounded-sm text-accent-2 underline underline-offset-2 transition-colors hover:text-ink"
           >
             {product.artworkTitle}
           </Link>{' '}
@@ -67,11 +72,11 @@ export default async function ProductPage({ params }: Params) {
         </p>
       </header>
 
-      <div className="mt-8">
+      <div className="mt-10">
         <ProductConfigurator product={product} />
       </div>
 
-      <div className="mt-14">
+      <div className="mt-16">
         <Reviews targetType="product" targetLabel={product.title} initial={reviews} />
       </div>
     </Container>

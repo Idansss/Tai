@@ -1,9 +1,10 @@
-import { Badge, buttonVariants, Container, Eyebrow, Heading, Price, Text } from '@tms/ui';
+import { Badge, buttonVariants, Container, Eyebrow, Frame, Heading, Price, Reveal, Text } from '@tms/ui';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import { CommunityBoard } from '@/components/community/community-board';
 import { Reviews } from '@/components/review/reviews';
 import { dataProvider } from '@/lib/data';
@@ -47,84 +48,115 @@ export default async function ArtworkDetailPage({ params }: Params) {
 
   return (
     <>
-      <Container className="py-10">
-        <nav aria-label="Breadcrumb" className="text-xs uppercase tracking-[0.08em] text-muted">
-          <Link href="/artworks" className="rounded-sm hover:text-ink">
+      <Container width="wide" className="py-10 sm:py-12">
+        <nav
+          aria-label="Breadcrumb"
+          className="font-mono text-xs uppercase tracking-[0.12em] text-muted"
+        >
+          <Link href="/artworks" className="rounded-sm transition-colors hover:text-ink">
             Artworks
           </Link>
-          <span aria-hidden> / </span>
+          <span aria-hidden className="px-2 text-line-2">
+            /
+          </span>
           <span className="text-ink-2">{artwork.title}</span>
         </nav>
 
-        <div className="mt-6 grid gap-10 lg:grid-cols-2">
-          {/* Gallery presentation */}
-          <div
-            className="aspect-[4/5] w-full rounded-[var(--radius-lg)] border border-line bg-gradient-to-br from-canvas-2 to-surface-2"
-            role="img"
-            aria-label={`${artwork.title}, artwork presentation placeholder`}
-          />
+        <div className="mt-8 grid gap-10 lg:grid-cols-12 lg:gap-12">
+          {/* Gallery presentation — sticky on desktop so the work stays in view */}
+          <div className="lg:col-span-7">
+            <div className="lg:sticky lg:top-[5.5rem]">
+              <Reveal from="none">
+                <Frame ratio="artwork" interactive className="shadow-md">
+                  <ArtworkVisual
+                    seed={artwork.slug}
+                    title={artwork.title}
+                    label={artwork.collection}
+                  />
+                </Frame>
+              </Reveal>
+            </div>
+          </div>
 
-          <div>
+          <div className="lg:col-span-5">
             <Eyebrow>{artwork.collection}</Eyebrow>
-            <Heading as={1} size="display-lg" className="mt-2">
+            <Heading as={1} size="display-lg" className="mt-3">
               {artwork.title}
             </Heading>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <Badge tone={artwork.limitedEdition ? 'warning' : 'neutral'}>
                 {artwork.edition ?? 'Open edition'}
               </Badge>
-              <Price
-                amountMinor={artwork.startingPriceMinor}
-                currency={artwork.currency}
-                className="text-ink"
-              />
-              <span className="text-xs text-muted">from</span>
+              <span className="flex items-baseline gap-2">
+                <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-muted">
+                  from
+                </span>
+                <Price
+                  amountMinor={artwork.startingPriceMinor}
+                  currency={artwork.currency}
+                  className="text-ink"
+                />
+              </span>
             </div>
 
             <Text size="lg" tone="secondary" className="mt-6">
               {artwork.story}
             </Text>
 
-            <dl className="mt-6 space-y-3 border-t border-line pt-6 text-sm">
-              <div className="flex gap-3">
-                <dt className="w-32 shrink-0 text-muted">Inspiration</dt>
+            <dl className="mt-8 divide-y divide-line border-y border-line text-sm">
+              <div className="flex gap-4 py-3">
+                <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.1em] text-muted">
+                  Inspiration
+                </dt>
                 <dd className="text-ink-2">{artwork.inspiration}</dd>
               </div>
-              <div className="flex gap-3">
-                <dt className="w-32 shrink-0 text-muted">Available on</dt>
+              <div className="flex gap-4 py-3">
+                <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.1em] text-muted">
+                  Available on
+                </dt>
                 <dd className="text-ink-2">{artwork.compatibleGarments.join(', ')}</dd>
               </div>
               {artwork.release ? (
-                <div className="flex gap-3">
-                  <dt className="w-32 shrink-0 text-muted">Release</dt>
+                <div className="flex gap-4 py-3">
+                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.1em] text-muted">
+                    Release
+                  </dt>
                   <dd className="text-ink-2">{artwork.release}</dd>
                 </div>
               ) : null}
             </dl>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/design-studio" className={buttonVariants({ size: 'lg' })}>
+            <div className="mt-8 flex flex-col gap-3">
+              <Link
+                href="/design-studio"
+                className={buttonVariants({ size: 'lg', fullWidth: true })}
+              >
                 Design with this artwork <ArrowRight className="size-4" aria-hidden />
               </Link>
-              <Link
-                href={`/artworks/${artwork.slug}/passport`}
-                className={buttonVariants({ size: 'lg', variant: 'secondary' })}
-              >
-                <ShieldCheck className="size-4" aria-hidden /> View passport
-              </Link>
-              <Link href="/artworks" className={buttonVariants({ size: 'lg', variant: 'ghost' })}>
-                Back to gallery
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href={`/artworks/${artwork.slug}/passport`}
+                  className={buttonVariants({ size: 'lg', variant: 'secondary' })}
+                >
+                  <ShieldCheck className="size-4" aria-hidden /> View passport
+                </Link>
+                <Link
+                  href="/artworks"
+                  className={buttonVariants({ size: 'lg', variant: 'ghost' })}
+                >
+                  Back to gallery
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-14">
+        <div className="mt-16">
           <Reviews targetType="artwork" targetLabel={artwork.title} initial={reviews} />
         </div>
 
-        <section aria-labelledby="community-title" className="mt-14 border-t border-line pt-10">
-          <Heading id="community-title" as={2} size="md">
+        <section aria-labelledby="community-title" className="mt-16 border-t border-line pt-12">
+          <Heading id="community-title" as={2} size="lg">
             Styled by the community
           </Heading>
           <Text tone="secondary" className="mt-1">
@@ -143,16 +175,16 @@ export default async function ArtworkDetailPage({ params }: Params) {
 
       {artwork.related.length > 0 ? (
         <section aria-labelledby="related-title" className="border-t border-line bg-canvas-2">
-          <Container className="py-14">
+          <Container width="wide" className="py-16">
             <Eyebrow>More from the studio</Eyebrow>
             <Heading id="related-title" as={2} size="lg" className="mt-2">
               Related artwork
             </Heading>
-            <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {artwork.related.map((art) => (
-                <li key={art.id}>
+            <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+              {artwork.related.map((art, i) => (
+                <Reveal as="li" key={art.id} delay={(i % 4) * 60}>
                   <ArtworkCard artwork={art} />
-                </li>
+                </Reveal>
               ))}
             </ul>
           </Container>

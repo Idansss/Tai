@@ -42,22 +42,27 @@ export default async function StoryDetailPage({ params }: Params) {
   if (!story) notFound();
 
   return (
-    <Container className="py-10">
-      <nav aria-label="Breadcrumb" className="text-xs uppercase tracking-[0.08em] text-muted">
-        <Link href="/stories" className="rounded-sm hover:text-ink">
+    <Container width="wide" className="py-10 sm:py-12">
+      <nav
+        aria-label="Breadcrumb"
+        className="font-mono text-xs uppercase tracking-[0.12em] text-muted"
+      >
+        <Link href="/stories" className="rounded-sm transition-colors hover:text-ink">
           Stories
         </Link>
-        <span aria-hidden> / </span>
+        <span aria-hidden className="px-2 text-line-2">
+          /
+        </span>
         <span className="text-ink-2">{story.title}</span>
       </nav>
 
-      <article className="mx-auto mt-6 max-w-2xl">
+      <article className="mx-auto mt-8 max-w-2xl">
         <header>
           <Eyebrow>{story.category}</Eyebrow>
-          <Heading as={1} size="display-lg" className="mt-2">
+          <Heading as={1} size="display-lg" className="mt-3">
             {story.title}
           </Heading>
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs uppercase tracking-[0.1em] text-muted">
             <span>{fmtDate(story.publishedOn)}</span>
             <span aria-hidden>·</span>
             <span>{story.readMinutes} min read</span>
@@ -65,7 +70,7 @@ export default async function StoryDetailPage({ params }: Params) {
               <>
                 <span aria-hidden>·</span>
                 <span className="inline-flex items-center gap-1.5">
-                  <ShoppingBag className="size-4 text-accent" aria-hidden />
+                  <ShoppingBag className="size-4 text-accent-2" aria-hidden />
                   {story.shoppableCount} shoppable {story.shoppableCount === 1 ? 'piece' : 'pieces'}
                 </span>
               </>

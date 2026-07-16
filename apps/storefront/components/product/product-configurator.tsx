@@ -1,9 +1,10 @@
 'use client';
 
-import { Alert, Badge, Price, cn } from '@tms/ui';
+import { Alert, Badge, Frame, Price, cn } from '@tms/ui';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { WishlistButton } from '@/components/account/wishlist-button';
+import { ArtworkVisual } from '@/components/artwork/artwork-visual';
 import { useCart } from '@/components/cart/cart-provider';
 import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import { WaitlistForm } from '@/components/waitlist/waitlist-form';
@@ -61,37 +62,56 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
-      {/* Preview */}
+      {/* Preview — artwork composited on the selected garment colour */}
       <div>
-        <div
-          className="relative aspect-[3/4] w-full overflow-hidden rounded-[var(--radius-lg)] border border-line"
-          style={{ backgroundColor: selectedColour?.hex ?? 'var(--color-surface-secondary)' }}
-          role="img"
-          aria-label={`${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view (preview placeholder)`}
-        >
-          <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
-            {view}
-          </span>
-        </div>
-        <div
-          className="mt-3 inline-flex rounded-md border border-line p-1"
-          role="group"
-          aria-label="Garment view"
-        >
-          {(['front', 'back'] as View[]).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              aria-pressed={view === v}
+        <div className="lg:sticky lg:top-[5.5rem]">
+          <Frame
+            ratio="product"
+            mat="none"
+            style={{ backgroundColor: selectedColour?.hex ?? 'var(--color-surface-secondary)' }}
+            role="img"
+            aria-label={`${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view (live preview)`}
+          >
+            <div
+              aria-hidden
               className={cn(
-                'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
+                'absolute inset-0 grid',
+                view === 'front' ? 'place-items-center' : 'items-start justify-center pt-[16%]',
               )}
             >
-              {v}
-            </button>
-          ))}
+              <div
+                className={cn(
+                  'overflow-hidden rounded-sm shadow-sm ring-1 ring-black/10 transition-all duration-[var(--duration-slow)] ease-[var(--ease-out)]',
+                  view === 'front' ? 'w-[52%]' : 'w-[30%]',
+                )}
+              >
+                <ArtworkVisual seed={product.artworkSlug} title={product.artworkTitle} />
+              </div>
+            </div>
+            <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.1em] text-white">
+              {view}
+            </span>
+          </Frame>
+          <div
+            className="mt-3 inline-flex rounded-md border border-line-2 bg-surface p-1"
+            role="group"
+            aria-label="Garment view"
+          >
+            {(['front', 'back'] as View[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                aria-pressed={view === v}
+                className={cn(
+                  'rounded px-4 py-1.5 text-sm capitalize outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                  view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -283,7 +303,7 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
         ) : null}
 
         {/* Details */}
-        <dl className="mt-8 space-y-3 border-t border-line pt-6 text-sm">
+        <dl className="mt-8 divide-y divide-line border-y border-line text-sm">
           {(
             [
               ['Fabric', product.fabric],
@@ -294,8 +314,10 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
               ['Returns', product.returnSummary],
             ] as const
           ).map(([label, value]) => (
-            <div key={label} className="flex gap-3">
-              <dt className="w-24 shrink-0 text-muted">{label}</dt>
+            <div key={label} className="flex gap-4 py-3">
+              <dt className="w-24 shrink-0 font-mono text-xs uppercase tracking-[0.1em] text-muted">
+                {label}
+              </dt>
               <dd className="text-ink-2">{value}</dd>
             </div>
           ))}
