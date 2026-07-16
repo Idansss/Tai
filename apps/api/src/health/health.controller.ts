@@ -12,28 +12,31 @@ export class HealthController {
   constructor(@Inject(HealthService) private readonly healthService: HealthService) {}
 
   @Get('liveness')
-  @ApiOperation({ summary: 'Confirm that the API process is alive' })
+  @ApiOperation({ operationId: 'getLiveness', summary: 'Confirm that the API process is alive' })
   @ApiOkResponse({ description: 'The API process is alive.' })
   liveness(@Req() request: Request): ApiResponse<HealthSnapshot> {
     return this.respond(request);
   }
 
   @Get('live')
-  @ApiOperation({ summary: 'Short alias for the API liveness check' })
+  @ApiOperation({ operationId: 'getLive', summary: 'Short alias for the API liveness check' })
   @ApiOkResponse({ description: 'The API process is alive.' })
   live(@Req() request: Request): ApiResponse<HealthSnapshot> {
     return this.respond(request);
   }
 
   @Get('readiness')
-  @ApiOperation({ summary: 'Confirm that the API is ready to accept traffic' })
+  @ApiOperation({
+    operationId: 'getReadiness',
+    summary: 'Confirm that the API is ready to accept traffic',
+  })
   @ApiOkResponse({ description: 'The API is ready. Dependency checks are added in B1.' })
   readiness(@Req() request: Request): ApiResponse<HealthSnapshot> {
     return this.respond(request);
   }
 
   @Get('ready')
-  @ApiOperation({ summary: 'Short alias for the API readiness check' })
+  @ApiOperation({ operationId: 'getReady', summary: 'Short alias for the API readiness check' })
   @ApiOkResponse({ description: 'The API is ready. Dependency checks are added in B1.' })
   ready(@Req() request: Request): ApiResponse<HealthSnapshot> {
     return this.respond(request);

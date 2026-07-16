@@ -3,6 +3,8 @@ import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import type { ApiErrorResponse, ErrorCode } from '@tms/contracts';
 import type { Request, Response } from 'express';
 
+import { ApiProblemException } from './api-problem.exception.js';
+
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(ApiExceptionFilter.name);
@@ -13,7 +15,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const response = context.getResponse<Response>();
     const status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-    const code = this.codeFor(status);
+    const code = exception instanceof ApiProblemException ? exception.code : this.codeFor(status);
     if (status >= 500) {
       this.logger.error({
         correlationId: request.correlationId ?? 'unavailable',

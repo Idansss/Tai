@@ -1,6 +1,8 @@
 {
   "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "types": ["node", "multer"],
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo"

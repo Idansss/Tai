@@ -1,10 +1,77 @@
 import { z } from 'zod';
 
-const EnvironmentSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-});
+const localAuthPepper = 'local-development-auth-pepper-change-me';
+const localMfaEncryptionKey = 'bG9jYWwtZGV2ZWxvcG1lbnQtbWZhLWtleS0xMjM0NTY';
+
+const EnvironmentSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
+    DATABASE_URL: z
+      .string()
+      .url()
+      .default('postgresql://tai:local_development_only@localhost:5432/tai_manic?schema=public'),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+    APP_PUBLIC_URL: z.string().url().default('http://localhost:3000'),
+    SMTP_URL: z.string().url().default('smtp://localhost:1025'),
+    REDIS_URL: z.string().url().default('redis://localhost:6379'),
+    S3_ENDPOINT: z.string().url().default('http://localhost:9000'),
+    S3_REGION: z.string().min(1).default('us-east-1'),
+    S3_BUCKET: z.string().min(3).max(63).default('tai-manic-local'),
+    S3_ACCESS_KEY: z.string().min(1).default('minio'),
+    S3_SECRET_KEY: z.string().min(8).default('local_development_only'),
+    MEDIA_MALWARE_SCAN_URL: z.string().url().optional(),
+    EMAIL_FROM: z.string().email().default('no-reply@taimanic.local'),
+    AUTH_TOKEN_PEPPER: z.string().min(32).default(localAuthPepper),
+    AUTH_COOKIE_NAME: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{1,64}$/)
+      .default('tms_session'),
+    AUTH_SESSION_TTL_SECONDS: z.coerce.number().int().min(300).max(31_536_000).default(2_592_000),
+    AUTH_VERIFICATION_TTL_SECONDS: z.coerce.number().int().min(300).max(604_800).default(86_400),
+    AUTH_RESET_TTL_SECONDS: z.coerce.number().int().min(300).max(86_400).default(3_600),
+    AUTH_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3_600).default(60),
+    AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(100).default(5),
+    ADMIN_AUTH_COOKIE_NAME: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{1,64}$/)
+      .default('tms_admin_session'),
+    ADMIN_AUTH_SESSION_TTL_SECONDS: z.coerce.number().int().min(300).max(604_800).default(28_800),
+    ADMIN_MFA_CHALLENGE_TTL_SECONDS: z.coerce.number().int().min(60).max(1_800).default(300),
+    ADMIN_MFA_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{43}$/)
+      .default(localMfaEncryptionKey),
+  })
+  .superRefine((environment, context) => {
+    if (
+      environment.NODE_ENV === 'production' &&
+      environment.AUTH_TOKEN_PEPPER === localAuthPepper
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['AUTH_TOKEN_PEPPER'],
+        message: 'AUTH_TOKEN_PEPPER must be replaced in production.',
+      });
+    }
+    if (
+      environment.NODE_ENV === 'production' &&
+      environment.ADMIN_MFA_ENCRYPTION_KEY === localMfaEncryptionKey
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ADMIN_MFA_ENCRYPTION_KEY'],
+        message: 'ADMIN_MFA_ENCRYPTION_KEY must be replaced in production.',
+      });
+    }
+    if (environment.NODE_ENV === 'production' && !environment.MEDIA_MALWARE_SCAN_URL) {
+      context.addIssue({
+        code: 'custom',
+        path: ['MEDIA_MALWARE_SCAN_URL'],
+        message: 'MEDIA_MALWARE_SCAN_URL is required in production.',
+      });
+    }
+  });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;
 

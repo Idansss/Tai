@@ -95,84 +95,92 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
 
 ## B1 — Identity and platform security
 
-- [ ] TMS-B1-001 Model users, customer/admin profiles, sessions, verification, reset tokens, roles, permissions, and audit logs
-  - Status: Not started
+- [x] TMS-B1-001 Model users, customer/admin profiles, sessions, verification, reset tokens, roles, permissions, and audit logs
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B0-011
   - Acceptance criteria: Reviewed migration with constraints/indexes; seed roles/permissions; database tests pass.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B1-002 Implement customer registration, login, logout, verification, password reset, and session invalidation
-  - Status: Not started
+  - Implementation evidence: `packages/database/prisma/schema.prisma`, migration `20260714142500_identity_foundation`, the idempotent role/permission seed in `packages/database/prisma/seed.ts`, and `packages/database/src/identity-foundation.integration.spec.ts`.
+  - Tests: A fresh PostgreSQL 17 container applies the migration twice, runs the seed twice, verifies 7 roles/12 permissions/34 grants and required indexes, exercises identity/session/token constraints, and proves audit update/delete and actor deletion are rejected. `pnpm check`, Prisma validation, production builds, Compose validation, and the production dependency audit pass.
+  - Notes: Verified on 2026-07-14 and squash-merged through PR #3 on 2026-07-16 as `5c6da304223b3aec7c3fdeb2a31178c90c4343ae`. This persistence-only slice adds no public API contract; TMS-B1-002 owns the authentication endpoints.
+- [x] TMS-B1-002 Implement customer registration, login, logout, verification, password reset, and session invalidation
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B1-001
   - Acceptance criteria: Secure cookies, hashing, throttling, safe recovery, OpenAPI, and positive/negative tests.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B1-003 Implement admin authentication, MFA-ready architecture, granular RBAC, and object-level authorization
-  - Status: Not started
+  - Implementation evidence: Customer auth controllers/services/guards, secure cookie and cryptography helpers, keyed request throttling, SMTP email adapter/templates, database client factory, configuration validation, additive OpenAPI and Zod contracts, audit records, and backend security/deployment/coordination documentation. The implementation is on `codex/b1-authentication` and uses the merged identity tables without a new migration.
+  - Tests: Seven disposable-PostgreSQL HTTP scenarios cover registration validation and duplicate handling, non-reversible stored credentials/tokens, verification token one-time use, verified login and cookie attributes, enumeration-safe recovery, reset-driven session revocation, logout, session ownership, revoke-all, audit evidence, and throttling. Cryptography, cookies, email rendering, configuration, exception mapping, and contract/OpenAPI tests pass. `pnpm check`, frozen install, Prisma validation, Compose validation, a high-severity production dependency audit, static OpenAPI reference/operation validation, clean database/API builds, and a live compiled API plus runtime Swagger smoke all pass.
+  - Notes: Verified and squash-merged through PR #10 on 2026-07-16 as `88801c1374415eddf318a95e56ac3be7ab864c98`. Raw session, verification, and reset tokens leave the process only as cookies or email links; only peppered HMAC digests are persisted. The limiter is intentionally process-local for the single-instance phase and must move to Redis before horizontal scaling.
+- [x] TMS-B1-003 Implement admin authentication, MFA-ready architecture, granular RBAC, and object-level authorization
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B1-001
   - Acceptance criteria: Every protected admin endpoint has server-side permission tests and bypass attempts fail.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: Separate customer/admin session audiences and cookies; password and MFA assurance levels; TOTP enrollment, verification, encrypted factor storage, bounded one-time challenges, and replay rejection; live database-backed permission guards; Owner-only Owner assignment and final-Owner preservation; owned and privileged cross-admin session revocation; provisioning and audited lost-device recovery commands; additive Prisma migration, OpenAPI, shared contracts, environment validation, audit events, and backend/coordination documentation.
+  - Tests: Eight MFA unit tests include the official RFC 6238 SHA-1 vectors, base32, encryption tamper detection, and `otpauth` URIs. Seven disposable-PostgreSQL HTTP scenarios cover provisioning, safe credential failures, customer/admin isolation, enrollment, encrypted storage, challenge lifecycle, TOTP replay, MFA assurance, live permissions, bypass denial, session boundaries, Owner elevation/final-Owner protection, logout, and audited MFA reset. The API has 35 passing tests across nine files and the database package has four passing migration/constraint tests. `pnpm check`, frozen install, Prisma validation, Compose validation, the high-severity production dependency audit, static OpenAPI reference/operation validation, and a live compiled API/runtime Swagger smoke pass.
+  - Notes: Verified and squash-merged through PR #11 on 2026-07-16 as `30bd5c087baf0f9b281f5422d43e5c54e26ace94` after GitHub Actions run 29467786313 passed. The migration is `20260716015000_admin_authentication`. Administrative role mutations and cross-admin session revocations require both `system.manage` and MFA assurance; Owner elevation additionally requires an active Owner.
 
 ## B2 — Artwork and catalogue
 
-- [ ] TMS-B2-001 Implement Artwork and immutable ArtworkVersion persistence and APIs
-  - Status: Not started
+- [x] TMS-B2-001 Implement Artwork and immutable ArtworkVersion persistence and APIs
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B1-003
   - Acceptance criteria: Draft/published/archived lifecycle; referenced versions cannot be mutated or deleted; OpenAPI/tests pass.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B2-002 Implement collections, drops, editions, stories, tags, and catalogue search
-  - Status: Not started
+  - Implementation evidence: `Artwork` roots and ordered `ArtworkVersion` snapshots; database-enforced content/delete immutability, lifecycle/timestamp checks, creator references, one-published-version partial uniqueness, and row-locked version allocation/publication; permission-scoped administrator create/list/detail/version/publish/archive commands; published-only public list/detail; cursor pagination, object-pair validation, audit events, Prisma exports, additive OpenAPI/shared contracts, frontend coordination, ADR/security/database/testing/architecture documentation, and retry-bounded concurrent Docker test setup.
+  - Tests: Six disposable-PostgreSQL HTTP scenarios cover authentication, `catalogue.read`/`catalogue.write` separation and denial audit, validation/slug conflict, draft isolation, direct-database and unapproved-HTTP mutation/delete bypasses, ordered and concurrent version creation, exact publication/prior archival, one published version, public list/detail, cursor pagination, cross-artwork version rejection, archive/republish behavior, and lifecycle audit evidence. Five persistence tests apply all three migrations and seeds twice and verify immutable triggers, lifecycle constraints, catalogue indexes, and the published-version partial unique index. The exact `pnpm check` passes with 41 API tests across ten files, every workspace test, production builds, and Prisma validation; static OpenAPI and compiled runtime Swagger each expose all nine artwork operations.
+  - Notes: Verified and squash-merged through PR #12 on 2026-07-16 as `daae9f37ea6119fdf8d4cc387fdd701d80a2de6c` after GitHub Actions run 29483761718 passed. Migration: `20260716030500_artwork_versioning`. Collection/tag/edition/filter/search enrichment remains TMS-B2-002; exact-version media ingestion and derivatives remain TMS-B2-004.
+- [x] TMS-B2-002 Implement collections, drops, editions, stories, tags, and catalogue search
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B2-001
   - Acceptance criteria: Admin CRUD plus paginated/filterable public catalogue endpoints with permission tests.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B2-003 Implement garment templates, colours, sizes, variants, size charts, placements, and compatibility
-  - Status: Not started
+  - Implementation evidence: Normalized typed tags and artwork joins, curated collections and ordered members, timed drops and ordered members, artwork editions, editorial stories and ordered JSON blocks; lifecycle/window/quantity/parent/order database constraints and discovery indexes; permission-scoped administrator CRUD and associations; published-only cursor pages/details; additive text/collection/drop/tag-kind/limited-edition filters on the canonical artwork endpoint; safe errors, mutation audits, shared Zod/domain contracts, 32 stable catalogue OpenAPI operations, architecture/database/security/testing/ADR/traceability documentation, and frontend coordination.
+  - Tests: Six real HTTP/PostgreSQL catalogue scenarios verify read/write permission separation, denial, tag CRUD and compound filters, collection lifecycle and nested draft isolation, timed drops, limited editions, narrative search, ordered story replacement, public draft isolation, validation/conflict safety, audits, and deletion. Six direct PostgreSQL tests deploy all four migrations and verify discovery indexes plus drop-window, numbered-edition, story-parent, and block-position constraints. The exact `pnpm check` passes 47 API tests across 11 files, every workspace test, production builds, and Prisma validation; frozen install, Compose validation, high-severity production audit, static OpenAPI validation, and compiled runtime Swagger/static parity also pass.
+  - Notes: Verified and squash-merged through PR #13 on 2026-07-16 as `ce8bca4f7e7866cee698a77c9a94319418e8ca8a` after GitHub Actions run 29489686858 passed. Migration: `20260716084000_catalogue_content`. API integration files run serially with bounded test/hook timeouts to avoid disposable-PostgreSQL resource contention. Waitlists, preorder/purchase-limit commerce, and drop engagement remain TMS-B7-001/B4; media and garments remain TMS-B2-004/TMS-B2-003.
+- [x] TMS-B2-003 Implement garment templates, colours, sizes, variants, size charts, placements, and compatibility
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B2-001
   - Acceptance criteria: Only administrator-approved configurations are valid; stock remains garment-variant based.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B2-004 Implement media ingestion, validation, immutable originals, derivatives, mockups, and approval workflow
-  - Status: Not started
-  - Owner: Codex
+  - Implementation evidence: Normalized garment templates, colours, measured sizes, colour/size SKU variants, normalized view placements, scale presets, exact artwork-version/template compatibility decisions, and placement allowlists; lifecycle/geometry/membership/approval database constraints and triggers; published-structure locking and approval invalidation on archival; permission-scoped administrator CRUD; published-only public garment and compatible-garment reads; exact server-authoritative configuration validation; safe errors and mutation audits; shared Zod/domain contracts; 26 stable garment OpenAPI operations; ADR/architecture/database/security/testing/traceability/coordination documentation.
+  - Tests: Six real HTTP/PostgreSQL garment scenarios verify authentication, `catalogue.read`/`catalogue.write` separation, incomplete publication rejection, strict colours and measured sizes, duplicate/cross-template variants, placement geometry, placement/scale publication order, public privacy, exact-version approval, replacement-version noninheritance, published-structure locking, placement allowlists, exact configuration validation, type filtering, safe errors, and audits. Seven direct PostgreSQL tests deploy all five migrations and verify garment indexes plus measurement, geometry, lifecycle, cross-template variant, and cross-template compatibility-placement constraints. The exact `pnpm check` passes 53 API tests across 12 files, every workspace test/build, and Prisma validation; frozen install, Compose validation, high-severity production audit, static OpenAPI validation, and compiled runtime Swagger/static parity also pass locally.
+  - Notes: Verified and squash-merged through PR #14 on 2026-07-16 as `4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79` after final GitHub Actions run 29497566759 passed. Migration: `20260716112000_garment_catalogue`. Static and runtime OpenAPI each expose 68 paths and 91 operations. The idempotent RBAC seed uses bounded interactive-transaction timeouts and the persistence suite uses a bounded five-minute aggregate setup allowance for concurrent full-workspace Docker runs. Stock quantities/movements/reservations remain TMS-B4-001; media bytes remain TMS-B2-004.
+- [x] TMS-B2-004 Implement media ingestion, validation, immutable originals, derivatives, mockups, and approval workflow
+  - Status: Verified
+  - Owner: Codex; verified and landed by Claude Code
   - Dependencies: TMS-B2-001
   - Acceptance criteria: File/MIME/dimension/size checks, malware hook, worker jobs, failure states, and admin approval tests.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: `packages/media` (validation, S3-compatible object storage, malware scan contract, `sharp` derivatives), `apps/api/src/media` (administrator upload/approval/retry and published read-only media), the `apps/worker` BullMQ `media-derivatives` consumer with retryable persisted job state, migration `20260716130000_media_pipeline` (`artwork_assets` and `media_processing_jobs` with shape/checksum/dimension/failure/approval constraints), and `MEDIA_MALWARE_SCAN_URL` required in production by configuration validation.
+  - Tests: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm db:validate`, `pnpm build` (14/14), and `pnpm test` (20/20 workspace tasks; API 13 files / 57 tests) pass locally. The PostgreSQL persistence suite deploys all six migrations. Compose validates. GitHub Actions run 29513562330 passes on PR #15.
+  - Notes: Implemented by Codex on `codex/b2-media-pipeline` but left **uncommitted and unpushed** in a local worktree; committed as `b93f4fc` to protect it. Two defects were found during verification and fixed. (1) `MEDIA_VALIDATION_FAILED`, `MEDIA_INFECTED`, and `MEDIA_PROCESSING_FAILED` were missing from the OpenAPI error catalogue, so the contract parity test was failing. (2) `@aws-sdk/client-s3` pulled `fast-xml-parser` <5.5.6, carrying one critical and three high advisories that the CI production audit blocked; pinned to >=5.5.6 in `9188717`. Verified once TMS-B2-004a closed the end-to-end coverage gap. Production renders remain TMS-B3-003.
+- [x] TMS-B2-004a Add PostgreSQL HTTP end-to-end coverage for the media pipeline
+  - Status: Verified
+  - Owner: Backend
+  - Dependencies: TMS-B2-004
+  - Acceptance criteria: Real-PostgreSQL HTTP scenarios cover upload validation, MIME-spoof rejection, malware rejection, derivative job state, mockup approval gating, retry of a failed job, `catalogue.read`/`catalogue.write` separation, and the guarantee that immutable originals are never publicly readable.
+  - Implementation evidence: `apps/api/src/media/media.e2e.spec.ts` provisions a disposable `postgres:17-alpine` container, deploys all six migrations, seeds RBAC, and drives the real `MediaModule` over HTTP. Object storage and the BullMQ publisher are replaced through the existing `MEDIA_STORAGE`/`MEDIA_QUEUE` tokens with an in-memory store and a recording queue, so no MinIO or Redis is required; the real `EicarAwareMalwareScanner` is exercised rather than mocked.
+  - Tests: Ten HTTP scenarios pass. They prove that an unauthenticated read is rejected and `catalogue.read` cannot write; that a version outside its artwork is not found; that MIME spoofing, sub-512px dimensions, and a missing file are all refused **before** anything reaches object storage; that a real EICAR signature carried inside a decodable PNG is rejected as `MEDIA_INFECTED` with zero assets persisted; that a queue outage still stores the original and records a safe retryable `FAILED` state; that only a failed job can be retried and it re-queues exactly once; that immutable originals and unfinished derivatives never appear in public media; that a mockup requires exact-version approved compatibility; that a mockup stays private through `PENDING` and `REJECTED` and only appears publicly once `APPROVED`; and that every mutation is audited. The API suite is now 14 files / 67 tests, up from 13 / 57.
+  - Notes: Raised during TMS-B2-004 verification because `media.service.spec.ts` mocks object storage and the queue, leaving the controller, guards, and DTO validation unproven against a real database. The malware assertion is genuine rather than vacuous: the payload is appended to a valid PNG so it survives `validateImage` (which returns the original bytes) and reaches the scanner, and the test asserts `MEDIA_INFECTED` rather than a validation error.
 
 ## B3 — Design Studio services
 
-- [ ] TMS-B3-001 Implement versioned design configurations, compatibility, hashing, privacy, saves, and stable shares
-  - Status: Not started
-  - Owner: Codex
+- [x] TMS-B3-001 Implement versioned design configurations, compatibility, hashing, privacy, saves, and stable shares
+  - Status: Verified
+  - Owner: Claude Code
   - Dependencies: TMS-B2-003
   - Acceptance criteria: Exact artwork/variant/placement/scale/view persisted; availability, ownership, and share security tested.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B3-002 Implement configuration pricing and availability services
-  - Status: Not started
-  - Owner: Codex
+  - Implementation evidence: `apps/api/src/designs` (service, controllers, DTOs, module), migration `20260716150000_design_configurations` (`design_configurations` with hash, name, share-token, and visibility/token agreement check constraints, RESTRICT foreign keys to the exact artwork version/variant/placement/scale preset, and a unique owner+hash index), shared `SaveDesignInputSchema`/`UpdateDesignInputSchema`/`DesignConfigurationSummary` contracts, six OpenAPI operations under `/api/v1/designs` and `/api/v1/shared-designs/{token}`, ADR-013, and the `DesignVisibility` database export. Versioning is inherent: a design binds one immutable published `ArtworkVersion`, never a mutable artwork root.
+  - Tests: Seven real HTTP/PostgreSQL scenarios pass. They prove that an anonymous caller and an administrator-audience session are both rejected; that an unapproved placement, an unpublished artwork version, and an unknown scale preset are each refused with `CONFIGURATION_NOT_APPROVED` and that freeform geometry (`printX`) is rejected outright; that the exact tuple persists with a deterministic 64-hex hash and re-saving is idempotent (201 then 200, one row); that another customer cannot list, read, rename, share, or delete a design and receives 404 rather than 403; that a share token is unguessable, stable across reads, and never discloses the owner or re-discloses the token; that rotating invalidates the previous link and reverting to `PRIVATE` clears the token; and that deletion removes the design without touching the artwork version or garment. API suite: 13 files / 60 tests. Database persistence: 7 tests. `pnpm format:check`, `pnpm lint` (20/20), `pnpm typecheck` (20/20), `pnpm build` (13/13), and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: Approval is delegated to the existing `GarmentService.validateConfiguration` rather than re-derived, so there is one definition of an approved configuration. Quantity is deliberately excluded from a saved design and from the hash: it is a cart concern, and including it would split one design into two. `AuthModule` now exports `AUTH_CONFIG` so an importing module can construct `SessionGuard`, mirroring `AdminAuthModule`. Guest designs are not supported; anonymous save arrives with carts in TMS-B4-002. Pricing and availability remain TMS-B3-002 and production renders remain TMS-B3-003.
+- [x] TMS-B3-002 Implement configuration pricing and availability services
+  - Status: Verified
+  - Owner: Claude Code
   - Dependencies: TMS-B3-001
   - Acceptance criteria: Server-authoritative price and availability with explicit errors and contract tests.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: Migration `20260716160000_configuration_pricing` adds `unit_price_minor`/`currency` to `artwork_garment_compatibilities` with check constraints binding price to approval, a positive bounded integer range, and an ISO-4217 currency pattern. `GarmentService.setCompatibility` requires a price exactly when approving and rejects one otherwise; `validateConfiguration` resolves the price from the approved pair, computes the total by integer multiplication, and returns `unitPrice`, `totalPrice`, and `availability`. Shared `MoneyMinorSchema`/`CurrencySchema`/`Money`/`AvailabilityStateSchema`/`ConfigurationAvailability` contracts, additive OpenAPI schemas, and ADR-015.
+  - Tests: The garment suite (6 HTTP/PostgreSQL scenarios) proves an approved pair without a price is rejected, a non-approved pair carrying a price is rejected, a zero amount is rejected, and validation returns the server-resolved unit price with a correctly multiplied total (1,400,000 kobo x 2 = 2,800,000) plus `AVAILABLE`. The contract suite proves an approved pair requires price and currency, a draft pair must not carry them, and a fractional amount is rejected. API suite 12 files / 53 tests; database persistence 7; contracts 9. `pnpm format:check`, `pnpm lint` (18/18), `pnpm typecheck` (18/18), `pnpm build` (13/13), and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: Price hangs on the approved artwork-and-garment pair per ADR-015, so pricing sits inside the same approval gate as ADR-011 and a replacement artwork version requires a fresh approval and a fresh price rather than inheriting the old one. Money is integer minor units (kobo, NGN); floating point is never used. Sizes carry no surcharge; a per-size modifier can be added later additively as a component of the computed unit price. Availability is catalogue-level only: drop windows gate an artwork inside a published drop, and `EDITION_EXHAUSTED` is defined in the contract but not yet reachable because edition counts need sold quantities from TMS-B4-003. Stock remains TMS-B4-001 and will refine availability. Order snapshots in TMS-B4-003 must copy the resolved amount and currency rather than referencing the compatibility, so a later price change never rewrites history.
 - [ ] TMS-B3-003 Implement idempotent server production renderer and render queue
   - Status: Not started
   - Owner: Codex
@@ -184,22 +192,22 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
 
 ## B4 — Commerce core
 
-- [ ] TMS-B4-001 Implement garment inventory, append-only movements, alerts, and concurrent expiring reservations
-  - Status: Not started
-  - Owner: Codex
+- [x] TMS-B4-001 Implement garment inventory, append-only movements, alerts, and concurrent expiring reservations
+  - Status: Verified
+  - Owner: Claude Code
   - Dependencies: TMS-B2-003
   - Acceptance criteria: Stock never goes negative; final-unit race and reservation expiry tests pass.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
-- [ ] TMS-B4-002 Implement guest/authenticated carts, merge, pricing, promotions, currency, and recalculation
-  - Status: Not started
-  - Owner: Codex
+  - Implementation evidence: `apps/api/src/inventory` (service, controller, DTOs, module) and migration `20260716170000_inventory_reservations` adding `inventory_items`, the append-only `inventory_movements` ledger with an UPDATE/DELETE trigger, and `inventory_reservations`. Constraints cover non-negative on-hand, non-zero movements, movement direction by kind, a mandatory adjustment reason, positive reservation quantities, and reservation lifecycle timestamps. Adds `inventory.read`/`inventory.write` to the RBAC seed, six OpenAPI operations under `/api/v1/admin/inventory`, and ADR-016.
+  - Tests: Eleven HTTP/PostgreSQL scenarios pass. They prove read/write permission separation and that a content manager has no inventory access; receipts recording a ledger entry; that the ledger rejects UPDATE and DELETE; that an adjustment requires a reason, cannot move zero, and cannot go below zero, with the database constraint proven independently by a direct raw write; that a hold reduces availability without moving stock and release is idempotent; that an administrator cannot adjust away stock already promised to a live hold; that an expired hold frees availability on the hot path, is genuinely resellable, and can never be committed; that a commit sells exactly once and a second commit is refused; that **twelve simultaneous reservations against a single remaining unit yield exactly one winner and eleven `INVENTORY_UNAVAILABLE` refusals**; that committing the final unit lands on zero and the next shopper is refused; and low-stock alerts plus audit coverage. API suite 13 files / 64 tests; database persistence 7 tests. `pnpm format:check`, `pnpm lint` (18/18), `pnpm typecheck` (18/18), `pnpm build` (13/13), and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: Concurrency is handled by locking the variant's `inventory_items` row with `SELECT ... FOR UPDATE` for the rest of the transaction, so concurrent reservers for one variant serialise rather than racing (ADR-016). Availability is derived from live reservations rather than a denormalised counter, so it cannot drift. Expiry is evaluated on the reservation path, so `sweepExpired` is cleanup and correctness does not depend on it running. Reservation lifetime is deliberately not exposed over HTTP: TMS-B4-002 carts and TMS-B4-003 checkouts own it and consume `reserve`/`release`/`commit` directly. Public stock exposure and the `OUT_OF_STOCK` availability state are a follow-up once TMS-B3-002 merges, since availability currently reports catalogue permission only.
+- [x] TMS-B4-002 Implement guest/authenticated carts, merge, pricing, promotions, currency, and recalculation
+  - Status: Verified
+  - Owner: Claude Code
   - Dependencies: TMS-B3-002, TMS-B4-001
   - Acceptance criteria: Browser prices are ignored; invalid/out-of-stock configurations fail safely; contract tests pass.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: `apps/api/src/cart` (service, controller, DTOs, module) and migration `20260716180000_carts_promotions` adding `carts`, `cart_lines`, and `promotions`. Constraints enforce exactly one cart owner, a guest-token format, a 1-20 line quantity, a hash format, promotion value/currency shape by kind, and a coherent promotion window. Shared `AddCartLineInputSchema`/`UpdateCartLineInputSchema`/`PromotionCodeInputSchema`/`Cart`/`CartLine`/`CartLineIssue`/`AppliedPromotion` contracts, `PROMOTION_INVALID`, six OpenAPI operations, and ADR-017. Answers frontend request TMS-FBR-003.
+  - Tests: Eight HTTP/PostgreSQL scenarios pass. They prove an anonymous shopper gets a cart and a guest cookie; a browser-supplied price is rejected with 400; prices and totals are server-resolved (1,400,000 kobo x 2 = 2,800,000); an unapproved configuration is refused with `CONFIGURATION_NOT_APPROVED`; identical configurations merge onto one line; a quantity beyond stock is refused on both add and update with the line left untouched; a line that goes out of stock while the cart sits reports `OUT_OF_STOCK`, sets `hasIssues`, and is excluded from the subtotal rather than dropped; a percentage promotion applies and unknown/ended/unlaunched codes all return one indistinguishable `PROMOTION_INVALID`; a fixed-amount code below its minimum returns `promotion: null` rather than an error; a discount never takes the total below zero; a guest cart merges into the customer cart on sign-in summing quantities (3 + 2 = 5), consumes the guest cart, and is stable on a second read; and another shopper gets 404 rather than 403 on a line they do not own. API suite 17 files / 93 tests; database persistence 8. `pnpm format:check`, `pnpm lint` (20/20), `pnpm typecheck` (20/20), `pnpm build` (14/14), and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: Stock is checked but never held; the reservation is taken at checkout so a browsing cart cannot starve inventory (ADR-017). No price or availability is stored on a line: both are recomputed on every read, so a stale cart cannot quote a price nobody approved. Line identity reuses the saved-design tuple hash, whose canonical form now lives once in `packages/contracts` and is shared by `DesignService` and `CartService` so the two cannot drift. `InventoryService.availableQuantity` was added so an unstocked variant reads as zero rather than raising. Delivery and tax are deliberately absent and belong to the TMS-B4-003 checkout quote, as TMS-FBR-003 requested. The Studio's `lineId()` helper keys on freeform geometry that ADR-013 removed and must be reworked before the frontend consumes this.
 - [ ] TMS-B4-003 Implement checkout, guest orders, immutable order snapshots, and audited order state machine
   - Status: Not started
   - Owner: Codex
@@ -316,3 +324,11 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Implementation evidence:
   - Tests:
   - Notes:
+- [ ] TMS-B8-004 Host the shared development database and object storage on Supabase
+  - Status: Partially complete; awaiting migration deploy and presigned-URL verification
+  - Owner: Claude Code
+  - Dependencies: None for development use; production hosting remains TMS-B8-002
+  - Acceptance criteria: Tai owns an isolated schema with no collisions against pre-existing tables; media storage is private; connection mode suits interactive transactions; credentials are never committed; tests continue to use disposable containers.
+  - Implementation evidence: Supabase project `tmijjorpsvawxlpvpuil` (`eu-west-1`, PostgreSQL 17.6). Created schema `tai` and private bucket `tai-manic-media` (25 MB limit, `image/png`/`image/jpeg`/`image/webp` only, mirroring `packages/media` validation). Documented connection, deploy, storage, and limits in the "Supabase hosting" section of `docs/backend/DEPLOYMENT.md`; annotated `.env.example`.
+  - Tests: Verified `gen_random_uuid()` resolves from `pg_catalog` so the migration defaults apply under `search_path=tai`; confirmed the bucket is private with the expected limits; confirmed `tai` starts empty.
+  - Notes: **The project is shared, not empty.** `public` still holds two abandoned applications (Maxx Engage AI and ProofOS) with live seed data — `skill_paths` 12 rows, `tasks` 11 rows, `project_briefs` 4 rows — plus 3 `auth.users` and a public `avatars` bucket. `public.users` collides head-on with the identity foundation, and `public.reviews`/`public.notifications`/`public.tasks` collide with planned TMS-B7-001/B4-004/B6-001 tables. Nothing was deleted; the `tai` schema sidesteps every collision and is reversible with `DROP SCHEMA tai CASCADE`. Remaining: run `prisma migrate deploy` and the seed with a real `DATABASE_URL` (Prisma must own migration history, so do not apply DDL through the SQL editor or MCP), and verify presigned `GET` URLs against the Supabase S3 endpoint. Free tier `t3.nano` at roughly 60 percent memory with no backups configured: development and staging only. Supabase provides no Redis, so `REDIS_URL` still needs a separate provider. Supabase Auth and RLS are deliberately unused.

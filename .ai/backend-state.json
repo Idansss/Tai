@@ -1,9 +1,9 @@
 {
-  "agent": "Codex",
+  "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
-  "currentPhase": "B1-ready",
-  "lastVerifiedTask": "TMS-B0-011",
-  "nextRecommendedTask": "TMS-B1-001",
+  "currentPhase": "B4",
+  "lastVerifiedTask": "TMS-B4-002",
+  "nextRecommendedTask": "TMS-B4-003 (checkout and orders)",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -15,14 +15,26 @@
     "TMS-B0-008",
     "TMS-B0-009",
     "TMS-B0-010",
-    "TMS-B0-011"
+    "TMS-B0-011",
+    "TMS-B1-001",
+    "TMS-B1-002",
+    "TMS-B1-003",
+    "TMS-B2-001",
+    "TMS-B2-002",
+    "TMS-B2-003",
+    "TMS-B2-004",
+    "TMS-B2-004a",
+    "TMS-B3-001",
+    "TMS-B3-002",
+    "TMS-B4-001",
+    "TMS-B4-002"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "validated-empty-schema",
-  "lastUpdated": "2026-07-14T14:13:27Z",
+  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
+  "lastUpdated": "2026-07-16T21:15:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -32,5 +44,193 @@
     "mainCiStatus": "passed",
     "filesVerified": true,
     "concerns": []
+  },
+  "identityFoundation": {
+    "task": "TMS-B1-001",
+    "pullRequest": 3,
+    "commit": "5c6da304223b3aec7c3fdeb2a31178c90c4343ae",
+    "mergedAt": "2026-07-16T00:37:27Z",
+    "status": "verified-merged",
+    "concerns": []
+  },
+  "activeTask": {
+    "task": "TMS-B4-002",
+    "branch": "codex/b4-cart",
+    "status": "verified-pr-open",
+    "pullRequest": 21,
+    "migration": "20260716180000_carts_promotions",
+    "qualityGate": "passed"
+  },
+  "mediaEndToEnd": {
+    "task": "TMS-B2-004a",
+    "branch": "codex/b2-004a-media-e2e",
+    "status": "verified-pr-open",
+    "pullRequest": 16,
+    "migration": "none-required",
+    "qualityGate": "passed",
+    "concerns": [
+      "Stacked on codex/b2-media-pipeline because PR #15 is not merged yet. Merge PR #15 first, or #16 will show the media implementation in its diff."
+    ]
+  },
+  "customerAuthentication": {
+    "task": "TMS-B1-002",
+    "branch": "codex/b1-authentication",
+    "status": "verified-merged",
+    "pullRequest": 10,
+    "commit": "88801c1374415eddf318a95e56ac3be7ab864c98",
+    "mergedAt": "2026-07-16T01:44:51Z",
+    "migration": "none-required",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "concerns": ["Move request throttling from process memory to Redis before horizontal scaling."]
+  },
+  "administratorAuthentication": {
+    "task": "TMS-B1-003",
+    "branch": "codex/b1-admin-auth",
+    "status": "verified-merged",
+    "pullRequest": 11,
+    "commit": "30bd5c087baf0f9b281f5422d43e5c54e26ace94",
+    "mergedAt": "2026-07-16T02:59:00Z",
+    "ciRun": 29467786313,
+    "migration": "20260716015000_admin_authentication",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "openApiValidation": "passed",
+    "concerns": [
+      "Move request throttling from process memory to Redis before horizontal scaling.",
+      "Add multi-key MFA encryption rotation before changing the production encryption key."
+    ]
+  },
+  "artworkVersioning": {
+    "task": "TMS-B2-001",
+    "branch": "codex/b2-artwork-versions",
+    "status": "verified-merged",
+    "pullRequest": 12,
+    "commit": "daae9f37ea6119fdf8d4cc387fdd701d80a2de6c",
+    "mergedAt": "2026-07-16T08:33:48Z",
+    "ciRun": 29483761718,
+    "migration": "20260716030500_artwork_versioning",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "openApiValidation": "passed",
+    "apiTests": 41,
+    "databaseTests": 5,
+    "concerns": [
+      "Collection, tag, edition, filtering, and search enrichment remains TMS-B2-002.",
+      "Exact-version media assets and ingestion remain TMS-B2-004."
+    ]
+  },
+  "catalogueContent": {
+    "task": "TMS-B2-002",
+    "branch": "codex/b2-catalogue-content",
+    "status": "verified-merged",
+    "pullRequest": 13,
+    "commit": "ce8bca4f7e7866cee698a77c9a94319418e8ca8a",
+    "mergedAt": "2026-07-16T10:10:19Z",
+    "ciRun": 29489686858,
+    "migration": "20260716084000_catalogue_content",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "openApiValidation": "passed",
+    "apiTests": 47,
+    "databaseTests": 6,
+    "openApiPaths": 51,
+    "openApiOperations": 65,
+    "concerns": [
+      "Garment templates, variants, placements, and compatibility remain TMS-B2-003.",
+      "Exact-version media assets and ingestion remain TMS-B2-004.",
+      "Waitlists, preorder rules, purchase limits, and inventory remain later commerce/growth tasks."
+    ]
+  },
+  "garmentCatalogue": {
+    "task": "TMS-B2-003",
+    "branch": "codex/b2-garment-catalogue",
+    "status": "verified-merged",
+    "pullRequest": 14,
+    "ciRun": 29497566759,
+    "commit": "4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79",
+    "mergedAt": "2026-07-16T12:20:15Z",
+    "migration": "20260716112000_garment_catalogue",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "openApiValidation": "passed",
+    "apiTests": 53,
+    "databaseTests": 7,
+    "openApiPaths": 68,
+    "openApiOperations": 91,
+    "concerns": [
+      "Exact-version media assets, ingestion, derivatives, and mockups remain TMS-B2-004.",
+      "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001."
+    ]
+  },
+  "designConfigurations": {
+    "task": "TMS-B3-001",
+    "branch": "codex/b3-design-configurations",
+    "status": "verified-pr-open",
+    "pullRequest": 17,
+    "migration": "20260716150000_design_configurations",
+    "qualityGate": "passed",
+    "apiTests": 74,
+    "databaseTests": 8,
+    "decisions": [
+      "ADR-013 approved placements are the only design geometry",
+      "ADR-014 a saved design is identified by its approved tuple, not by quantity"
+    ],
+    "concerns": [
+      "Merged origin/main (TMS-B2-004 media). The persistence migration-count guard is 7 here; each remaining open PR that adds a migration must raise it again.",
+      "Guest designs are unsupported; anonymous save arrives with carts in TMS-B4-002.",
+      "The Design Studio UI must drop freeform placement and crop before it can consume this surface (ADR-013)."
+    ]
+  },
+  "configurationPricing": {
+    "task": "TMS-B3-002",
+    "branch": "codex/b3-pricing-availability",
+    "status": "verified-pr-open",
+    "pullRequest": 19,
+    "migration": "20260716160000_configuration_pricing",
+    "qualityGate": "passed",
+    "decisions": [
+      "ADR-015 price belongs to the approved artwork and garment pair; money is integer minor units (NGN kobo); no size surcharge"
+    ],
+    "concerns": [
+      "Merged origin/main (TMS-B2-004 media, TMS-B3-001 designs). The persistence migration-count guard is 8 here; TMS-B4-001 must raise it again.",
+      "EDITION_EXHAUSTED is contract-defined but unreachable until sold quantities exist in TMS-B4-003.",
+      "Availability is catalogue-level only; stock is TMS-B4-001.",
+      "TMS-B4-003 order snapshots must copy the resolved amount and currency, never reference the compatibility, so a later price change cannot rewrite history."
+    ]
+  },
+  "inventoryReservations": {
+    "task": "TMS-B4-001",
+    "branch": "codex/b4-inventory-reservations",
+    "status": "verified-pr-open",
+    "pullRequest": 20,
+    "migration": "20260716170000_inventory_reservations",
+    "qualityGate": "passed",
+    "decisions": [
+      "ADR-016 row-locked reservations with derived availability and an append-only ledger"
+    ],
+    "concerns": [
+      "The RBAC matrix is now 14 permissions after inventory.read/inventory.write.",
+      "Public stock exposure and an OUT_OF_STOCK availability state remain a follow-up on top of TMS-B3-002.",
+      "Reservation TTL is caller-supplied; TMS-B4-002 must choose and document a cart hold duration."
+    ]
+  },
+  "cart": {
+    "task": "TMS-B4-002",
+    "branch": "codex/b4-cart",
+    "status": "verified-pr-open",
+    "pullRequest": 21,
+    "migration": "20260716180000_carts_promotions",
+    "qualityGate": "passed",
+    "apiTests": 93,
+    "databaseTests": 8,
+    "decisions": ["ADR-017 stock is held at checkout, never by the cart"],
+    "answersFrontendRequest": "TMS-FBR-003",
+    "concerns": [
+      "TMS-B4-003 must take the inventory hold at checkout and refuse while any cart line has an issue.",
+      "TMS-B4-003 order snapshots must copy the resolved amount and currency, never reference the compatibility (ADR-015).",
+      "The storefront's lineId() helper keys on freeform geometry removed by ADR-013 and must be reworked before it can consume this API.",
+      "Abandoned-cart cleanup is not implemented; carts carry lastActivityAt for a future TMS-B4-004 recovery job."
+    ]
   }
 }
