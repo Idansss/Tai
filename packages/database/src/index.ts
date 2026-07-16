@@ -11,6 +11,8 @@ export {
   AuthAssuranceLevel,
   Prisma,
   SessionKind,
+  StoryBlockType,
+  TagKind,
   UserStatus,
 } from '../generated/client/client.js';
 

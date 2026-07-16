@@ -4,6 +4,7 @@ import { LoggerModule } from 'nestjs-pino';
 
 import { AdminAuthModule } from './admin-auth/admin-auth.module.js';
 import { ArtworkModule } from './artworks/artwork.module.js';
+import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
@@ -13,6 +14,7 @@ import { HealthService } from './health/health.service.js';
     AuthModule,
     AdminAuthModule,
     ArtworkModule,
+    CatalogueModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: loadEnvironment().LOG_LEVEL,

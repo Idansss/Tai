@@ -261,10 +261,130 @@ export interface Artwork {
   updatedAt: string;
   publishedAt: string | null;
   archivedAt: string | null;
+  tags?: CatalogueTag[];
+  collections?: CatalogueEntry[];
+  drops?: CatalogueEntry[];
+  editions?: Edition[];
 }
 
 export interface AdminArtwork extends Artwork {
   versions: ArtworkVersion[];
+}
+
+export const TagKindSchema = z.enum(['GENERAL', 'THEME', 'MOOD', 'COLOUR_FAMILY']);
+export type TagKind = z.infer<typeof TagKindSchema>;
+
+export const TagInputSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(100),
+  kind: TagKindSchema.default('GENERAL'),
+});
+export type TagInput = z.infer<typeof TagInputSchema>;
+
+export const CatalogueEntryInputSchema = z.object({
+  slug: ArtworkSlugSchema,
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(10_000).nullable().optional(),
+});
+export type CatalogueEntryInput = z.infer<typeof CatalogueEntryInputSchema>;
+
+export const CatalogueEntryUpdateInputSchema = CatalogueEntryInputSchema.partial().extend({
+  status: ArtworkStatusSchema.optional(),
+});
+export type CatalogueEntryUpdateInput = z.infer<typeof CatalogueEntryUpdateInputSchema>;
+
+export const DropInputSchema = CatalogueEntryInputSchema.extend({
+  startsAt: z.iso.datetime().nullable().optional(),
+  endsAt: z.iso.datetime().nullable().optional(),
+}).refine((value) => !value.endsAt || (!!value.startsAt && value.endsAt > value.startsAt), {
+  message: 'A drop end time must be after its start time.',
+  path: ['endsAt'],
+});
+export type DropInput = z.infer<typeof DropInputSchema>;
+
+export const EditionInputSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    totalQuantity: z.number().int().positive().nullable().optional(),
+    numbered: z.boolean().default(false),
+    status: ArtworkStatusSchema.optional(),
+  })
+  .refine((value) => !value.numbered || !!value.totalQuantity, {
+    message: 'A numbered edition requires a total quantity.',
+    path: ['totalQuantity'],
+  });
+export type EditionInput = z.infer<typeof EditionInputSchema>;
+
+export const StoryBlockInputSchema = z.object({
+  type: z.enum(['TEXT', 'IMAGE', 'QUOTE', 'EMBED']),
+  content: z.record(z.string(), z.unknown()),
+});
+export const StoryInputSchema = z
+  .object({
+    slug: ArtworkSlugSchema,
+    title: z.string().trim().min(1).max(200),
+    excerpt: z.string().trim().max(500).nullable().optional(),
+    artworkId: z.string().uuid().nullable().optional(),
+    collectionId: z.string().uuid().nullable().optional(),
+    blocks: z.array(StoryBlockInputSchema).max(100).default([]),
+    status: ArtworkStatusSchema.optional(),
+  })
+  .refine((value) => !(value.artworkId && value.collectionId), {
+    message: 'A story can belong to an artwork or a collection, not both.',
+    path: ['collectionId'],
+  });
+export type StoryInput = z.infer<typeof StoryInputSchema>;
+
+export interface CatalogueTag {
+  id: string;
+  slug: string;
+  name: string;
+  kind: TagKind;
+}
+
+export interface CatalogueEntry {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  status: ArtworkStatus;
+  publishedAt: string | null;
+  archivedAt: string | null;
+}
+
+export interface Edition {
+  id: string;
+  artworkId: string;
+  name: string;
+  totalQuantity: number | null;
+  numbered: boolean;
+  status: ArtworkStatus;
+  releasedAt: string | null;
+}
+
+export interface StoryBlock {
+  id: string;
+  position: number;
+  type: 'TEXT' | 'IMAGE' | 'QUOTE' | 'EMBED';
+  content: Record<string, unknown>;
+}
+
+export interface Story {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  status: ArtworkStatus;
+  artworkId: string | null;
+  collectionId: string | null;
+  blocks: StoryBlock[];
+  publishedAt: string | null;
+  archivedAt: string | null;
 }
 
 export const DesignConfigurationInputSchema = z.object({

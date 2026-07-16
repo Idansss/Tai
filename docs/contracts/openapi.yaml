@@ -12,7 +12,9 @@ tags:
   - name: admin-authentication
   - name: admin-access
   - name: artworks
+  - name: catalogue
   - name: administrator-artworks
+  - name: administrator-catalogue
 paths:
   /api/v1/auth/register:
     post:
@@ -363,6 +365,41 @@ paths:
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: q
+          in: query
+          description: Case-insensitive search across published artwork title and narrative fields.
+          schema: { type: string, maxLength: 200 }
+        - name: collection
+          in: query
+          description: Published collection slug.
+          schema: { type: string }
+        - name: drop
+          in: query
+          description: Published drop slug.
+          schema: { type: string }
+        - name: tag
+          in: query
+          description: Tag slug of any kind.
+          schema: { type: string }
+        - name: theme
+          in: query
+          description: Theme tag slug.
+          schema: { type: string }
+        - name: mood
+          in: query
+          description: Mood tag slug.
+          schema: { type: string }
+        - name: colourFamily
+          in: query
+          description: Colour-family tag slug.
+          schema: { type: string }
+        - name: limitedEdition
+          in: query
+          description: When true, return only artworks with a published edition.
+          schema: { type: boolean }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [newest], default: newest }
       responses:
         '200':
           description: A cursor page containing only published artworks.
@@ -531,6 +568,437 @@ paths:
         '401': { $ref: '#/components/responses/ApiError' }
         '403': { $ref: '#/components/responses/ApiError' }
         '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/collections:
+    get:
+      operationId: listPublishedCollections
+      tags: [catalogue]
+      summary: List published curated collections
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { $ref: '#/components/responses/CataloguePage' }
+        '400': { $ref: '#/components/responses/ApiError' }
+  /api/v1/collections/{slug}:
+    get:
+      operationId: getPublishedCollection
+      tags: [catalogue]
+      summary: Get a published curated collection
+      parameters:
+        - $ref: '#/components/parameters/CatalogueSlug'
+      responses:
+        '200': { $ref: '#/components/responses/CatalogueEntry' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/drops:
+    get:
+      operationId: listPublishedDrops
+      tags: [catalogue]
+      summary: List published timed drops
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { $ref: '#/components/responses/DropPage' }
+        '400': { $ref: '#/components/responses/ApiError' }
+  /api/v1/drops/{slug}:
+    get:
+      operationId: getPublishedDrop
+      tags: [catalogue]
+      summary: Get a published timed drop
+      parameters:
+        - $ref: '#/components/parameters/CatalogueSlug'
+      responses:
+        '200': { $ref: '#/components/responses/Drop' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/stories:
+    get:
+      operationId: listPublishedStories
+      tags: [catalogue]
+      summary: List published editorial stories
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { $ref: '#/components/responses/StoryPage' }
+        '400': { $ref: '#/components/responses/ApiError' }
+  /api/v1/stories/{slug}:
+    get:
+      operationId: getPublishedStory
+      tags: [catalogue]
+      summary: Get a published editorial story and its ordered blocks
+      parameters:
+        - $ref: '#/components/parameters/CatalogueSlug'
+      responses:
+        '200': { $ref: '#/components/responses/Story' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/tags:
+    get:
+      operationId: listAdministratorTags
+      tags: [administrator-catalogue]
+      summary: List catalogue tags
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/TagList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: createAdministratorTag
+      tags: [administrator-catalogue]
+      summary: Create a catalogue tag
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TagInput' }
+      responses:
+        '201': { $ref: '#/components/responses/Tag' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/tags/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorTag
+      tags: [administrator-catalogue]
+      summary: Replace a catalogue tag
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TagInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Tag' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteAdministratorTag
+      tags: [administrator-catalogue]
+      summary: Delete a catalogue tag
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Tag deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/tags/{id}/artworks/{artworkId}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+      - $ref: '#/components/parameters/ArtworkId'
+    put:
+      operationId: attachAdministratorArtworkTag
+      tags: [administrator-catalogue]
+      summary: Attach a tag to an artwork root
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/Association' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: detachAdministratorArtworkTag
+      tags: [administrator-catalogue]
+      summary: Detach a tag from an artwork root
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Tag association removed. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/collections:
+    get:
+      operationId: listAdministratorCollections
+      tags: [administrator-catalogue]
+      summary: List collections in every lifecycle state
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/CatalogueList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: createAdministratorCollection
+      tags: [administrator-catalogue]
+      summary: Create a draft collection
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogueEntryInput' }
+      responses:
+        '201': { $ref: '#/components/responses/CatalogueEntry' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/collections/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    patch:
+      operationId: updateAdministratorCollection
+      tags: [administrator-catalogue]
+      summary: Update or transition a collection
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogueEntryUpdateInput' }
+      responses:
+        '200': { $ref: '#/components/responses/CatalogueEntry' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteAdministratorCollection
+      tags: [administrator-catalogue]
+      summary: Delete a collection
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Collection deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/collections/{id}/artworks/{artworkId}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+      - $ref: '#/components/parameters/ArtworkId'
+    put:
+      operationId: attachAdministratorCollectionArtwork
+      tags: [administrator-catalogue]
+      summary: Add or reorder an artwork in a collection
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssociationInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Association' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: detachAdministratorCollectionArtwork
+      tags: [administrator-catalogue]
+      summary: Remove an artwork from a collection
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Collection association removed. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/drops:
+    get:
+      operationId: listAdministratorDrops
+      tags: [administrator-catalogue]
+      summary: List timed drops in every lifecycle state
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/DropList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: createAdministratorDrop
+      tags: [administrator-catalogue]
+      summary: Create a draft timed drop
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DropInput' }
+      responses:
+        '201': { $ref: '#/components/responses/Drop' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/drops/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    patch:
+      operationId: updateAdministratorDrop
+      tags: [administrator-catalogue]
+      summary: Update or transition a timed drop
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DropUpdateInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Drop' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteAdministratorDrop
+      tags: [administrator-catalogue]
+      summary: Delete a timed drop
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Drop deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/drops/{id}/artworks/{artworkId}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+      - $ref: '#/components/parameters/ArtworkId'
+    put:
+      operationId: attachAdministratorDropArtwork
+      tags: [administrator-catalogue]
+      summary: Add or reorder an artwork in a timed drop
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssociationInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Association' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: detachAdministratorDropArtwork
+      tags: [administrator-catalogue]
+      summary: Remove an artwork from a timed drop
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Drop association removed. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/editions:
+    get:
+      operationId: listAdministratorEditions
+      tags: [administrator-catalogue]
+      summary: List artwork editions
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/EditionList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/artworks/{artworkId}/editions:
+    parameters:
+      - $ref: '#/components/parameters/ArtworkId'
+    post:
+      operationId: createAdministratorEdition
+      tags: [administrator-catalogue]
+      summary: Create an edition for an artwork root
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EditionInput' }
+      responses:
+        '201': { $ref: '#/components/responses/Edition' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/editions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorEdition
+      tags: [administrator-catalogue]
+      summary: Replace an artwork edition
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EditionInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Edition' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteAdministratorEdition
+      tags: [administrator-catalogue]
+      summary: Delete an artwork edition
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Edition deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/stories:
+    get:
+      operationId: listAdministratorStories
+      tags: [administrator-catalogue]
+      summary: List editorial stories in every lifecycle state
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/StoryList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: createAdministratorStory
+      tags: [administrator-catalogue]
+      summary: Create an editorial story with ordered blocks
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StoryInput' }
+      responses:
+        '201': { $ref: '#/components/responses/Story' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/catalogue/stories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogueId'
+    put:
+      operationId: updateAdministratorStory
+      tags: [administrator-catalogue]
+      summary: Replace an editorial story and its ordered blocks
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StoryInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Story' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: deleteAdministratorStory
+      tags: [administrator-catalogue]
+      summary: Delete an editorial story
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: Story deleted. }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
   /api/v1/health/liveness:
     get:
       operationId: getLiveness
@@ -581,6 +1049,24 @@ paths:
                 $ref: '#/components/schemas/HealthResponse'
 components:
   parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string, format: uuid }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    CatalogueId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CatalogueSlug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
     ArtworkId:
       name: artworkId
       in: path
@@ -606,6 +1092,76 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ApiError' }
+    Tag:
+      description: Catalogue tag.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TagResponse' }
+    TagList:
+      description: Catalogue tags.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TagListResponse' }
+    CatalogueEntry:
+      description: Curated collection.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/CatalogueEntryResponse' }
+    CatalogueList:
+      description: Curated collections.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/CatalogueListResponse' }
+    CataloguePage:
+      description: Cursor page of published curated collections.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/CataloguePageResponse' }
+    Drop:
+      description: Timed drop.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DropResponse' }
+    DropList:
+      description: Timed drops.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DropListResponse' }
+    DropPage:
+      description: Cursor page of published timed drops.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DropPageResponse' }
+    Edition:
+      description: Artwork edition.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/EditionResponse' }
+    EditionList:
+      description: Artwork editions.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/EditionListResponse' }
+    Story:
+      description: Editorial story with ordered blocks.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StoryResponse' }
+    StoryList:
+      description: Editorial stories.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StoryListResponse' }
+    StoryPage:
+      description: Cursor page of published editorial stories.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StoryPageResponse' }
+    Association:
+      description: Artwork association.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/AssociationResponse' }
   schemas:
     CustomerRegistrationInput:
       type: object
@@ -812,6 +1368,250 @@ components:
               type: array
               items: { $ref: '#/components/schemas/AdminRole' }
         meta: { $ref: '#/components/schemas/ApiMeta' }
+    TagKind:
+      type: string
+      enum: [GENERAL, THEME, MOOD, COLOUR_FAMILY]
+    TagInput:
+      type: object
+      additionalProperties: false
+      required: [slug, name]
+      properties:
+        slug: { type: string, maxLength: 100, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        kind: { $ref: '#/components/schemas/TagKind' }
+    Tag:
+      allOf:
+        - $ref: '#/components/schemas/TagInput'
+        - type: object
+          required: [id, kind]
+          properties:
+            id: { type: string, format: uuid }
+            kind: { $ref: '#/components/schemas/TagKind' }
+    CatalogueEntryInput:
+      type: object
+      additionalProperties: false
+      required: [slug, title]
+      properties:
+        slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 10000 }
+    CatalogueEntryUpdateInput:
+      type: object
+      additionalProperties: false
+      properties:
+        slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 10000 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    ArtworkAssociation:
+      type: object
+      required: [artworkId, position]
+      properties:
+        artworkId: { type: string, format: uuid }
+        position: { type: integer, minimum: 0 }
+    AssociationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        position: { type: integer, minimum: 0, default: 0 }
+    CatalogueEntry:
+      allOf:
+        - $ref: '#/components/schemas/CatalogueEntryInput'
+        - type: object
+          required: [id, status, artworks, publishedAt, archivedAt]
+          properties:
+            id: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+            artworks:
+              type: array
+              items: { $ref: '#/components/schemas/ArtworkAssociation' }
+            publishedAt: { type: [string, 'null'], format: date-time }
+            archivedAt: { type: [string, 'null'], format: date-time }
+    DropInput:
+      allOf:
+        - $ref: '#/components/schemas/CatalogueEntryInput'
+        - type: object
+          properties:
+            startsAt: { type: [string, 'null'], format: date-time }
+            endsAt: { type: [string, 'null'], format: date-time }
+    DropUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/CatalogueEntryUpdateInput'
+        - type: object
+          properties:
+            startsAt: { type: [string, 'null'], format: date-time }
+            endsAt: { type: [string, 'null'], format: date-time }
+    Drop:
+      allOf:
+        - $ref: '#/components/schemas/CatalogueEntry'
+        - type: object
+          required: [startsAt, endsAt]
+          properties:
+            startsAt: { type: [string, 'null'], format: date-time }
+            endsAt: { type: [string, 'null'], format: date-time }
+    EditionInput:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        totalQuantity: { type: [integer, 'null'], minimum: 1 }
+        numbered: { type: boolean, default: false }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    Edition:
+      allOf:
+        - $ref: '#/components/schemas/EditionInput'
+        - type: object
+          required: [id, artworkId, numbered, status, releasedAt]
+          properties:
+            id: { type: string, format: uuid }
+            artworkId: { type: string, format: uuid }
+            releasedAt: { type: [string, 'null'], format: date-time }
+    StoryBlockInput:
+      type: object
+      additionalProperties: false
+      required: [type, content]
+      properties:
+        type: { type: string, enum: [TEXT, IMAGE, QUOTE, EMBED] }
+        content: { type: object, additionalProperties: true }
+    StoryBlock:
+      allOf:
+        - $ref: '#/components/schemas/StoryBlockInput'
+        - type: object
+          required: [id, position]
+          properties:
+            id: { type: string, format: uuid }
+            position: { type: integer, minimum: 0 }
+    StoryInput:
+      type: object
+      additionalProperties: false
+      required: [slug, title, blocks]
+      properties:
+        slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        excerpt: { type: [string, 'null'], maxLength: 500 }
+        artworkId: { type: [string, 'null'], format: uuid }
+        collectionId: { type: [string, 'null'], format: uuid }
+        blocks:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/StoryBlockInput' }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+    Story:
+      allOf:
+        - $ref: '#/components/schemas/StoryInput'
+        - type: object
+          required: [id, status, publishedAt, archivedAt]
+          properties:
+            id: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ArtworkStatus' }
+            blocks:
+              type: array
+              items: { $ref: '#/components/schemas/StoryBlock' }
+            publishedAt: { type: [string, 'null'], format: date-time }
+            archivedAt: { type: [string, 'null'], format: date-time }
+    TagResponse:
+      $ref: '#/components/schemas/TagEnvelope'
+    TagEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Tag' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    TagListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Tag' } }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    CatalogueEntryResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/CatalogueEntry' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    CatalogueListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/CatalogueEntry' } }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    CataloguePageResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/CataloguePage' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    CataloguePage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/CatalogueEntry' } }
+        nextCursor: { type: [string, 'null'], format: uuid }
+    DropResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Drop' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    DropListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Drop' } }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    DropPageResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items, nextCursor]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Drop' } }
+            nextCursor: { type: [string, 'null'], format: uuid }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    EditionResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Edition' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    EditionListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Edition' } }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    StoryResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Story' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    StoryListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Story' } }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    StoryPageResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items, nextCursor]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Story' } }
+            nextCursor: { type: [string, 'null'], format: uuid }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AssociationResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: object, additionalProperties: true }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     ArtworkStatus:
       type: string
       enum: [DRAFT, PUBLISHED, ARCHIVED]
@@ -881,6 +1681,18 @@ components:
           oneOf:
             - $ref: '#/components/schemas/ArtworkVersion'
             - type: 'null'
+        tags:
+          type: array
+          items: { $ref: '#/components/schemas/Tag' }
+        collections:
+          type: array
+          items: { $ref: '#/components/schemas/CatalogueEntry' }
+        drops:
+          type: array
+          items: { $ref: '#/components/schemas/Drop' }
+        editions:
+          type: array
+          items: { $ref: '#/components/schemas/Edition' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
         publishedAt: { type: [string, 'null'], format: date-time }

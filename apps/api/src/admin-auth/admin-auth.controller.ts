@@ -60,7 +60,10 @@ export class AdminAuthController {
   @Post('auth/login')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: AdminLoginDto })
-  @ApiOperation({ summary: 'Authenticate an administrator or begin the required MFA flow' })
+  @ApiOperation({
+    operationId: 'loginAdministrator',
+    summary: 'Authenticate an administrator or begin the required MFA flow',
+  })
   @ApiOkResponse({ description: 'A session or MFA challenge was created.' })
   @ApiUnauthorizedResponse({ description: 'The credentials are invalid.' })
   async login(
@@ -78,7 +81,10 @@ export class AdminAuthController {
   @Post('auth/mfa/enroll')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: AdminMfaChallengeDto })
-  @ApiOperation({ summary: 'Create a TOTP factor for a password-verified administrator' })
+  @ApiOperation({
+    operationId: 'beginAdministratorMfaEnrollment',
+    summary: 'Create a TOTP factor for a password-verified administrator',
+  })
   @ApiOkResponse({ description: 'The one-time TOTP enrollment secret was returned.' })
   async beginMfaEnrollment(
     @Body() input: AdminMfaChallengeDto,
@@ -95,7 +101,10 @@ export class AdminAuthController {
   @Post('auth/mfa/enroll/confirm')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: AdminMfaCodeDto })
-  @ApiOperation({ summary: 'Confirm TOTP enrollment and create an MFA-assured session' })
+  @ApiOperation({
+    operationId: 'confirmAdministratorMfaEnrollment',
+    summary: 'Confirm TOTP enrollment and create an MFA-assured session',
+  })
   @ApiOkResponse({ description: 'TOTP was enrolled and the administration session was created.' })
   async confirmMfaEnrollment(
     @Body() input: AdminMfaCodeDto,
@@ -115,7 +124,10 @@ export class AdminAuthController {
   @Post('auth/mfa/verify')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: AdminMfaCodeDto })
-  @ApiOperation({ summary: 'Complete an administrator TOTP challenge' })
+  @ApiOperation({
+    operationId: 'verifyAdministratorMfa',
+    summary: 'Complete an administrator TOTP challenge',
+  })
   @ApiOkResponse({ description: 'The administration session was created.' })
   async verifyMfa(
     @Body() input: AdminMfaCodeDto,
@@ -134,7 +146,10 @@ export class AdminAuthController {
 
   @Post('auth/logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Revoke the current administration session' })
+  @ApiOperation({
+    operationId: 'logoutAdministrator',
+    summary: 'Revoke the current administration session',
+  })
   @ApiNoContentResponse({ description: 'The session was revoked when present.' })
   async logout(
     @Req() request: Request,
@@ -148,7 +163,10 @@ export class AdminAuthController {
   @Get('auth/session')
   @UseGuards(AdminSessionGuard)
   @ApiCookieAuth('tms_admin_session')
-  @ApiOperation({ summary: 'Read the current administrator, roles, and permissions' })
+  @ApiOperation({
+    operationId: 'getAdministratorSession',
+    summary: 'Read the current administrator, roles, and permissions',
+  })
   @ApiOkResponse({ description: 'The current administration session.' })
   getSession(@Req() request: Request): ApiResponse<{ session: AdminSession }> {
     return this.respond(request, { session: request.adminSession!.session });
@@ -158,7 +176,10 @@ export class AdminAuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AdminSessionGuard)
   @ApiCookieAuth('tms_admin_session')
-  @ApiOperation({ summary: 'Revoke an owned administration session or, with authority, another' })
+  @ApiOperation({
+    operationId: 'revokeAdministratorSession',
+    summary: 'Revoke an owned administration session or, with authority, another',
+  })
   @ApiNoContentResponse({ description: 'The administration session was revoked.' })
   async revokeSession(
     @Param('sessionId', new ParseUUIDPipe()) sessionId: string,
@@ -177,7 +198,10 @@ export class AdminAuthController {
   @UseGuards(AdminSessionGuard, AdminPermissionGuard)
   @RequireAdminPermissions('users.read')
   @ApiCookieAuth('tms_admin_session')
-  @ApiOperation({ summary: 'List administrative roles and their permissions' })
+  @ApiOperation({
+    operationId: 'listAdministratorRoles',
+    summary: 'List administrative roles and their permissions',
+  })
   @ApiOkResponse({ description: 'Administrative roles and permissions.' })
   async listRoles(@Req() request: Request): Promise<ApiResponse<{ roles: AdminRole[] }>> {
     return this.respond(request, { roles: await this.adminAuthService.listRoles() });
@@ -190,7 +214,10 @@ export class AdminAuthController {
   @RequireAdminMfa()
   @ApiCookieAuth('tms_admin_session')
   @ApiBody({ type: AdminRoleAssignmentDto })
-  @ApiOperation({ summary: 'Assign an administrative role' })
+  @ApiOperation({
+    operationId: 'assignAdministratorRole',
+    summary: 'Assign an administrative role',
+  })
   @ApiNoContentResponse({ description: 'The role assignment is active.' })
   async assignRole(
     @Param('userId', new ParseUUIDPipe()) userId: string,
@@ -213,7 +240,10 @@ export class AdminAuthController {
   @RequireAdminPermissions('system.manage')
   @RequireAdminMfa()
   @ApiCookieAuth('tms_admin_session')
-  @ApiOperation({ summary: 'Revoke an administrative role' })
+  @ApiOperation({
+    operationId: 'revokeAdministratorRole',
+    summary: 'Revoke an administrative role',
+  })
   @ApiNoContentResponse({ description: 'The role assignment was removed.' })
   async revokeRole(
     @Param('userId', new ParseUUIDPipe()) userId: string,

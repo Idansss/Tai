@@ -53,7 +53,7 @@ export class AuthController {
 
   @Post('register')
   @ApiBody({ type: RegisterCustomerDto })
-  @ApiOperation({ summary: 'Register a customer account' })
+  @ApiOperation({ operationId: 'registerCustomer', summary: 'Register a customer account' })
   @ApiCreatedResponse({ description: 'The customer account was created.' })
   @ApiConflictResponse({ description: 'An account already exists for the email address.' })
   async register(
@@ -68,7 +68,7 @@ export class AuthController {
   @Post('login')
   @ApiBody({ type: LoginCustomerDto })
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Create a customer session' })
+  @ApiOperation({ operationId: 'loginCustomer', summary: 'Create a customer session' })
   @ApiOkResponse({ description: 'The customer session was created.' })
   @ApiUnauthorizedResponse({ description: 'The credentials are invalid.' })
   async login(
@@ -84,7 +84,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Revoke the current customer session' })
+  @ApiOperation({ operationId: 'logoutCustomer', summary: 'Revoke the current customer session' })
   @ApiNoContentResponse({ description: 'The current session was revoked when present.' })
   async logout(
     @Req() request: Request,
@@ -98,7 +98,10 @@ export class AuthController {
   @Post('email-verification/request')
   @ApiBody({ type: AuthEmailDto })
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Request a customer email-verification link' })
+  @ApiOperation({
+    operationId: 'requestCustomerEmailVerification',
+    summary: 'Request a customer email-verification link',
+  })
   @ApiAcceptedResponse({ description: 'Accepted without disclosing account state.' })
   async requestEmailVerification(
     @Body() input: AuthEmailDto,
@@ -112,7 +115,10 @@ export class AuthController {
   @Post('email-verification/confirm')
   @ApiBody({ type: AuthTokenDto })
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify a customer email address and create a session' })
+  @ApiOperation({
+    operationId: 'confirmCustomerEmailVerification',
+    summary: 'Verify a customer email address and create a session',
+  })
   @ApiOkResponse({ description: 'The email address was verified.' })
   async confirmEmailVerification(
     @Body() input: AuthTokenDto,
@@ -131,7 +137,10 @@ export class AuthController {
   @Post('password-reset/request')
   @ApiBody({ type: AuthEmailDto })
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Request a customer password-reset link' })
+  @ApiOperation({
+    operationId: 'requestCustomerPasswordReset',
+    summary: 'Request a customer password-reset link',
+  })
   @ApiAcceptedResponse({ description: 'Accepted without disclosing account state.' })
   async requestPasswordReset(
     @Body() input: AuthEmailDto,
@@ -145,7 +154,10 @@ export class AuthController {
   @Post('password-reset/confirm')
   @ApiBody({ type: ConfirmPasswordResetDto })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Reset a customer password and revoke every session' })
+  @ApiOperation({
+    operationId: 'confirmCustomerPasswordReset',
+    summary: 'Reset a customer password and revoke every session',
+  })
   @ApiNoContentResponse({ description: 'The password was reset and sessions were revoked.' })
   async confirmPasswordReset(
     @Body() input: ConfirmPasswordResetDto,
@@ -160,7 +172,7 @@ export class AuthController {
   @Get('session')
   @UseGuards(SessionGuard)
   @ApiCookieAuth('tms_session')
-  @ApiOperation({ summary: 'Read the current customer session' })
+  @ApiOperation({ operationId: 'getCustomerSession', summary: 'Read the current customer session' })
   @ApiOkResponse({ description: 'The current authenticated session.' })
   getSession(@Req() request: Request): ApiResponse<{ session: AuthSession }> {
     return this.respond(request, { session: request.authSession!.session });
@@ -170,7 +182,10 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(SessionGuard)
   @ApiCookieAuth('tms_session')
-  @ApiOperation({ summary: 'Revoke one session owned by the current customer' })
+  @ApiOperation({
+    operationId: 'revokeCustomerSession',
+    summary: 'Revoke one session owned by the current customer',
+  })
   @ApiNoContentResponse({ description: 'The owned session was revoked.' })
   async revokeSession(
     @Param('sessionId', new ParseUUIDPipe()) sessionId: string,
@@ -189,7 +204,10 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(SessionGuard)
   @ApiCookieAuth('tms_session')
-  @ApiOperation({ summary: 'Revoke every session owned by the current customer' })
+  @ApiOperation({
+    operationId: 'revokeAllCustomerSessions',
+    summary: 'Revoke every session owned by the current customer',
+  })
   @ApiNoContentResponse({ description: 'All customer sessions were revoked.' })
   async revokeAllSessions(
     @Req() request: Request,

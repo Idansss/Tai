@@ -126,3 +126,22 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Public endpoints return only published roots and the exact published version. A draft/archived slug returns `RESOURCE_NOT_FOUND`. Publishing a version archives the prior publication; archiving the published version or root removes it from public reads.
 - There are intentionally no version update/delete endpoints. Treat IDs/content as immutable and create a new version for edits.
 - Delivery boundary: this is the core of TMS-FBR-001, not the complete gallery view model. Collection/tag/filter/sort fields arrive in TMS-B2-002; preview/image/process assets arrive in TMS-B2-004. Continue the typed mock adapter for those missing fields and do not synthesize them from `metadata`.
+
+## 2026-07-16 — TMS-B2-002 catalogue discovery and editorial content
+
+- Status: implemented on `codex/b2-catalogue-content`; consume after its focused PR is merged.
+- Compatibility: additive. Existing artwork, authentication, access, and health operations remain stable. `GET /api/v1/artworks` gains optional filters and additive `tags`, `collections`, `drops`, and `editions` fields.
+- Public discovery:
+  - `GET /api/v1/artworks?cursor=<uuid>&limit=20&q=<text>&collection=<slug>&drop=<slug>&tag=<slug>&theme=<slug>&mood=<slug>&colourFamily=<slug>&limitedEdition=true&sort=newest`
+  - `GET /api/v1/collections?cursor=<uuid>&limit=20`
+  - `GET /api/v1/collections/:slug`
+  - `GET /api/v1/drops?cursor=<uuid>&limit=20`
+  - `GET /api/v1/drops/:slug`
+  - `GET /api/v1/stories?cursor=<uuid>&limit=20`
+  - `GET /api/v1/stories/:slug`
+- Administrator catalogue operations live under `/api/v1/admin/catalogue`: CRUD for `tags`, `collections`, `drops`, `editions`, and `stories`; tag/collection/drop artwork associations use nested `PUT`/`DELETE` routes. Reads require `catalogue.read`; mutations require `catalogue.write`.
+- Tag kinds are `GENERAL`, `THEME`, `MOOD`, and `COLOUR_FAMILY`. Multiple supplied artwork filters compose with AND semantics. Text search is case-insensitive across the exact published version's title, short story, story, and inspiration.
+- Collections and drops expose ordered `{ artworkId, position }` membership. Public responses omit draft/archived containers and omit unpublished artwork roots even when an administrator associated them with a published container.
+- Editions expose `name`, optional positive `totalQuantity`, `numbered`, lifecycle `status`, and `releasedAt`; numbered editions require a total quantity. `limitedEdition=true` means at least one published edition exists.
+- Stories expose optional `artworkId` or `collectionId` (never both), lifecycle fields, and ordered blocks with type `TEXT`, `IMAGE`, `QUOTE`, or `EMBED` plus object-shaped `content`.
+- Media URLs/previews remain TMS-B2-004. Garment templates/variants/compatibility remain TMS-B2-003. Waitlists, preorder behavior, purchase limits, and inventory are not implied by a drop or edition and remain later commerce/growth work.

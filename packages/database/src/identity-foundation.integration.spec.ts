@@ -153,7 +153,7 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'SELECT count(*)::int AS count FROM permissions',
     );
 
-    expect(migrationResult.rows[0]?.count).toBe(3);
+    expect(migrationResult.rows[0]?.count).toBe(4);
     expect(permissionResult.rows[0]?.count).toBe(12);
     expect(roleResult.rows).toEqual([
       { code: 'ANALYST', is_system: true, grant_count: 2 },
@@ -185,6 +185,10 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
           'artworks_status_created_at_idx',
           'artwork_versions_artwork_status_version_idx',
           'artwork_versions_one_published_idx',
+          'collections_status_published_at_idx',
+          'drops_status_starts_at_idx',
+          'stories_status_published_at_idx',
+          'artwork_tags_tag_artwork_idx',
           'users_normalized_email_key',
         ],
       ],
@@ -192,15 +196,19 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
 
     expect(result.rows.map(({ indexname }) => indexname)).toEqual([
       'admin_auth_challenges_user_state_idx',
+      'artwork_tags_tag_artwork_idx',
       'artwork_versions_artwork_status_version_idx',
       'artwork_versions_one_published_idx',
       'artworks_status_created_at_idx',
       'audit_logs_correlation_id_idx',
       'audit_logs_resource_occurred_at_idx',
+      'collections_status_published_at_idx',
+      'drops_status_starts_at_idx',
       'email_verification_tokens_user_state_idx',
       'password_reset_tokens_user_state_idx',
       'sessions_user_kind_state_idx',
       'sessions_user_revoked_expires_idx',
+      'stories_status_published_at_idx',
       'users_normalized_email_key',
     ]);
   });
@@ -258,6 +266,74 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
         [randomUUID(), userId],
       ),
       'artworks_lifecycle_check',
+    );
+  });
+
+  it('enforces catalogue windows, edition quantities, story ownership, and block ordering', async () => {
+    const userId = randomUUID();
+    const artworkId = randomUUID();
+    const collectionId = randomUUID();
+    const storyId = randomUUID();
+    await database.query(
+      `INSERT INTO users (id, email, normalized_email, updated_at)
+       VALUES ($1, $2, $2, CURRENT_TIMESTAMP)`,
+      [userId, `catalogue-${userId}@example.com`],
+    );
+    await database.query(
+      `INSERT INTO artworks (id, slug, created_by_user_id, updated_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
+      [artworkId, `catalogue-${artworkId}`, userId],
+    );
+    await database.query(
+      `INSERT INTO collections (id, slug, title, created_by_user_id, updated_at)
+       VALUES ($1, $2, 'Constraint collection', $3, CURRENT_TIMESTAMP)`,
+      [collectionId, `collection-${collectionId}`, userId],
+    );
+
+    await expectConstraint(
+      database.query(
+        `INSERT INTO drops
+           (id, slug, title, starts_at, ends_at, created_by_user_id, updated_at)
+         VALUES ($1, $2, 'Invalid window', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '1 hour', $3, CURRENT_TIMESTAMP)`,
+        [randomUUID(), `drop-${randomUUID()}`, userId],
+      ),
+      'drops_window_check',
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO editions
+           (id, artwork_id, name, numbered, updated_at)
+         VALUES ($1, $2, 'Invalid numbered edition', true, CURRENT_TIMESTAMP)`,
+        [randomUUID(), artworkId],
+      ),
+      'editions_numbered_check',
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO stories
+           (id, slug, title, artwork_id, collection_id, created_by_user_id, updated_at)
+         VALUES ($1, $2, 'Invalid ownership', $3, $4, $5, CURRENT_TIMESTAMP)`,
+        [randomUUID(), `story-${randomUUID()}`, artworkId, collectionId, userId],
+      ),
+      'stories_parent_check',
+    );
+    await database.query(
+      `INSERT INTO stories (id, slug, title, artwork_id, created_by_user_id, updated_at)
+       VALUES ($1, $2, 'Ordered story', $3, $4, CURRENT_TIMESTAMP)`,
+      [storyId, `ordered-${storyId}`, artworkId, userId],
+    );
+    await database.query(
+      `INSERT INTO story_blocks (id, story_id, position, type, content)
+       VALUES ($1, $2, 0, 'TEXT', '{"text":"first"}'::jsonb)`,
+      [randomUUID(), storyId],
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO story_blocks (id, story_id, position, type, content)
+         VALUES ($1, $2, 0, 'QUOTE', '{"quote":"duplicate"}'::jsonb)`,
+        [randomUUID(), storyId],
+      ),
+      'story_blocks_story_position_key',
     );
   });
 
