@@ -1,0 +1,11 @@
+/*
+ * Standalone all-in-one stylesheet (Tailwind + tokens + theme + UI source scan).
+ * Apps that need to control their own @source scanning should instead import
+ * `tailwindcss`, `@tms/ui/tokens.css` and `@tms/ui/theme.css` directly and declare
+ * their own @source lines (see each app's globals.css).
+ */
+@import 'tailwindcss';
+@import './tokens.css';
+@import './theme.css';
+
+@source "../**/*.{ts,tsx}";
