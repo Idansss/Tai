@@ -2,8 +2,8 @@
   "agent": "Codex",
   "area": "backend",
   "currentPhase": "B2",
-  "lastVerifiedTask": "TMS-B1-003",
-  "nextRecommendedTask": "TMS-B2-001",
+  "lastVerifiedTask": "TMS-B2-001",
+  "nextRecommendedTask": "TMS-B2-002",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -18,14 +18,15 @@
     "TMS-B0-011",
     "TMS-B1-001",
     "TMS-B1-002",
-    "TMS-B1-003"
+    "TMS-B1-003",
+    "TMS-B2-001"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-verified-local",
-  "lastUpdated": "2026-07-16T02:53:16Z",
+  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-verified-local",
+  "lastUpdated": "2026-07-16T08:26:55Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -45,8 +46,8 @@
     "concerns": []
   },
   "activeTask": {
-    "task": "TMS-B1-003",
-    "branch": "codex/b1-admin-auth",
+    "task": "TMS-B2-001",
+    "branch": "codex/b2-artwork-versions",
     "status": "verified-local-awaiting-pr"
   },
   "customerAuthentication": {
@@ -64,7 +65,11 @@
   "administratorAuthentication": {
     "task": "TMS-B1-003",
     "branch": "codex/b1-admin-auth",
-    "status": "verified-local-awaiting-pr",
+    "status": "verified-merged",
+    "pullRequest": 11,
+    "commit": "30bd5c087baf0f9b281f5422d43e5c54e26ace94",
+    "mergedAt": "2026-07-16T02:59:00Z",
+    "ciRun": 29467786313,
     "migration": "20260716015000_admin_authentication",
     "qualityGate": "passed",
     "runtimeSmoke": "passed",
@@ -72,6 +77,21 @@
     "concerns": [
       "Move request throttling from process memory to Redis before horizontal scaling.",
       "Add multi-key MFA encryption rotation before changing the production encryption key."
+    ]
+  },
+  "artworkVersioning": {
+    "task": "TMS-B2-001",
+    "branch": "codex/b2-artwork-versions",
+    "status": "verified-local-awaiting-pr",
+    "migration": "20260716030500_artwork_versioning",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "openApiValidation": "passed",
+    "apiTests": 41,
+    "databaseTests": 5,
+    "concerns": [
+      "Collection, tag, edition, filtering, and search enrichment remains TMS-B2-002.",
+      "Exact-version media assets and ingestion remain TMS-B2-004."
     ]
   }
 }

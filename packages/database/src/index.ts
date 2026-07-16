@@ -6,6 +6,8 @@ export {
   AdminAuthChallengePurpose,
   AdminMfaFactorStatus,
   AdminProfileStatus,
+  ArtworkStatus,
+  ArtworkVersionStatus,
   AuthAssuranceLevel,
   Prisma,
   SessionKind,
@@ -18,4 +20,4 @@ export function createDatabaseClient(connectionString: string): PrismaClient {
 
 export type DatabaseClient = ReturnType<typeof createDatabaseClient>;
 
-export const databasePackageStatus = 'identity-foundation-verified' as const;
+export const databasePackageStatus = 'artwork-versioning-verified' as const;

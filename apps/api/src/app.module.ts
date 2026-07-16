@@ -3,6 +3,7 @@ import { loadEnvironment } from '@tms/configuration';
 import { LoggerModule } from 'nestjs-pino';
 
 import { AdminAuthModule } from './admin-auth/admin-auth.module.js';
+import { ArtworkModule } from './artworks/artwork.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
@@ -11,6 +12,7 @@ import { HealthService } from './health/health.service.js';
   imports: [
     AuthModule,
     AdminAuthModule,
+    ArtworkModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: loadEnvironment().LOG_LEVEL,

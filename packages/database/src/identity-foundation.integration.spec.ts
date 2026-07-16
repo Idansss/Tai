@@ -27,6 +27,20 @@ async function runDocker(arguments_: string[], timeout = 30_000): Promise<string
   return stdout.trim();
 }
 
+async function waitForDocker(): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      await runDocker(['info'], 15_000);
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('Docker is unavailable.');
+}
+
 async function waitForPostgres(): Promise<void> {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
@@ -65,9 +79,9 @@ async function expectConstraint(
   throw new Error(`Expected database constraint ${expectedConstraint} to reject the operation.`);
 }
 
-describe.sequential('identity foundation PostgreSQL integration', () => {
+describe.sequential('backend persistence PostgreSQL integration', () => {
   beforeAll(async () => {
-    await runDocker(['info'], 15_000);
+    await waitForDocker();
     await runDocker(
       [
         'run',
@@ -118,7 +132,7 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
     }
   }, 45_000);
 
-  it('deploys the reviewed B1 migrations and seeds the canonical RBAC matrix idempotently', async () => {
+  it('deploys the reviewed migrations and seeds the canonical RBAC matrix idempotently', async () => {
     const migrationResult = await database.query<{ count: number }>(
       `SELECT count(*)::int AS count
        FROM "_prisma_migrations"
@@ -139,7 +153,7 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
       'SELECT count(*)::int AS count FROM permissions',
     );
 
-    expect(migrationResult.rows[0]?.count).toBe(2);
+    expect(migrationResult.rows[0]?.count).toBe(3);
     expect(permissionResult.rows[0]?.count).toBe(12);
     expect(roleResult.rows).toEqual([
       { code: 'ANALYST', is_system: true, grant_count: 2 },
@@ -168,6 +182,9 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
           'sessions_user_revoked_expires_idx',
           'sessions_user_kind_state_idx',
           'admin_auth_challenges_user_state_idx',
+          'artworks_status_created_at_idx',
+          'artwork_versions_artwork_status_version_idx',
+          'artwork_versions_one_published_idx',
           'users_normalized_email_key',
         ],
       ],
@@ -175,6 +192,9 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
 
     expect(result.rows.map(({ indexname }) => indexname)).toEqual([
       'admin_auth_challenges_user_state_idx',
+      'artwork_versions_artwork_status_version_idx',
+      'artwork_versions_one_published_idx',
+      'artworks_status_created_at_idx',
       'audit_logs_correlation_id_idx',
       'audit_logs_resource_occurred_at_idx',
       'email_verification_tokens_user_state_idx',
@@ -183,6 +203,62 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
       'sessions_user_revoked_expires_idx',
       'users_normalized_email_key',
     ]);
+  });
+
+  it('enforces immutable artwork content, lifecycle constraints, and one published version', async () => {
+    const userId = randomUUID();
+    const artworkId = randomUUID();
+    const versionId = randomUUID();
+    await database.query(
+      `INSERT INTO users (id, email, normalized_email, updated_at)
+       VALUES ($1, 'artwork-owner@example.com', 'artwork-owner@example.com', CURRENT_TIMESTAMP)`,
+      [userId],
+    );
+    await database.query(
+      `INSERT INTO artworks (id, slug, created_by_user_id, updated_at)
+       VALUES ($1, 'database-artwork', $2, CURRENT_TIMESTAMP)`,
+      [artworkId, userId],
+    );
+    await database.query(
+      `INSERT INTO artwork_versions
+         (id, artwork_id, version_number, title, metadata, created_by_user_id)
+       VALUES ($1, $2, 1, 'Original title', '{"mood":"quiet"}'::jsonb, $3)`,
+      [versionId, artworkId, userId],
+    );
+
+    await expect(
+      database.query('UPDATE artwork_versions SET title = $1 WHERE id = $2', [
+        'Mutated title',
+        versionId,
+      ]),
+    ).rejects.toThrow('artwork version content is immutable');
+    await database.query(
+      `UPDATE artwork_versions
+       SET status = 'PUBLISHED', published_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [versionId],
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO artwork_versions
+           (id, artwork_id, version_number, status, title, metadata, created_by_user_id, published_at)
+         VALUES ($1, $2, 2, 'PUBLISHED', 'Second title', '{}'::jsonb, $3, CURRENT_TIMESTAMP)`,
+        [randomUUID(), artworkId, userId],
+      ),
+      'artwork_versions_one_published_idx',
+    );
+    await expect(
+      database.query('DELETE FROM artwork_versions WHERE id = $1', [versionId]),
+    ).rejects.toThrow('artwork versions are immutable and cannot be deleted');
+    await expectConstraint(
+      database.query(
+        `INSERT INTO artworks
+           (id, slug, status, created_by_user_id, updated_at)
+         VALUES ($1, 'invalid-published-artwork', 'PUBLISHED', $2, CURRENT_TIMESTAMP)`,
+        [randomUUID(), userId],
+      ),
+      'artworks_lifecycle_check',
+    );
   });
 
   it('enforces normalized identity and lifecycle invariants in PostgreSQL', async () => {
