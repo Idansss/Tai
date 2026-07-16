@@ -29,6 +29,8 @@ const credentials = {
   password: 'garment_test_only',
 };
 const password = 'correct garment horse battery staple';
+/** 14,000 naira in kobo. Money is integer minor units only. See ADR-015. */
+const price = { unitPriceMinor: 1_400_000, currency: 'NGN' };
 let app: INestApplication;
 let database: DatabaseService;
 let databaseUrl = '';
@@ -387,19 +389,39 @@ describe.sequential('garment catalogue and compatibility HTTP integration', () =
     await api()
       .put(`/api/v1/admin/garments/${templateId}/compatibilities/${draftArtworkVersionId}`)
       .set('Cookie', contentCookie)
-      .send({ status: 'APPROVED', placementIds: [placementId] })
+      .send({ status: 'APPROVED', placementIds: [placementId], ...price })
       .expect(HttpStatus.BAD_REQUEST);
     await api()
       .put(`/api/v1/admin/garments/${templateId}/compatibilities/${artworkVersionId}`)
       .set('Cookie', contentCookie)
-      .send({ status: 'APPROVED', placementIds: [] })
+      .send({ status: 'APPROVED', placementIds: [], ...price })
       .expect(HttpStatus.BAD_REQUEST);
-    const approved = await api()
+
+    // An approved combination must be priced, and only an approved one may carry a price.
+    const unpriced = await api()
       .put(`/api/v1/admin/garments/${templateId}/compatibilities/${artworkVersionId}`)
       .set('Cookie', contentCookie)
       .send({ status: 'APPROVED', placementIds: [placementId] })
+      .expect(HttpStatus.BAD_REQUEST);
+    expect(unpriced.body.error.code).toBe('VALIDATION_FAILED');
+    const pricedDraft = await api()
+      .put(`/api/v1/admin/garments/${templateId}/compatibilities/${artworkVersionId}`)
+      .set('Cookie', contentCookie)
+      .send({ status: 'DRAFT', placementIds: [placementId], ...price })
+      .expect(HttpStatus.BAD_REQUEST);
+    expect(pricedDraft.body.error.code).toBe('VALIDATION_FAILED');
+    await api()
+      .put(`/api/v1/admin/garments/${templateId}/compatibilities/${artworkVersionId}`)
+      .set('Cookie', contentCookie)
+      .send({ status: 'APPROVED', placementIds: [placementId], unitPriceMinor: 0, currency: 'NGN' })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    const approved = await api()
+      .put(`/api/v1/admin/garments/${templateId}/compatibilities/${artworkVersionId}`)
+      .set('Cookie', contentCookie)
+      .send({ status: 'APPROVED', placementIds: [placementId], ...price })
       .expect(HttpStatus.OK);
-    expect(approved.body.data).toMatchObject({ status: 'APPROVED' });
+    expect(approved.body.data).toMatchObject({ status: 'APPROVED', ...price });
 
     const compatible = await api()
       .get('/api/v1/artworks/midnight-signal/compatible-garments')
@@ -452,6 +474,11 @@ describe.sequential('garment catalogue and compatibility HTTP integration', () =
       placementId,
       view: 'FRONT',
       quantity: 2,
+      // Price is resolved from the approved pair and the total is computed server-side in
+      // integer minor units; a browser-supplied price is never consulted.
+      unitPrice: { amountMinor: 1_400_000, currency: 'NGN' },
+      totalPrice: { amountMinor: 2_800_000, currency: 'NGN' },
+      availability: { state: 'AVAILABLE', opensAt: null, closesAt: null },
     });
     for (const invalid of [
       { scalePreset: 'oversized', view: 'FRONT' },

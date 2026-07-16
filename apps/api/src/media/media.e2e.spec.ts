@@ -373,7 +373,12 @@ describe.sequential('artwork media pipeline HTTP integration', () => {
     await api()
       .put(`/api/v1/admin/garments/${templateId}/compatibilities/${artworkVersionId}`)
       .set('Cookie', contentCookie)
-      .send({ status: 'APPROVED', placementIds: [placementId] })
+      .send({
+        status: 'APPROVED',
+        placementIds: [placementId],
+        unitPriceMinor: 1_400_000,
+        currency: 'NGN',
+      })
       .expect(HttpStatus.OK);
   }, 180_000);
 

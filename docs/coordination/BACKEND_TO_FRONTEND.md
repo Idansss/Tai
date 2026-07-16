@@ -192,3 +192,14 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Sharing: a design is `PRIVATE` (no `shareToken`) or `UNLISTED` (with one). `POST /designs/{id}/share` publishes or rotates a link — **rotating immediately breaks the previous URL**, so surface that in the UI. `PATCH { visibility: 'PRIVATE' }` revokes. `GET /shared-designs/{token}` is public, returns `shareToken: null`, and never exposes the owner.
 - Reading a design you do not own returns `404`, not `403`. Do not render a "forbidden" state; treat it as not found.
 - Still absent and not to be faked: price, availability, stock (TMS-B3-002 and TMS-B4-001) and production renders (TMS-B3-003). Keep typed adapters for those fields.
+
+## 2026-07-16 — TMS-B3-002 server-authoritative price and availability
+
+- Status: implemented on `codex/b3-pricing-availability`; consume after its PR is merged.
+- Compatibility: additive to `POST /api/v1/garment-configurations/validate`, which now also returns `unitPrice`, `totalPrice`, and `availability`. No operation is removed or renamed.
+- **Money is integer minor units, never a float.** `{ amountMinor: 1400000, currency: 'NGN' }` is ₦14,000. This matches `priceMinor`/`currency: 'NGN'` already used in `apps/storefront/lib/cart.ts` and `lib/data/mock.ts`, so the existing frontend shape is correct — only its source changes from mock to API.
+- **`totalPrice` is computed by the server.** Do not multiply on the client and do not send a price; a browser-supplied amount is never consulted. Keep the preview subtotal helpers for optimistic display only, and always show the server total at checkout.
+- Price lives on the approved artwork-and-garment pair (ADR-015). Administrators set it when approving, so `PUT /api/v1/admin/garments/{templateId}/compatibilities/{artworkVersionId}` now requires `unitPriceMinor` and `currency` when `status: 'APPROVED'` and rejects them otherwise. **This affects the admin garment/compatibility screens.**
+- `availability.state` is one of `AVAILABLE`, `DROP_NOT_OPEN`, `DROP_ENDED`, or `EDITION_EXHAUSTED`, with `opensAt`/`closesAt` when a drop bounds it. Use these for the countdown and sold-out states rather than inferring from dates client-side.
+- **`AVAILABLE` does not mean in stock.** It means the catalogue permits the sale. Stock arrives with TMS-B4-001 and will refine this; do not present it as "in stock" yet.
+- `EDITION_EXHAUSTED` is in the contract but not yet reachable: edition counts need sold quantities from TMS-B4-003. Handle it, but do not expect it.

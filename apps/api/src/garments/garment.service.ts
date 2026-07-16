@@ -1,4 +1,5 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import type { ConfigurationAvailability } from '@tms/contracts';
 import { ArtworkStatus, ArtworkVersionStatus, CompatibilityStatus, Prisma } from '@tms/database';
 
 import type {
@@ -390,11 +391,24 @@ export class GarmentService {
     input: GarmentCompatibilityDto,
     context: AdminRequestContext,
   ) {
-    if (input.status === CompatibilityStatus.APPROVED) {
+    const approving = input.status === CompatibilityStatus.APPROVED;
+    // An approved combination must be priced and a non-approved one must not carry a price, so a
+    // configuration can never be sold at a price nobody explicitly approved. See ADR-015.
+    if (approving && (input.unitPriceMinor === undefined || input.currency === undefined)) {
+      throw this.validation('An approved compatibility requires a unit price and currency.');
+    }
+    if (!approving && (input.unitPriceMinor !== undefined || input.currency !== undefined)) {
+      throw this.validation('Only an approved compatibility may carry a price.');
+    }
+    if (approving) {
       await this.validateCompatibilityApproval(templateId, artworkVersionId, input.placementIds);
     } else {
       await this.validatePlacementMembership(templateId, input.placementIds, false);
     }
+    const pricing = {
+      unitPriceMinor: approving ? input.unitPriceMinor! : null,
+      currency: approving ? input.currency! : null,
+    };
     return this.mutate(
       actor,
       'garment.compatibility.set',
@@ -408,6 +422,7 @@ export class GarmentService {
             },
             update: {
               status: input.status,
+              ...pricing,
               approvedByUserId:
                 input.status === CompatibilityStatus.APPROVED ? actor.session.user.id : null,
               approvedAt: input.status === CompatibilityStatus.APPROVED ? new Date() : null,
@@ -417,6 +432,7 @@ export class GarmentService {
               artworkVersionId,
               templateId,
               status: input.status,
+              ...pricing,
               createdByUserId: actor.session.user.id,
               approvedByUserId:
                 input.status === CompatibilityStatus.APPROVED ? actor.session.user.id : null,
@@ -509,6 +525,22 @@ export class GarmentService {
       },
     });
     if (!placement || !placement.scalePresets[0]) throw this.configurationInvalid();
+
+    // Price is server-authoritative and comes from the approved pair, never from the browser.
+    const compatibility = await this.database.client.artworkGarmentCompatibility.findFirst({
+      where: {
+        artworkVersionId: input.artworkVersionId,
+        templateId: variant.templateId,
+        status: CompatibilityStatus.APPROVED,
+      },
+      select: { unitPriceMinor: true, currency: true },
+    });
+    // A database check constraint guarantees an approved pair is priced. If that is somehow not
+    // true, refuse to sell rather than invent or default an amount.
+    if (!compatibility?.unitPriceMinor || !compatibility.currency)
+      throw this.configurationInvalid();
+
+    const availability = await this.resolveAvailability(version.artworkId);
     return {
       valid: true as const,
       artworkId: version.artworkId,
@@ -519,6 +551,58 @@ export class GarmentService {
       scalePresetId: placement.scalePresets[0].id,
       view: placement.view,
       quantity: input.quantity,
+      unitPrice: { amountMinor: compatibility.unitPriceMinor, currency: compatibility.currency },
+      totalPrice: {
+        // Integer arithmetic in minor units. Money is never a float.
+        amountMinor: compatibility.unitPriceMinor * input.quantity,
+        currency: compatibility.currency,
+      },
+      availability,
+    };
+  }
+
+  /**
+   * Catalogue-level availability only. Stock is TMS-B4-001 and will refine this, so AVAILABLE
+   * means "the catalogue permits this sale", never "a unit is reserved for you".
+   */
+  private async resolveAvailability(
+    artworkId: string,
+    now = new Date(),
+  ): Promise<ConfigurationAvailability> {
+    const drops = await this.database.client.drop.findMany({
+      where: { status: ArtworkStatus.PUBLISHED, artworks: { some: { artworkId } } },
+      select: { startsAt: true, endsAt: true },
+    });
+    // An artwork outside every drop sells normally; drops restrict, they do not gate.
+    if (!drops.length) return { state: 'AVAILABLE', opensAt: null, closesAt: null };
+
+    const open = drops.find(
+      (drop) => (!drop.startsAt || drop.startsAt <= now) && (!drop.endsAt || drop.endsAt > now),
+    );
+    if (open) {
+      return {
+        state: 'AVAILABLE',
+        opensAt: open.startsAt?.toISOString() ?? null,
+        closesAt: open.endsAt?.toISOString() ?? null,
+      };
+    }
+    const upcoming = drops
+      .filter((drop) => drop.startsAt && drop.startsAt > now)
+      .sort((a, b) => a.startsAt!.getTime() - b.startsAt!.getTime())[0];
+    if (upcoming) {
+      return {
+        state: 'DROP_NOT_OPEN',
+        opensAt: upcoming.startsAt!.toISOString(),
+        closesAt: upcoming.endsAt?.toISOString() ?? null,
+      };
+    }
+    const ended = drops
+      .filter((drop) => drop.endsAt && drop.endsAt <= now)
+      .sort((a, b) => b.endsAt!.getTime() - a.endsAt!.getTime())[0];
+    return {
+      state: 'DROP_ENDED',
+      opensAt: ended?.startsAt?.toISOString() ?? null,
+      closesAt: ended?.endsAt?.toISOString() ?? null,
     };
   }
 
