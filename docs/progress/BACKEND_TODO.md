@@ -165,14 +165,14 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Implementation evidence:
   - Tests:
   - Notes:
-- [ ] TMS-B3-002 Implement configuration pricing and availability services
-  - Status: Not started
-  - Owner: Codex
+- [x] TMS-B3-002 Implement configuration pricing and availability services
+  - Status: Verified
+  - Owner: Claude Code
   - Dependencies: TMS-B3-001
   - Acceptance criteria: Server-authoritative price and availability with explicit errors and contract tests.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: Migration `20260716160000_configuration_pricing` adds `unit_price_minor`/`currency` to `artwork_garment_compatibilities` with check constraints binding price to approval, a positive bounded integer range, and an ISO-4217 currency pattern. `GarmentService.setCompatibility` requires a price exactly when approving and rejects one otherwise; `validateConfiguration` resolves the price from the approved pair, computes the total by integer multiplication, and returns `unitPrice`, `totalPrice`, and `availability`. Shared `MoneyMinorSchema`/`CurrencySchema`/`Money`/`AvailabilityStateSchema`/`ConfigurationAvailability` contracts, additive OpenAPI schemas, and ADR-015.
+  - Tests: The garment suite (6 HTTP/PostgreSQL scenarios) proves an approved pair without a price is rejected, a non-approved pair carrying a price is rejected, a zero amount is rejected, and validation returns the server-resolved unit price with a correctly multiplied total (1,400,000 kobo x 2 = 2,800,000) plus `AVAILABLE`. The contract suite proves an approved pair requires price and currency, a draft pair must not carry them, and a fractional amount is rejected. API suite 12 files / 53 tests; database persistence 7; contracts 9. `pnpm format:check`, `pnpm lint` (18/18), `pnpm typecheck` (18/18), `pnpm build` (13/13), and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: Price hangs on the approved artwork-and-garment pair per ADR-015, so pricing sits inside the same approval gate as ADR-011 and a replacement artwork version requires a fresh approval and a fresh price rather than inheriting the old one. Money is integer minor units (kobo, NGN); floating point is never used. Sizes carry no surcharge; a per-size modifier can be added later additively as a component of the computed unit price. Availability is catalogue-level only: drop windows gate an artwork inside a published drop, and `EDITION_EXHAUSTED` is defined in the contract but not yet reachable because edition counts need sold quantities from TMS-B4-003. Stock remains TMS-B4-001 and will refine availability. Order snapshots in TMS-B4-003 must copy the resolved amount and currency rather than referencing the compatibility, so a later price change never rewrites history.
 - [ ] TMS-B3-003 Implement idempotent server production renderer and render queue
   - Status: Not started
   - Owner: Codex

@@ -161,3 +161,14 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Compatibility is approved against an exact immutable `artworkVersionId`, a template, and an allowlist of published placement IDs. Publishing a replacement artwork version does not inherit the prior version's approval. Published template structure cannot change until the template is archived; leaving publication archives its current approvals.
 - Configuration validation requires `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, quantity? }` and returns the resolved IDs with `valid: true`. Treat `422 CONFIGURATION_NOT_APPROVED` as an unavailable selection and refresh compatibility; never infer compatibility client-side.
 - Inventory quantities, stock status, price, and reservations remain TMS-B4. Media URLs, artwork originals, derivatives, and mockups remain TMS-B2-004. Continue typed adapters for those absent fields.
+
+## 2026-07-16 — TMS-B3-002 server-authoritative price and availability
+
+- Status: implemented on `codex/b3-pricing-availability`; consume after its PR is merged.
+- Compatibility: additive to `POST /api/v1/garment-configurations/validate`, which now also returns `unitPrice`, `totalPrice`, and `availability`. No operation is removed or renamed.
+- **Money is integer minor units, never a float.** `{ amountMinor: 1400000, currency: 'NGN' }` is ₦14,000. This matches `priceMinor`/`currency: 'NGN'` already used in `apps/storefront/lib/cart.ts` and `lib/data/mock.ts`, so the existing frontend shape is correct — only its source changes from mock to API.
+- **`totalPrice` is computed by the server.** Do not multiply on the client and do not send a price; a browser-supplied amount is never consulted. Keep the preview subtotal helpers for optimistic display only, and always show the server total at checkout.
+- Price lives on the approved artwork-and-garment pair (ADR-015). Administrators set it when approving, so `PUT /api/v1/admin/garments/{templateId}/compatibilities/{artworkVersionId}` now requires `unitPriceMinor` and `currency` when `status: 'APPROVED'` and rejects them otherwise. **This affects the admin garment/compatibility screens.**
+- `availability.state` is one of `AVAILABLE`, `DROP_NOT_OPEN`, `DROP_ENDED`, or `EDITION_EXHAUSTED`, with `opensAt`/`closesAt` when a drop bounds it. Use these for the countdown and sold-out states rather than inferring from dates client-side.
+- **`AVAILABLE` does not mean in stock.** It means the catalogue permits the sale. Stock arrives with TMS-B4-001 and will refine this; do not present it as "in stock" yet.
+- `EDITION_EXHAUSTED` is in the contract but not yet reachable: edition counts need sold quantities from TMS-B4-003. Handle it, but do not expect it.

@@ -1,9 +1,9 @@
 {
   "agent": "Codex",
   "area": "backend",
-  "currentPhase": "B2",
-  "lastVerifiedTask": "TMS-B2-003",
-  "nextRecommendedTask": "Merge PR #14, then start TMS-B2-004",
+  "currentPhase": "B3",
+  "lastVerifiedTask": "TMS-B3-002",
+  "nextRecommendedTask": "TMS-B3-003 (production renderer) or TMS-B4-001 (inventory), which is unblocked and can run in parallel",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -21,14 +21,15 @@
     "TMS-B1-003",
     "TMS-B2-001",
     "TMS-B2-002",
-    "TMS-B2-003"
+    "TMS-B2-003",
+    "TMS-B3-002"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
   "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
-  "lastUpdated": "2026-07-16T13:15:51+01:00",
+  "lastUpdated": "2026-07-16T17:30:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -48,11 +49,12 @@
     "concerns": []
   },
   "activeTask": {
-    "task": "TMS-B2-003",
-    "branch": "codex/b2-garment-catalogue",
-    "status": "verified-pr-open-ci-passed",
-    "pullRequest": 14,
-    "ciRun": 29497257382
+    "task": "TMS-B3-002",
+    "branch": "codex/b3-pricing-availability",
+    "status": "verified-pr-open",
+    "pullRequest": 19,
+    "migration": "20260716160000_configuration_pricing",
+    "qualityGate": "passed"
   },
   "customerAuthentication": {
     "task": "TMS-B1-002",
@@ -141,6 +143,26 @@
     "concerns": [
       "Exact-version media assets, ingestion, derivatives, and mockups remain TMS-B2-004.",
       "Garment inventory quantities, movements, alerts, and reservations remain TMS-B4-001."
+    ]
+  },
+  "configurationPricing": {
+    "task": "TMS-B3-002",
+    "branch": "codex/b3-pricing-availability",
+    "status": "verified-pr-open",
+    "pullRequest": 19,
+    "migration": "20260716160000_configuration_pricing",
+    "qualityGate": "passed",
+    "apiTests": 53,
+    "databaseTests": 7,
+    "contractTests": 9,
+    "decisions": [
+      "ADR-015 price belongs to the approved artwork and garment pair; money is integer minor units (NGN kobo); no size surcharge"
+    ],
+    "concerns": [
+      "Four open PRs each bump the persistence suite migration-count guard (#15, #17, #19). Reconcile the value as they land: it equals the number of migration directories on main.",
+      "EDITION_EXHAUSTED is contract-defined but unreachable until sold quantities exist in TMS-B4-003.",
+      "Availability is catalogue-level only; stock is TMS-B4-001.",
+      "TMS-B4-003 order snapshots must copy the resolved amount and currency, never reference the compatibility, so a later price change cannot rewrite history."
     ]
   }
 }
