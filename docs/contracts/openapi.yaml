@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
   - name: authentication
+  - name: admin-authentication
+  - name: admin-access
 paths:
   /api/v1/auth/register:
     post:
@@ -171,6 +173,182 @@ paths:
         '400': { $ref: '#/components/responses/ApiError' }
         '401': { $ref: '#/components/responses/ApiError' }
         '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/auth/login:
+    post:
+      operationId: loginAdministrator
+      tags: [admin-authentication]
+      summary: Authenticate an administrator or begin required MFA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminLoginInput' }
+      responses:
+        '200':
+          description: A session or MFA challenge was created.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: Present only after authentication completes; HttpOnly, SameSite=Lax, Secure in production.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminLoginResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/auth/mfa/enroll:
+    post:
+      operationId: beginAdministratorMfaEnrollment
+      tags: [admin-authentication]
+      summary: Generate a TOTP factor after password verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminMfaChallengeInput' }
+      responses:
+        '200':
+          description: The TOTP secret is returned once for enrollment.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminTotpEnrollmentResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/auth/mfa/enroll/confirm:
+    post:
+      operationId: confirmAdministratorMfaEnrollment
+      tags: [admin-authentication]
+      summary: Confirm TOTP enrollment and create an MFA-assured session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminMfaCodeInput' }
+      responses:
+        '200':
+          description: TOTP was enrolled and an administration session was created.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: HttpOnly, SameSite=Lax administration session cookie; Secure in production.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminSessionResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/auth/mfa/verify:
+    post:
+      operationId: verifyAdministratorMfa
+      tags: [admin-authentication]
+      summary: Complete a TOTP challenge and create an MFA-assured session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminMfaCodeInput' }
+      responses:
+        '200':
+          description: An administration session was created.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: HttpOnly, SameSite=Lax administration session cookie; Secure in production.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminSessionResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/auth/logout:
+    post:
+      operationId: logoutAdministrator
+      tags: [admin-authentication]
+      summary: Revoke the current administration session when present
+      responses:
+        '204': { description: The session was revoked when present. }
+  /api/v1/admin/auth/session:
+    get:
+      operationId: getAdministratorSession
+      tags: [admin-authentication]
+      summary: Read the current administrator, roles, permissions, and assurance level
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200':
+          description: The current administration session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminSessionResponse' }
+        '401': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/auth/sessions/{sessionId}:
+    delete:
+      operationId: revokeAdministratorSession
+      tags: [admin-authentication]
+      summary: Revoke an owned administration session or another with system authority and MFA
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: The administration session was revoked. }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/access/roles:
+    get:
+      operationId: listAdministratorRoles
+      tags: [admin-access]
+      summary: List roles and their permission grants
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '200':
+          description: The canonical administrative role matrix.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminRolesResponse' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/access/users/{userId}/roles/{roleCode}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: roleCode
+        in: path
+        required: true
+        schema: { type: string, pattern: '^[A-Z][A-Z0-9_]{0,63}$' }
+    put:
+      operationId: assignAdministratorRole
+      tags: [admin-access]
+      summary: Assign a role with system.manage permission and MFA assurance
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminRoleAssignmentInput' }
+      responses:
+        '204': { description: The role assignment is active. }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+    delete:
+      operationId: revokeAdministratorRole
+      tags: [admin-access]
+      summary: Revoke a role with system.manage permission and MFA assurance
+      security: [{ tms_admin_session: [] }]
+      responses:
+        '204': { description: The role assignment was removed. }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
   /api/v1/health/liveness:
     get:
       operationId: getLiveness
@@ -225,6 +403,10 @@ components:
       type: apiKey
       in: cookie
       name: tms_session
+    tms_admin_session:
+      type: apiKey
+      in: cookie
+      name: tms_admin_session
   responses:
     ApiError:
       description: The request could not be completed.
@@ -313,6 +495,130 @@ components:
           properties:
             accepted: { type: boolean, const: true }
         meta: { $ref: '#/components/schemas/ApiMeta' }
+    AdminLoginInput:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 320 }
+        password: { type: string, format: password, minLength: 1, maxLength: 128 }
+    AdminMfaChallengeInput:
+      type: object
+      additionalProperties: false
+      required: [challengeToken]
+      properties:
+        challengeToken:
+          { type: string, minLength: 43, maxLength: 43, pattern: '^[A-Za-z0-9_-]{43}$' }
+    AdminMfaCodeInput:
+      type: object
+      additionalProperties: false
+      required: [challengeToken, code]
+      properties:
+        challengeToken:
+          { type: string, minLength: 43, maxLength: 43, pattern: '^[A-Za-z0-9_-]{43}$' }
+        code: { type: string, pattern: '^\d{6}$' }
+    AdminRoleAssignmentInput:
+      type: object
+      additionalProperties: false
+      properties:
+        expiresAt: { type: [string, 'null'], format: date-time }
+    AdminUser:
+      type: object
+      required: [id, email, name, roles, permissions, mfaRequired, mfaEnrolled]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        roles:
+          type: array
+          uniqueItems: true
+          items: { type: string }
+        permissions:
+          type: array
+          uniqueItems: true
+          items: { type: string, pattern: '^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$' }
+        mfaRequired: { type: boolean }
+        mfaEnrolled: { type: boolean }
+    AdminSession:
+      type: object
+      required: [id, expiresAt, assuranceLevel, user]
+      properties:
+        id: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+        assuranceLevel: { type: string, enum: [PASSWORD, MFA] }
+        user: { $ref: '#/components/schemas/AdminUser' }
+    AdminAuthChallenge:
+      type: object
+      required: [status, challengeToken, expiresAt]
+      properties:
+        status: { type: string, enum: [MFA_ENROLLMENT_REQUIRED, MFA_REQUIRED] }
+        challengeToken: { type: string, minLength: 43, maxLength: 43 }
+        expiresAt: { type: string, format: date-time }
+    AdminLoginResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [session]
+              properties:
+                session: { $ref: '#/components/schemas/AdminSession' }
+            - type: object
+              additionalProperties: false
+              required: [challenge]
+              properties:
+                challenge: { $ref: '#/components/schemas/AdminAuthChallenge' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AdminSessionResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [session]
+          properties:
+            session: { $ref: '#/components/schemas/AdminSession' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AdminTotpEnrollmentResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [enrollment]
+          properties:
+            enrollment:
+              type: object
+              required: [secret, otpauthUri]
+              properties:
+                secret: { type: string, pattern: '^[A-Z2-7]+$' }
+                otpauthUri: { type: string, format: uri }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AdminRole:
+      type: object
+      required: [code, name, description, permissions]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        permissions:
+          type: array
+          uniqueItems: true
+          items: { type: string }
+    AdminRolesResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [roles]
+          properties:
+            roles:
+              type: array
+              items: { $ref: '#/components/schemas/AdminRole' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     HealthResponse:
       type: object
       required: [data, meta]
@@ -349,6 +655,9 @@ components:
                   EMAIL_VERIFICATION_REQUIRED,
                   TOKEN_INVALID_OR_EXPIRED,
                   SESSION_INVALID,
+                  ADMIN_MFA_REQUIRED,
+                  MFA_CHALLENGE_INVALID,
+                  MFA_CODE_INVALID,
                   PERMISSION_DENIED,
                   RESOURCE_NOT_FOUND,
                   CONFLICT,

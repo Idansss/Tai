@@ -118,7 +118,7 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
     }
   }, 45_000);
 
-  it('deploys exactly one successful migration and seeds the canonical RBAC matrix idempotently', async () => {
+  it('deploys the reviewed B1 migrations and seeds the canonical RBAC matrix idempotently', async () => {
     const migrationResult = await database.query<{ count: number }>(
       `SELECT count(*)::int AS count
        FROM "_prisma_migrations"
@@ -139,7 +139,7 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
       'SELECT count(*)::int AS count FROM permissions',
     );
 
-    expect(migrationResult.rows[0]?.count).toBe(1);
+    expect(migrationResult.rows[0]?.count).toBe(2);
     expect(permissionResult.rows[0]?.count).toBe(12);
     expect(roleResult.rows).toEqual([
       { code: 'ANALYST', is_system: true, grant_count: 2 },
@@ -166,16 +166,20 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
           'email_verification_tokens_user_state_idx',
           'password_reset_tokens_user_state_idx',
           'sessions_user_revoked_expires_idx',
+          'sessions_user_kind_state_idx',
+          'admin_auth_challenges_user_state_idx',
           'users_normalized_email_key',
         ],
       ],
     );
 
     expect(result.rows.map(({ indexname }) => indexname)).toEqual([
+      'admin_auth_challenges_user_state_idx',
       'audit_logs_correlation_id_idx',
       'audit_logs_resource_occurred_at_idx',
       'email_verification_tokens_user_state_idx',
       'password_reset_tokens_user_state_idx',
+      'sessions_user_kind_state_idx',
       'sessions_user_revoked_expires_idx',
       'users_normalized_email_key',
     ]);
@@ -226,6 +230,16 @@ describe.sequential('identity foundation PostgreSQL integration', () => {
         [randomUUID(), userId, `reset-${randomUUID()}`],
       ),
       'password_reset_tokens_consumed_time_check',
+    );
+    await expectConstraint(
+      database.query(
+        `INSERT INTO sessions
+           (id, user_id, token_hash, kind, assurance_level, expires_at, created_at)
+         VALUES
+           ($1, $2, $3, 'ADMIN', 'MFA', CURRENT_TIMESTAMP + INTERVAL '1 hour', CURRENT_TIMESTAMP)`,
+        [randomUUID(), userId, `admin-session-${randomUUID()}`],
+      ),
+      'sessions_assurance_check',
     );
   });
 

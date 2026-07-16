@@ -45,6 +45,6 @@ import { SessionGuard } from './session.guard.js';
       },
     },
   ],
-  exports: [AuthService, SessionGuard],
+  exports: [AuthService, SessionGuard, AuthRateLimiterService],
 })
 export class AuthModule {}

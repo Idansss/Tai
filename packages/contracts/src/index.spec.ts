@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import {
+  AdminMfaCodeInputSchema,
+  AdminRoleAssignmentInputSchema,
   AuthTokenInputSchema,
   CustomerRegistrationInputSchema,
   DesignConfigurationInputSchema,
@@ -49,6 +51,19 @@ describe('shared contracts', () => {
     ).toBe(true);
   });
 
+  it('enforces administrator MFA and role-assignment input boundaries', () => {
+    expect(
+      AdminMfaCodeInputSchema.safeParse({ challengeToken: 'A'.repeat(43), code: '123456' }).success,
+    ).toBe(true);
+    expect(
+      AdminMfaCodeInputSchema.safeParse({ challengeToken: 'raw', code: '1234567' }).success,
+    ).toBe(false);
+    expect(
+      AdminRoleAssignmentInputSchema.safeParse({ expiresAt: '2027-01-01T00:00:00Z' }).success,
+    ).toBe(true);
+    expect(AdminRoleAssignmentInputSchema.safeParse({ expiresAt: 'tomorrow' }).success).toBe(false);
+  });
+
   it('keeps the public authentication contract and error catalogue in OpenAPI', () => {
     for (const operationId of [
       'registerCustomer',
@@ -61,6 +76,16 @@ describe('shared contracts', () => {
       'getCustomerSession',
       'revokeCustomerSession',
       'revokeAllCustomerSessions',
+      'loginAdministrator',
+      'beginAdministratorMfaEnrollment',
+      'confirmAdministratorMfaEnrollment',
+      'verifyAdministratorMfa',
+      'logoutAdministrator',
+      'getAdministratorSession',
+      'revokeAdministratorSession',
+      'listAdministratorRoles',
+      'assignAdministratorRole',
+      'revokeAdministratorRole',
     ]) {
       expect(openApi).toContain(`operationId: ${operationId}`);
     }

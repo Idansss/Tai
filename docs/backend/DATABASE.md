@@ -10,6 +10,8 @@ The seed is idempotent and establishes Owner, Store Administrator, Content Manag
 
 TMS-B1-002 uses the merged identity tables without a new migration. Passwords use salted scrypt encodings. Session, verification, reset, and IP values use deployment-peppered HMAC-SHA-256 digests; raw values exist only in the cookie or one-time email link. Verification and reset consumption, session creation/revocation, password changes, and their audit records execute transactionally.
 
+Migration `20260716015000_admin_authentication` adds explicit customer/admin session audiences, password/MFA assurance levels, administrator display names, encrypted TOTP factor state, short-lived attempt-bounded MFA challenges, replay time-step tracking, and supporting indexes/check constraints. Existing sessions backfill to `CUSTOMER`/`PASSWORD`. MFA factor and challenge lifecycle rules are enforced in PostgreSQL. Administrator role assignments remain the canonical seeded RBAC model and may expire.
+
 ## Rules
 
 - UUID identifiers, UTC timestamps, explicit foreign keys, useful indexes, and unique constraints

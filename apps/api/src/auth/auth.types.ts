@@ -12,6 +12,12 @@ export interface AuthConfig {
   rateLimitMaxAttempts: number;
 }
 
+export interface SessionCookieConfig {
+  nodeEnvironment: 'development' | 'test' | 'production';
+  cookieName: string;
+  sessionTtlSeconds: number;
+}
+
 export interface SessionTokenResult {
   token: string;
   session: AuthSession;

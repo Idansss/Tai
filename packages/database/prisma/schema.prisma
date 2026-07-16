@@ -34,6 +34,27 @@ enum AuditOutcome {
   DENIED
 }
 
+enum SessionKind {
+  CUSTOMER
+  ADMIN
+}
+
+enum AuthAssuranceLevel {
+  PASSWORD
+  MFA
+}
+
+enum AdminMfaFactorStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+enum AdminAuthChallengePurpose {
+  ENROLL_TOTP
+  VERIFY_TOTP
+}
+
 model User {
   id                     String                   @id @default(uuid()) @db.Uuid
   email                  String                   @db.VarChar(320)
@@ -53,6 +74,8 @@ model User {
   roleAssignments        UserRole[]               @relation("UserRoleUser")
   roleAssignmentsCreated UserRole[]               @relation("UserRoleAssignedBy")
   auditLogs              AuditLog[]               @relation("AuditActor")
+  adminMfaFactor         AdminMfaFactor?
+  adminAuthChallenges    AdminAuthChallenge[]
 
   @@index([status, deletedAt], map: "users_status_deleted_at_idx")
   @@index([createdAt], map: "users_created_at_idx")
@@ -74,6 +97,7 @@ model CustomerProfile {
 
 model AdminProfile {
   userId        String             @id @map("user_id") @db.Uuid
+  displayName   String             @map("display_name") @db.VarChar(100)
   status        AdminProfileStatus @default(INVITED)
   mfaRequired   Boolean            @default(true) @map("mfa_required")
   mfaEnrolledAt DateTime?          @map("mfa_enrolled_at") @db.Timestamptz(3)
@@ -145,6 +169,9 @@ model Session {
   id               String    @id @default(uuid()) @db.Uuid
   userId           String    @map("user_id") @db.Uuid
   tokenHash        String    @unique(map: "sessions_token_hash_key") @map("token_hash") @db.VarChar(128)
+  kind             SessionKind @default(CUSTOMER)
+  assuranceLevel   AuthAssuranceLevel @default(PASSWORD) @map("assurance_level")
+  mfaVerifiedAt    DateTime? @map("mfa_verified_at") @db.Timestamptz(3)
   expiresAt        DateTime  @map("expires_at") @db.Timestamptz(3)
   lastSeenAt       DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
   revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(3)
@@ -155,8 +182,40 @@ model Session {
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt, expiresAt], map: "sessions_user_revoked_expires_idx")
+  @@index([userId, kind, revokedAt, expiresAt], map: "sessions_user_kind_state_idx")
   @@index([expiresAt], map: "sessions_expires_at_idx")
   @@map("sessions")
+}
+
+model AdminMfaFactor {
+  userId           String               @id @map("user_id") @db.Uuid
+  status           AdminMfaFactorStatus @default(PENDING)
+  secretCiphertext String               @map("secret_ciphertext") @db.VarChar(1000)
+  lastUsedTimeStep BigInt?              @map("last_used_time_step")
+  verifiedAt       DateTime?            @map("verified_at") @db.Timestamptz(3)
+  revokedAt        DateTime?            @map("revoked_at") @db.Timestamptz(3)
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status], map: "admin_mfa_factors_status_idx")
+  @@map("admin_mfa_factors")
+}
+
+model AdminAuthChallenge {
+  id                String                    @id @default(uuid()) @db.Uuid
+  userId            String                    @map("user_id") @db.Uuid
+  tokenHash         String                    @unique(map: "admin_auth_challenges_token_hash_key") @map("token_hash") @db.VarChar(128)
+  purpose           AdminAuthChallengePurpose
+  expiresAt         DateTime                  @map("expires_at") @db.Timestamptz(3)
+  consumedAt        DateTime?                 @map("consumed_at") @db.Timestamptz(3)
+  attemptsRemaining Int                       @default(5) @map("attempts_remaining")
+  createdAt         DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, consumedAt, expiresAt], map: "admin_auth_challenges_user_state_idx")
+  @@index([expiresAt], map: "admin_auth_challenges_expires_at_idx")
+  @@map("admin_auth_challenges")
 }
 
 model EmailVerificationToken {

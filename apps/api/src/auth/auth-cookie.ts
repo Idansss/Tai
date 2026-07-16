@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 
-import type { AuthConfig } from './auth.types.js';
+import type { SessionCookieConfig } from './auth.types.js';
 
 export function readCookie(
   cookieHeader: string | undefined,
@@ -18,7 +18,11 @@ export function readCookie(
   return undefined;
 }
 
-export function setSessionCookie(response: Response, token: string, config: AuthConfig): void {
+export function setSessionCookie(
+  response: Response,
+  token: string,
+  config: SessionCookieConfig,
+): void {
   response.cookie(config.cookieName, token, {
     httpOnly: true,
     secure: config.nodeEnvironment === 'production',
@@ -28,7 +32,7 @@ export function setSessionCookie(response: Response, token: string, config: Auth
   });
 }
 
-export function clearSessionCookie(response: Response, config: AuthConfig): void {
+export function clearSessionCookie(response: Response, config: SessionCookieConfig): void {
   response.clearCookie(config.cookieName, {
     httpOnly: true,
     secure: config.nodeEnvironment === 'production',

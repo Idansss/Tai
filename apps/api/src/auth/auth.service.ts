@@ -8,7 +8,7 @@ import type {
   CustomerRegistrationInput,
   PasswordResetConfirmationInput,
 } from '@tms/contracts';
-import { Prisma, UserStatus } from '@tms/database';
+import { Prisma, SessionKind, UserStatus } from '@tms/database';
 import type { EmailProvider } from '@tms/email';
 
 import { DatabaseService } from '../database/database.service.js';
@@ -313,6 +313,7 @@ export class AuthService {
         where: { userId: record.userId, revokedAt: null },
         data: { revokedAt: now, revocationReason: 'password_reset' },
       });
+      await transaction.adminAuthChallenge.deleteMany({ where: { userId: record.userId } });
       await this.writeAudit(transaction, {
         actorUserId: record.userId,
         action: 'auth.password_reset.confirm',
@@ -333,6 +334,7 @@ export class AuthService {
     });
     if (
       !record ||
+      record.kind !== SessionKind.CUSTOMER ||
       record.revokedAt ||
       record.expiresAt <= now ||
       record.user.status !== UserStatus.ACTIVE ||
@@ -356,9 +358,9 @@ export class AuthService {
     const now = new Date();
     const record = await this.database.client.session.findUnique({
       where: { tokenHash: this.hashToken(token) },
-      select: { id: true, userId: true, revokedAt: true },
+      select: { id: true, userId: true, kind: true, revokedAt: true },
     });
-    if (!record || record.revokedAt) return;
+    if (!record || record.kind !== SessionKind.CUSTOMER || record.revokedAt) return;
 
     await this.database.client.$transaction(async (transaction) => {
       await transaction.session.update({
@@ -386,6 +388,7 @@ export class AuthService {
         where: {
           id: sessionId,
           userId: authenticated.session.user.id,
+          kind: SessionKind.CUSTOMER,
           revokedAt: null,
           expiresAt: { gt: now },
         },
@@ -418,7 +421,11 @@ export class AuthService {
     const now = new Date();
     await this.database.client.$transaction(async (transaction) => {
       await transaction.session.updateMany({
-        where: { userId: authenticated.session.user.id, revokedAt: null },
+        where: {
+          userId: authenticated.session.user.id,
+          kind: SessionKind.CUSTOMER,
+          revokedAt: null,
+        },
         data: { revokedAt: now, revocationReason: 'customer_revoked_all' },
       });
       await this.writeAudit(transaction, {
@@ -462,6 +469,7 @@ export class AuthService {
   ) {
     return {
       userId,
+      kind: SessionKind.CUSTOMER,
       tokenHash: this.hashToken(token),
       expiresAt,
       ipAddressHash: context.ipAddress

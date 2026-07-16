@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "admin:provision": "tsx src/admin-auth/provision-admin.ts",
+    "admin:mfa-reset": "tsx src/admin-auth/reset-admin-mfa.ts",
     "build": "tsc -p tsconfig.build.json",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
     "dev": "tsx watch src/main.ts",

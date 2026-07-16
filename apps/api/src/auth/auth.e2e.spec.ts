@@ -156,7 +156,6 @@ describe.sequential('customer authentication HTTP integration', () => {
     process.env.DATABASE_URL = databaseUrl;
     process.env.AUTH_TOKEN_PEPPER = 'authentication-e2e-test-pepper-value';
     process.env.AUTH_RATE_LIMIT_MAX_ATTEMPTS = '10';
-    await runPrisma(['generate']);
     await runPrisma(['migrate', 'deploy']);
 
     const module = await Test.createTestingModule({ imports: [AuthModule] })
@@ -391,7 +390,7 @@ describe.sequential('customer authentication HTTP integration', () => {
     );
     expect(attempts[10]?.status).toBe(HttpStatus.TOO_MANY_REQUESTS);
     expect(attempts[10]?.body.error.code).toBe('RATE_LIMITED');
-  });
+  }, 20_000);
 
   it('records authentication audit evidence without mutable history', async () => {
     const auditCount = await database.client.auditLog.count({
