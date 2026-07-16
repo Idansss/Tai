@@ -1,7 +1,8 @@
 import { Badge, Eyebrow, Frame, Heading, Price, Text } from '@tms/ui';
 import Link from 'next/link';
 import { WishlistButton } from '@/components/account/wishlist-button';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
+import { resolveProductImage } from '@/lib/artwork-images';
 import type { ProductSummary } from '@/lib/data';
 
 const availabilityTone = {
@@ -17,6 +18,7 @@ const availabilityLabel = {
 } as const;
 
 export function ProductCard({ product }: { product: ProductSummary }) {
+  const image = resolveProductImage(product.slug, product.artworkSlug);
   return (
     <div className="relative">
       <Link
@@ -24,10 +26,12 @@ export function ProductCard({ product }: { product: ProductSummary }) {
         className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
       >
         <Frame ratio="product" mat="canvas" interactive>
-          <ArtworkVisual
+          <ArtworkMedia
+            src={image}
             seed={product.artworkSlug}
             title={product.artworkTitle}
             label={product.garment}
+            className="object-[50%_18%]"
           />
           <div className="pointer-events-none absolute left-3 top-3">
             <Badge tone={availabilityTone[product.availability]}>

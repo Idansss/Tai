@@ -1,7 +1,8 @@
 import { Eyebrow, Frame, Heading, Text } from '@tms/ui';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
+import { resolveDropImage } from '@/lib/artwork-images';
 import type { DropSummary } from '@/lib/data';
 import { dropStatus, nextMilestone } from '@/lib/drops';
 import { Countdown } from './countdown';
@@ -11,6 +12,7 @@ import { DropStatusBadge } from './drop-status-badge';
 export function DropCard({ drop, now }: { drop: DropSummary; now: number }) {
   const status = dropStatus(drop, now);
   const milestone = nextMilestone(drop, now);
+  const image = resolveDropImage(drop.slug, drop.collection);
 
   return (
     <Link
@@ -18,7 +20,13 @@ export function DropCard({ drop, now }: { drop: DropSummary; now: number }) {
       className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
     >
       <Frame ratio="collection" mat="canvas" interactive>
-        <ArtworkVisual seed={`drop-${drop.slug}`} title={drop.title} label={drop.collection} />
+        <ArtworkMedia
+          src={image}
+          seed={`drop-${drop.slug}`}
+          title={drop.title}
+          label={drop.collection}
+          className="object-[50%_20%]"
+        />
         <div className="pointer-events-none absolute left-3 top-3">
           <DropStatusBadge status={status} />
         </div>
