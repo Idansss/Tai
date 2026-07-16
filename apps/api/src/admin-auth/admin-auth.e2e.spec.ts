@@ -238,7 +238,7 @@ describe.sequential('administrator authentication and authorization HTTP integra
         email: 'analyst@example.com',
         name: 'Analyst One',
         roles: ['ANALYST'],
-        permissions: ['analytics.read', 'catalogue.read'],
+        permissions: ['analytics.read', 'catalogue.read', 'inventory.read'],
       },
     });
     const stored = await database.client.session.findUniqueOrThrow({

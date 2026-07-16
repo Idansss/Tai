@@ -75,3 +75,17 @@ Decision: the price hangs on the existing `ArtworkGarmentCompatibility` record, 
 Rejected alternatives: a garment base price plus an artwork premium would save administrator effort by letting new artwork inherit a garment's price, but it lets a combination become sellable at a price nobody explicitly chose. Per-variant SKU pricing was rejected as unnecessary surface — six sizes by four colours is twenty-four prices per artwork to keep consistent — and is not what the storefront models.
 
 Consequences: sizes carry no surcharge; one price covers every size and colour of a garment. A per-size modifier can be added later additively without invalidating stored prices or historical orders, because it would be a component of the computed unit price rather than a change to how price is identified. Order snapshots in TMS-B4-003 must copy the resolved amount and currency rather than referencing the compatibility, so a later price change never rewrites history.
+
+## ADR-016 — Row-locked reservations with derived availability
+
+Status: Accepted. Stock is held against the blank garment variant, never against artwork. Available stock is on-hand minus the quantity held by live reservations, and a reservation reduces availability without moving stock.
+
+Context: the final unit of a variant is the case that decides whether the platform oversells. Two shoppers reaching for it at the same instant must not both succeed, and the answer must hold under real concurrency rather than only in a single-threaded test.
+
+Decision: a reservation locks the variant's `inventory_items` row with `SELECT ... FOR UPDATE` and holds that lock for the rest of the transaction, so every concurrent reserver for one variant serialises. Availability is recomputed inside that lock from the reservation rows themselves rather than read from a denormalised counter, so the number cannot drift out of agreement with the reservations that produced it. The cost is that reservations for a single variant are serial; that is acceptable, since the contention is per variant and the critical section is small.
+
+Expiry is evaluated on the reservation path itself: stale holds are expired before availability is computed. A background sweep exists but correctness does not depend on it, so a stopped worker slows cleanup rather than blocking sales. An expired hold can never be committed, because its units may already have been sold to someone else.
+
+Defence in depth: the application refuses to oversell, and a `CHECK (on_hand >= 0)` constraint rejects a negative value even for a direct database write. The movement ledger is append-only through a trigger that rejects UPDATE and DELETE, so stock history is auditable but never rewritable. An adjustment cannot take stock below the quantity already promised to live reservations, which would otherwise send a holder to checkout against stock that no longer exists.
+
+Consequences: `reserve`, `release`, and `commit` are service operations rather than HTTP endpoints, because reservation lifetime belongs to the cart (TMS-B4-002) and checkout (TMS-B4-003) that own the hold. Callers supply the hold duration, so TMS-B4-002 must choose and document a cart hold TTL. Availability in TMS-B3-002 currently reports catalogue permission only; exposing stock publicly and adding an `OUT_OF_STOCK` state is a follow-up once both land.

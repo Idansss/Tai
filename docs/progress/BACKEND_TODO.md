@@ -192,14 +192,14 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
 
 ## B4 — Commerce core
 
-- [ ] TMS-B4-001 Implement garment inventory, append-only movements, alerts, and concurrent expiring reservations
-  - Status: Not started
-  - Owner: Codex
+- [x] TMS-B4-001 Implement garment inventory, append-only movements, alerts, and concurrent expiring reservations
+  - Status: Verified
+  - Owner: Claude Code
   - Dependencies: TMS-B2-003
   - Acceptance criteria: Stock never goes negative; final-unit race and reservation expiry tests pass.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: `apps/api/src/inventory` (service, controller, DTOs, module) and migration `20260716170000_inventory_reservations` adding `inventory_items`, the append-only `inventory_movements` ledger with an UPDATE/DELETE trigger, and `inventory_reservations`. Constraints cover non-negative on-hand, non-zero movements, movement direction by kind, a mandatory adjustment reason, positive reservation quantities, and reservation lifecycle timestamps. Adds `inventory.read`/`inventory.write` to the RBAC seed, six OpenAPI operations under `/api/v1/admin/inventory`, and ADR-016.
+  - Tests: Eleven HTTP/PostgreSQL scenarios pass. They prove read/write permission separation and that a content manager has no inventory access; receipts recording a ledger entry; that the ledger rejects UPDATE and DELETE; that an adjustment requires a reason, cannot move zero, and cannot go below zero, with the database constraint proven independently by a direct raw write; that a hold reduces availability without moving stock and release is idempotent; that an administrator cannot adjust away stock already promised to a live hold; that an expired hold frees availability on the hot path, is genuinely resellable, and can never be committed; that a commit sells exactly once and a second commit is refused; that **twelve simultaneous reservations against a single remaining unit yield exactly one winner and eleven `INVENTORY_UNAVAILABLE` refusals**; that committing the final unit lands on zero and the next shopper is refused; and low-stock alerts plus audit coverage. API suite 13 files / 64 tests; database persistence 7 tests. `pnpm format:check`, `pnpm lint` (18/18), `pnpm typecheck` (18/18), `pnpm build` (13/13), and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: Concurrency is handled by locking the variant's `inventory_items` row with `SELECT ... FOR UPDATE` for the rest of the transaction, so concurrent reservers for one variant serialise rather than racing (ADR-016). Availability is derived from live reservations rather than a denormalised counter, so it cannot drift. Expiry is evaluated on the reservation path, so `sweepExpired` is cleanup and correctness does not depend on it running. Reservation lifetime is deliberately not exposed over HTTP: TMS-B4-002 carts and TMS-B4-003 checkouts own it and consume `reserve`/`release`/`commit` directly. Public stock exposure and the `OUT_OF_STOCK` availability state are a follow-up once TMS-B3-002 merges, since availability currently reports catalogue permission only.
 - [ ] TMS-B4-002 Implement guest/authenticated carts, merge, pricing, promotions, currency, and recalculation
   - Status: Not started
   - Owner: Codex

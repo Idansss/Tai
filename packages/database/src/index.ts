@@ -13,6 +13,8 @@ export {
   DesignVisibility,
   GarmentType,
   GarmentView,
+  InventoryMovementKind,
+  InventoryReservationStatus,
   MalwareScanStatus,
   MediaApprovalStatus,
   MediaAssetKind,

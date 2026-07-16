@@ -153,16 +153,16 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'SELECT count(*)::int AS count FROM permissions',
     );
 
-    expect(migrationResult.rows[0]?.count).toBe(8);
-    expect(permissionResult.rows[0]?.count).toBe(12);
+    expect(migrationResult.rows[0]?.count).toBe(9);
+    expect(permissionResult.rows[0]?.count).toBe(14);
     expect(roleResult.rows).toEqual([
-      { code: 'ANALYST', is_system: true, grant_count: 2 },
+      { code: 'ANALYST', is_system: true, grant_count: 3 },
       { code: 'CONTENT_MANAGER', is_system: true, grant_count: 2 },
       { code: 'CUSTOMER_SUPPORT', is_system: true, grant_count: 3 },
-      { code: 'FULFILMENT_OPERATOR', is_system: true, grant_count: 2 },
-      { code: 'OWNER', is_system: true, grant_count: 12 },
+      { code: 'FULFILMENT_OPERATOR', is_system: true, grant_count: 4 },
+      { code: 'OWNER', is_system: true, grant_count: 14 },
       { code: 'PRODUCTION_OPERATOR', is_system: true, grant_count: 2 },
-      { code: 'STORE_ADMINISTRATOR', is_system: true, grant_count: 11 },
+      { code: 'STORE_ADMINISTRATOR', is_system: true, grant_count: 13 },
     ]);
   });
 
@@ -192,7 +192,13 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
           'garment_templates_status_created_at_idx',
           'garment_variants_template_status_idx',
           'garment_placements_template_status_position_idx',
+          'inventory_items_variant_id_key',
+          'inventory_movements_item_created_at_idx',
+          'inventory_reservations_item_status_expires_idx',
           'artwork_garment_compatibilities_template_status_idx',
+          'inventory_items_variant_id_key',
+          'inventory_movements_item_created_at_idx',
+          'inventory_reservations_item_status_expires_idx',
           'artwork_assets_version_kind_status_idx',
           'artwork_assets_approval_kind_created_idx',
           'media_processing_jobs_status_created_idx',
@@ -218,6 +224,9 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'garment_placements_template_status_position_idx',
       'garment_templates_status_created_at_idx',
       'garment_variants_template_status_idx',
+      'inventory_items_variant_id_key',
+      'inventory_movements_item_created_at_idx',
+      'inventory_reservations_item_status_expires_idx',
       'media_processing_jobs_status_created_idx',
       'password_reset_tokens_user_state_idx',
       'sessions_user_kind_state_idx',

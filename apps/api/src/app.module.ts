@@ -10,6 +10,7 @@ import { DesignModule } from './designs/design.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
 import { GarmentModule } from './garments/garment.module.js';
+import { InventoryModule } from './inventory/inventory.module.js';
 import { MediaModule } from './media/media.module.js';
 
 @Module({
@@ -20,6 +21,7 @@ import { MediaModule } from './media/media.module.js';
     CatalogueModule,
     GarmentModule,
     DesignModule,
+    InventoryModule,
     MediaModule,
     LoggerModule.forRoot({
       pinoHttp: {

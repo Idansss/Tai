@@ -9,6 +9,8 @@ export const permissionSeeds = [
   ['users.write', 'users', 'write', 'Manage customer and administrator accounts.'],
   ['catalogue.read', 'catalogue', 'read', 'View catalogue administration data.'],
   ['catalogue.write', 'catalogue', 'write', 'Manage catalogue content and configuration.'],
+  ['inventory.read', 'inventory', 'read', 'View garment stock levels and movements.'],
+  ['inventory.write', 'inventory', 'write', 'Receive, adjust, and correct garment stock.'],
   ['production.read', 'production', 'read', 'View production work and status.'],
   ['production.write', 'production', 'write', 'Manage production work and status.'],
   ['fulfilment.read', 'fulfilment', 'read', 'View fulfilment work and status.'],
@@ -49,7 +51,7 @@ export const roleSeeds = [
     code: 'FULFILMENT_OPERATOR',
     name: 'Fulfilment Operator',
     description: 'Packing, dispatch, and fulfilment operations.',
-    permissionCodes: ['fulfilment.read', 'fulfilment.write'],
+    permissionCodes: ['fulfilment.read', 'fulfilment.write', 'inventory.read', 'inventory.write'],
   },
   {
     code: 'CUSTOMER_SUPPORT',
@@ -61,7 +63,7 @@ export const roleSeeds = [
     code: 'ANALYST',
     name: 'Analyst',
     description: 'Read-only analytics and catalogue visibility.',
-    permissionCodes: ['analytics.read', 'catalogue.read'],
+    permissionCodes: ['analytics.read', 'catalogue.read', 'inventory.read'],
   },
 ] as const;
 

@@ -203,3 +203,14 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - `availability.state` is one of `AVAILABLE`, `DROP_NOT_OPEN`, `DROP_ENDED`, or `EDITION_EXHAUSTED`, with `opensAt`/`closesAt` when a drop bounds it. Use these for the countdown and sold-out states rather than inferring from dates client-side.
 - **`AVAILABLE` does not mean in stock.** It means the catalogue permits the sale. Stock arrives with TMS-B4-001 and will refine this; do not present it as "in stock" yet.
 - `EDITION_EXHAUSTED` is in the contract but not yet reachable: edition counts need sold quantities from TMS-B4-003. Handle it, but do not expect it.
+
+## 2026-07-16 — TMS-B4-001 garment inventory is available
+
+- Status: implemented on `codex/b4-inventory-reservations`; consume after its PR is merged.
+- Compatibility: additive. Six new administrator operations under `/api/v1/admin/inventory`, no existing operation changed.
+- **This replaces the stock matrix mock in the admin garment/inventory screens.** Reads need `inventory.read`; receipts, adjustments, and thresholds need `inventory.write`. Fulfilment operators and store administrators have both; analysts have read only; **content managers have no inventory access at all**, so hide the section for them rather than letting it 403.
+- A stock level is `{ variantId, sku, onHand, reserved, available, lowStockThreshold, lowStock }`. `available` is `onHand - reserved`. **Do not compute stock client-side** — a hold reduces `available` without changing `onHand`, and only the server knows which holds are still live.
+- `GET /api/v1/admin/inventory?lowStockOnly=true` powers the low-stock alert list. Use `lowStock` rather than re-deriving it from the threshold.
+- Adjustments require a `reason`; the API rejects a zero `quantityDelta`, an adjustment below zero (`400 VALIDATION_FAILED`), and an adjustment that would drop stock below what is already reserved (`409 INVENTORY_UNAVAILABLE`). Surface that conflict as a real message: it means someone is mid-purchase, not that the input was malformed.
+- `GET /api/v1/admin/inventory/{variantId}/movements` is an append-only ledger. There is deliberately no edit or delete: stock history cannot be rewritten. Do not build an edit affordance.
+- **Stock is not public yet.** There is no customer-facing stock endpoint, and `availability` from `garment-configurations/validate` still means "the catalogue permits this sale", not "in stock". Keep any storefront stock display on typed adapters until that follow-up lands.
