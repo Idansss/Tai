@@ -2,18 +2,28 @@
 
 import { Alert, Badge, Frame, Price, cn } from '@tms/ui';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
 import { useMemo, useRef, useState } from 'react';
 import { WishlistButton } from '@/components/account/wishlist-button';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
 import { useCart } from '@/components/cart/cart-provider';
 import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
+import { ShirtMockup } from '@/components/product/shirt-mockup';
 import { WaitlistForm } from '@/components/waitlist/waitlist-form';
 import type { ProductDetail } from '@/lib/data';
 import { waitlistKey } from '@/lib/waitlist';
 
 type View = 'front' | 'back';
 
-export function ProductConfigurator({ product }: { product: ProductDetail }) {
+export function ProductConfigurator({
+  product,
+  artworkSrc,
+  mockups,
+}: {
+  product: ProductDetail;
+  artworkSrc?: string | null;
+  mockups?: { front: string | null; back: string | null };
+}) {
   const { addItem } = useCart();
   const firstAvailableColour = useMemo(
     () => product.colours.find((c) => c.available)?.name ?? product.colours[0]?.name,
@@ -29,6 +39,7 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
   const sizeGroupRef = useRef<HTMLFieldSetElement>(null);
 
   const selectedColour = product.colours.find((c) => c.name === colour);
+  const photographedMockup = view === 'front' ? mockups?.front : mockups?.back;
   const soldOut = product.availability === 'sold_out';
 
   function addToBag() {
@@ -47,6 +58,7 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
     setError(null);
     addItem({
       productSlug: product.slug,
+      artworkSlug: product.artworkSlug,
       artworkTitle: product.artworkTitle,
       garment: product.garment,
       colour,
@@ -68,26 +80,43 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
           <Frame
             ratio="product"
             mat="none"
-            style={{ backgroundColor: selectedColour?.hex ?? 'var(--color-surface-secondary)' }}
+            className="bg-[radial-gradient(120%_100%_at_50%_0%,var(--color-surface)_0%,var(--color-surface-secondary)_100%)]"
             role="img"
             aria-label={`${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view (live preview)`}
           >
-            <div
-              aria-hidden
-              className={cn(
-                'absolute inset-0 grid',
-                view === 'front' ? 'place-items-center' : 'items-start justify-center pt-[16%]',
-              )}
-            >
-              <div
-                className={cn(
-                  'overflow-hidden rounded-sm shadow-sm ring-1 ring-black/10 transition-all duration-[var(--duration-slow)] ease-[var(--ease-out)]',
-                  view === 'front' ? 'w-[52%]' : 'w-[30%]',
-                )}
-              >
-                <ArtworkVisual seed={product.artworkSlug} title={product.artworkTitle} />
+            {photographedMockup ? (
+              <Image
+                src={photographedMockup}
+                alt=""
+                fill
+                priority={view === 'front'}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-contain"
+              />
+            ) : (
+              <div aria-hidden className="absolute inset-0 p-[3%] sm:p-[5%]">
+                <ShirtMockup
+                  colourHex={selectedColour?.hex}
+                  view={view}
+                  garment={product.garment}
+                  print={{
+                    widthPct: view === 'front' ? 30 : 32,
+                    y: view === 'front' ? 39 : 40,
+                    artwork: (
+                      <div className="h-full w-full">
+                        <ArtworkMedia
+                          src={artworkSrc}
+                          seed={product.artworkSlug}
+                          title={product.artworkTitle}
+                          label={product.garment}
+                          className="object-contain"
+                        />
+                      </div>
+                    ),
+                  }}
+                />
               </div>
-            </div>
+            )}
             <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.1em] text-white">
               {view}
             </span>

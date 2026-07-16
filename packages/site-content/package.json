@@ -1,0 +1,36 @@
+{
+  "name": "@tms/site-content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rimraf dist tsconfig.tsbuildinfo && prisma generate && tsc -p tsconfig.build.json",
+    "clean": "rimraf dist generated tsconfig.tsbuildinfo",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "lint": "eslint src prisma.config.ts prisma/seed.ts --max-warnings=0",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.8.0",
+    "@prisma/client": "7.8.0",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.20.0",
+    "prisma": "7.8.0",
+    "tsx": "4.23.1",
+    "vitest": "4.1.10"
+  }
+}

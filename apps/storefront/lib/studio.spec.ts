@@ -14,6 +14,12 @@ const full: StudioConfig = {
   size: 'M',
   placement: 'centre-chest',
   scale: 'medium',
+  printX: 47.5,
+  printY: 44,
+  printWidth: 38,
+  cropZoom: 1.4,
+  cropX: -8,
+  cropY: 12,
   view: 'back',
   quantity: 3,
 };

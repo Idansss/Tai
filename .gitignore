@@ -12,6 +12,7 @@ test-results/
 *.log
 *.tsbuildinfo
 packages/database/generated/
+packages/site-content/generated/
 packages/database/prisma/*.db
 .idea/
 .vscode/

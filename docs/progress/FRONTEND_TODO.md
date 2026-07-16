@@ -813,6 +813,18 @@ Codex delivering endpoints.
 
 ## Phase F6 — Premium UI overhaul ("Gallery Press" direction)
 
+- [x] **TMS-UX4-002** Shared realistic garment mockups — **Verified 2026-07-16.** Replaced the flat box-like preview with
+      one layered front/back renderer used by product cards/detail, Design Studio, cart, and saved
+      designs. Includes independent garment colour, print-safe clipping, non-tinting artwork layer,
+      fabric grain/folds/highlights/shadows, responsive framing, and original asset/licence record in
+      `docs/frontend/GARMENT_MOCKUP_RESEARCH.md`. No new runtime dependency or external production asset.
+      Added 15 distinct owner-supplied “From Africa, to You” artworks (16 files received; one exact
+      duplicate), 14 new Classic Tee products plus the existing Market Day tee, shared photographic
+      black front/back bases, real-image Design Studio thumbnails, and exact artwork compositing.
+      Evidence: all 15 new product routes return 200; desktop/mobile product and front/back Studio
+      screenshots are under `docs/frontend/screenshots/garment-mockup`; lint/typecheck and 195 tests
+      pass; production build generated all 107 pages and 21 product paths.
+
 Branch: `claude/f6-premium-ui-overhaul` (from `claude/f5-post-merge` newest frontend state,
 merged `origin/main` backend foundation). Direction selected: **A · "The Gallery Press"**
 (docs/frontend/PREMIUM_UI_RESEARCH.md, 49/50). Screenshot artifacts (before/after PNGs) are
@@ -820,58 +832,63 @@ produced via the storefront Playwright config in UX7 — the in-app Browser pane
 times out in this environment, so on-disk capture is deferred to Playwright, not blocked on it.
 
 ### UX0 — Research & audit
+
 - [x] **TMS-UX0-001** Protect current implementation & checkpoint — Verified. New branch off
-  newest frontend state; clean merge of `origin/main` (backend only); merge commit is the
-  checkpoint; all F5 frontend work preserved.
+      newest frontend state; clean merge of `origin/main` (backend only); merge commit is the
+      checkpoint; all F5 frontend work preserved.
 - [x] **TMS-UX0-002** Audit every storefront route — Verified. `docs/frontend/PREMIUM_UI_AUDIT.md`.
 - [x] **TMS-UX0-003** Audit every admin route — Verified. Same doc, §2.
 - [x] **TMS-UX0-004** External design research — Verified. `PREMIUM_UI_RESEARCH.md` §1–3 (24 refs).
 - [x] **TMS-UX0-005** Reference matrix — Verified. `PREMIUM_UI_RESEARCH.md` §2.
 - [x] **TMS-UX0-006** Three scored visual directions — Verified. `PREMIUM_UI_RESEARCH.md` §4.
 - [x] **TMS-UX0-007** Select & document final direction — Verified. Direction A, §5, with font
-  change record (kept Space Grotesk + IBM Plex Sans; added IBM Plex Mono for meta/numerals).
+      change record (kept Space Grotesk + IBM Plex Sans; added IBM Plex Mono for meta/numerals).
 
 ### UX1 — Design-system reconstruction (`packages/ui`)
+
 - [x] **TMS-UX1-001** Rebuild semantic colour system — Verified. Neutral gallery paper + near-black
-  ink primary + teal signature; `tokens.css` + `tokens.ts` in sync; **28/28 AA contrast pairs pass**
-  (`tokens.spec.ts`); confirmed live (body `#f4f3f0`, ink `#131417`, accent `#16171a`).
+      ink primary + teal signature; `tokens.css` + `tokens.ts` in sync; **28/28 AA contrast pairs pass**
+      (`tokens.spec.ts`); confirmed live (body `#f4f3f0`, ink `#131417`, accent `#16171a`).
 - [x] **TMS-UX1-002** Refine typography — Verified. Added IBM Plex Mono (`--font-mono`) via
-  `next/font` (self-hosted, swap); editorial numerals (`tnum`/`zero`); fluid display clamp; mono
-  confirmed loaded in-browser; h1 renders 89.6px desktop / 44px mobile.
+      `next/font` (self-hosted, swap); editorial numerals (`tnum`/`zero`); fluid display clamp; mono
+      confirmed loaded in-browser; h1 renders 89.6px desktop / 44px mobile.
 - [x] **TMS-UX1-003** Refine spacing & grid — Implemented. Wide editorial canvas (`Container width="wide"`,
-  90rem) adopted by chrome + home; numbered-index rhythm. AC: propagate to all routes (UX3+).
+      90rem) adopted by chrome + home; numbered-index rhythm. AC: propagate to all routes (UX3+).
 - [ ] **TMS-UX1-004** Rebuild core surfaces & cards — In progress. Added elevation scale
-  (`--shadow-xs/sm/md/lg`) + `Frame` framed-object primitive; `ArtworkCard` reframed. Remaining:
-  migrate remaining card usages to framed objects across routes.
+      (`--shadow-xs/sm/md/lg`) + `Frame` framed-object primitive; `ArtworkCard` reframed. Remaining:
+      migrate remaining card usages to framed objects across routes.
 - [ ] **TMS-UX1-005** Rebuild forms — Not started. `Field/Input/Textarea/ValidationMessage`,
-  `SegmentedControl`, `Swatch/SizeSelector`, `QuantityControl`.
+      `SegmentedControl`, `Swatch/SizeSelector`, `QuantityControl`.
 - [ ] **TMS-UX1-006** Dropdowns & comboboxes — In progress. `Select` already fully accessible;
-  remaining: portal positioning for viewport-edge/in-drawer safety, `Combobox`, and audit that
-  every user-facing select uses it (storefront + admin).
+      remaining: portal positioning for viewport-edge/in-drawer safety, `Combobox`, and audit that
+      every user-facing select uses it (storefront + admin).
 - [x] **TMS-UX1-007** Motion tokens — Verified. Durations/easings (`--ease-out/-in-out`),
-  `Reveal` (IntersectionObserver, SSR- + reduced-motion- + CLS-safe), `Marquee` (CSS, pause-on-hover,
-  reduced-motion halt). Live on home.
+      `Reveal` (IntersectionObserver, SSR- + reduced-motion- + CLS-safe), `Marquee` (CSS, pause-on-hover,
+      reduced-motion halt). Live on home.
 - [x] **TMS-UX1-008** Image system — Verified. Ratio tokens (`--ratio-artwork/product/collection/
-  wide/square`), `Frame` (mat + hairline + hover zoom, no stretch/CLS), deterministic `ArtworkVisual`
-  plates (no fake stock imagery).
+wide/square`), `Frame` (mat + hairline + hover zoom, no stretch/CLS), deterministic `ArtworkVisual`
+      plates (no fake stock imagery).
 - [ ] **TMS-UX1-009** Update shared UI docs — In progress. `DESIGN_SYSTEM.md` updated for Gallery Press.
 
 ### UX2 — Landing-page overhaul
+
 - [x] **TMS-UX2-001** Recompose opening experience — Verified. Art-led asymmetric hero + marquee.
 - [x] **TMS-UX2-002** Homepage storytelling — Verified. Numbered sections 01 Gallery / 02 Studio
-  (dark focus band) / 03 Design Studio / closing statement.
+      (dark focus band) / 03 Design Studio / closing statement.
 - [x] **TMS-UX2-003** Featured artwork & products — Verified. Framed `ArtworkCard` grid, reveal stagger.
 - [x] **TMS-UX2-004** Design Studio introduction — Verified. Immersive 3-step invitation band.
 - [x] **TMS-UX2-005** Homepage motion — Verified. Reveal/stagger + marquee, reduced-motion safe.
 - [x] **TMS-UX2-006** Responsive homepage — Verified. No overflow at 375/1280; deliberate mobile stack.
 - [ ] **TMS-UX2-007** Homepage a11y & performance audit — In progress. AA tokens + no-overflow +
-  no console errors confirmed; remaining: axe run on the new DOM + production Lighthouse (LCP/INP/CLS).
+      no console errors confirmed; remaining: axe run on the new DOM + production Lighthouse (LCP/INP/CLS).
 
 ### UX3 — Storefront overhaul (Implemented, verifying)
+
 Gallery Press propagated across the storefront. New shared `PageHeading` (editorial masthead:
 numbered index + mono eyebrow + display title + lead + meta). Cards reframed as `Frame` gallery
 objects (`ArtworkCard`, `ProductCard`, `CollectionCard`, `DropCard`, `StoryCard`,
 `CommunityPhotoCard`). Routes updated to wide canvas + reveal grids + mono meta:
+
 - `/artworks` (editorial header + sticky filter bar + 4-col framed grid) and `/artworks/[slug]`
   (sticky gallery presentation, mono spec list, framed related grid).
 - `/shop`, `/collections` + `/collections/[slug]` (editorial cover), `/products/[slug]`
@@ -890,8 +907,10 @@ objects (`ArtworkCard`, `ProductCard`, `CollectionCard`, `DropCard`, `StoryCard`
   complete for the storefront.
 
 ### UX4 — Design Studio overhaul (Implemented, verifying)
+
 Reworked `components/studio/design-studio.tsx` into a premium creative tool while preserving all
 logic (state, share-link, add-to-bag, save-design, params):
+
 - **Live preview now composites the real artwork** (`ArtworkVisual`) onto the selected garment
   colour, front/back aware, with a print-area guide; replaced the old white-box + title text.
 - **Zoom control** on the preview (inline transform, animated, reduced-motion safe) — note
@@ -910,7 +929,9 @@ logic (state, share-link, add-to-bag, save-design, params):
   Deferred to UX7: axe pass + production build.
 
 ### UX5 — Commerce & account overhaul (Implemented, verifying)
+
 Applied Gallery Press to commerce + account with calm, focused refinement (logic untouched):
+
 - **Cart**: line thumbnails reframed to `ArtworkVisual` plates (was a blank swatch); cart page +
   drawer inherit it; summary promo label mono, promo tag + discount → teal `accent-2`; cart page
   masthead via `PageHeading`.
@@ -933,10 +954,12 @@ Applied Gallery Press to commerce + account with calm, focused refinement (logic
   UI 35 + storefront 195 tests green. Deferred to UX7: axe + production build.
 
 ### UX6 — Admin overhaul (Not started)
+
 Admin shell, dashboard, tables, orders, artworks, garments, inventory, production, customers,
 analytics, errors, storyteller, responsive admin.
 
 ### UX7 — Final hardening (Not started)
+
 Visual-regression baselines + before/after PNGs (Playwright), cross-route consistency, mobile,
 accessibility audit, performance audit, motion review, dropdown audit, console-error audit,
 production build, browser verification, screenshot package.

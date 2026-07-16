@@ -1,5 +1,27 @@
 # Frontend Handoff
 
+## Admin control-centre — CMS foundation (2026-07-16)
+
+New frontend-owned CMS, **`@tms/site-content`**, backed by the isolated **`cms` Postgres schema**
+(same DB, separate from Codex's `public` tables). It gives the admin **real, database-backed control**
+over editable website content — no backend endpoint required for that half. Live and verified
+end-to-end this session:
+
+- **Server-side admin auth** (httpOnly cookie, scrypt passwords, `cms.admin_users`) + **RBAC**
+  (Owner / Administrator / Restricted staff) enforced in every route handler + immutable **audit log**.
+  The admin console moved off its client-only mock session onto this real session (125 admin tests
+  still green).
+- **Announcements** managed end-to-end: admin CRUD, draft/scheduled/published/archived, reorder,
+  soft-delete/restore, validation, audit — and the **storefront announcement bar renders the
+  published item live** (`apps/storefront/components/site/announcement-bar.tsx`).
+- **Audit log viewer** (read-only).
+
+The full site→admin map and per-feature status live in
+[`docs/admin/SITE_ADMIN_CONTROL_MAP.md`](../admin/SITE_ADMIN_CONTROL_MAP.md). Commerce/ops remain on
+the provider seam with the `TMS-FBR-009` contract filed for Codex. Remaining CMS verticals (pages,
+nav/footer/social, homepage sections, SEO, redirects, settings, studio-guide, media) are modelled in
+the schema and follow the announcements pattern exactly.
+
 ## Current frontend phase
 
 **F0–F4 all Verified AND MERGED TO `main`** (2026-07-15). The F0→F4 PR stack (#4→#5→#6→#7→#8)
@@ -568,6 +590,7 @@ auth merged clean — no frontend files touched). Merge commit is the pre-overha
 (24-ref matrix, pattern synthesis, three scored directions) and `PREMIUM_UI_AUDIT.md` (all routes).
 
 **Shipped & verified this session**
+
 - Design-system reconstruction in `packages/ui` (source of truth `src/styles/tokens.css` +
   `src/tokens.ts`): neutral gallery paper `#f4f3f0`, warm-neutral ink `#131417`, near-black ink
   primary accent `#16171a`, teal signature `#0f6b63`; charcoal dark gallery with paper-white
@@ -631,6 +654,7 @@ dropdown audit), UX7 (hardening). Do not redo the palette.
 
 Reworked `components/studio/design-studio.tsx` into a premium creative tool (all logic preserved:
 config state, share-link, add-to-bag, save-design, URL params):
+
 - **Live preview composites the real artwork** (`ArtworkVisual`) onto the selected garment colour,
   front/back aware, with a print-area guide — replaced the old white box + title text.
 - **Zoom control** (animated, reduced-motion safe). NOTE: Tailwind v4 arbitrary `scale-[…]` via
@@ -655,7 +679,26 @@ palette; reuse `Frame`/`ArtworkVisual`/`PageHeading`/`SectionIndex`/`Reveal`.
 
 ## F6 — UX5 commerce & account — session 4
 
+## F6 — realistic garment mockups — session 5
+
+- Added a shared layered `ShirtMockup` renderer across product cards/detail, Design Studio, cart,
+  and saved designs. Front/back, garment cut, colour, artwork, placement, and scale now flow through
+  the same visual geometry. Fabric grain, clipped folds, seams, highlights, print-safe clipping,
+  and ambient shadow replace the former rectangular garment/stand-in artwork plates.
+- The implementation is original SVG/CSS and ships no externally licensed asset or new dependency.
+  Research, 2D-vs-3D rationale, reference list, and asset record are in
+  `docs/frontend/GARMENT_MOCKUP_RESEARCH.md`.
+- Expanded the owner-supplied “From Africa, to You” set to 15 distinct artworks (16 source files;
+  images 7 and 11 are duplicates) and 15 black Classic Tee products. A clean photographic
+  front/back base is shared across cards, product detail, Design Studio, cart and saved designs;
+  the original artwork file is composited separately with `object-contain`, preserving its full
+  frame and text. Studio thumbnails now resolve real artwork assets instead of placeholders.
+- Verification: all 15 new product routes returned HTTP 200; desktop/mobile product and Studio
+  front/back screenshots captured; lint, typecheck, 195 tests, and production build pass (107
+  static pages; 21 product paths).
+
 Calm, focused Gallery Press across commerce + account (all logic untouched):
+
 - **Cart**: line-item thumbnails reframed to `ArtworkVisual` plates (was a blank swatch), inherited
   by the cart page and drawer; summary promo label mono, promo tag + discount → teal; cart masthead
   via `PageHeading`.
@@ -675,9 +718,10 @@ artwork thumbnails + mono summary, no overflow; checkout → steps 01–04 + cus
 delivery options + Place order, no overflow. UI 35 + storefront 195 tests + typecheck + lint green.
 
 Next: **UX6 — admin overhaul** (`apps/admin`). Same tokens, quieter operational dialect: admin shell
-+ nav, dashboard + metrics/charts, a refined DataTable dialect for orders/customers, artworks +
-upload + detail, garments + inventory matrix, production board, analytics, error centre, Brand
-Storyteller (in-system, no AI gradient), forms/filters/dropdowns, responsive. **Add IBM Plex Mono to
-the admin layout** (`apps/admin/app/layout.tsx`) to match the storefront. Admin already inherits the
-refined palette via the shared token CSS. Then UX1-005/006 (forms, Select portal + Combobox +
-dropdown audit) and UX7 (axe + production build + Playwright before/after PNGs). Do not redo palette.
+
+- nav, dashboard + metrics/charts, a refined DataTable dialect for orders/customers, artworks +
+  upload + detail, garments + inventory matrix, production board, analytics, error centre, Brand
+  Storyteller (in-system, no AI gradient), forms/filters/dropdowns, responsive. **Add IBM Plex Mono to
+  the admin layout** (`apps/admin/app/layout.tsx`) to match the storefront. Admin already inherits the
+  refined palette via the shared token CSS. Then UX1-005/006 (forms, Select portal + Combobox +
+  dropdown audit) and UX7 (axe + production build + Playwright before/after PNGs). Do not redo palette.

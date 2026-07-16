@@ -15,18 +15,27 @@ export function AdminLoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<AuthErrors>({});
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Already signed in? Go straight to the console.
   useEffect(() => {
     if (ready && user) router.replace('/');
   }, [ready, user, router]);
 
-  function onSubmit(event: React.FormEvent) {
+  async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    setServerError(null);
     const found = validateLogin({ email, password });
     setErrors(found);
     if (Object.keys(found).length > 0) return;
-    login({ email });
+    setSubmitting(true);
+    const error = await login({ email, password });
+    setSubmitting(false);
+    if (error) {
+      setServerError(error);
+      return;
+    }
     router.replace('/');
   }
 
@@ -43,6 +52,12 @@ export function AdminLoginForm() {
           Operational console for Tai Manic Studios.
         </Text>
       </div>
+
+      {serverError ? (
+        <Alert tone="error" title="Sign in failed" className="mb-4">
+          {serverError}
+        </Alert>
+      ) : null}
 
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         <div>
@@ -89,16 +104,17 @@ export function AdminLoginForm() {
 
         <button
           type="submit"
-          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          disabled={submitting}
+          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:opacity-60"
         >
-          Sign in
+          {submitting ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
 
-      <Alert tone="info" title="Preview console" className="mt-6">
-        This is a preview build, no staff accounts, roles or passwords exist yet. Any well-formed
-        sign-in starts a demo session stored only in your browser. Real staff auth and role-based
-        access arrive with the admin auth backend.
+      <Alert tone="info" title="Server-authenticated console" className="mt-6">
+        Sign-in is enforced server-side against real staff accounts with role-based permissions.
+        Content changes persist to the database and are audited. Staff accounts and granular RBAC
+        move to the platform admin-auth service when it lands.
       </Alert>
     </div>
   );

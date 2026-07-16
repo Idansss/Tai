@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@tms/ui';
+import Image from 'next/image';
 import { useState } from 'react';
 import { ArtworkVisual } from './artwork-visual';
 
@@ -39,12 +40,13 @@ export function ArtworkMedia({
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- Frame controls ratio; art files are user-supplied, unknown dimensions.
-    <img
+    <Image
       src={src}
       alt={label ? `${title} — ${label}` : title}
+      fill
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
       className={cn('h-full w-full object-cover', className)}
-      loading={priority ? 'eager' : 'lazy'}
+      priority={priority}
       onError={() => setFailed(true)}
       draggable={false}
     />

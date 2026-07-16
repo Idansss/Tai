@@ -41,6 +41,12 @@ export function designSignature(config: StudioConfig): string {
     config.placement,
     config.scale,
     config.view,
+    config.printX,
+    config.printY,
+    config.printWidth,
+    config.cropZoom,
+    config.cropX,
+    config.cropY,
   ]
     .map((part) => (part ?? '').toString().trim().toLowerCase())
     .join('|');

@@ -55,6 +55,43 @@ interface ProductSeed {
 }
 
 const productSeeds: ProductSeed[] = [
+  ...(
+    [
+      ['addis-coffee-garden', 'Addis Coffee Garden'],
+      ['heritage-gifts', 'Heritage Gifts'],
+      ['four-corners-of-africa', 'Four Corners of Africa'],
+      ['kenya-heritage', 'Kenya Heritage'],
+      ['africa-united', 'Africa United'],
+      ['cultural-soul', 'Cultural Soul'],
+      ['kenya-soul', 'Kenya Soul'],
+      ['lagos-market-muse', 'Lagos Market Muse'],
+      ['nile-legacy', 'Nile Legacy'],
+      ['nigeria-muse-sketch', 'Nigeria Muse — Sketch'],
+      ['four-nations', 'Four Nations'],
+      ['from-africa-collection', 'From Africa, to You — The Collection'],
+      ['ancestral-sisters', 'Ancestral Sisters'],
+      ['nile-muse-sketch', 'Nile Muse — Sketch'],
+    ] as const
+  ).map(([artworkSlug, artworkTitle]) => ({
+    slug: `${artworkSlug}-classic-tee`,
+    artworkSlug,
+    artworkTitle,
+    collection: 'From Africa, to You',
+    garment: 'Classic T-shirt',
+    priceMinor: 1400000,
+    availability: 'available' as const,
+    colours: ['Black'],
+  })),
+  {
+    slug: 'market-day-classic-tee',
+    artworkSlug: 'market-day',
+    artworkTitle: 'Market Day',
+    collection: 'City Portraits',
+    garment: 'Classic T-shirt',
+    priceMinor: 1400000,
+    availability: 'available',
+    colours: ['Black'],
+  },
   {
     slug: 'midnight-in-lagos-classic-tee',
     artworkSlug: 'midnight-in-lagos',
@@ -163,6 +200,12 @@ function toProductDetail(seed: ProductSeed): ProductDetail {
 
 /** Collection metadata keyed by the collection name used on artworks. */
 const collectionMeta: { slug: string; name: string; description: string }[] = [
+  {
+    slug: 'from-africa-to-you',
+    name: 'From Africa, to You',
+    description:
+      'Portraits, symbols and stories carried across the continent and into contemporary life.',
+  },
   {
     slug: 'night-studies',
     name: 'Night Studies',
@@ -282,6 +325,105 @@ const artworks: ArtworkSummary[] = [
     compatibleGarments: ['Oversized T-shirt'],
     limitedEdition: false,
   },
+  ...(
+    [
+      [
+        'a9',
+        'addis-coffee-garden',
+        'Addis Coffee Garden',
+        'A quiet coffee garden study rooted in Addis Ababa.',
+      ],
+      [
+        'a10',
+        'heritage-gifts',
+        'Heritage Gifts',
+        'Objects, makers and stories carried from Africa with care.',
+      ],
+      [
+        'a11',
+        'four-corners-of-africa',
+        'Four Corners of Africa',
+        'Four scenes of craft, ritual and exchange across the continent.',
+      ],
+      [
+        'a12',
+        'kenya-heritage',
+        'Kenya Heritage',
+        'A seated portrait framed by Kenyan craft and living pattern.',
+      ],
+      [
+        'a13',
+        'africa-united',
+        'Africa United',
+        'Ethiopia, Nigeria and Kenya gathered in one bold graphic.',
+      ],
+      [
+        'a14',
+        'cultural-soul',
+        'Cultural Soul',
+        'Streetwear, symbols and modern African cultural pride.',
+      ],
+      [
+        'a15',
+        'kenya-soul',
+        'Kenya Soul',
+        'A Kenyan portrait surrounded by ancestral symbols and craft.',
+      ],
+      [
+        'a16',
+        'lagos-market-muse',
+        'Lagos Market Muse',
+        'A sunlit market portrait full of colour and confidence.',
+      ],
+      [
+        'a17',
+        'nile-legacy',
+        'Nile Legacy',
+        'Egyptian iconography meets contemporary African portraiture.',
+      ],
+      [
+        'a18',
+        'nigeria-muse-sketch',
+        'Nigeria Muse — Sketch',
+        'The graphite beginning of a Nigeria-inspired portrait.',
+      ],
+      [
+        'a19',
+        'four-nations',
+        'Four Nations',
+        'Nigeria, Ethiopia, South Africa and Ghana in four vivid panels.',
+      ],
+      [
+        'a20',
+        'from-africa-collection',
+        'From Africa, to You — The Collection',
+        'Four gallery portraits celebrating continental dress and art.',
+      ],
+      [
+        'a21',
+        'ancestral-sisters',
+        'Ancestral Sisters',
+        'Three women carrying pattern, rhythm and ancestral memory.',
+      ],
+      [
+        'a22',
+        'nile-muse-sketch',
+        'Nile Muse — Sketch',
+        'A graphite character study shaped by Nile iconography.',
+      ],
+    ] as const
+  ).map(([id, slug, title, shortStory]) => ({
+    id,
+    slug,
+    title,
+    collection: 'From Africa, to You',
+    shortStory,
+    availability: 'available' as const,
+    startingPriceMinor: 1400000,
+    currency: 'NGN',
+    compatibleGarments: ['Classic T-shirt'],
+    limitedEdition: false,
+  })),
 ];
 
 const HOUR_MS = 3_600_000;

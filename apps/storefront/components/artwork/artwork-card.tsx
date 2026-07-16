@@ -4,12 +4,6 @@ import { resolveArtworkImage } from '@/lib/artwork-images';
 import type { ArtworkSummary } from '@/lib/data';
 import { ArtworkMedia } from './artwork-media';
 
-const availabilityTone = {
-  available: 'success',
-  limited: 'warning',
-  sold_out: 'neutral',
-} as const;
-
 const availabilityLabel = {
   available: 'Available',
   limited: 'Limited edition',
@@ -35,9 +29,7 @@ export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
           label={artwork.collection}
         />
         <div className="pointer-events-none absolute left-3 top-3">
-          <Badge tone={availabilityTone[artwork.availability]}>
-            {availabilityLabel[artwork.availability]}
-          </Badge>
+          <Badge tone="neutral">{availabilityLabel[artwork.availability]}</Badge>
         </div>
       </Frame>
       <div className="mt-4 space-y-1.5">

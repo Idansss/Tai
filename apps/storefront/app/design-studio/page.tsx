@@ -2,6 +2,7 @@ import { Container } from '@tms/ui';
 import type { Metadata } from 'next';
 import { PageHeading } from '@/components/site/page-heading';
 import { DesignStudio } from '@/components/studio/design-studio';
+import { resolveArtworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 import { parseStudioParams } from '@/lib/studio';
 
@@ -32,7 +33,14 @@ export default async function DesignStudioPage({ searchParams }: PageProps) {
         />
       </div>
 
-      <DesignStudio artworks={artworks} options={options} initialConfig={initialConfig} />
+      <DesignStudio
+        artworks={artworks}
+        artworkImages={Object.fromEntries(
+          artworks.map((artwork) => [artwork.slug, resolveArtworkImage(artwork.slug)]),
+        )}
+        options={options}
+        initialConfig={initialConfig}
+      />
     </Container>
   );
 }

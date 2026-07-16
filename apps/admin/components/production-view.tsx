@@ -253,15 +253,17 @@ function JobCard({
             {job.customerName}
           </Text>
         </div>
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-1">
           <Badge tone={stageTone(job.stage)}>{stageLabel(job.stage)}</Badge>
           {priority ? (
-            <span className="inline-flex items-center gap-1 text-xs text-warning">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-warning">
               <AlertTriangle className="size-3.5" aria-hidden />
               {formatAge(job.placedAt, now)} old
             </span>
           ) : (
-            <span className="text-xs text-muted">{formatAge(job.placedAt, now)} old</span>
+            <span className="whitespace-nowrap text-xs text-muted">
+              {formatAge(job.placedAt, now)} old
+            </span>
           )}
         </div>
       </div>

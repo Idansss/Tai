@@ -64,7 +64,10 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [errors, setErrors] = useState<AuthErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
 
-  const next = searchParams.get('next') || '/account';
+  const nextParam = searchParams.get('next');
+  const next = nextParam || '/account';
+  const withNext = (path: string) =>
+    nextParam ? `${path}?next=${encodeURIComponent(nextParam)}` : path;
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -156,14 +159,17 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         {isRegister ? (
           <>
             Already have an account?{' '}
-            <Link href="/login" className="text-ink underline-offset-2 hover:underline">
+            <Link href={withNext('/login')} className="text-ink underline-offset-2 hover:underline">
               Sign in
             </Link>
           </>
         ) : (
           <>
             New to the studio?{' '}
-            <Link href="/register" className="text-ink underline-offset-2 hover:underline">
+            <Link
+              href={withNext('/register')}
+              className="text-ink underline-offset-2 hover:underline"
+            >
               Create an account
             </Link>
           </>

@@ -4,6 +4,7 @@ import { EmptyState, Heading, Skeleton } from '@tms/ui';
 import { ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/account/auth-provider';
 import { CartLineList } from './cart-line-list';
 import { CartSummary } from './cart-summary';
 import { useCart } from './cart-provider';
@@ -11,6 +12,7 @@ import { useCart } from './cart-provider';
 /** Full-page bag: line items on the left, a sticky order summary on the right. */
 export function CartView() {
   const { items, count, ready } = useCart();
+  const { user } = useAuth();
   const router = useRouter();
 
   if (!ready) {
@@ -67,7 +69,7 @@ export function CartView() {
         <Heading as={2} size="md" className="mb-4">
           Order summary
         </Heading>
-        <CartSummary onCheckout={() => router.push('/checkout')} />
+        <CartSummary onCheckout={() => router.push(user ? '/checkout' : '/login?next=/checkout')} />
         <p className="mt-3 text-center text-xs text-muted">
           {count} item{count === 1 ? '' : 's'} in your bag
         </p>

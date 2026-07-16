@@ -5,9 +5,12 @@ import {
   BarChart3,
   Boxes,
   Factory,
+  Home,
   LayoutDashboard,
+  Megaphone,
   Menu,
   Palette,
+  ScrollText,
   ShoppingBag,
   Sparkles,
   TriangleAlert,
@@ -19,47 +22,82 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
 import { useAdminAuth } from './admin-auth-provider';
 
-const NAV = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/orders', label: 'Orders', icon: ShoppingBag },
-  { href: '/artworks', label: 'Artworks', icon: Palette },
-  { href: '/storyteller', label: 'Brand Storyteller', icon: Sparkles },
-  { href: '/garments', label: 'Garments', icon: Boxes },
-  { href: '/production', label: 'Production', icon: Factory },
-  { href: '/customers', label: 'Customers', icon: Users },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/errors', label: 'Error centre', icon: TriangleAlert },
+const NAV_GROUPS = [
+  {
+    label: 'Operations',
+    items: [
+      { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/orders', label: 'Orders', icon: ShoppingBag },
+      { href: '/artworks', label: 'Artworks', icon: Palette },
+      { href: '/storyteller', label: 'Brand Storyteller', icon: Sparkles },
+      { href: '/garments', label: 'Garments', icon: Boxes },
+      { href: '/production', label: 'Production', icon: Factory },
+      { href: '/customers', label: 'Customers', icon: Users },
+      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/errors', label: 'Error centre', icon: TriangleAlert },
+    ],
+  },
+  {
+    label: 'Website content',
+    items: [
+      { href: '/content/homepage', label: 'Homepage', icon: Home },
+      { href: '/content/announcements', label: 'Announcements', icon: Megaphone },
+      { href: '/content/audit', label: 'Audit log', icon: ScrollText },
+    ],
+  },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
 }
 
+function roleLabel(role: string): string {
+  switch (role) {
+    case 'OWNER':
+      return 'Owner';
+    case 'ADMINISTRATOR':
+      return 'Administrator';
+    case 'RESTRICTED_STAFF':
+      return 'Staff';
+    default:
+      return 'Console';
+  }
+}
+
 function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (
-    <ul className="space-y-1">
-      {NAV.map(({ href, label, icon: Icon }) => {
-        const active = isActive(pathname, href);
-        return (
-          <li key={href}>
-            <Link
-              href={href}
-              onClick={onNavigate}
-              aria-current={active ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                active
-                  ? 'bg-canvas-2 font-medium text-ink'
-                  : 'text-ink-2 hover:bg-canvas-2 hover:text-ink',
-              )}
-            >
-              <Icon className="size-4 shrink-0" aria-hidden />
-              {label}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="space-y-5">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label}>
+          <p className="mb-1 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-muted">
+            {group.label}
+          </p>
+          <ul className="space-y-1">
+            {group.items.map(({ href, label, icon: Icon }) => {
+              const active = isActive(pathname, href);
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    onClick={onNavigate}
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(
+                      'flex items-center gap-3 rounded-md px-3 py-2 text-sm outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                      active
+                        ? 'bg-canvas-2 font-medium text-ink'
+                        : 'text-ink-2 hover:bg-canvas-2 hover:text-ink',
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -120,8 +158,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 border-r border-line bg-surface md:block">
+      {/* Desktop sidebar — pinned while the main content scrolls */}
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 self-start overflow-y-auto border-r border-line bg-surface md:block">
         <div className="flex h-16 items-center border-b border-line px-5">
           <span className="font-display text-sm font-semibold tracking-tight">TMS Admin</span>
         </div>
@@ -131,7 +169,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-5">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-5">
           <div className="flex items-center gap-2">
             <IconButton
               className="md:hidden"
@@ -144,7 +182,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-xs uppercase tracking-[0.08em] text-muted sm:inline">
-              Operational console
+              {roleLabel(user.role)}
             </span>
             <span className="hidden text-sm text-ink-2 sm:inline" aria-hidden>
               ·
@@ -155,8 +193,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => {
-                logout();
-                router.replace('/login');
+                void logout().then(() => router.replace('/login'));
               }}
               className="inline-flex h-9 items-center justify-center rounded-md border border-line-2 px-3 text-xs font-medium text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
             >

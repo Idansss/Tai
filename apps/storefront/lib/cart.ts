@@ -14,6 +14,8 @@ export interface CartItem {
   id: string;
   /** Slug of the product this line represents (used for the default link). */
   productSlug: string;
+  /** Artwork slug for an exact thumbnail; absent on legacy stored lines. */
+  artworkSlug?: string;
   /** Where the line links to; defaults to the product page when omitted. */
   href?: string;
   artworkTitle: string;
@@ -28,6 +30,12 @@ export interface CartItem {
   placement?: string;
   scale?: string;
   view?: string;
+  printX?: number;
+  printY?: number;
+  printWidth?: number;
+  cropZoom?: number;
+  cropX?: number;
+  cropY?: number;
 }
 
 /** A configuration a caller wants to add, everything but the derived id. */
@@ -45,9 +53,29 @@ export function lineId(input: {
   size: string;
   placement?: string;
   scale?: string;
+  view?: string;
+  printX?: number;
+  printY?: number;
+  printWidth?: number;
+  cropZoom?: number;
+  cropX?: number;
+  cropY?: number;
 }): string {
-  return [input.productSlug, input.colour, input.size, input.placement ?? '', input.scale ?? '']
-    .map((part) => part.trim().toLowerCase().replace(/\s+/g, '-'))
+  return [
+    input.productSlug,
+    input.colour,
+    input.size,
+    input.placement ?? '',
+    input.scale ?? '',
+    input.view ?? '',
+    input.printX ?? '',
+    input.printY ?? '',
+    input.printWidth ?? '',
+    input.cropZoom ?? '',
+    input.cropX ?? '',
+    input.cropY ?? '',
+  ]
+    .map((part) => String(part).trim().toLowerCase().replace(/\s+/g, '-'))
     .join('__');
 }
 

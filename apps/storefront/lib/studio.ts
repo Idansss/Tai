@@ -7,6 +7,14 @@ export interface StudioConfig {
   size: string | null;
   placement: string | null;
   scale: string | null;
+  /** Freeform print transform, percentages relative to the garment preview. */
+  printX: number | null;
+  printY: number | null;
+  printWidth: number | null;
+  /** Crop controls: zoom 1–3 and focal offset -50–50. */
+  cropZoom: number;
+  cropX: number;
+  cropY: number;
   view: StudioView;
   quantity: number;
 }
@@ -18,6 +26,12 @@ export const EMPTY_STUDIO_CONFIG: StudioConfig = {
   size: null,
   placement: null,
   scale: null,
+  printX: null,
+  printY: null,
+  printWidth: null,
+  cropZoom: 1,
+  cropX: 0,
+  cropY: 0,
   view: 'front',
   quantity: 1,
 };
@@ -36,6 +50,18 @@ function clampQuantity(raw: string | null): number {
   return Math.min(10, Math.max(1, n));
 }
 
+function clampNumber(raw: string | null, min: number, max: number, fallback: number): number {
+  const n = raw ? Number.parseFloat(raw) : fallback;
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function optionalNumber(raw: string | null, min: number, max: number): number | null {
+  if (raw === null) return null;
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : null;
+}
+
 /** Parse a shareable Design Studio configuration from URL params. */
 export function parseStudioParams(searchParams: RawParams): StudioConfig {
   return {
@@ -45,6 +71,12 @@ export function parseStudioParams(searchParams: RawParams): StudioConfig {
     size: first(searchParams.size),
     placement: first(searchParams.placement),
     scale: first(searchParams.scale),
+    printX: optionalNumber(first(searchParams.printX), 15, 85),
+    printY: optionalNumber(first(searchParams.printY), 20, 80),
+    printWidth: optionalNumber(first(searchParams.printWidth), 12, 70),
+    cropZoom: clampNumber(first(searchParams.cropZoom), 1, 3, 1),
+    cropX: clampNumber(first(searchParams.cropX), -50, 50, 0),
+    cropY: clampNumber(first(searchParams.cropY), -50, 50, 0),
     view: first(searchParams.view) === 'back' ? 'back' : 'front',
     quantity: clampQuantity(first(searchParams.quantity)),
   };
@@ -59,6 +91,13 @@ export function buildStudioQuery(config: StudioConfig): string {
   if (config.size) params.set('size', config.size);
   if (config.placement) params.set('placement', config.placement);
   if (config.scale) params.set('scale', config.scale);
+  if (config.printX !== null) params.set('printX', String(Math.round(config.printX * 10) / 10));
+  if (config.printY !== null) params.set('printY', String(Math.round(config.printY * 10) / 10));
+  if (config.printWidth !== null)
+    params.set('printWidth', String(Math.round(config.printWidth * 10) / 10));
+  if ((config.cropZoom ?? 1) !== 1) params.set('cropZoom', String(config.cropZoom));
+  if ((config.cropX ?? 0) !== 0) params.set('cropX', String(config.cropX));
+  if ((config.cropY ?? 0) !== 0) params.set('cropY', String(config.cropY));
   if (config.view === 'back') params.set('view', 'back');
   if (config.quantity > 1) params.set('quantity', String(config.quantity));
   const qs = params.toString();

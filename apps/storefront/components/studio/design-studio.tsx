@@ -5,12 +5,14 @@ import { Check, Copy, Heart, RotateCcw, ShoppingBag, ZoomIn } from 'lucide-react
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
 import { useCart } from '@/components/cart/cart-provider';
+import { ShirtMockup } from '@/components/product/shirt-mockup';
 import { designSignature, persistSavedDesign } from '@/lib/account';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import {
   buildStudioQuery,
+  EMPTY_STUDIO_CONFIG,
   isStudioConfigComplete,
   type StudioConfig,
   type StudioView,
@@ -72,14 +74,17 @@ function Section({
 
 export function DesignStudio({
   artworks,
+  artworkImages,
   options,
   initialConfig,
 }: {
   artworks: ArtworkSummary[];
+  artworkImages: Record<string, string | null>;
   options: StudioOptions;
   initialConfig: StudioConfig;
 }) {
   const [config, setConfig] = useState<StudioConfig>(() => ({
+    ...EMPTY_STUDIO_CONFIG,
     ...initialConfig,
     colour: initialConfig.colour ?? options.colours[0]?.name ?? null,
     placement: initialConfig.placement ?? 'centre-chest',
@@ -110,6 +115,9 @@ export function DesignStudio({
   const colour = options.colours.find((c) => c.name === config.colour) ?? null;
   const placement = options.placements.find((p) => p.id === config.placement) ?? null;
   const scale = options.scalePresets.find((s) => s.id === config.scale) ?? null;
+  const printX = config.printX ?? placement?.x ?? 50;
+  const printY = config.printY ?? placement?.y ?? 38;
+  const printWidth = config.printWidth ?? scale?.widthPct ?? 44;
   const complete = isStudioConfigComplete(config);
   const artworkOnThisView = placement && placement.area === config.view;
 
@@ -124,7 +132,29 @@ export function DesignStudio({
 
   const selectPlacement = (id: string) => {
     const p = options.placements.find((pl) => pl.id === id);
-    update({ placement: id, view: p?.area ?? config.view });
+    update({
+      placement: id,
+      view: p?.area ?? config.view,
+      printX: p?.x ?? null,
+      printY: p?.y ?? null,
+    });
+  };
+
+  const selectView = (view: StudioView) => {
+    if (placement?.area === view) {
+      update({ view });
+      return;
+    }
+    const next =
+      options.placements.find(
+        (candidate) => candidate.area === view && candidate.id === 'centre-chest',
+      ) ?? options.placements.find((candidate) => candidate.area === view);
+    update({
+      view,
+      placement: next?.id ?? config.placement,
+      printX: next?.x ?? config.printX,
+      printY: next?.y ?? config.printY,
+    });
   };
 
   const copyShareLink = useCallback(async () => {
@@ -145,6 +175,7 @@ export function DesignStudio({
     }
     addItem({
       productSlug: `${artwork.slug}-studio`,
+      artworkSlug: artwork.slug,
       href: `/design-studio${buildStudioQuery(config)}`,
       artworkTitle: artwork.title,
       garment: config.garment,
@@ -156,11 +187,17 @@ export function DesignStudio({
       placement: placement?.label,
       scale: scale?.label,
       view: config.view,
+      printX,
+      printY,
+      printWidth,
+      cropZoom: config.cropZoom,
+      cropX: config.cropX,
+      cropY: config.cropY,
     });
     setAdded(true);
     setStatus(
       `Added to your bag: ${artwork.title} on ${config.garment}, ${config.colour}, size ${config.size}, ` +
-        `${placement?.label.toLowerCase()} · ${scale?.label.toLowerCase()}.`,
+        `${placement?.label.toLowerCase()} Â· ${scale?.label.toLowerCase()}.`,
     );
   };
 
@@ -194,14 +231,14 @@ export function DesignStudio({
       className="overflow-hidden rounded-[var(--radius-xl)] border border-line bg-canvas"
     >
       <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-        {/* Preview — the artwork composited onto the garment */}
+        {/* Preview â€” the artwork composited onto the garment */}
         <div className="border-b border-line bg-canvas-2/40 p-4 sm:p-6 lg:sticky lg:top-16 lg:self-start lg:border-b-0 lg:border-r">
           <div className="lg:mx-auto lg:max-w-md">
             <Frame
               ratio="product"
               mat="none"
               rounded
-              style={{ backgroundColor: colour?.hex ?? 'var(--color-surface-secondary)' }}
+              className="bg-[radial-gradient(120%_100%_at_50%_0%,#343331_0%,#171716_100%)]"
               role="img"
               aria-label={
                 artwork
@@ -214,26 +251,39 @@ export function DesignStudio({
                 style={{ transform: zoom ? 'scale(1.35)' : 'scale(1)' }}
                 className="absolute inset-0 transition-transform duration-[var(--duration-slow)] ease-[var(--ease-out)] motion-reduce:transition-none"
               >
-                {/* Print-area guide */}
-                <div
-                  className="absolute rounded-sm border border-dashed border-white/35"
-                  style={{ left: '18%', top: '16%', width: '64%', height: '60%' }}
-                />
-                {/* Artwork print */}
-                {artwork && artworkOnThisView && placement && scale ? (
-                  <div
-                    className="absolute overflow-hidden rounded-sm shadow-lg ring-1 ring-black/15"
-                    style={{
-                      left: `${placement.x}%`,
-                      top: `${placement.y}%`,
-                      width: `${scale.widthPct}%`,
-                      aspectRatio: '4 / 5',
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  >
-                    <ArtworkVisual seed={artwork.slug} title={artwork.title} />
-                  </div>
-                ) : null}
+                <div className="absolute inset-0 p-[3%] sm:p-[5%]">
+                  <ShirtMockup
+                    colourHex={colour?.hex}
+                    view={config.view}
+                    garment={config.garment ?? undefined}
+                    showPrintArea
+                    print={
+                      artwork && placement && scale
+                        ? {
+                            x: printX,
+                            y: printY,
+                            widthPct: printWidth,
+                            cropZoom: config.cropZoom,
+                            cropX: config.cropX,
+                            cropY: config.cropY,
+                            visible: Boolean(artworkOnThisView),
+                            artwork: (
+                              <ArtworkMedia
+                                src={artworkImages[artwork.slug]}
+                                seed={artwork.slug}
+                                title={artwork.title}
+                                className="object-contain"
+                              />
+                            ),
+                          }
+                        : undefined
+                    }
+                    interactive={Boolean(artwork && artworkOnThisView)}
+                    onPrintChange={({ x, y, widthPct }) =>
+                      update({ printX: x, printY: y, printWidth: widthPct })
+                    }
+                  />
+                </div>
               </div>
 
               <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.1em] text-white">
@@ -255,6 +305,11 @@ export function DesignStudio({
                   Artwork is on the {placement?.area}
                 </span>
               ) : null}
+              {artwork && artworkOnThisView ? (
+                <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center font-mono text-[0.65rem] uppercase tracking-[0.08em] text-white/80">
+                  Drag to move · corner handle to resize
+                </span>
+              ) : null}
             </Frame>
 
             {/* View toggle */}
@@ -268,7 +323,7 @@ export function DesignStudio({
                   <button
                     key={v}
                     type="button"
-                    onClick={() => update({ view: v })}
+                    onClick={() => selectView(v)}
                     aria-pressed={config.view === v}
                     className={cn(
                       'rounded px-4 py-1.5 text-sm capitalize outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
@@ -310,7 +365,12 @@ export function DesignStudio({
                         )}
                       >
                         <span aria-hidden className="block aspect-[4/5] w-full">
-                          <ArtworkVisual seed={a.slug} title={a.title} />
+                          <ArtworkMedia
+                            src={artworkImages[a.slug]}
+                            seed={a.slug}
+                            title={a.title}
+                            className="object-contain"
+                          />
                         </span>
                         {active ? (
                           <span
@@ -386,7 +446,11 @@ export function DesignStudio({
           <Section step={4} title="Size" disabled={!artwork}>
             <div className="flex flex-wrap gap-2">
               {options.sizes.map((s) => (
-                <ChipButton key={s} selected={config.size === s} onClick={() => update({ size: s })}>
+                <ChipButton
+                  key={s}
+                  selected={config.size === s}
+                  onClick={() => update({ size: s })}
+                >
                   {s}
                 </ChipButton>
               ))}
@@ -413,12 +477,95 @@ export function DesignStudio({
                 <ChipButton
                   key={s.id}
                   selected={config.scale === s.id}
-                  onClick={() => update({ scale: s.id })}
+                  onClick={() => update({ scale: s.id, printWidth: s.widthPct })}
                 >
                   {s.label}
                 </ChipButton>
               ))}
             </div>
+          </Section>
+
+          <Section step={7} title="Crop & fine tune" disabled={!artwork}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="text-xs text-ink-2">
+                <span className="flex justify-between">
+                  <span>Print size</span>
+                  <span>{Math.round(printWidth)}%</span>
+                </span>
+                <input
+                  type="range"
+                  min="12"
+                  max="70"
+                  step="1"
+                  value={printWidth}
+                  onChange={(event) =>
+                    update({ printWidth: Number(event.target.value), scale: null })
+                  }
+                  className="mt-2 w-full accent-[var(--color-accent-secondary)]"
+                />
+              </label>
+              <label className="text-xs text-ink-2">
+                <span className="flex justify-between">
+                  <span>Crop zoom</span>
+                  <span>{config.cropZoom.toFixed(1)}×</span>
+                </span>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  value={config.cropZoom}
+                  onChange={(event) => update({ cropZoom: Number(event.target.value) })}
+                  className="mt-2 w-full accent-[var(--color-accent-secondary)]"
+                />
+              </label>
+              <label className="text-xs text-ink-2">
+                <span className="flex justify-between">
+                  <span>Crop horizontal</span>
+                  <span>{config.cropX}%</span>
+                </span>
+                <input
+                  type="range"
+                  min="-50"
+                  max="50"
+                  step="1"
+                  value={config.cropX}
+                  onChange={(event) => update({ cropX: Number(event.target.value) })}
+                  className="mt-2 w-full accent-[var(--color-accent-secondary)]"
+                />
+              </label>
+              <label className="text-xs text-ink-2">
+                <span className="flex justify-between">
+                  <span>Crop vertical</span>
+                  <span>{config.cropY}%</span>
+                </span>
+                <input
+                  type="range"
+                  min="-50"
+                  max="50"
+                  step="1"
+                  value={config.cropY}
+                  onChange={(event) => update({ cropY: Number(event.target.value) })}
+                  className="mt-2 w-full accent-[var(--color-accent-secondary)]"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                update({
+                  printX: placement?.x ?? null,
+                  printY: placement?.y ?? null,
+                  printWidth: scale?.widthPct ?? null,
+                  cropZoom: 1,
+                  cropX: 0,
+                  cropY: 0,
+                })
+              }
+              className="mt-4 inline-flex items-center gap-2 text-xs text-ink-2 underline-offset-4 hover:text-ink hover:underline"
+            >
+              <RotateCcw className="size-3.5" aria-hidden /> Reset print transform
+            </button>
           </Section>
 
           {/* Summary + actions */}
@@ -454,7 +601,7 @@ export function DesignStudio({
                     <dt className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-muted">
                       {label}
                     </dt>
-                    <dd className="text-ink-2">{value ?? '—'}</dd>
+                    <dd className="text-ink-2">{value ?? 'â€”'}</dd>
                   </div>
                 ))}
               </dl>
@@ -475,7 +622,10 @@ export function DesignStudio({
                 disabled={!complete}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-line-2 px-4 text-sm text-ink outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Heart className={cn('size-4', saved && 'fill-current text-accent-2')} aria-hidden />
+                <Heart
+                  className={cn('size-4', saved && 'fill-current text-accent-2')}
+                  aria-hidden
+                />
                 {saved ? 'Design saved' : 'Save design'}
               </button>
               <button
@@ -484,7 +634,11 @@ export function DesignStudio({
                 disabled={!artwork}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-line-2 px-4 text-sm text-ink outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+                {copied ? (
+                  <Check className="size-4" aria-hidden />
+                ) : (
+                  <Copy className="size-4" aria-hidden />
+                )}
                 {copied ? 'Link copied' : 'Copy share link'}
               </button>
               <button

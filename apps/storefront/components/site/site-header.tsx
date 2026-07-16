@@ -2,6 +2,7 @@
 
 import { Container, IconButton, cn } from '@tms/ui';
 import { Menu, Search, ShoppingBag, User, X } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
@@ -62,9 +63,17 @@ export function SiteHeader() {
         <nav className="flex h-16 items-center justify-between gap-4 lg:h-[4.5rem]" aria-label="Primary">
           <Link
             href="/"
-            className="rounded-sm font-display text-lg font-semibold tracking-[-0.01em] text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            aria-label="Tai Manic Studios home"
+            className="shrink-0 rounded-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
           >
-            Tai Manic Studios
+            <Image
+              src="/logo-tai-manic.png"
+              alt="Tai Manic Studios"
+              width={1353}
+              height={365}
+              priority
+              className="h-8 w-auto sm:h-9 lg:h-10"
+            />
           </Link>
 
           <ul className="hidden items-center gap-8 md:flex">

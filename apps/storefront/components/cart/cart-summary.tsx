@@ -3,11 +3,13 @@
 import { Price } from '@tms/ui';
 import { Tag, X } from 'lucide-react';
 import { useId, useState } from 'react';
+import { useAuth } from '@/components/account/auth-provider';
 import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import { useCart } from './cart-provider';
 
 /** Promotion entry + subtotal/total breakdown, shared by the drawer and page. */
 export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
+  const { user } = useAuth();
   const {
     items,
     subtotalMinor,
@@ -116,10 +118,12 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
         onClick={onCheckout}
         className="inline-flex h-12 w-full items-center justify-center rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
       >
-        Checkout
+        {user ? 'Checkout' : 'Sign in to check out'}
       </button>
       <p className="text-center text-xs text-muted">
-        Secure checkout · delivery and tax confirmed before payment.
+        {user
+          ? 'Secure checkout · delivery and tax confirmed before payment.'
+          : 'Your bag is saved — sign in and you’ll come right back to it.'}
       </p>
     </div>
   );

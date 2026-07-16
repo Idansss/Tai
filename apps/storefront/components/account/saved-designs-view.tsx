@@ -4,7 +4,8 @@ import { EmptyState, Price, Text } from '@tms/ui';
 import { Palette, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
+import { ShirtMockup } from '@/components/product/shirt-mockup';
 import { deleteSavedDesign, readSavedDesigns, type SavedDesign } from '@/lib/account';
 import { buildStudioQuery } from '@/lib/studio';
 import { AccountShell } from './account-shell';
@@ -58,15 +59,36 @@ export function SavedDesignsView() {
               className="flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-canvas-2"
             >
               <div
-                className="relative grid aspect-[4/3] w-full place-items-center overflow-hidden"
-                style={{ backgroundColor: design.colourHex ?? 'var(--color-surface-secondary)' }}
+                className="relative grid aspect-[4/3] w-full place-items-center overflow-hidden bg-[radial-gradient(circle_at_top,#f4f1eb,#d9d5cc)]"
                 role="img"
                 aria-label={`${design.artworkTitle} design preview`}
               >
-                <div aria-hidden className="w-[38%] overflow-hidden rounded-sm shadow-md ring-1 ring-black/10">
-                  {design.config.artwork ? (
-                    <ArtworkVisual seed={design.config.artwork} title={design.artworkTitle} />
-                  ) : null}
+                <div aria-hidden className="absolute inset-0">
+                  <ShirtMockup
+                    colourHex={design.colourHex}
+                    view={design.config.view}
+                    garment={design.config.garment ?? undefined}
+                    print={
+                      design.config.artwork
+                        ? {
+                            x: design.config.printX ?? undefined,
+                            y: design.config.printY ?? undefined,
+                            widthPct: design.config.printWidth ?? undefined,
+                            cropZoom: design.config.cropZoom,
+                            cropX: design.config.cropX,
+                            cropY: design.config.cropY,
+                            artwork: (
+                              <ArtworkMedia
+                                src={`/artworks/${design.config.artwork}.jpg`}
+                                seed={design.config.artwork}
+                                title={design.artworkTitle}
+                                className="object-contain"
+                              />
+                            ),
+                          }
+                        : undefined
+                    }
+                  />
                 </div>
               </div>
               <div className="flex flex-1 flex-col gap-2 p-4">

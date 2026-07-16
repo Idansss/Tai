@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProductConfigurator } from '@/components/product/product-configurator';
 import { Reviews } from '@/components/review/reviews';
+import { resolveArtworkImage, resolveProductMockups } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 
 interface Params {
@@ -73,7 +74,11 @@ export default async function ProductPage({ params }: Params) {
       </header>
 
       <div className="mt-10">
-        <ProductConfigurator product={product} />
+        <ProductConfigurator
+          product={product}
+          artworkSrc={resolveArtworkImage(product.artworkSlug)}
+          mockups={resolveProductMockups(product.slug)}
+        />
       </div>
 
       <div className="mt-16">

@@ -34,7 +34,22 @@ export function resolveArtworkImage(slug: string): string | null {
  * wins; otherwise we fall back to the artwork printed on it.
  */
 export function resolveProductImage(productSlug: string, artworkSlug: string): string | null {
-  return resolveIn('products', productSlug) ?? resolveIn('artworks', artworkSlug);
+  return (
+    resolveIn('products', productSlug) ??
+    resolveIn('products', `${productSlug}-front`) ??
+    resolveIn('artworks', artworkSlug)
+  );
+}
+
+/** Approved front/back photographed mockups for a product, when supplied. */
+export function resolveProductMockups(productSlug: string): {
+  front: string | null;
+  back: string | null;
+} {
+  return {
+    front: resolveIn('products', `${productSlug}-front`),
+    back: resolveIn('products', `${productSlug}-back`),
+  };
 }
 
 /** Representative artwork per collection, used for collection/drop covers. */

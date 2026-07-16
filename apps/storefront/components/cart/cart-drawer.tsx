@@ -5,6 +5,7 @@ import { ShoppingBag, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@/components/account/auth-provider';
 import { CartLineList } from './cart-line-list';
 import { CartSummary } from './cart-summary';
 import { useCart } from './cart-provider';
@@ -16,6 +17,7 @@ import { useCart } from './cart-provider';
  */
 export function CartDrawer() {
   const { items, count, isOpen, closeCart } = useCart();
+  const { user } = useAuth();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -58,8 +60,10 @@ export function CartDrawer() {
 
   const goToCheckout = useCallback(() => {
     closeCart();
-    router.push('/checkout');
-  }, [closeCart, router]);
+    // Guests must sign in first; they return straight to checkout with their
+    // (locally persisted) bag intact.
+    router.push(user ? '/checkout' : '/login?next=/checkout');
+  }, [closeCart, router, user]);
 
   return (
     <dialog

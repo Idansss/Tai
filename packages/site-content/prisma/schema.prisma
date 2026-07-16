@@ -1,0 +1,277 @@
+// @tms/site-content — frontend-owned CMS persistence.
+//
+// Lives in the `cms` Postgres schema, isolated from the backend's `public`
+// tables (owned by @tms/database / Codex) inside the same database. The schema
+// is selected by the `?schema=cms` search path in CMS_DATABASE_URL, so nothing
+// here can touch identity, catalogue, or commerce tables.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Interim admin identity (defers to Codex B1-003 / /api/v1/admin/auth) -----
+
+enum AdminRole {
+  OWNER
+  ADMINISTRATOR
+  RESTRICTED_STAFF
+}
+
+enum AdminUserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+model AdminUser {
+  id           String          @id @default(uuid()) @db.Uuid
+  email        String          @unique(map: "cms_admin_users_email_key") @db.VarChar(320)
+  name         String          @db.VarChar(120)
+  passwordHash String          @map("password_hash") @db.VarChar(255)
+  role         AdminRole       @default(RESTRICTED_STAFF)
+  status       AdminUserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?       @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sessions     AdminSession[]
+
+  @@index([status], map: "cms_admin_users_status_idx")
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id          String    @id @default(uuid()) @db.Uuid
+  adminUserId String    @map("admin_user_id") @db.Uuid
+  tokenHash   String    @unique(map: "cms_admin_sessions_token_hash_key") @map("token_hash") @db.VarChar(128)
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  user        AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, revokedAt, expiresAt], map: "cms_admin_sessions_user_state_idx")
+  @@index([expiresAt], map: "cms_admin_sessions_expires_at_idx")
+  @@map("admin_sessions")
+}
+
+model AuditEvent {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @map("actor_id") @db.Uuid
+  actorEmail   String?  @map("actor_email") @db.VarChar(320)
+  action       String   @db.VarChar(80)
+  resourceType String   @map("resource_type") @db.VarChar(80)
+  resourceId   String?  @map("resource_id") @db.VarChar(120)
+  summary      String   @db.VarChar(500)
+  before       Json?    @db.JsonB
+  after        Json?    @db.JsonB
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([resourceType, resourceId, createdAt], map: "cms_audit_events_resource_idx")
+  @@index([actorId, createdAt], map: "cms_audit_events_actor_idx")
+  @@index([createdAt], map: "cms_audit_events_created_at_idx")
+  @@map("audit_events")
+}
+
+// --- Shared content lifecycle -------------------------------------------------
+
+enum ContentStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+// --- Announcements (site-wide bar) --------------------------------------------
+
+enum AnnouncementTone {
+  DEFAULT
+  INFO
+  SUCCESS
+  WARNING
+}
+
+model Announcement {
+  id          String           @id @default(uuid()) @db.Uuid
+  message     String           @db.VarChar(280)
+  href        String?          @db.VarChar(500)
+  linkLabel   String?          @map("link_label") @db.VarChar(80)
+  tone        AnnouncementTone @default(DEFAULT)
+  status      ContentStatus    @default(DRAFT)
+  startsAt    DateTime?        @map("starts_at") @db.Timestamptz(3)
+  endsAt      DateTime?        @map("ends_at") @db.Timestamptz(3)
+  sortOrder   Int              @default(0) @map("sort_order")
+  publishedAt DateTime?        @map("published_at") @db.Timestamptz(3)
+  createdById String?          @map("created_by_id") @db.Uuid
+  updatedById String?          @map("updated_by_id") @db.Uuid
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime?        @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([status, deletedAt, sortOrder], map: "cms_announcements_status_idx")
+  @@map("announcements")
+}
+
+// --- Editable pages (About, FAQ, policies, …) ---------------------------------
+
+model ContentPage {
+  id              String        @id @default(uuid()) @db.Uuid
+  slug            String        @unique(map: "cms_content_pages_slug_key") @db.VarChar(120)
+  title           String        @db.VarChar(200)
+  status          ContentStatus @default(DRAFT)
+  // Structured blocks: [{ type: 'heading'|'paragraph'|'list'|'faq'|'richtext', ... }]
+  body            Json          @default("[]") @db.JsonB
+  seoTitle        String?       @map("seo_title") @db.VarChar(200)
+  seoDescription  String?       @map("seo_description") @db.VarChar(400)
+  socialImageUrl  String?       @map("social_image_url") @db.VarChar(500)
+  scheduledFor    DateTime?     @map("scheduled_for") @db.Timestamptz(3)
+  publishedAt     DateTime?     @map("published_at") @db.Timestamptz(3)
+  createdById     String?       @map("created_by_id") @db.Uuid
+  updatedById     String?       @map("updated_by_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([status, deletedAt], map: "cms_content_pages_status_idx")
+  @@map("content_pages")
+}
+
+// --- Homepage sections (hero, featured, banners, …) ---------------------------
+
+model HomepageSection {
+  id           String        @id @default(uuid()) @db.Uuid
+  key          String        @unique(map: "cms_homepage_sections_key_key") @db.VarChar(80)
+  type         String        @db.VarChar(40)
+  title        String?       @db.VarChar(200)
+  subtitle     String?       @db.VarChar(400)
+  body         Json          @default("{}") @db.JsonB
+  mediaUrl     String?       @map("media_url") @db.VarChar(500)
+  ctaLabel     String?       @map("cta_label") @db.VarChar(80)
+  ctaHref      String?       @map("cta_href") @db.VarChar(500)
+  status       ContentStatus @default(DRAFT)
+  sortOrder    Int           @default(0) @map("sort_order")
+  scheduledFor DateTime?     @map("scheduled_for") @db.Timestamptz(3)
+  publishedAt  DateTime?     @map("published_at") @db.Timestamptz(3)
+  createdById  String?       @map("created_by_id") @db.Uuid
+  updatedById  String?       @map("updated_by_id") @db.Uuid
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime?     @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([status, deletedAt, sortOrder], map: "cms_homepage_sections_status_idx")
+  @@map("homepage_sections")
+}
+
+// --- Navigation, footer, social (one table, grouped) --------------------------
+
+enum NavGroup {
+  PRIMARY
+  FOOTER
+  SOCIAL
+}
+
+model NavLink {
+  id          String        @id @default(uuid()) @db.Uuid
+  group       NavGroup
+  label       String        @db.VarChar(80)
+  href        String        @db.VarChar(500)
+  icon        String?       @db.VarChar(40)
+  columnKey   String?       @map("column_key") @db.VarChar(40)
+  status      ContentStatus @default(PUBLISHED)
+  sortOrder   Int           @default(0) @map("sort_order")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([group, status, deletedAt, sortOrder], map: "cms_nav_links_group_idx")
+  @@map("nav_links")
+}
+
+// --- Per-route SEO overrides --------------------------------------------------
+
+model SeoEntry {
+  id             String   @id @default(uuid()) @db.Uuid
+  routePath      String   @unique(map: "cms_seo_entries_route_key") @map("route_path") @db.VarChar(200)
+  title          String?  @db.VarChar(200)
+  description    String?  @db.VarChar(400)
+  socialImageUrl String?  @map("social_image_url") @db.VarChar(500)
+  canonicalUrl   String?  @map("canonical_url") @db.VarChar(500)
+  noindex        Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("seo_entries")
+}
+
+// --- Redirects ----------------------------------------------------------------
+
+model Redirect {
+  id         String   @id @default(uuid()) @db.Uuid
+  fromPath   String   @unique(map: "cms_redirects_from_key") @map("from_path") @db.VarChar(500)
+  toPath     String   @map("to_path") @db.VarChar(500)
+  statusCode Int      @default(301) @map("status_code")
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("redirects")
+}
+
+// --- Studio Guide content -----------------------------------------------------
+
+enum StudioGuideKind {
+  INTRO
+  SUGGESTED_QUESTION
+  KNOWLEDGE
+}
+
+model StudioGuideEntry {
+  id        String          @id @default(uuid()) @db.Uuid
+  kind      StudioGuideKind
+  question  String?         @db.VarChar(300)
+  body      String          @db.Text
+  status    ContentStatus   @default(DRAFT)
+  sortOrder Int             @default(0) @map("sort_order")
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime?       @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([kind, status, deletedAt, sortOrder], map: "cms_studio_guide_kind_idx")
+  @@map("studio_guide_entries")
+}
+
+// --- Site settings / flags / maintenance / business details -------------------
+// Key/value with a typed accessor layer in src/settings.ts.
+
+model SiteSetting {
+  key         String   @id @db.VarChar(80)
+  value       Json     @db.JsonB
+  description String?  @db.VarChar(400)
+  updatedById String?  @map("updated_by_id") @db.Uuid
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("site_settings")
+}
+
+// --- Media library ------------------------------------------------------------
+
+model MediaAsset {
+  id          String    @id @default(uuid()) @db.Uuid
+  url         String    @db.VarChar(500)
+  filename    String    @db.VarChar(200)
+  mimeType    String    @map("mime_type") @db.VarChar(120)
+  sizeBytes   Int       @map("size_bytes")
+  width       Int?
+  height      Int?
+  alt         String?   @db.VarChar(300)
+  createdById String?   @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([deletedAt, createdAt], map: "cms_media_assets_idx")
+  @@map("media_assets")
+}

@@ -1,21 +1,33 @@
 /**
- * Mock staff authentication for the preview admin console. There is no admin
- * auth backend yet (no real staff accounts, roles or SSO), so this models a
- * **demo staff session** entirely client-side:
- *
- * - Sign-in validates the email/password *shape* only; with nothing to check
- *   credentials against, any well-formed sign-in starts a demo session. The UI
- *   says so plainly.
- * - The session is a `{ email, name }` object in `localStorage`, **no password
- *   is ever stored**.
- *
- * Replace with real staff auth + role-based access control (RBAC) and an
- * httpOnly session cookie once the admin auth API lands (TMS-FBR-006).
+ * Staff authentication for the admin console. Backed by a **real server session**
+ * (httpOnly cookie) issued by the CMS auth routes (`/api/cms/auth/*`), which
+ * authenticate against `cms.admin_users` with hashed passwords and enforce
+ * role-based permissions server-side. This is the interim admin identity until
+ * Codex's admin auth + granular RBAC (TMS-FBR-006 / B1-003) lands, at which point
+ * these routes proxy `/api/v1/admin/auth`.
  */
 
-export interface StaffUser {
+/** A permission code the server grants per role (mirrors @tms/site-content). */
+export type Permission =
+  | 'content.read'
+  | 'content.write'
+  | 'content.publish'
+  | 'content.delete'
+  | 'settings.read'
+  | 'settings.write'
+  | 'staff.read'
+  | 'staff.write'
+  | 'audit.read'
+  | 'media.write';
+
+export type AdminRole = 'OWNER' | 'ADMINISTRATOR' | 'RESTRICTED_STAFF';
+
+export interface AdminIdentity {
+  id: string;
   email: string;
   name: string;
+  role: AdminRole;
+  permissions: Permission[];
 }
 
 export type AuthErrors = Record<string, string>;
@@ -53,26 +65,53 @@ export function validateLogin(input: LoginInput): AuthErrors {
   return errors;
 }
 
-// --- Persistence ---------------------------------------------------------------
+export function hasPermission(identity: AdminIdentity | null, permission: Permission): boolean {
+  return identity?.permissions.includes(permission) ?? false;
+}
 
-const SESSION_KEY = 'tms.admin.session.v1';
+// --- Server session API --------------------------------------------------------
 
-export function readStaffSession(): StaffUser | null {
-  if (typeof window === 'undefined') return null;
+export interface LoginResult {
+  ok: boolean;
+  identity?: AdminIdentity;
+  error?: string;
+}
+
+/** Authenticate against the server; the session cookie is set by the response. */
+export async function apiLogin(input: LoginInput): Promise<LoginResult> {
   try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as StaffUser) : null;
+    const res = await fetch('/api/cms/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      identity?: AdminIdentity;
+      error?: string;
+    };
+    if (!res.ok) return { ok: false, error: data.error ?? 'Sign in failed.' };
+    return { ok: true, identity: data.identity };
   } catch {
-    return null;
+    return { ok: false, error: 'Network error. Please try again.' };
   }
 }
 
-export function writeStaffSession(user: StaffUser | null): void {
-  if (typeof window === 'undefined') return;
+export async function apiLogout(): Promise<void> {
   try {
-    if (user) window.localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    else window.localStorage.removeItem(SESSION_KEY);
+    await fetch('/api/cms/auth/logout', { method: 'POST' });
   } catch {
-    // storage unavailable, session still works for this tab
+    // best effort; the cookie is cleared server-side
+  }
+}
+
+/** Hydrate the current session from the cookie, or null if signed out. */
+export async function apiSession(): Promise<AdminIdentity | null> {
+  try {
+    const res = await fetch('/api/cms/auth/session', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { identity: AdminIdentity | null };
+    return data.identity;
+  } catch {
+    return null;
   }
 }

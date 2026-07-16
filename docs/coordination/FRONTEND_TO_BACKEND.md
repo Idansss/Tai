@@ -282,4 +282,44 @@ lead time; pre-order production starts at the drop's release). This is a **front
 - Suggested fallback: keep `lib/fulfilment.ts` + `MadeToOrderNote` as the presentation; swap the
   computed window for the server estimate on delivery.
 
-_No further requests yet. Add here as F1+ surfaces need contracts._
+## Request TMS-FBR-009 — Admin control-centre: writes, operations & RBAC [admin build-out]
+
+The admin is being turned into a full control centre (see
+`docs/admin/SITE_ADMIN_CONTROL_MAP.md`). Editable **website content** is now served by a
+frontend-owned CMS (`@tms/site-content`, `cms` Postgres schema) with real persistence, server-side
+RBAC and audit — **no backend endpoint needed** for that half. The **commerce & operations** half
+below is Codex-owned; the admin UI exists on the typed provider seam and needs these write/action
+endpoints to become live. Money in **minor units + currency**; statuses as `@tms/contracts` enums;
+every mutation must record **actor, action, resource, reason, correlation ID** and be
+permission-checked server-side.
+
+- **Admin auth + granular RBAC (B1-003 / TMS-FBR-006).** `POST /api/v1/admin/auth/login|logout`,
+  `GET /api/v1/admin/auth/session` returning `{ user, roles[], permissions[] }`. The CMS currently
+  runs an **interim** cookie session (`cms.admin_users`, roles Owner/Administrator/Restricted staff)
+  that the admin will delegate to this service on delivery. Please expose a permission list the
+  frontend can read so both consoles gate identically.
+- **Orders & payments (B4-003 / B5-001).** Fulfilment actions as real endpoints: production-asset
+  fetch, packing slip, notification resend, **refund** (`POST …/orders/{ref}/refunds`), return.
+  Internal notes `GET/POST/DELETE /api/v1/admin/orders/{ref}/notes` (today localStorage).
+- **Production / QC / fulfilment (B6-001).** Audited state-machine transitions
+  `POST /api/v1/admin/orders/{ref}/transitions { to, reason }` (move-to-production, print, QC
+  pass/reprint, dispatch, delivered, exception/retry) + **per-line** QC results and print files.
+- **Catalogue writes (B2).** Artwork upload + async processing + publish/schedule/archive/unpublish;
+  mockup approval `PATCH …/mockups/{id}`; garment create/edit (colours, sizes, size chart, print
+  areas, placement rules, price, media) + activate/archive/restore; **per-colour×size stock
+  adjustments** `PATCH …/garments/{id}/variants/{colourId}/{size}` (append-only movements).
+- **Inventory (B4-001).** Stock adjustments + low-stock alerts feed the garment inventory matrix and
+  the storefront per-colour×size availability (pairs with TMS-FBR-002).
+- **Growth (B7-001).** Promotions/discounts CRUD; waitlists list + notify; pre-orders/limited-drop
+  reservations; **reviews & community moderation** (approve/reject/hide) with an audited queue.
+- **Admin read + exports (B6-002).** Paginated, permission-scoped metrics / customers / orders /
+  payments / integration views; safe CSV export (escaped); the **error centre** stays safe by
+  construction (correlation IDs + resolution state only — never stack traces, payloads or secrets).
+- **AI drafts & approval (B7-002/003).** Draft store with provider/model/template/input/output/edit/
+  approval/cost metadata; public use requires approval; feature-flagged.
+
+Blocking: no (each admin surface runs on the mock provider until its endpoint lands; the CMS content
+surfaces are already live). Suggested fallback: keep the `AdminDataProvider` interface + view-model
+shapes and flip `adminDataProvider` from `mockAdminProvider` to `apiProvider` (env switch wired).
+
+_Add here as further admin surfaces need contracts._

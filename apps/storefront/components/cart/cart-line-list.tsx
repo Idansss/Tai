@@ -3,7 +3,8 @@
 import { Price, cn } from '@tms/ui';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
+import { garmentColourHex, ShirtMockup } from '@/components/product/shirt-mockup';
 import type { CartItem } from '@/lib/cart';
 import { MAX_LINE_QUANTITY } from '@/lib/cart';
 import { useCart } from './cart-provider';
@@ -50,17 +51,36 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
         const href = item.href ?? `/products/${item.productSlug}`;
         return (
           <li key={item.id} className={cn('flex gap-4', compact ? 'py-4' : 'py-6')}>
-            {/* Framed plate stand-in for the configured piece. */}
             <Link
               href={href}
               aria-hidden
               tabIndex={-1}
               className={cn(
-                'shrink-0 overflow-hidden rounded-md border border-line bg-canvas-2',
+                'shrink-0 overflow-hidden rounded-md border border-line bg-[radial-gradient(circle_at_top,#f4f1eb,#d9d5cc)]',
                 compact ? 'size-16' : 'size-20',
               )}
             >
-              <ArtworkVisual seed={item.productSlug} title={item.artworkTitle} />
+              <ShirtMockup
+                colourHex={garmentColourHex(item.colour)}
+                view={item.view === 'back' ? 'back' : 'front'}
+                garment={item.garment}
+                print={{
+                  x: item.printX,
+                  y: item.printY,
+                  widthPct: item.printWidth,
+                  cropZoom: item.cropZoom,
+                  cropX: item.cropX,
+                  cropY: item.cropY,
+                  artwork: (
+                    <ArtworkMedia
+                      src={item.artworkSlug ? `/artworks/${item.artworkSlug}.jpg` : null}
+                      seed={item.artworkSlug ?? item.productSlug}
+                      title={item.artworkTitle}
+                      className="object-contain"
+                    />
+                  ),
+                }}
+              />
             </Link>
 
             <div className="min-w-0 flex-1">

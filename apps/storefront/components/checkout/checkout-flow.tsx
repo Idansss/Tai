@@ -1,11 +1,21 @@
 'use client';
 
-import { Alert, EmptyState, Heading, Price, SectionIndex, Select, Skeleton, Text, cn } from '@tms/ui';
+import {
+  Alert,
+  EmptyState,
+  Heading,
+  Price,
+  SectionIndex,
+  Select,
+  Skeleton,
+  Text,
+  cn,
+} from '@tms/ui';
 import { Lock, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from '@/components/account/auth-provider';
+import { useRequireAuth } from '@/components/account/use-require-auth';
 import { useCart } from '@/components/cart/cart-provider';
 import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import type { DeliveryOption } from '@/lib/data';
@@ -55,7 +65,9 @@ const inputClass =
 
 export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOption[] }) {
   const { items, ready, subtotalMinor, estimatedTotalMinor, promotion } = useCart();
-  const { user } = useAuth();
+  // Checkout requires a signed-in account. Guests are redirected to sign in and
+  // returned here; the bag persists locally so it's intact on their return.
+  const { user, ready: authReady } = useRequireAuth('/checkout');
   const router = useRouter();
   const [form, setForm] = useState<CheckoutForm>(EMPTY_CHECKOUT_FORM);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -127,12 +139,32 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
     router.push('/checkout/payment');
   }
 
-  if (!ready) {
+  if (!ready || !authReady) {
     return (
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <Skeleton className="h-96 w-full" />
         <Skeleton className="h-72 w-full" />
       </div>
+    );
+  }
+
+  // Signed out: useRequireAuth is redirecting to sign in; show a clear interim
+  // state (with a manual link) rather than the checkout form.
+  if (!user) {
+    return (
+      <EmptyState
+        icon={<Lock className="size-6" aria-hidden />}
+        title="Sign in to check out"
+        description="Your bag is saved. Sign in and you'll come straight back here to complete your order."
+        action={
+          <Link
+            href="/login?next=/checkout"
+            className="inline-flex h-11 items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          >
+            Sign in to continue
+          </Link>
+        }
+      />
     );
   }
 

@@ -4,6 +4,7 @@ import { AuthProvider } from '@/components/account/auth-provider';
 import { WishlistProvider } from '@/components/account/wishlist-provider';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { CartProvider } from '@/components/cart/cart-provider';
+import { AnnouncementBar } from '@/components/site/announcement-bar';
 import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
 import './globals.css';
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WishlistProvider>
             <CartProvider>
               <div className="flex min-h-dvh flex-col">
+                <AnnouncementBar />
                 <SiteHeader />
                 <main id="main" className="flex-1">
                   {children}

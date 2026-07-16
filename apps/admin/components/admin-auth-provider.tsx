@@ -2,47 +2,63 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  type StaffUser,
-  nameFromEmail,
-  normalizeEmail,
-  readStaffSession,
-  writeStaffSession,
+  apiLogin,
+  apiLogout,
+  apiSession,
+  hasPermission,
+  type AdminIdentity,
+  type LoginInput,
+  type Permission,
 } from '@/lib/admin-auth';
 
 interface AdminAuthContextValue {
-  user: StaffUser | null;
-  /** True once the session has hydrated from storage. */
+  user: AdminIdentity | null;
+  /** True once the session has been checked with the server. */
   ready: boolean;
-  /** Start a demo staff session (no real credential check, preview only). */
-  login: (input: { email: string }) => void;
-  logout: () => void;
+  /** Authenticate against the server; returns an error message on failure. */
+  login: (input: LoginInput) => Promise<string | null>;
+  logout: () => Promise<void>;
+  can: (permission: Permission) => boolean;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<StaffUser | null>(null);
+  const [user, setUser] = useState<AdminIdentity | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setUser(readStaffSession());
-    setReady(true);
+    let active = true;
+    void apiSession().then((identity) => {
+      if (active) {
+        setUser(identity);
+        setReady(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const login = useCallback(({ email }: { email: string }) => {
-    const staff: StaffUser = { email: normalizeEmail(email), name: nameFromEmail(email) };
-    writeStaffSession(staff);
-    setUser(staff);
+  const login = useCallback(async (input: LoginInput): Promise<string | null> => {
+    const result = await apiLogin(input);
+    if (result.ok && result.identity) {
+      setUser(result.identity);
+      return null;
+    }
+    return result.error ?? 'Sign in failed.';
   }, []);
 
-  const logout = useCallback(() => {
-    writeStaffSession(null);
+  const logout = useCallback(async () => {
+    await apiLogout();
     setUser(null);
   }, []);
 
+  const can = useCallback((permission: Permission) => hasPermission(user, permission), [user]);
+
   const value = useMemo<AdminAuthContextValue>(
-    () => ({ user, ready, login, logout }),
-    [user, ready, login, logout],
+    () => ({ user, ready, login, logout, can }),
+    [user, ready, login, logout, can],
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
