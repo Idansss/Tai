@@ -72,41 +72,44 @@ export async function seed(): Promise<void> {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
   try {
-    await prisma.$transaction(async (transaction) => {
-      for (const [code, resource, action, description] of permissionSeeds) {
-        await transaction.permission.upsert({
-          where: { code },
-          update: { resource, action, description },
-          create: { code, resource, action, description },
-        });
-      }
+    await prisma.$transaction(
+      async (transaction) => {
+        for (const [code, resource, action, description] of permissionSeeds) {
+          await transaction.permission.upsert({
+            where: { code },
+            update: { resource, action, description },
+            create: { code, resource, action, description },
+          });
+        }
 
-      const permissionRecords = await transaction.permission.findMany({
-        where: { code: { in: [...allPermissionCodes] } },
-        select: { id: true, code: true },
-      });
-      const permissionIds = new Map(permissionRecords.map(({ code, id }) => [code, id]));
-
-      for (const roleSeed of roleSeeds) {
-        const role = await transaction.role.upsert({
-          where: { code: roleSeed.code },
-          update: { name: roleSeed.name, description: roleSeed.description, isSystem: true },
-          create: { code: roleSeed.code, name: roleSeed.name, description: roleSeed.description },
-          select: { id: true },
+        const permissionRecords = await transaction.permission.findMany({
+          where: { code: { in: [...allPermissionCodes] } },
+          select: { id: true, code: true },
         });
+        const permissionIds = new Map(permissionRecords.map(({ code, id }) => [code, id]));
 
-        await transaction.rolePermission.deleteMany({ where: { roleId: role.id } });
-        await transaction.rolePermission.createMany({
-          data: roleSeed.permissionCodes.map((permissionCode) => {
-            const permissionId = permissionIds.get(permissionCode);
-            if (!permissionId) {
-              throw new Error(`Missing seeded permission: ${permissionCode}`);
-            }
-            return { roleId: role.id, permissionId };
-          }),
-        });
-      }
-    });
+        for (const roleSeed of roleSeeds) {
+          const role = await transaction.role.upsert({
+            where: { code: roleSeed.code },
+            update: { name: roleSeed.name, description: roleSeed.description, isSystem: true },
+            create: { code: roleSeed.code, name: roleSeed.name, description: roleSeed.description },
+            select: { id: true },
+          });
+
+          await transaction.rolePermission.deleteMany({ where: { roleId: role.id } });
+          await transaction.rolePermission.createMany({
+            data: roleSeed.permissionCodes.map((permissionCode) => {
+              const permissionId = permissionIds.get(permissionCode);
+              if (!permissionId) {
+                throw new Error(`Missing seeded permission: ${permissionCode}`);
+              }
+              return { roleId: role.id, permissionId };
+            }),
+          });
+        }
+      },
+      { maxWait: 30_000, timeout: 60_000 },
+    );
   } finally {
     await prisma.$disconnect();
   }

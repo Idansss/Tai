@@ -145,3 +145,19 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Editions expose `name`, optional positive `totalQuantity`, `numbered`, lifecycle `status`, and `releasedAt`; numbered editions require a total quantity. `limitedEdition=true` means at least one published edition exists.
 - Stories expose optional `artworkId` or `collectionId` (never both), lifecycle fields, and ordered blocks with type `TEXT`, `IMAGE`, `QUOTE`, or `EMBED` plus object-shaped `content`.
 - Media URLs/previews remain TMS-B2-004. Garment templates/variants/compatibility remain TMS-B2-003. Waitlists, preorder behavior, purchase limits, and inventory are not implied by a drop or edition and remain later commerce/growth work.
+
+## 2026-07-16 — TMS-B2-003 approved garment canvases
+
+- Status: implemented on `codex/b2-garment-catalogue`; consume after its focused PR is merged.
+- Compatibility: additive. Existing artwork, catalogue, authentication, access, and health operations remain stable. The public error catalogue adds `CONFIGURATION_NOT_APPROVED` for an invalid exact tuple.
+- Public operations:
+  - `GET /api/v1/garments?cursor=<uuid>&limit=20&type=<GarmentType>`
+  - `GET /api/v1/garments/:slug`
+  - `GET /api/v1/artworks/:slug/compatible-garments`
+  - `POST /api/v1/garment-configurations/validate`
+- Administrator operations live under `/api/v1/admin/garments`. Reads require `catalogue.read`; mutations require `catalogue.write`. They cover template create/read/update/delete plus nested colours, measured sizes, colour/size SKU variants, normalized view placements, scale presets, and exact artwork-version compatibility decisions.
+- Garment types are `CLASSIC_TSHIRT`, `OVERSIZED_TSHIRT`, `LONG_SLEEVE`, `HOODIE`, `SWEATSHIRT`, `TOTE_BAG`, `CAP`, and `ART_PRINT`. Views are `FRONT`, `BACK`, `LEFT`, and `RIGHT`.
+- Public garment records contain only published colours, sizes/measurements, variants, placements, and scale presets. Normalized placement coordinates use integer permille values in a 1000-by-1000 canvas; `printWidthMm` and `printHeightMm` preserve physical output dimensions.
+- Compatibility is approved against an exact immutable `artworkVersionId`, a template, and an allowlist of published placement IDs. Publishing a replacement artwork version does not inherit the prior version's approval. Published template structure cannot change until the template is archived; leaving publication archives its current approvals.
+- Configuration validation requires `{ artworkVersionId, garmentVariantId, placementId, scalePreset, view, quantity? }` and returns the resolved IDs with `valid: true`. Treat `422 CONFIGURATION_NOT_APPROVED` as an unavailable selection and refresh compatibility; never infer compatibility client-side.
+- Inventory quantities, stock status, price, and reservations remain TMS-B4. Media URLs, artwork originals, derivatives, and mockups remain TMS-B2-004. Continue typed adapters for those absent fields.

@@ -2,17 +2,17 @@
 
 ## Current backend phase
 
-B2 — Artwork and catalogue is active. TMS-B2-001 is Verified and merged. TMS-B2-002 is Verified locally on `codex/b2-catalogue-content`; its focused PR, CI, and merge are pending. The next dependency-ready task after merge is TMS-B2-003.
+B2 — Artwork and catalogue is active. TMS-B2-001 and TMS-B2-002 are Verified and merged. TMS-B2-003 is fully implemented and locally validated on `codex/b2-garment-catalogue`; its focused PR and CI are pending.
 
 ## Work completed
 
-The B0 foundation and all B1 identity/customer/admin authentication work are Verified and merged. TMS-B2-001 establishes `Artwork` as the stable creative root and ordered immutable `ArtworkVersion` snapshots with database-enforced immutability and exact publication.
+TMS-B2-003 adds approved blank-garment canvases without weakening the artwork-first catalogue. Garment templates own colours, measured sizes, colour/size SKU variants, normalized view placements, and scale presets. Compatibility approval binds an exact immutable published artwork version to one published garment template and an explicit placement allowlist. A replacement artwork version never inherits an older version's approval.
 
-TMS-B2-002 adds normalized typed tags, curated collections, timed drops, limited-edition declarations, and ordered-block editorial stories around artwork roots. Public collection/drop/story reads and canonical artwork search expose only published containers, published artwork roots, exact published versions, and published editions. Artwork search composes narrative text, collection, drop, tag, theme, mood, colour-family, and limited-edition filters with cursor pagination. Administrator CRUD and artwork associations require `catalogue.read` or `catalogue.write` and successful mutations append audit evidence.
+Published garment structure is locked until the template leaves publication. Leaving publication archives approved compatibility decisions so structural edits and republication require fresh approval. Public configuration validation accepts only an exact published artwork version, published template/variant/colour/size, published placement/view/scale, and approved exact-version compatibility. Inventory quantities remain variant-based deferred scope.
 
 ## Tasks verified
 
-TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 through TMS-B2-002.
+TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 through TMS-B2-002. TMS-B2-003 remains unchecked until focused PR CI passes.
 
 ## Merge record
 
@@ -21,55 +21,50 @@ TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 thr
 - PR #10: `88801c1374415eddf318a95e56ac3be7ab864c98`, CI 29464793865.
 - PR #11: `30bd5c087baf0f9b281f5422d43e5c54e26ace94`, CI 29467786313.
 - PR #12: `daae9f37ea6119fdf8d4cc387fdd701d80a2de6c`, CI 29483761718.
+- PR #13: `ce8bca4f7e7866cee698a77c9a94319418e8ca8a`, CI 29489686858.
 
 ## Next task
 
-Commit and publish the focused TMS-B2-002 branch, open its PR, resolve CI, and squash-merge it when clean and green. Then branch from the latest `main`, record the TMS-B2-002 merge evidence, mark TMS-B2-003 In progress, and implement garment templates, colours, sizes, variants, size charts, placements, and approved artwork/garment compatibility.
+Publish TMS-B2-003, resolve its CI, mark it Verified, and merge it. Then start TMS-B2-004 media ingestion and derivative processing from the latest `main`.
 
 ## API contracts added or changed
 
-`GET /api/v1/artworks` now accepts `q`, `collection`, `drop`, `tag`, `theme`, `mood`, `colourFamily`, `limitedEdition`, and `sort=newest` in addition to cursor pagination. Search records add typed `tags`, published `collections`, published `drops`, and published `editions` while preserving the exact `publishedVersion`.
+Four public operations add published garment list/detail, exact published-artwork-version compatible garments, and exact configuration validation. Twenty-two administrator operations under `/api/v1/admin/garments` manage templates, colours, sizes/measurements, variants, placements, scale presets, and exact artwork-version compatibility. Administrator reads require `catalogue.read`; mutations require `catalogue.write`.
 
-New public cursor-list/detail routes are `/api/v1/collections`, `/api/v1/drops`, and `/api/v1/stories`. New administrator operations under `/api/v1/admin/catalogue` cover tags, collections, drops, editions, stories, and tag/collection/drop artwork associations. Reads require `catalogue.read`; mutations require `catalogue.write`. The static OpenAPI source and `packages/contracts` are aligned. The compiled runtime now uses the same stable operation IDs as all 65 static operations.
+The shared contract adds garment types/views/lifecycle entities and inputs plus `CONFIGURATION_NOT_APPROVED`. Static OpenAPI and compiled runtime Swagger match at 68 paths and 91 stable operation IDs with both session-cookie schemes.
 
-## Database migrations
+## Database migration
 
-Migrations `20260714142500_identity_foundation`, `20260716015000_admin_authentication`, and `20260716030500_artwork_versioning` are merged. Verified migration `20260716084000_catalogue_content` adds tags/artwork joins, collections/ordered members, drops/ordered members, editions, stories, and ordered story blocks. Checks enforce lifecycle timestamps, drop windows, edition quantity rules, optional single story ownership, object block content, and deterministic non-negative positions. The persistence suite deploys all four migrations and seeds twice.
+`20260716112000_garment_catalogue` adds nine garment and compatibility tables, enum types, foreign keys, indexes, checks, and membership triggers. Geometry is normalized to a 1000-by-1000 integer canvas while physical print dimensions remain positive millimetres. Compatibility references `ArtworkVersion`, not the mutable `Artwork` root. The persistence suite deploys all five migrations and seeds twice.
 
 ## Environment variables added
 
-TMS-B2-002 adds no environment variables.
+None.
 
 ## Files changed
 
-The slice changes backend API/database code and tests, the shared contract package, OpenAPI, backend/contract documentation, coordination/TODO/handoff/state ledgers, and an API-only Vitest resource-bound configuration. It makes a minimal compatible operation-ID correction in backend auth/admin-auth/health decorators after compiled Swagger exposed pre-existing drift. It does not modify frontend-owned implementation, UI packages, frontend documentation, or frontend state.
+Only backend-owned API/database code and tests, shared contracts/OpenAPI, backend/contract/coordination documentation, TODO/handoff/state ledgers, and the existing backend seed's bounded transaction configuration. No frontend-owned implementation, frontend documentation, UI package, or frontend state file was modified.
 
-## Commands run
+## Commands and results
 
-`pnpm check`, targeted/full API tests, direct database integration tests, contract tests/build, API/database lint/type checks/builds, `pnpm install --frozen-lockfile`, `docker compose -f infra/docker-compose.yml config --quiet`, `corepack pnpm@11.13.0 --pm-on-fail=ignore audit --audit-level high --prod`, static OpenAPI YAML/reference/operation validation, and compiled runtime Swagger/static parity validation.
-
-## Test results
-
-The final exact `pnpm check` passes formatting, linting, strict type checking, every workspace test, all production builds, and Prisma validation. The API has 47 passing tests across 11 files; six catalogue HTTP/PostgreSQL scenarios cover RBAC, CRUD, filters, lifecycle/privacy, constraints, safe failures, and audits. The database package has six tests applying four migrations and directly checking catalogue constraints/indexes. Static OpenAPI reports 51 paths, 65 unique operations, and 376 resolved references. Compiled runtime Swagger reports the same 51 paths and 65 operation IDs with both session-cookie schemes.
-
-Frozen install and Compose validation pass. The high-severity production audit exits successfully with one moderate advisory reported below the configured failure threshold.
+The exact `pnpm check` passes formatting, all workspace lint/type/test suites, all production builds, and Prisma validation. The API has 53 passing tests across 12 files; the database package has seven passing tests. `pnpm install --frozen-lockfile`, Compose validation, high-severity production audit, static OpenAPI YAML/reference/operation validation, and compiled Swagger/static parity pass. The audit reports one moderate advisory below the configured failure threshold.
 
 ## Known defects and deferred scope
 
-Readiness still reports process readiness only. Authentication throttling remains process-local and must move to Redis before horizontal scaling. MFA encryption needs multi-key rotation before changing the production key. TMS-B2-003 owns garment configuration/compatibility; TMS-B2-004 owns exact-version media ingestion and derivatives. Drops/editions in this slice do not imply waitlists, preorder rules, purchase limits, or inventory.
+Readiness still reports process readiness only. Authentication throttling remains process-local and must move to Redis before horizontal scaling. MFA encryption needs multi-key rotation before changing the production key. TMS-B2-004 owns exact-version media originals, derivatives, previews, mockups, and approval. TMS-B4-001 owns garment inventory quantities, movements, alerts, and reservations.
 
 ## Blockers
 
-No TMS-B2-002 blocker remains. Live Flutterwave and GIGL verification will remain credential-blocked in B5.
+No implementation blocker remains. TMS-B2-003 requires focused PR CI before verification. Live Flutterwave and GIGL verification remains credential-blocked later in B5.
 
 ## Requests for Claude Code
 
-Continue to own the frontend directories identified by `AGENTS.md`. Consume the TMS-B2-002 contract only after its focused PR merges. Catalogue discovery/editorial fields are ready; continue typed mocks for garment compatibility and media fields until TMS-B2-003/TMS-B2-004. Do not synthesize those missing domains from generic artwork metadata.
+Continue to own the frontend directories identified by `AGENTS.md`. Consume the TMS-B2-003 contract only after its focused PR merges. Use the exact-version compatibility endpoints and treat `422 CONFIGURATION_NOT_APPROVED` as an unavailable selection requiring refresh. Do not infer compatibility, price, stock, or media URLs client-side.
 
 ## Do not redo
 
-Do not recreate B0/B1 foundations, authentication/RBAC, artwork roots/versioning, or TMS-B2-002 catalogue discovery/editorial models and contracts.
+Do not recreate B0/B1 foundations, authentication/RBAC, artwork roots/versioning, catalogue discovery/editorial content, or the garment schema and exact-version compatibility work in this slice.
 
 ## Exact continuation instruction
 
-Publish `codex/b2-catalogue-content`, resolve its focused PR/CI, and squash-merge it when green. Update merge evidence on the next branch, then start TMS-B2-003 from the resulting latest `main` without modifying frontend-owned files.
+Commit and push `codex/b2-garment-catalogue`, open its focused PR, resolve CI, mark TMS-B2-003 Verified, merge it, then continue TMS-B2-004 from current `main` without modifying frontend-owned files.

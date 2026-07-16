@@ -15,6 +15,7 @@ export const errorCodes = [
   'PERMISSION_DENIED',
   'RESOURCE_NOT_FOUND',
   'CONFLICT',
+  'CONFIGURATION_NOT_APPROVED',
   'RATE_LIMITED',
   'IDEMPOTENCY_CONFLICT',
   'INVENTORY_UNAVAILABLE',
@@ -387,12 +388,225 @@ export interface Story {
   archivedAt: string | null;
 }
 
+export const GarmentTypeSchema = z.enum([
+  'CLASSIC_TSHIRT',
+  'OVERSIZED_TSHIRT',
+  'LONG_SLEEVE',
+  'HOODIE',
+  'SWEATSHIRT',
+  'TOTE_BAG',
+  'CAP',
+  'ART_PRINT',
+]);
+export type GarmentType = z.infer<typeof GarmentTypeSchema>;
+
+export const GarmentViewSchema = z.enum(['FRONT', 'BACK', 'LEFT', 'RIGHT']);
+export type GarmentView = z.infer<typeof GarmentViewSchema>;
+
+export const CompatibilityStatusSchema = z.enum(['DRAFT', 'APPROVED', 'ARCHIVED']);
+export type CompatibilityStatus = z.infer<typeof CompatibilityStatusSchema>;
+
+export const GarmentTemplateInputSchema = z.object({
+  slug: ArtworkSlugSchema,
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(10_000).nullable().optional(),
+  type: GarmentTypeSchema,
+  fabric: z.string().trim().max(500).nullable().optional(),
+  fit: z.string().trim().max(500).nullable().optional(),
+  care: z.string().trim().max(10_000).nullable().optional(),
+});
+export type GarmentTemplateInput = z.infer<typeof GarmentTemplateInputSchema>;
+
+export const GarmentTemplateUpdateInputSchema = GarmentTemplateInputSchema.partial()
+  .extend({ status: ArtworkStatusSchema.optional() })
+  .refine((value) => Object.values(value).some((entry) => entry !== undefined), {
+    message: 'At least one garment field is required.',
+  });
+export type GarmentTemplateUpdateInput = z.infer<typeof GarmentTemplateUpdateInputSchema>;
+
+export const GarmentColourInputSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(100),
+  hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  position: z.number().int().nonnegative().default(0),
+  status: ArtworkStatusSchema.optional(),
+});
+export type GarmentColourInput = z.infer<typeof GarmentColourInputSchema>;
+
+export const GarmentMeasurementInputSchema = z.object({
+  key: z
+    .string()
+    .regex(/^[a-z][a-z0-9_]*$/)
+    .max(64),
+  label: z.string().trim().min(1).max(100),
+  valueMm: z.number().int().positive(),
+});
+export const GarmentSizeInputSchema = z.object({
+  code: z.string().trim().min(1).max(32),
+  label: z.string().trim().min(1).max(100),
+  position: z.number().int().nonnegative().default(0),
+  status: ArtworkStatusSchema.optional(),
+  measurements: z.array(GarmentMeasurementInputSchema).max(50).default([]),
+});
+export type GarmentSizeInput = z.infer<typeof GarmentSizeInputSchema>;
+
+export const GarmentVariantInputSchema = z.object({
+  colourId: z.string().uuid(),
+  sizeId: z.string().uuid(),
+  sku: z.string().trim().min(1).max(80),
+  status: ArtworkStatusSchema.optional(),
+});
+export type GarmentVariantInput = z.infer<typeof GarmentVariantInputSchema>;
+
+export const GarmentPlacementInputSchema = z
+  .object({
+    slug: z
+      .string()
+      .trim()
+      .min(1)
+      .max(100)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    name: z.string().trim().min(1).max(100),
+    view: GarmentViewSchema,
+    xPermille: z.number().int().min(0).max(999),
+    yPermille: z.number().int().min(0).max(999),
+    widthPermille: z.number().int().min(1).max(1000),
+    heightPermille: z.number().int().min(1).max(1000),
+    printWidthMm: z.number().int().positive(),
+    printHeightMm: z.number().int().positive(),
+    position: z.number().int().nonnegative().default(0),
+    status: ArtworkStatusSchema.optional(),
+  })
+  .refine((value) => value.xPermille + value.widthPermille <= 1000, {
+    message: 'Placement width exceeds the normalized canvas.',
+    path: ['widthPermille'],
+  })
+  .refine((value) => value.yPermille + value.heightPermille <= 1000, {
+    message: 'Placement height exceeds the normalized canvas.',
+    path: ['heightPermille'],
+  });
+export type GarmentPlacementInput = z.infer<typeof GarmentPlacementInputSchema>;
+
+export const GarmentScalePresetInputSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(100),
+  scalePercent: z.number().int().min(1).max(100),
+  position: z.number().int().nonnegative().default(0),
+  status: ArtworkStatusSchema.optional(),
+});
+export type GarmentScalePresetInput = z.infer<typeof GarmentScalePresetInputSchema>;
+
+export const ArtworkGarmentCompatibilityInputSchema = z
+  .object({
+    status: CompatibilityStatusSchema,
+    placementIds: z.array(z.string().uuid()).max(50).default([]),
+  })
+  .refine((value) => new Set(value.placementIds).size === value.placementIds.length, {
+    message: 'Compatibility placement identifiers must be unique.',
+    path: ['placementIds'],
+  });
+export type ArtworkGarmentCompatibilityInput = z.infer<
+  typeof ArtworkGarmentCompatibilityInputSchema
+>;
+
+export interface GarmentColour extends GarmentColourInput {
+  id: string;
+  templateId: string;
+  status: ArtworkStatus;
+}
+
+export interface GarmentMeasurement {
+  id: string;
+  key: string;
+  label: string;
+  valueMm: number;
+}
+
+export interface GarmentSize {
+  id: string;
+  templateId: string;
+  code: string;
+  label: string;
+  position: number;
+  status: ArtworkStatus;
+  measurements: GarmentMeasurement[];
+}
+
+export interface GarmentVariant extends GarmentVariantInput {
+  id: string;
+  templateId: string;
+  status: ArtworkStatus;
+}
+
+export interface GarmentScalePreset extends GarmentScalePresetInput {
+  id: string;
+  placementId: string;
+  status: ArtworkStatus;
+}
+
+export interface GarmentPlacement extends GarmentPlacementInput {
+  id: string;
+  templateId: string;
+  status: ArtworkStatus;
+  scalePresets: GarmentScalePreset[];
+}
+
+export interface GarmentTemplate extends GarmentTemplateInput {
+  id: string;
+  status: ArtworkStatus;
+  colours: GarmentColour[];
+  sizes: GarmentSize[];
+  variants: GarmentVariant[];
+  placements: GarmentPlacement[];
+  publishedAt: string | null;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ArtworkGarmentCompatibility {
+  id: string;
+  artworkVersionId: string;
+  templateId: string;
+  status: CompatibilityStatus;
+  placements: Array<{ placement: GarmentPlacement }>;
+  template: GarmentTemplate;
+  approvedAt: string | null;
+  archivedAt: string | null;
+}
+
 export const DesignConfigurationInputSchema = z.object({
   artworkVersionId: z.string().uuid(),
   garmentVariantId: z.string().uuid(),
   placementId: z.string().uuid(),
-  scalePreset: z.string().min(1).max(64),
-  view: z.string().min(1).max(64),
+  scalePreset: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  view: GarmentViewSchema,
   quantity: z.number().int().min(1).max(100).default(1),
 });
 export type DesignConfigurationInput = z.infer<typeof DesignConfigurationInputSchema>;
+
+export interface GarmentConfigurationValidation {
+  valid: true;
+  artworkId: string;
+  artworkVersionId: string;
+  garmentTemplateId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+  quantity: number;
+}

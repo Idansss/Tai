@@ -81,32 +81,59 @@ enum StoryBlockType {
   EMBED
 }
 
+enum GarmentType {
+  CLASSIC_TSHIRT
+  OVERSIZED_TSHIRT
+  LONG_SLEEVE
+  HOODIE
+  SWEATSHIRT
+  TOTE_BAG
+  CAP
+  ART_PRINT
+}
+
+enum GarmentView {
+  FRONT
+  BACK
+  LEFT
+  RIGHT
+}
+
+enum CompatibilityStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
 model User {
-  id                     String                   @id @default(uuid()) @db.Uuid
-  email                  String                   @db.VarChar(320)
-  normalizedEmail        String                   @unique(map: "users_normalized_email_key") @map("normalized_email") @db.VarChar(320)
-  passwordHash           String?                  @map("password_hash") @db.VarChar(255)
-  status                 UserStatus               @default(PENDING_VERIFICATION)
-  emailVerifiedAt        DateTime?                @map("email_verified_at") @db.Timestamptz(3)
-  lastLoginAt            DateTime?                @map("last_login_at") @db.Timestamptz(3)
-  createdAt              DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt              DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(3)
-  customerProfile        CustomerProfile?
-  adminProfile           AdminProfile?
-  sessions               Session[]
-  verificationTokens     EmailVerificationToken[]
-  passwordResetTokens    PasswordResetToken[]
-  roleAssignments        UserRole[]               @relation("UserRoleUser")
-  roleAssignmentsCreated UserRole[]               @relation("UserRoleAssignedBy")
-  auditLogs              AuditLog[]               @relation("AuditActor")
-  adminMfaFactor         AdminMfaFactor?
-  adminAuthChallenges    AdminAuthChallenge[]
-  artworksCreated        Artwork[]                @relation("ArtworkCreator")
-  artworkVersionsCreated ArtworkVersion[]         @relation("ArtworkVersionCreator")
-  collectionsCreated     Collection[]             @relation("CollectionCreator")
-  dropsCreated           Drop[]                   @relation("DropCreator")
-  storiesCreated         Story[]                  @relation("StoryCreator")
+  id                             String                        @id @default(uuid()) @db.Uuid
+  email                          String                        @db.VarChar(320)
+  normalizedEmail                String                        @unique(map: "users_normalized_email_key") @map("normalized_email") @db.VarChar(320)
+  passwordHash                   String?                       @map("password_hash") @db.VarChar(255)
+  status                         UserStatus                    @default(PENDING_VERIFICATION)
+  emailVerifiedAt                DateTime?                     @map("email_verified_at") @db.Timestamptz(3)
+  lastLoginAt                    DateTime?                     @map("last_login_at") @db.Timestamptz(3)
+  createdAt                      DateTime                      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                      DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt                      DateTime?                     @map("deleted_at") @db.Timestamptz(3)
+  customerProfile                CustomerProfile?
+  adminProfile                   AdminProfile?
+  sessions                       Session[]
+  verificationTokens             EmailVerificationToken[]
+  passwordResetTokens            PasswordResetToken[]
+  roleAssignments                UserRole[]                    @relation("UserRoleUser")
+  roleAssignmentsCreated         UserRole[]                    @relation("UserRoleAssignedBy")
+  auditLogs                      AuditLog[]                    @relation("AuditActor")
+  adminMfaFactor                 AdminMfaFactor?
+  adminAuthChallenges            AdminAuthChallenge[]
+  artworksCreated                Artwork[]                     @relation("ArtworkCreator")
+  artworkVersionsCreated         ArtworkVersion[]              @relation("ArtworkVersionCreator")
+  collectionsCreated             Collection[]                  @relation("CollectionCreator")
+  dropsCreated                   Drop[]                        @relation("DropCreator")
+  storiesCreated                 Story[]                       @relation("StoryCreator")
+  garmentTemplatesCreated        GarmentTemplate[]             @relation("GarmentTemplateCreator")
+  garmentCompatibilitiesCreated  ArtworkGarmentCompatibility[] @relation("GarmentCompatibilityCreator")
+  garmentCompatibilitiesApproved ArtworkGarmentCompatibility[] @relation("GarmentCompatibilityApprover")
 
   @@index([status, deletedAt], map: "users_status_deleted_at_idx")
   @@index([createdAt], map: "users_created_at_idx")
@@ -272,21 +299,22 @@ model Artwork {
 }
 
 model ArtworkVersion {
-  id              String               @id @default(uuid()) @db.Uuid
-  artworkId       String               @map("artwork_id") @db.Uuid
-  versionNumber   Int                  @map("version_number")
-  status          ArtworkVersionStatus @default(DRAFT)
-  title           String               @db.VarChar(200)
-  shortStory      String?              @map("short_story") @db.VarChar(500)
-  story           String?              @db.Text
-  inspiration     String?              @db.Text
-  metadata        Json                 @default("{}") @db.JsonB
-  createdByUserId String               @map("created_by_user_id") @db.Uuid
-  publishedAt     DateTime?            @map("published_at") @db.Timestamptz(3)
-  archivedAt      DateTime?            @map("archived_at") @db.Timestamptz(3)
-  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
-  artwork         Artwork              @relation(fields: [artworkId], references: [id], onDelete: Restrict)
-  createdBy       User                 @relation("ArtworkVersionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  id                     String                        @id @default(uuid()) @db.Uuid
+  artworkId              String                        @map("artwork_id") @db.Uuid
+  versionNumber          Int                           @map("version_number")
+  status                 ArtworkVersionStatus          @default(DRAFT)
+  title                  String                        @db.VarChar(200)
+  shortStory             String?                       @map("short_story") @db.VarChar(500)
+  story                  String?                       @db.Text
+  inspiration            String?                       @db.Text
+  metadata               Json                          @default("{}") @db.JsonB
+  createdByUserId        String                        @map("created_by_user_id") @db.Uuid
+  publishedAt            DateTime?                     @map("published_at") @db.Timestamptz(3)
+  archivedAt             DateTime?                     @map("archived_at") @db.Timestamptz(3)
+  createdAt              DateTime                      @default(now()) @map("created_at") @db.Timestamptz(3)
+  artwork                Artwork                       @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+  createdBy              User                          @relation("ArtworkVersionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  garmentCompatibilities ArtworkGarmentCompatibility[]
 
   @@unique([artworkId, versionNumber], map: "artwork_versions_artwork_version_key")
   @@index([artworkId, status, versionNumber], map: "artwork_versions_artwork_status_version_idx")
@@ -438,6 +466,173 @@ model StoryBlock {
 
   @@unique([storyId, position], map: "story_blocks_story_position_key")
   @@map("story_blocks")
+}
+
+model GarmentTemplate {
+  id              String                        @id @default(uuid()) @db.Uuid
+  slug            String                        @unique(map: "garment_templates_slug_key") @db.VarChar(160)
+  title           String                        @db.VarChar(200)
+  description     String?                       @db.Text
+  type            GarmentType
+  fabric          String?                       @db.VarChar(500)
+  fit             String?                       @db.VarChar(500)
+  care            String?                       @db.Text
+  status          ArtworkStatus                 @default(DRAFT)
+  createdByUserId String                        @map("created_by_user_id") @db.Uuid
+  publishedAt     DateTime?                     @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?                     @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime                      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       User                          @relation("GarmentTemplateCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  colours         GarmentColour[]
+  sizes           GarmentSize[]
+  variants        GarmentVariant[]
+  placements      GarmentPlacement[]
+  compatibilities ArtworkGarmentCompatibility[]
+
+  @@index([status, createdAt], map: "garment_templates_status_created_at_idx")
+  @@map("garment_templates")
+}
+
+model GarmentColour {
+  id         String           @id @default(uuid()) @db.Uuid
+  templateId String           @map("template_id") @db.Uuid
+  slug       String           @db.VarChar(100)
+  name       String           @db.VarChar(100)
+  hex        String           @db.Char(7)
+  position   Int              @default(0)
+  status     ArtworkStatus    @default(DRAFT)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  template   GarmentTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  variants   GarmentVariant[]
+
+  @@unique([templateId, slug], map: "garment_colours_template_slug_key")
+  @@index([templateId, status, position], map: "garment_colours_template_status_position_idx")
+  @@map("garment_colours")
+}
+
+model GarmentSize {
+  id           String                   @id @default(uuid()) @db.Uuid
+  templateId   String                   @map("template_id") @db.Uuid
+  code         String                   @db.VarChar(32)
+  label        String                   @db.VarChar(100)
+  position     Int                      @default(0)
+  status       ArtworkStatus            @default(DRAFT)
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  template     GarmentTemplate          @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  measurements GarmentSizeMeasurement[]
+  variants     GarmentVariant[]
+
+  @@unique([templateId, code], map: "garment_sizes_template_code_key")
+  @@index([templateId, status, position], map: "garment_sizes_template_status_position_idx")
+  @@map("garment_sizes")
+}
+
+model GarmentSizeMeasurement {
+  id      String      @id @default(uuid()) @db.Uuid
+  sizeId  String      @map("size_id") @db.Uuid
+  key     String      @db.VarChar(64)
+  label   String      @db.VarChar(100)
+  valueMm Int         @map("value_mm")
+  size    GarmentSize @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+
+  @@unique([sizeId, key], map: "garment_size_measurements_size_key_key")
+  @@map("garment_size_measurements")
+}
+
+model GarmentVariant {
+  id         String          @id @default(uuid()) @db.Uuid
+  templateId String          @map("template_id") @db.Uuid
+  colourId   String          @map("colour_id") @db.Uuid
+  sizeId     String          @map("size_id") @db.Uuid
+  sku        String          @unique(map: "garment_variants_sku_key") @db.VarChar(80)
+  status     ArtworkStatus   @default(DRAFT)
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  template   GarmentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  colour     GarmentColour   @relation(fields: [colourId], references: [id], onDelete: Restrict)
+  size       GarmentSize     @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+
+  @@unique([templateId, colourId, sizeId], map: "garment_variants_template_colour_size_key")
+  @@index([templateId, status], map: "garment_variants_template_status_idx")
+  @@map("garment_variants")
+}
+
+model GarmentPlacement {
+  id              String                    @id @default(uuid()) @db.Uuid
+  templateId      String                    @map("template_id") @db.Uuid
+  slug            String                    @db.VarChar(100)
+  name            String                    @db.VarChar(100)
+  view            GarmentView
+  xPermille       Int                       @map("x_permille")
+  yPermille       Int                       @map("y_permille")
+  widthPermille   Int                       @map("width_permille")
+  heightPermille  Int                       @map("height_permille")
+  printWidthMm    Int                       @map("print_width_mm")
+  printHeightMm   Int                       @map("print_height_mm")
+  position        Int                       @default(0)
+  status          ArtworkStatus             @default(DRAFT)
+  createdAt       DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  template        GarmentTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  scalePresets    GarmentScalePreset[]
+  compatibilities ArtworkGarmentPlacement[]
+
+  @@unique([templateId, slug], map: "garment_placements_template_slug_key")
+  @@index([templateId, status, position], map: "garment_placements_template_status_position_idx")
+  @@map("garment_placements")
+}
+
+model GarmentScalePreset {
+  id           String           @id @default(uuid()) @db.Uuid
+  placementId  String           @map("placement_id") @db.Uuid
+  slug         String           @db.VarChar(64)
+  name         String           @db.VarChar(100)
+  scalePercent Int              @map("scale_percent")
+  position     Int              @default(0)
+  status       ArtworkStatus    @default(DRAFT)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  placement    GarmentPlacement @relation(fields: [placementId], references: [id], onDelete: Cascade)
+
+  @@unique([placementId, slug], map: "garment_scale_presets_placement_slug_key")
+  @@index([placementId, status, position], map: "garment_scale_presets_placement_status_position_idx")
+  @@map("garment_scale_presets")
+}
+
+model ArtworkGarmentCompatibility {
+  id               String                    @id @default(uuid()) @db.Uuid
+  artworkVersionId String                    @map("artwork_version_id") @db.Uuid
+  templateId       String                    @map("template_id") @db.Uuid
+  status           CompatibilityStatus       @default(DRAFT)
+  createdByUserId  String                    @map("created_by_user_id") @db.Uuid
+  approvedByUserId String?                   @map("approved_by_user_id") @db.Uuid
+  approvedAt       DateTime?                 @map("approved_at") @db.Timestamptz(3)
+  archivedAt       DateTime?                 @map("archived_at") @db.Timestamptz(3)
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  artworkVersion   ArtworkVersion            @relation(fields: [artworkVersionId], references: [id], onDelete: Restrict)
+  template         GarmentTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdBy        User                      @relation("GarmentCompatibilityCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  approvedBy       User?                     @relation("GarmentCompatibilityApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  placements       ArtworkGarmentPlacement[]
+
+  @@unique([artworkVersionId, templateId], map: "artwork_garment_compatibilities_version_template_key")
+  @@index([templateId, status], map: "artwork_garment_compatibilities_template_status_idx")
+  @@map("artwork_garment_compatibilities")
+}
+
+model ArtworkGarmentPlacement {
+  compatibilityId String                      @map("compatibility_id") @db.Uuid
+  placementId     String                      @map("placement_id") @db.Uuid
+  compatibility   ArtworkGarmentCompatibility @relation(fields: [compatibilityId], references: [id], onDelete: Cascade)
+  placement       GarmentPlacement            @relation(fields: [placementId], references: [id], onDelete: Restrict)
+
+  @@id([compatibilityId, placementId])
+  @@index([placementId, compatibilityId], map: "artwork_garment_placements_placement_compatibility_idx")
+  @@map("artwork_garment_placements")
 }
 
 model EmailVerificationToken {

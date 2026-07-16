@@ -38,3 +38,7 @@ Webhook work must validate signatures, persist raw events safely, reject amount/
 - Catalogue lists and details suppress draft/archived containers and suppress draft/archived artwork members nested in otherwise published collections or drops.
 - Catalogue administrator reads require `catalogue.read`; tag, collection, drop, edition, association, and story mutations require `catalogue.write` and append actor/correlation-aware audit records.
 - DTO validation and PostgreSQL checks both enforce drop windows, edition quantities, story ownership, and ordered blocks. Unique/foreign-key conflicts are mapped to stable safe errors without exposing SQL details.
+- Garment administration uses the same live `catalogue.read`/`catalogue.write` permission boundary and audits successful mutations. Public reads suppress every draft or archived template member.
+- A garment cannot publish until it has published colour, size, variant, placement, and scale members. An exact artwork-version compatibility cannot be approved until the version, both roots, and every allowlisted placement are published.
+- Configuration validation is server-authoritative and binds the exact immutable artwork version to one published variant, placement, scale preset, and view. Invalid combinations return `CONFIGURATION_NOT_APPROVED` without leaking unpublished catalogue state.
+- PostgreSQL independently prevents cross-template variant members, cross-template compatibility placements, invalid normalized geometry, and invalid lifecycle timestamps.

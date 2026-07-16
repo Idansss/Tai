@@ -15,7 +15,8 @@
 | Admin identity and authorization     | TMS-B1-003     | Admin auth/MFA module, audience migration, RBAC guards, OpenAPI | PostgreSQL HTTP, RFC TOTP, permission, object-bypass, contract tests |
 | Artwork roots and immutable versions | TMS-B2-001     | Artwork module, versioning migration, RBAC, OpenAPI             | PostgreSQL triggers/indexes, HTTP lifecycle/bypass/contract tests    |
 | Catalogue discovery and editorial    | TMS-B2-002     | Catalogue module, normalized migration, RBAC, OpenAPI           | PostgreSQL constraints, HTTP CRUD/filter/privacy/contract tests      |
-| Garment compatibility and media      | TMS-B2-003–004 | Future garment module and media modules/jobs                    | Compatibility, validation, worker/API tests                          |
+| Garment canvases and compatibility   | TMS-B2-003     | Garment module, normalized migration, RBAC, OpenAPI             | PostgreSQL constraints, HTTP lifecycle/approval/configuration tests  |
+| Media ingestion and derivatives      | TMS-B2-004     | Future media modules, storage adapter, and worker jobs          | File validation, malware hook, worker/API tests                      |
 | Design configurations/rendering      | TMS-B3-001–003 | Future B3 schema/services/jobs                                  | Contract, availability, renderer tests                               |
 | Inventory/cart/checkout/orders       | TMS-B4-001–004 | Future B4 modules                                               | Concurrency, state-machine, E2E tests                                |
 | Flutterwave/GIGL-ready integrations  | TMS-B5-001–003 | Future provider interfaces/adapters                             | Webhook, duplicate, timeout, contract tests                          |
