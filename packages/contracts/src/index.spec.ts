@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
   AdminMfaCodeInputSchema,
   AdminRoleAssignmentInputSchema,
+  ArtworkCreateInputSchema,
+  ArtworkVersionInputSchema,
   AuthTokenInputSchema,
   CustomerRegistrationInputSchema,
   DesignConfigurationInputSchema,
@@ -64,6 +66,20 @@ describe('shared contracts', () => {
     expect(AdminRoleAssignmentInputSchema.safeParse({ expiresAt: 'tomorrow' }).success).toBe(false);
   });
 
+  it('enforces artwork slugs and immutable version input boundaries', () => {
+    expect(
+      ArtworkCreateInputSchema.safeParse({
+        slug: 'lagos-after-dark',
+        title: 'Lagos After Dark',
+        metadata: { mood: 'electric' },
+      }).success,
+    ).toBe(true);
+    expect(
+      ArtworkCreateInputSchema.safeParse({ slug: 'Not URL Safe', title: 'Artwork' }).success,
+    ).toBe(false);
+    expect(ArtworkVersionInputSchema.safeParse({ title: '   ' }).success).toBe(false);
+  });
+
   it('keeps the public authentication contract and error catalogue in OpenAPI', () => {
     for (const operationId of [
       'registerCustomer',
@@ -86,6 +102,15 @@ describe('shared contracts', () => {
       'listAdministratorRoles',
       'assignAdministratorRole',
       'revokeAdministratorRole',
+      'listPublishedArtworks',
+      'getPublishedArtwork',
+      'listAdministratorArtworks',
+      'getAdministratorArtwork',
+      'createAdministratorArtwork',
+      'createAdministratorArtworkVersion',
+      'publishAdministratorArtworkVersion',
+      'archiveAdministratorArtworkVersion',
+      'archiveAdministratorArtwork',
     ]) {
       expect(openApi).toContain(`operationId: ${operationId}`);
     }

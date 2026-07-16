@@ -12,6 +12,10 @@ TMS-B1-002 uses the merged identity tables without a new migration. Passwords us
 
 Migration `20260716015000_admin_authentication` adds explicit customer/admin session audiences, password/MFA assurance levels, administrator display names, encrypted TOTP factor state, short-lived attempt-bounded MFA challenges, replay time-step tracking, and supporting indexes/check constraints. Existing sessions backfill to `CUSTOMER`/`PASSWORD`. MFA factor and challenge lifecycle rules are enforced in PostgreSQL. Administrator role assignments remain the canonical seeded RBAC model and may expire.
 
+## B2 artwork versioning
+
+Migration `20260716030500_artwork_versioning` adds artwork roots and ordered artwork versions with draft, published, and archived lifecycle states. Slugs and `(artwork_id, version_number)` are unique; a partial unique index allows at most one published version per artwork. Check constraints enforce slug, title, sequence, timestamp, and lifecycle validity. A database trigger rejects changes to version identity/content/metadata, while a separate trigger rejects all version deletion; lifecycle columns remain transitionable by the service. Artwork/version creator references are restrictive so operational history cannot be removed by deleting its actor.
+
 ## Rules
 
 - UUID identifiers, UTC timestamps, explicit foreign keys, useful indexes, and unique constraints

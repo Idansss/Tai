@@ -61,6 +61,20 @@ async function runDocker(arguments_: string[], timeout = 30_000): Promise<string
   return stdout.trim();
 }
 
+async function waitForDocker(): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      await runDocker(['info'], 15_000);
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('Docker is unavailable.');
+}
+
 async function waitForPostgres(): Promise<void> {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
@@ -124,7 +138,7 @@ const HttpStatus = {
 
 describe.sequential('customer authentication HTTP integration', () => {
   beforeAll(async () => {
-    await runDocker(['info'], 15_000);
+    await waitForDocker();
     await runDocker(
       [
         'run',

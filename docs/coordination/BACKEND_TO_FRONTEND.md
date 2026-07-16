@@ -86,7 +86,7 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 
 ## 2026-07-16 — TMS-B1-003 administrator authentication and RBAC
 
-- Status: implemented on `codex/b1-admin-auth`; consume after its focused PR is merged.
+- Status: Verified and merged through PR #11 as `30bd5c087baf0f9b281f5422d43e5c54e26ace94`; ready for frontend consumption.
 - Compatibility: additive. Customer auth and health contracts are unchanged.
 - Authentication transport: opaque `tms_admin_session` HttpOnly cookie, distinct from `tms_session`. Use credentialed same-origin requests; never read, copy, or persist either session token in browser code.
 - Added auth endpoints:
@@ -105,3 +105,24 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - The session includes `id`, `expiresAt`, `assuranceLevel`, and `user: { id, email, name, roles, permissions, mfaRequired, mfaEnrolled }`. Route and action visibility may use roles/permissions for UX, but the API remains authoritative.
 - Added error codes: `ADMIN_MFA_REQUIRED`, `MFA_CHALLENGE_INVALID`, and `MFA_CODE_INVALID`. Existing `AUTHENTICATION_INVALID`, `SESSION_INVALID`, `PERMISSION_DENIED`, `RESOURCE_NOT_FOUND`, `CONFLICT`, `VALIDATION_FAILED`, and `RATE_LIMITED` also apply.
 - Frontend action: replace the mock `localStorage` staff session with login/session/logout calls, delete `tms.admin.session.v1` during migration, render the MFA enrollment/challenge step when returned, and gate navigation from the session's permissions. Never treat client-side gating as authorization.
+
+## 2026-07-16 — TMS-B2-001 artwork roots and immutable versions
+
+- Status: implemented on `codex/b2-artwork-versions`; consume after its focused PR is merged.
+- Compatibility: additive. Authentication, access, and health contracts are unchanged.
+- Public endpoints:
+  - `GET /api/v1/artworks?cursor=<uuid>&limit=20`
+  - `GET /api/v1/artworks/:slug`
+- Administrator endpoints:
+  - `GET /api/v1/admin/artworks?cursor=<uuid>&limit=20&status=DRAFT|PUBLISHED|ARCHIVED` (`catalogue.read`)
+  - `GET /api/v1/admin/artworks/:artworkId` (`catalogue.read`)
+  - `POST /api/v1/admin/artworks` (`catalogue.write`)
+  - `POST /api/v1/admin/artworks/:artworkId/versions` (`catalogue.write`)
+  - `POST /api/v1/admin/artworks/:artworkId/versions/:versionId/publish` (`catalogue.write`)
+  - `POST /api/v1/admin/artworks/:artworkId/versions/:versionId/archive` (`catalogue.write`)
+  - `POST /api/v1/admin/artworks/:artworkId/archive` (`catalogue.write`)
+- Artwork creation accepts lowercase kebab-case `slug`, `title`, optional `shortStory`, `story`, `inspiration`, and optional JSON-object `metadata`. Creating a replacement accepts the same fields except `slug` and always inserts the next immutable draft version.
+- Responses expose root lifecycle/timestamps plus `publishedVersion`; administrator records additionally expose the complete newest-first `versions[]` history. Version fields are `id`, `versionNumber`, `status`, content/metadata, and lifecycle timestamps.
+- Public endpoints return only published roots and the exact published version. A draft/archived slug returns `RESOURCE_NOT_FOUND`. Publishing a version archives the prior publication; archiving the published version or root removes it from public reads.
+- There are intentionally no version update/delete endpoints. Treat IDs/content as immutable and create a new version for edits.
+- Delivery boundary: this is the core of TMS-FBR-001, not the complete gallery view model. Collection/tag/filter/sort fields arrive in TMS-B2-002; preview/image/process assets arrive in TMS-B2-004. Continue the typed mock adapter for those missing fields and do not synthesize them from `metadata`.

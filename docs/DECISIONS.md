@@ -31,3 +31,7 @@ Status: Accepted. Hash passwords with parameterized scrypt and store only deploy
 ## ADR-008 — Separate admin sessions with TOTP assurance and database-backed RBAC
 
 Status: Accepted. Administration sessions have a distinct cookie and persisted `ADMIN` audience so customer sessions cannot cross the trust boundary. Effective permissions are recalculated from non-expired database role assignments on every request. TOTP follows RFC 6238 with replayed time steps rejected; shared secrets are encrypted with deployment-specific AES-256-GCM key material and never returned after enrollment. Password and MFA challenges remain separate, short-lived, attempt-bounded records. Sensitive access mutations require both `system.manage` and MFA assurance, Owner elevation is Owner-only, and the final active Owner cannot be removed.
+
+## ADR-009 — Insert-only artwork content with explicit lifecycle transitions
+
+Status: Accepted. An `Artwork` is the stable catalogue root and `ArtworkVersion` is the exact creative/content snapshot. Content changes insert the next ordered draft; version identity, content, metadata, creator, and creation time are immutable in PostgreSQL, and versions cannot be deleted. Only lifecycle status/timestamps may transition. Publishing locks the root, archives the previous publication, and relies on a partial unique index to guarantee one published version. Exact-version asset relations arrive in the media slice without weakening this invariant.

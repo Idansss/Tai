@@ -26,3 +26,7 @@ OpenAPI and `packages/contracts` are public platform boundaries. Provider packag
 ## Administration authentication and authorization
 
 `AdminAuthModule` owns staff login/logout/session hydration, TOTP enrollment and verification, effective-role resolution, permission guards, MFA-assurance guards, staff-session revocation, and role assignments. Customer and admin sessions share lifecycle infrastructure but have different persisted audiences and cookie names. Every admin request reloads active, non-expired role grants from PostgreSQL, so revocation takes effect on the next request without trusting browser state. Object-level service checks distinguish an administrator's own session from another administrator's session; cross-admin revocation requires `system.manage` and MFA.
+
+## Artwork catalogue
+
+`ArtworkModule` owns the creative root and immutable content-version lifecycle. Public reads query only roots and versions in `PUBLISHED` state. Administrator reads return full version history behind `catalogue.read`; writes are explicit create/publish/archive commands behind `catalogue.write`. Version allocation and publication lock the artwork row, so concurrent writers cannot create duplicate sequence numbers or leave more than one published version. Media ownership remains an exact-version concern implemented by TMS-B2-004 rather than a mutable field on the artwork root.

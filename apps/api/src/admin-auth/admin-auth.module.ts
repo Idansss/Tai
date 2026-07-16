@@ -35,6 +35,12 @@ import { AdminSessionGuard } from './admin-session.guard.js';
       },
     },
   ],
-  exports: [AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminMfaGuard],
+  exports: [
+    AdminAuthService,
+    AdminSessionGuard,
+    AdminPermissionGuard,
+    AdminMfaGuard,
+    ADMIN_AUTH_CONFIG,
+  ],
 })
 export class AdminAuthModule {}

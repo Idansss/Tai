@@ -118,18 +118,18 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
   - Acceptance criteria: Every protected admin endpoint has server-side permission tests and bypass attempts fail.
   - Implementation evidence: Separate customer/admin session audiences and cookies; password and MFA assurance levels; TOTP enrollment, verification, encrypted factor storage, bounded one-time challenges, and replay rejection; live database-backed permission guards; Owner-only Owner assignment and final-Owner preservation; owned and privileged cross-admin session revocation; provisioning and audited lost-device recovery commands; additive Prisma migration, OpenAPI, shared contracts, environment validation, audit events, and backend/coordination documentation.
   - Tests: Eight MFA unit tests include the official RFC 6238 SHA-1 vectors, base32, encryption tamper detection, and `otpauth` URIs. Seven disposable-PostgreSQL HTTP scenarios cover provisioning, safe credential failures, customer/admin isolation, enrollment, encrypted storage, challenge lifecycle, TOTP replay, MFA assurance, live permissions, bypass denial, session boundaries, Owner elevation/final-Owner protection, logout, and audited MFA reset. The API has 35 passing tests across nine files and the database package has four passing migration/constraint tests. `pnpm check`, frozen install, Prisma validation, Compose validation, the high-severity production dependency audit, static OpenAPI reference/operation validation, and a live compiled API/runtime Swagger smoke pass.
-  - Notes: Verified locally on 2026-07-16 on `codex/b1-admin-auth` from the TMS-B1-002 merge commit `88801c1374415eddf318a95e56ac3be7ab864c98`; focused PR and CI are pending. The migration is `20260716015000_admin_authentication`. Administrative role mutations and cross-admin session revocations require both `system.manage` and MFA assurance; Owner elevation additionally requires an active Owner.
+  - Notes: Verified and squash-merged through PR #11 on 2026-07-16 as `30bd5c087baf0f9b281f5422d43e5c54e26ace94` after GitHub Actions run 29467786313 passed. The migration is `20260716015000_admin_authentication`. Administrative role mutations and cross-admin session revocations require both `system.manage` and MFA assurance; Owner elevation additionally requires an active Owner.
 
 ## B2 — Artwork and catalogue
 
-- [ ] TMS-B2-001 Implement Artwork and immutable ArtworkVersion persistence and APIs
-  - Status: Not started
+- [x] TMS-B2-001 Implement Artwork and immutable ArtworkVersion persistence and APIs
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B1-003
   - Acceptance criteria: Draft/published/archived lifecycle; referenced versions cannot be mutated or deleted; OpenAPI/tests pass.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: `Artwork` roots and ordered `ArtworkVersion` snapshots; database-enforced content/delete immutability, lifecycle/timestamp checks, creator references, one-published-version partial uniqueness, and row-locked version allocation/publication; permission-scoped administrator create/list/detail/version/publish/archive commands; published-only public list/detail; cursor pagination, object-pair validation, audit events, Prisma exports, additive OpenAPI/shared contracts, frontend coordination, ADR/security/database/testing/architecture documentation, and retry-bounded concurrent Docker test setup.
+  - Tests: Six disposable-PostgreSQL HTTP scenarios cover authentication, `catalogue.read`/`catalogue.write` separation and denial audit, validation/slug conflict, draft isolation, direct-database and unapproved-HTTP mutation/delete bypasses, ordered and concurrent version creation, exact publication/prior archival, one published version, public list/detail, cursor pagination, cross-artwork version rejection, archive/republish behavior, and lifecycle audit evidence. Five persistence tests apply all three migrations and seeds twice and verify immutable triggers, lifecycle constraints, catalogue indexes, and the published-version partial unique index. The exact `pnpm check` passes with 41 API tests across ten files, every workspace test, production builds, and Prisma validation; static OpenAPI and compiled runtime Swagger each expose all nine artwork operations.
+  - Notes: Verified locally on 2026-07-16 on `codex/b2-artwork-versions` from the TMS-B1-003 merge commit `30bd5c087baf0f9b281f5422d43e5c54e26ace94`; focused PR and CI are pending. Migration: `20260716030500_artwork_versioning`. Collection/tag/edition/filter/search enrichment remains TMS-B2-002; exact-version media ingestion and derivatives remain TMS-B2-004.
 - [ ] TMS-B2-002 Implement collections, drops, editions, stories, tags, and catalogue search
   - Status: Not started
   - Owner: Codex

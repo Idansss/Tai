@@ -11,6 +11,8 @@ tags:
   - name: authentication
   - name: admin-authentication
   - name: admin-access
+  - name: artworks
+  - name: administrator-artworks
 paths:
   /api/v1/auth/register:
     post:
@@ -349,6 +351,186 @@ paths:
         '403': { $ref: '#/components/responses/ApiError' }
         '404': { $ref: '#/components/responses/ApiError' }
         '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/artworks:
+    get:
+      operationId: listPublishedArtworks
+      tags: [artworks]
+      summary: List published artworks with their exact published versions
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: A cursor page containing only published artworks.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ArtworkPageResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+  /api/v1/artworks/{slug}:
+    get:
+      operationId: getPublishedArtwork
+      tags: [artworks]
+      summary: Get a published artwork by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      responses:
+        '200':
+          description: The artwork and its exact published version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ArtworkResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks:
+    get:
+      operationId: listAdministratorArtworks
+      tags: [administrator-artworks]
+      summary: List artworks and complete immutable version histories
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ArtworkStatus' }
+      responses:
+        '200':
+          description: A permission-scoped cursor page of administrator artwork records.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminArtworkPageResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+    post:
+      operationId: createAdministratorArtwork
+      tags: [administrator-artworks]
+      summary: Create an artwork root and its first immutable draft version
+      security: [{ tms_admin_session: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArtworkCreateInput' }
+      responses:
+        '201':
+          description: The draft artwork and first version were created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminArtworkResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}:
+    get:
+      operationId: getAdministratorArtwork
+      tags: [administrator-artworks]
+      summary: Get an artwork and its immutable version history
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+      responses:
+        '200':
+          description: The administrator artwork record.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminArtworkResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}/versions:
+    post:
+      operationId: createAdministratorArtworkVersion
+      tags: [administrator-artworks]
+      summary: Create the next immutable draft version
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArtworkVersionInput' }
+      responses:
+        '201':
+          description: The next immutable draft version was created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminArtworkResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}/versions/{versionId}/publish:
+    post:
+      operationId: publishAdministratorArtworkVersion
+      tags: [administrator-artworks]
+      summary: Publish an exact version and archive the previous publication
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+        - $ref: '#/components/parameters/ArtworkVersionId'
+      responses:
+        '200':
+          description: The selected immutable version is published.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminArtworkResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}/versions/{versionId}/archive:
+    post:
+      operationId: archiveAdministratorArtworkVersion
+      tags: [administrator-artworks]
+      summary: Archive an exact version without deleting its content
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+        - $ref: '#/components/parameters/ArtworkVersionId'
+      responses:
+        '200':
+          description: The selected immutable version is archived.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminArtworkResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/artworks/{artworkId}/archive:
+    post:
+      operationId: archiveAdministratorArtwork
+      tags: [administrator-artworks]
+      summary: Archive an artwork and its currently published version
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ArtworkId'
+      responses:
+        '200':
+          description: The artwork is archived and hidden from public reads.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminArtworkResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
   /api/v1/health/liveness:
     get:
       operationId: getLiveness
@@ -398,6 +580,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 components:
+  parameters:
+    ArtworkId:
+      name: artworkId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ArtworkVersionId:
+      name: versionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
   securitySchemes:
     tms_session:
       type: apiKey
@@ -618,6 +811,126 @@ components:
             roles:
               type: array
               items: { $ref: '#/components/schemas/AdminRole' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ArtworkStatus:
+      type: string
+      enum: [DRAFT, PUBLISHED, ARCHIVED]
+    ArtworkVersionInput:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        shortStory: { type: [string, 'null'], maxLength: 500 }
+        story: { type: [string, 'null'], maxLength: 10000 }
+        inspiration: { type: [string, 'null'], maxLength: 5000 }
+        metadata:
+          type: object
+          additionalProperties: true
+    ArtworkCreateInput:
+      type: object
+      additionalProperties: false
+      required: [slug, title]
+      properties:
+        slug: { type: string, minLength: 1, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        shortStory: { type: [string, 'null'], maxLength: 500 }
+        story: { type: [string, 'null'], maxLength: 10000 }
+        inspiration: { type: [string, 'null'], maxLength: 5000 }
+        metadata:
+          type: object
+          additionalProperties: true
+    ArtworkVersion:
+      type: object
+      required:
+        [
+          id,
+          versionNumber,
+          status,
+          title,
+          shortStory,
+          story,
+          inspiration,
+          metadata,
+          publishedAt,
+          archivedAt,
+          createdAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        versionNumber: { type: integer, minimum: 1 }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+        title: { type: string }
+        shortStory: { type: [string, 'null'] }
+        story: { type: [string, 'null'] }
+        inspiration: { type: [string, 'null'] }
+        metadata:
+          type: object
+          additionalProperties: true
+        publishedAt: { type: [string, 'null'], format: date-time }
+        archivedAt: { type: [string, 'null'], format: date-time }
+        createdAt: { type: string, format: date-time }
+    Artwork:
+      type: object
+      required: [id, slug, status, publishedVersion, createdAt, updatedAt, publishedAt, archivedAt]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        status: { $ref: '#/components/schemas/ArtworkStatus' }
+        publishedVersion:
+          oneOf:
+            - $ref: '#/components/schemas/ArtworkVersion'
+            - type: 'null'
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        archivedAt: { type: [string, 'null'], format: date-time }
+    AdminArtwork:
+      allOf:
+        - $ref: '#/components/schemas/Artwork'
+        - type: object
+          required: [versions]
+          properties:
+            versions:
+              type: array
+              items: { $ref: '#/components/schemas/ArtworkVersion' }
+    ArtworkResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Artwork' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AdminArtworkResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/AdminArtwork' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ArtworkPageResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items, nextCursor]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Artwork' }
+            nextCursor: { type: [string, 'null'], format: uuid }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    AdminArtworkPageResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items, nextCursor]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/AdminArtwork' }
+            nextCursor: { type: [string, 'null'], format: uuid }
         meta: { $ref: '#/components/schemas/ApiMeta' }
     HealthResponse:
       type: object

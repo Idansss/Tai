@@ -214,6 +214,59 @@ export interface AdminRole {
   permissions: string[];
 }
 
+export const ArtworkStatusSchema = z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']);
+export type ArtworkStatus = z.infer<typeof ArtworkStatusSchema>;
+
+export const ArtworkSlugSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(160)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
+export const ArtworkVersionInputSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  shortStory: z.string().trim().max(500).nullable().optional(),
+  story: z.string().trim().max(10_000).nullable().optional(),
+  inspiration: z.string().trim().max(5_000).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type ArtworkVersionInput = z.infer<typeof ArtworkVersionInputSchema>;
+
+export const ArtworkCreateInputSchema = ArtworkVersionInputSchema.extend({
+  slug: ArtworkSlugSchema,
+});
+export type ArtworkCreateInput = z.infer<typeof ArtworkCreateInputSchema>;
+
+export interface ArtworkVersion {
+  id: string;
+  versionNumber: number;
+  status: ArtworkStatus;
+  title: string;
+  shortStory: string | null;
+  story: string | null;
+  inspiration: string | null;
+  metadata: Record<string, unknown>;
+  publishedAt: string | null;
+  archivedAt: string | null;
+  createdAt: string;
+}
+
+export interface Artwork {
+  id: string;
+  slug: string;
+  status: ArtworkStatus;
+  publishedVersion: ArtworkVersion | null;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  archivedAt: string | null;
+}
+
+export interface AdminArtwork extends Artwork {
+  versions: ArtworkVersion[];
+}
+
 export const DesignConfigurationInputSchema = z.object({
   artworkVersionId: z.string().uuid(),
   garmentVariantId: z.string().uuid(),

@@ -55,6 +55,18 @@ enum AdminAuthChallengePurpose {
   VERIFY_TOTP
 }
 
+enum ArtworkStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ArtworkVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 model User {
   id                     String                   @id @default(uuid()) @db.Uuid
   email                  String                   @db.VarChar(320)
@@ -76,6 +88,8 @@ model User {
   auditLogs              AuditLog[]               @relation("AuditActor")
   adminMfaFactor         AdminMfaFactor?
   adminAuthChallenges    AdminAuthChallenge[]
+  artworksCreated        Artwork[]                @relation("ArtworkCreator")
+  artworkVersionsCreated ArtworkVersion[]         @relation("ArtworkVersionCreator")
 
   @@index([status, deletedAt], map: "users_status_deleted_at_idx")
   @@index([createdAt], map: "users_created_at_idx")
@@ -166,20 +180,20 @@ model UserRole {
 }
 
 model Session {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  tokenHash        String    @unique(map: "sessions_token_hash_key") @map("token_hash") @db.VarChar(128)
-  kind             SessionKind @default(CUSTOMER)
+  id               String             @id @default(uuid()) @db.Uuid
+  userId           String             @map("user_id") @db.Uuid
+  tokenHash        String             @unique(map: "sessions_token_hash_key") @map("token_hash") @db.VarChar(128)
+  kind             SessionKind        @default(CUSTOMER)
   assuranceLevel   AuthAssuranceLevel @default(PASSWORD) @map("assurance_level")
-  mfaVerifiedAt    DateTime? @map("mfa_verified_at") @db.Timestamptz(3)
-  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(3)
-  lastSeenAt       DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
-  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(3)
-  revocationReason String?   @map("revocation_reason") @db.VarChar(200)
-  ipAddressHash    String?   @map("ip_address_hash") @db.VarChar(128)
-  userAgent        String?   @map("user_agent") @db.VarChar(500)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mfaVerifiedAt    DateTime?          @map("mfa_verified_at") @db.Timestamptz(3)
+  expiresAt        DateTime           @map("expires_at") @db.Timestamptz(3)
+  lastSeenAt       DateTime           @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  revokedAt        DateTime?          @map("revoked_at") @db.Timestamptz(3)
+  revocationReason String?            @map("revocation_reason") @db.VarChar(200)
+  ipAddressHash    String?            @map("ip_address_hash") @db.VarChar(128)
+  userAgent        String?            @map("user_agent") @db.VarChar(500)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt, expiresAt], map: "sessions_user_revoked_expires_idx")
   @@index([userId, kind, revokedAt, expiresAt], map: "sessions_user_kind_state_idx")
@@ -216,6 +230,47 @@ model AdminAuthChallenge {
   @@index([userId, consumedAt, expiresAt], map: "admin_auth_challenges_user_state_idx")
   @@index([expiresAt], map: "admin_auth_challenges_expires_at_idx")
   @@map("admin_auth_challenges")
+}
+
+model Artwork {
+  id              String           @id @default(uuid()) @db.Uuid
+  slug            String           @unique(map: "artworks_slug_key") @db.VarChar(160)
+  status          ArtworkStatus    @default(DRAFT)
+  createdByUserId String           @map("created_by_user_id") @db.Uuid
+  publishedAt     DateTime?        @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?        @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       User             @relation("ArtworkCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  versions        ArtworkVersion[]
+
+  @@index([status, createdAt], map: "artworks_status_created_at_idx")
+  @@index([createdByUserId], map: "artworks_created_by_user_id_idx")
+  @@map("artworks")
+}
+
+model ArtworkVersion {
+  id              String               @id @default(uuid()) @db.Uuid
+  artworkId       String               @map("artwork_id") @db.Uuid
+  versionNumber   Int                  @map("version_number")
+  status          ArtworkVersionStatus @default(DRAFT)
+  title           String               @db.VarChar(200)
+  shortStory      String?              @map("short_story") @db.VarChar(500)
+  story           String?              @db.Text
+  inspiration     String?              @db.Text
+  metadata        Json                 @default("{}") @db.JsonB
+  createdByUserId String               @map("created_by_user_id") @db.Uuid
+  publishedAt     DateTime?            @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?            @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  artwork         Artwork              @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+  createdBy       User                 @relation("ArtworkVersionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([artworkId, versionNumber], map: "artwork_versions_artwork_version_key")
+  @@index([artworkId, status, versionNumber], map: "artwork_versions_artwork_status_version_idx")
+  @@index([status, publishedAt], map: "artwork_versions_status_published_at_idx")
+  @@index([createdByUserId], map: "artwork_versions_created_by_user_id_idx")
+  @@map("artwork_versions")
 }
 
 model EmailVerificationToken {

@@ -27,3 +27,11 @@ Webhook work must validate signatures, persist raw events safely, reject amount/
 - A user may revoke their own admin session. Revoking another user's session requires `system.manage` and MFA. Assigning or revoking Owner requires an Owner actor, and the final active Owner is protected.
 - Bootstrap provisioning is an explicit environment-driven operator command. It creates no checked-in credential, validates the canonical role, hashes the supplied password, defaults MFA to required, and appends a system audit record.
 - Lost-device recovery is an explicit operator-only MFA reset command. It revokes the factor, every admin session and challenge, forces MFA to remain required, and appends a system audit record before the next enrollment.
+
+## Artwork authorization and integrity controls
+
+- Public catalogue reads filter both the artwork root and its exact version to `PUBLISHED`; draft and archived content return not found rather than leaking through nested records.
+- Administrator reads require `catalogue.read`; every create, version, publish, and archive command requires `catalogue.write`. Permission denial is audited by the shared admin guard.
+- Artwork/version identifiers are checked as a pair before lifecycle changes, preventing a valid version ID from being replayed against another artwork.
+- PostgreSQL rejects version content updates and every version delete independently of the HTTP layer. Publication locks the artwork row and a partial unique index enforces one published version under concurrent requests.
+- Lifecycle commands append actor/correlation-aware audit records. Browser input cannot set version numbers, status, publication timestamps, creator IDs, or audit outcome.
