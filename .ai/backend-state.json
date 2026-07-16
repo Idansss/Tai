@@ -2,8 +2,8 @@
   "agent": "Codex",
   "area": "backend",
   "currentPhase": "B1",
-  "lastVerifiedTask": "TMS-B1-001",
-  "nextRecommendedTask": "TMS-B1-002",
+  "lastVerifiedTask": "TMS-B1-002",
+  "nextRecommendedTask": "TMS-B1-003",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -16,14 +16,15 @@
     "TMS-B0-009",
     "TMS-B0-010",
     "TMS-B0-011",
-    "TMS-B1-001"
+    "TMS-B1-001",
+    "TMS-B1-002"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "identity-foundation-verified-unmerged",
-  "lastUpdated": "2026-07-14T15:20:21Z",
+  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration",
+  "lastUpdated": "2026-07-16T01:35:47Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -37,8 +38,23 @@
   "identityFoundation": {
     "task": "TMS-B1-001",
     "pullRequest": 3,
-    "commit": "2d6f140",
-    "status": "verified-open",
+    "commit": "5c6da304223b3aec7c3fdeb2a31178c90c4343ae",
+    "mergedAt": "2026-07-16T00:37:27Z",
+    "status": "verified-merged",
     "concerns": []
+  },
+  "activeTask": {
+    "task": "TMS-B1-002",
+    "branch": "codex/b1-authentication",
+    "status": "verified-local"
+  },
+  "customerAuthentication": {
+    "task": "TMS-B1-002",
+    "branch": "codex/b1-authentication",
+    "status": "verified-local",
+    "migration": "none-required",
+    "qualityGate": "passed",
+    "runtimeSmoke": "passed",
+    "concerns": ["Move request throttling from process memory to Redis before horizontal scaling."]
   }
 }

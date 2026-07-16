@@ -6,11 +6,17 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "rimraf dist tsconfig.tsbuildinfo && tsc -p tsconfig.build.json",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
     "lint": "eslint src --max-warnings=0",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "nodemailer": "9.0.3"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "8.0.1"
   }
 }

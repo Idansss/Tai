@@ -18,3 +18,7 @@ Clients call `/api/v1`. Middleware assigns a correlation ID, validation rejects 
 ## Boundaries
 
 OpenAPI and `packages/contracts` are public platform boundaries. Provider packages implement interfaces owned by domain modules. No provider payload or browser-submitted price is trusted as domain truth.
+
+## Customer authentication
+
+`AuthModule` owns customer registration, login, email verification, password reset, secure-cookie sessions, and customer-owned session revocation. It uses the shared Prisma client factory, a provider-neutral SMTP email adapter, explicit public problem codes, and an isolated rate-limiter service. Authentication tokens are opaque browser/email values; only deployment-peppered HMAC digests reach PostgreSQL. The current limiter is process-local and replaceable; distributed Redis storage is required before horizontally scaling the API.
