@@ -105,6 +105,21 @@ enum CompatibilityStatus {
   ARCHIVED
 }
 
+enum InventoryMovementKind {
+  RECEIPT
+  ADJUSTMENT
+  SALE
+  RETURN
+  DAMAGE
+}
+
+enum InventoryReservationStatus {
+  ACTIVE
+  RELEASED
+  COMMITTED
+  EXPIRED
+}
+
 model User {
   id                             String                        @id @default(uuid()) @db.Uuid
   email                          String                        @db.VarChar(320)
@@ -134,6 +149,7 @@ model User {
   garmentTemplatesCreated        GarmentTemplate[]             @relation("GarmentTemplateCreator")
   garmentCompatibilitiesCreated  ArtworkGarmentCompatibility[] @relation("GarmentCompatibilityCreator")
   garmentCompatibilitiesApproved ArtworkGarmentCompatibility[] @relation("GarmentCompatibilityApprover")
+  inventoryMovements             InventoryMovement[]           @relation("InventoryMovementActor")
 
   @@index([status, deletedAt], map: "users_status_deleted_at_idx")
   @@index([createdAt], map: "users_created_at_idx")
@@ -555,6 +571,8 @@ model GarmentVariant {
   colour     GarmentColour   @relation(fields: [colourId], references: [id], onDelete: Restrict)
   size       GarmentSize     @relation(fields: [sizeId], references: [id], onDelete: Restrict)
 
+  inventoryItem InventoryItem?
+
   @@unique([templateId, colourId, sizeId], map: "garment_variants_template_colour_size_key")
   @@index([templateId, status], map: "garment_variants_template_status_idx")
   @@map("garment_variants")
@@ -633,6 +651,62 @@ model ArtworkGarmentPlacement {
   @@id([compatibilityId, placementId])
   @@index([placementId, compatibilityId], map: "artwork_garment_placements_placement_compatibility_idx")
   @@map("artwork_garment_placements")
+}
+
+/// Stock is held against the blank garment variant, never against artwork. One row per variant;
+/// this row is also the lock target that serialises concurrent reservations for that variant.
+model InventoryItem {
+  id                String                 @id @default(uuid()) @db.Uuid
+  variantId         String                 @unique(map: "inventory_items_variant_id_key") @map("variant_id") @db.Uuid
+  onHand            Int                    @default(0) @map("on_hand")
+  lowStockThreshold Int                    @default(0) @map("low_stock_threshold")
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  variant           GarmentVariant         @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  movements         InventoryMovement[]
+  reservations      InventoryReservation[]
+
+  @@map("inventory_items")
+}
+
+/// Append-only ledger. Every change to on-hand stock writes one row and a database trigger
+/// rejects UPDATE and DELETE, so stock history can be audited but never rewritten.
+model InventoryMovement {
+  id              String                @id @default(uuid()) @db.Uuid
+  itemId          String                @map("item_id") @db.Uuid
+  kind            InventoryMovementKind
+  quantityDelta   Int                   @map("quantity_delta")
+  /// The resulting on-hand value, captured so the ledger can be replayed without recomputation.
+  onHandAfter     Int                   @map("on_hand_after")
+  reason          String?               @db.VarChar(500)
+  reference       String?               @db.VarChar(200)
+  createdByUserId String?               @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  item            InventoryItem         @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  createdBy       User?                 @relation("InventoryMovementActor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([itemId, createdAt], map: "inventory_movements_item_created_at_idx")
+  @@map("inventory_movements")
+}
+
+/// An expiring hold on stock. Available stock is on-hand minus the sum of ACTIVE reservations
+/// that have not expired, so a reservation reduces availability without moving stock.
+model InventoryReservation {
+  id          String                     @id @default(uuid()) @db.Uuid
+  itemId      String                     @map("item_id") @db.Uuid
+  quantity    Int
+  status      InventoryReservationStatus @default(ACTIVE)
+  /// Opaque holder key. TMS-B4-002 carts and TMS-B4-003 checkouts own this value.
+  reference   String                     @db.VarChar(200)
+  expiresAt   DateTime                   @map("expires_at") @db.Timestamptz(3)
+  releasedAt  DateTime?                  @map("released_at") @db.Timestamptz(3)
+  committedAt DateTime?                  @map("committed_at") @db.Timestamptz(3)
+  createdAt   DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  item        InventoryItem              @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@index([itemId, status, expiresAt], map: "inventory_reservations_item_status_expires_idx")
+  @@index([reference], map: "inventory_reservations_reference_idx")
+  @@map("inventory_reservations")
 }
 
 model EmailVerificationToken {

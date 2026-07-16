@@ -1433,6 +1433,100 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /api/v1/admin/inventory:
+    get:
+      operationId: listAdministratorStock
+      tags: [administrator-inventory]
+      summary: List stock levels
+      security: [{ tms_admin_session: [] }]
+      parameters:
+        - name: lowStockOnly
+          in: query
+          schema: { type: boolean }
+          description: Return only variants at or below their low-stock threshold.
+      responses:
+        '200': { $ref: '#/components/responses/StockLevelList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/inventory/{variantId}:
+    get:
+      operationId: getAdministratorStock
+      tags: [administrator-inventory]
+      summary: Read one variant stock level
+      security: [{ tms_admin_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/VariantId' }]
+      responses:
+        '200': { $ref: '#/components/responses/StockLevel' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/inventory/{variantId}/movements:
+    get:
+      operationId: listAdministratorStockMovements
+      tags: [administrator-inventory]
+      summary: Read the append-only stock ledger
+      security: [{ tms_admin_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/VariantId' }]
+      responses:
+        '200': { $ref: '#/components/responses/StockMovementList' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/inventory/{variantId}/receipts:
+    post:
+      operationId: receiveAdministratorStock
+      tags: [administrator-inventory]
+      summary: Receive stock
+      security: [{ tms_admin_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/VariantId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InventoryReceiptInput' }
+      responses:
+        '200': { $ref: '#/components/responses/StockLevel' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/inventory/{variantId}/adjustments:
+    post:
+      operationId: adjustAdministratorStock
+      tags: [administrator-inventory]
+      summary: Adjust stock with a recorded reason
+      security: [{ tms_admin_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/VariantId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InventoryAdjustmentInput' }
+      responses:
+        '200': { $ref: '#/components/responses/StockLevel' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/admin/inventory/{variantId}/threshold:
+    put:
+      operationId: setAdministratorStockThreshold
+      tags: [administrator-inventory]
+      summary: Set the low-stock alert threshold
+      security: [{ tms_admin_session: [] }]
+      parameters: [{ $ref: '#/components/parameters/VariantId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InventoryThresholdInput' }
+      responses:
+        '200': { $ref: '#/components/responses/StockLevel' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
 components:
   parameters:
     Cursor:
@@ -1445,6 +1539,11 @@ components:
       schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
     CatalogueId:
       name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    VariantId:
+      name: variantId
       in: path
       required: true
       schema: { type: string, format: uuid }
@@ -1624,6 +1723,21 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/GarmentConfigurationValidationResponse' }
+    StockLevel:
+      description: One garment variant stock level.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StockLevelResponse' }
+    StockLevelList:
+      description: Stock levels per garment variant.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StockLevelListResponse' }
+    StockMovementList:
+      description: The append-only stock ledger, oldest first.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/StockMovementListResponse' }
   schemas:
     CustomerRegistrationInput:
       type: object
@@ -2532,6 +2646,81 @@ components:
       required: [data, meta]
       properties:
         data: { $ref: '#/components/schemas/GarmentConfigurationValidation' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    InventoryReceiptInput:
+      type: object
+      additionalProperties: false
+      required: [quantity]
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+        reference: { type: string, minLength: 1, maxLength: 200 }
+    InventoryAdjustmentInput:
+      type: object
+      additionalProperties: false
+      required: [quantityDelta, reason]
+      description: >
+        A signed correction. Zero is rejected because a movement that moves nothing is not a
+        record. A RETURN must add stock and DAMAGE must remove it. An adjustment can never take
+        stock below zero, nor below the quantity currently held by live reservations.
+      properties:
+        quantityDelta: { type: integer, minimum: -100000, maximum: 100000 }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+        kind: { type: string, enum: [ADJUSTMENT, RETURN, DAMAGE], default: ADJUSTMENT }
+        reference: { type: string, minLength: 1, maxLength: 200 }
+    InventoryThresholdInput:
+      type: object
+      additionalProperties: false
+      required: [lowStockThreshold]
+      properties:
+        lowStockThreshold: { type: integer, minimum: 0, maximum: 100000 }
+    StockLevelData:
+      type: object
+      required: [variantId, sku, onHand, reserved, available, lowStockThreshold, lowStock]
+      description: >
+        available is onHand minus the quantity held by live reservations. A reservation reduces
+        availability without moving stock, so onHand changes only on a receipt, an adjustment,
+        or a committed sale.
+      properties:
+        variantId: { type: string, format: uuid }
+        sku: { type: string }
+        onHand: { type: integer, minimum: 0 }
+        reserved: { type: integer, minimum: 0 }
+        available: { type: integer }
+        lowStockThreshold: { type: integer, minimum: 0 }
+        lowStock: { type: boolean }
+    StockMovement:
+      type: object
+      required: [id, kind, quantityDelta, onHandAfter, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [RECEIPT, ADJUSTMENT, SALE, RETURN, DAMAGE] }
+        quantityDelta: { type: integer }
+        onHandAfter: { type: integer, minimum: 0 }
+        reason: { type: string, nullable: true }
+        reference: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    StockLevelResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/StockLevelData' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    StockLevelListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/StockLevelData' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    StockMovementListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/StockMovement' }
         meta: { $ref: '#/components/schemas/ApiMeta' }
     HealthResponse:
       type: object

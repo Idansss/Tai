@@ -12,6 +12,8 @@ export {
   CompatibilityStatus,
   GarmentType,
   GarmentView,
+  InventoryMovementKind,
+  InventoryReservationStatus,
   Prisma,
   SessionKind,
   StoryBlockType,
