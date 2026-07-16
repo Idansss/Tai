@@ -2,7 +2,7 @@
 
 ## Current backend phase
 
-B2 — Artwork and catalogue is active. TMS-B2-001 and TMS-B2-002 are Verified and merged. TMS-B2-003 is Verified on `codex/b2-garment-catalogue`; PR #14 is clean and GitHub Actions run 29497257382 passed.
+B2 — Artwork and catalogue is active. TMS-B2-001 through TMS-B2-003 are Verified and merged. TMS-B2-004 is In progress on `codex/b2-media-pipeline`.
 
 ## Work completed
 
@@ -22,10 +22,11 @@ TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 thr
 - PR #11: `30bd5c087baf0f9b281f5422d43e5c54e26ace94`, CI 29467786313.
 - PR #12: `daae9f37ea6119fdf8d4cc387fdd701d80a2de6c`, CI 29483761718.
 - PR #13: `ce8bca4f7e7866cee698a77c9a94319418e8ca8a`, CI 29489686858.
+- PR #14: `4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79`, CI 29497566759.
 
 ## Next task
 
-Merge clean PR #14, then start TMS-B2-004 media ingestion and derivative processing from the latest `main`.
+Implement TMS-B2-004 exact-version media ingestion, validation/scanning, immutable originals, web/thumbnail derivative jobs, mockups, and approval workflow.
 
 ## API contracts added or changed
 
@@ -55,7 +56,7 @@ Readiness still reports process readiness only. Authentication throttling remain
 
 ## Blockers
 
-No TMS-B2-003 blocker remains. Live Flutterwave and GIGL verification remains credential-blocked later in B5.
+No B2 blocker is currently known. Live Flutterwave and GIGL verification remains credential-blocked later in B5.
 
 ## Requests for Claude Code
 
@@ -67,4 +68,4 @@ Do not recreate B0/B1 foundations, authentication/RBAC, artwork roots/versioning
 
 ## Exact continuation instruction
 
-Push the Verified ledger commit, confirm PR #14 remains green, merge it, then continue TMS-B2-004 from current `main` without modifying frontend-owned files.
+Continue TMS-B2-004 on `codex/b2-media-pipeline`, validate, document, publish, resolve CI, and merge its focused PR without modifying frontend-owned files.

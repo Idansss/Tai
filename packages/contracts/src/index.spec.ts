@@ -157,8 +157,34 @@ describe('shared contracts', () => {
       ArtworkGarmentCompatibilityInputSchema.safeParse({
         status: 'APPROVED',
         placementIds: ['974d56a9-fdc5-4365-8c46-c96fbe8d6c8d'],
+        unitPriceMinor: 1_400_000,
+        currency: 'NGN',
       }).success,
     ).toBe(true);
+    // An approved pair without a price, and a non-approved pair carrying one, are both rejected.
+    expect(
+      ArtworkGarmentCompatibilityInputSchema.safeParse({
+        status: 'APPROVED',
+        placementIds: ['974d56a9-fdc5-4365-8c46-c96fbe8d6c8d'],
+      }).success,
+    ).toBe(false);
+    expect(
+      ArtworkGarmentCompatibilityInputSchema.safeParse({
+        status: 'DRAFT',
+        placementIds: [],
+        unitPriceMinor: 1_400_000,
+        currency: 'NGN',
+      }).success,
+    ).toBe(false);
+    // Money is integer minor units only: no floats, no zero, no negatives.
+    expect(
+      ArtworkGarmentCompatibilityInputSchema.safeParse({
+        status: 'APPROVED',
+        placementIds: ['974d56a9-fdc5-4365-8c46-c96fbe8d6c8d'],
+        unitPriceMinor: 1400.5,
+        currency: 'NGN',
+      }).success,
+    ).toBe(false);
     expect(
       ArtworkGarmentCompatibilityInputSchema.safeParse({
         status: 'APPROVED',

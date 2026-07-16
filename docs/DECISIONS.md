@@ -44,6 +44,38 @@ Status: Accepted. Tags, curated collections, timed drops, editions, and editoria
 
 Status: Accepted. Garments are approved blank canvases for artwork, never creative catalogue roots. Templates own normalized colours, measured sizes, colour/size SKU variants, view placements, and scale presets. Exact artwork-version/template compatibility explicitly allowlists published placements, so a newly published artwork version never inherits an older version's approval. A valid design selection binds one immutable published artwork version to one published variant, placement, scale preset, and view; the server revalidates that tuple instead of trusting browser state. Published template structure is locked until archival, and leaving publication archives existing approvals. Inventory remains variant-based and is added separately so catalogue compatibility does not imply stock.
 
+## ADR-012 — Immutable originals and persistent derivative state
+
+Status: Accepted. Media belongs to an exact immutable artwork version. Validate and scan bytes before storing a content-addressed original; never mutate or delete original bytes or provenance. Redis carries delivery, while PostgreSQL remains authoritative for queued/processing/succeeded/failed state and bounded attempts. Web previews are deterministic derivatives and are never production-print assets. Mockups require explicit approval before public exposure. Storage, scanner, and queue implementations remain provider-neutral so local MinIO/EICAR-aware development can be replaced without changing the domain contract.
+
+## ADR-013 — Approved placements are the only design geometry
+
+Status: Accepted. A saved design binds one immutable published artwork version to one published garment variant, placement, scale preset, and view, exactly as ADR-011 defines a valid selection. The server does not accept, store, or render freeform print geometry.
+
+Context: the Design Studio user interface was built against typed mocks with no backend and offers continuous print placement (`printX`, `printY`, `printWidth`) plus crop (`cropZoom`, `cropX`, `cropY`). No approved-canvas model can express that geometry, so the two representations are irreconcilable.
+
+Consequences: freeform placement and crop controls leave the Studio and are replaced by the placements and scale presets an administrator has actually approved. This preserves the ADR-011 invariant that only administrator-approved configurations are valid, guarantees print resolution and DPI on production output, and keeps the TMS-B3-003 renderer deterministic — an approved tuple always renders one exact result. The cost is real Studio interface rework and the loss of fine customer positioning. A bounded offset within an approved placement box was considered and rejected for this phase because it weakens exact approval; it can be revisited as a separate task without invalidating stored designs, since a bounded offset is additive to the approved tuple.
+
+## ADR-014 — A saved design is identified by its approved tuple, not by quantity
+
+Status: Accepted. `design_configurations` stores the approved tuple and a SHA-256 hash over that tuple only. Quantity is excluded.
+
+Context: the shared `DesignConfigurationInputSchema` carries a quantity because the garment validation endpoint answers "may this be bought, and how many". A saved design answers a different question: "what did the customer make".
+
+Consequences: saving the same design twice is idempotent and collapses onto one row, so `POST /api/v1/designs` returns 201 for a new design and 200 for an identical one, including under a concurrent unique-index race. Quantity moves to the cart in TMS-B4-002. A design is PRIVATE with no share token or UNLISTED with one, and a database check constraint prevents those states from drifting; rotation invalidates the previous link immediately. Ownership failures report not-found rather than forbidden so design identifiers cannot be probed. Foreign keys to the artwork version, variant, placement, and scale preset are RESTRICT so a saved design cannot silently lose the configuration it was built from.
+
+## ADR-015 — Price belongs to the approved artwork and garment pair
+
+Status: Accepted. Money is stored as an integer amount in minor units with an explicit ISO-4217 currency. The base currency is NGN and amounts are kobo. Floating point is never used for money anywhere in the platform.
+
+Context: the storefront already models money this way (`priceMinor`, `currency: 'NGN'`, ₦11,000–₦18,000 per product) and annotates it "server-authoritative later", and Flutterwave settles in NGN minor units. Price varies per product — that is, per artwork on a given garment — and does not vary by size or colour.
+
+Decision: the price hangs on the existing `ArtworkGarmentCompatibility` record, which already binds one exact immutable published artwork version to one published garment template and is explicitly approved by an administrator. An administrator therefore sets the price at the moment they approve that artwork on that garment, and an approved compatibility without a price is not sellable. This keeps pricing inside the same approval gate as ADR-011: there is no way to sell a combination that an administrator did not both approve and price. Because compatibility references an exact `ArtworkVersion` and never the mutable artwork root, publishing a replacement version requires a fresh approval and a fresh price rather than silently inheriting the old one.
+
+Rejected alternatives: a garment base price plus an artwork premium would save administrator effort by letting new artwork inherit a garment's price, but it lets a combination become sellable at a price nobody explicitly chose. Per-variant SKU pricing was rejected as unnecessary surface — six sizes by four colours is twenty-four prices per artwork to keep consistent — and is not what the storefront models.
+
+Consequences: sizes carry no surcharge; one price covers every size and colour of a garment. A per-size modifier can be added later additively without invalidating stored prices or historical orders, because it would be a component of the computed unit price rather than a change to how price is identified. Order snapshots in TMS-B4-003 must copy the resolved amount and currency rather than referencing the compatibility, so a later price change never rewrites history.
+
 ## ADR-016 — Row-locked reservations with derived availability
 
 Status: Accepted. Stock is held against the blank garment variant, never against artwork. Available stock is on-hand minus the quantity held by live reservations, and a reservation reduces availability without moving stock.

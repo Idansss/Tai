@@ -24,6 +24,8 @@
     "@tms/contracts": "workspace:*",
     "@tms/database": "workspace:*",
     "@tms/email": "workspace:*",
+    "@tms/media": "workspace:*",
+    "bullmq": "5.80.2",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "helmet": "8.1.0",
@@ -36,7 +38,9 @@
   "devDependencies": {
     "@nestjs/testing": "11.1.28",
     "@types/express": "5.0.6",
+    "@types/multer": "2.0.0",
     "@types/supertest": "7.2.1",
+    "sharp": "0.34.3",
     "supertest": "7.2.2",
     "tsx": "4.23.1"
   }

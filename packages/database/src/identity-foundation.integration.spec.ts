@@ -153,7 +153,7 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'SELECT count(*)::int AS count FROM permissions',
     );
 
-    expect(migrationResult.rows[0]?.count).toBe(6);
+    expect(migrationResult.rows[0]?.count).toBe(9);
     expect(permissionResult.rows[0]?.count).toBe(14);
     expect(roleResult.rows).toEqual([
       { code: 'ANALYST', is_system: true, grant_count: 3 },
@@ -199,6 +199,9 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
           'inventory_items_variant_id_key',
           'inventory_movements_item_created_at_idx',
           'inventory_reservations_item_status_expires_idx',
+          'artwork_assets_version_kind_status_idx',
+          'artwork_assets_approval_kind_created_idx',
+          'media_processing_jobs_status_created_idx',
           'users_normalized_email_key',
         ],
       ],
@@ -206,6 +209,8 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
 
     expect(result.rows.map(({ indexname }) => indexname)).toEqual([
       'admin_auth_challenges_user_state_idx',
+      'artwork_assets_approval_kind_created_idx',
+      'artwork_assets_version_kind_status_idx',
       'artwork_garment_compatibilities_template_status_idx',
       'artwork_tags_tag_artwork_idx',
       'artwork_versions_artwork_status_version_idx',
@@ -222,6 +227,7 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
       'inventory_items_variant_id_key',
       'inventory_movements_item_created_at_idx',
       'inventory_reservations_item_status_expires_idx',
+      'media_processing_jobs_status_created_idx',
       'password_reset_tokens_user_state_idx',
       'sessions_user_kind_state_idx',
       'sessions_user_revoked_expires_idx',
@@ -519,6 +525,81 @@ describe.sequential('backend persistence PostgreSQL integration', () => {
         [randomUUID(), userId, `admin-session-${randomUUID()}`],
       ),
       'sessions_assurance_check',
+    );
+  });
+
+  it('enforces immutable exact-version media provenance and safe approval state', async () => {
+    const userId = randomUUID();
+    const artworkId = randomUUID();
+    const versionId = randomUUID();
+    const secondVersionId = randomUUID();
+    const originalId = randomUUID();
+    await database.query(
+      `INSERT INTO users (id, email, normalized_email, updated_at)
+       VALUES ($1, $2, $2, CURRENT_TIMESTAMP)`,
+      [userId, `media-${userId}@example.com`],
+    );
+    await database.query(
+      `INSERT INTO artworks (id, slug, created_by_user_id, updated_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
+      [artworkId, `media-${artworkId}`, userId],
+    );
+    await database.query(
+      `INSERT INTO artwork_versions (id, artwork_id, version_number, title, created_by_user_id)
+       VALUES ($1, $2, 1, 'Media one', $3), ($4, $2, 2, 'Media two', $3)`,
+      [versionId, artworkId, userId, secondVersionId],
+    );
+    await database.query(
+      `INSERT INTO artwork_assets
+         (id, artwork_version_id, kind, variant_key, storage_key, original_filename, mime_type,
+          extension, byte_size, width, height, checksum_sha256, processing_status,
+          malware_scan_status, approval_status, created_by_user_id, updated_at)
+       VALUES ($1, $2, 'ORIGINAL', 'original', $3, 'art.png', 'image/png', 'png', 2048,
+               3200, 3100, $4, 'READY', 'CLEAN', 'NOT_REQUIRED', $5, CURRENT_TIMESTAMP)`,
+      [originalId, versionId, `original/${originalId}.png`, 'a'.repeat(64), userId],
+    );
+    await expect(
+      database.query('UPDATE artwork_assets SET storage_key = $1 WHERE id = $2', [
+        `mutated/${originalId}.png`,
+        originalId,
+      ]),
+    ).rejects.toThrow('media asset bytes and provenance are immutable');
+    await expect(
+      database.query('DELETE FROM artwork_assets WHERE id = $1', [originalId]),
+    ).rejects.toThrow('media assets are immutable and cannot be deleted');
+    await expect(
+      database.query(
+        `INSERT INTO artwork_assets
+           (id, artwork_version_id, source_asset_id, kind, variant_key, storage_key,
+            original_filename, mime_type, extension, byte_size, width, height,
+            checksum_sha256, processing_status, malware_scan_status, approval_status,
+            created_by_user_id, updated_at)
+         VALUES ($1, $2, $3, 'THUMBNAIL', 'thumbnail-400', $4, 'thumb.webp',
+                 'image/webp', 'webp', 512, 400, 400, $5, 'READY', 'CLEAN',
+                 'NOT_REQUIRED', $6, CURRENT_TIMESTAMP)`,
+        [
+          randomUUID(),
+          secondVersionId,
+          originalId,
+          `derivative/${randomUUID()}.webp`,
+          'b'.repeat(64),
+          userId,
+        ],
+      ),
+    ).rejects.toThrow('media derivative source must be the same artwork version original');
+    await expectConstraint(
+      database.query(
+        `INSERT INTO artwork_assets
+           (id, artwork_version_id, kind, variant_key, storage_key, original_filename,
+            mime_type, extension, byte_size, width, height, checksum_sha256,
+            processing_status, malware_scan_status, approval_status, approved_at,
+            created_by_user_id, updated_at)
+         VALUES ($1, $2, 'ORIGINAL', 'bad-approval', $3, 'bad.png', 'image/png', 'png',
+                 2048, 1000, 1000, $4, 'READY', 'CLEAN', 'APPROVED', CURRENT_TIMESTAMP,
+                 $5, CURRENT_TIMESTAMP)`,
+        [randomUUID(), secondVersionId, `bad/${randomUUID()}.png`, 'c'.repeat(64), userId],
+      ),
+      'artwork_assets_approval_check',
     );
   });
 

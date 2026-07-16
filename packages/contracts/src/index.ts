@@ -16,6 +16,9 @@ export const errorCodes = [
   'RESOURCE_NOT_FOUND',
   'CONFLICT',
   'CONFIGURATION_NOT_APPROVED',
+  'MEDIA_VALIDATION_FAILED',
+  'MEDIA_INFECTED',
+  'MEDIA_PROCESSING_FAILED',
   'RATE_LIMITED',
   'IDEMPOTENCY_CONFLICT',
   'INVENTORY_UNAVAILABLE',
@@ -251,7 +254,56 @@ export interface ArtworkVersion {
   publishedAt: string | null;
   archivedAt: string | null;
   createdAt: string;
+  media?: MediaAsset[];
 }
+
+export const MediaAssetKindSchema = z.enum(['ORIGINAL', 'WEB_DERIVATIVE', 'THUMBNAIL', 'MOCKUP']);
+export type MediaAssetKind = z.infer<typeof MediaAssetKindSchema>;
+export const MediaProcessingStatusSchema = z.enum(['QUEUED', 'PROCESSING', 'READY', 'FAILED']);
+export type MediaProcessingStatus = z.infer<typeof MediaProcessingStatusSchema>;
+export const MediaApprovalStatusSchema = z.enum([
+  'NOT_REQUIRED',
+  'PENDING',
+  'APPROVED',
+  'REJECTED',
+]);
+export type MediaApprovalStatus = z.infer<typeof MediaApprovalStatusSchema>;
+
+export interface MediaAsset {
+  id: string;
+  artworkVersionId: string;
+  kind: MediaAssetKind;
+  variantKey: string;
+  originalFilename: string;
+  mimeType: string;
+  byteSize: number;
+  width: number;
+  height: number;
+  hasAlpha: boolean;
+  checksumSha256: string;
+  dominantHex: string | null;
+  lowResolution: boolean;
+  processingStatus: MediaProcessingStatus;
+  approvalStatus: MediaApprovalStatus;
+  failureCode: string | null;
+  failureMessage: string | null;
+  rejectionReason: string | null;
+  garmentTemplateId: string | null;
+  garmentPlacementId: string | null;
+  url: string | null;
+  createdAt: string;
+}
+
+export const MockupApprovalInputSchema = z
+  .object({
+    status: z.enum(['APPROVED', 'REJECTED']),
+    reason: z.string().trim().min(1).max(500).optional(),
+  })
+  .refine((value) => value.status !== 'REJECTED' || !!value.reason, {
+    message: 'A rejection reason is required.',
+    path: ['reason'],
+  });
+export type MockupApprovalInput = z.infer<typeof MockupApprovalInputSchema>;
 
 export interface Artwork {
   id: string;
@@ -506,15 +558,37 @@ export const GarmentScalePresetInputSchema = z.object({
 });
 export type GarmentScalePresetInput = z.infer<typeof GarmentScalePresetInputSchema>;
 
+/** Integer minor units only. Money is never a float. The base currency is NGN (kobo). */
+export const MoneyMinorSchema = z.number().int().positive().max(100_000_000);
+export const CurrencySchema = z.string().regex(/^[A-Z]{3}$/);
+
+export interface Money {
+  amountMinor: number;
+  currency: string;
+}
+
 export const ArtworkGarmentCompatibilityInputSchema = z
   .object({
     status: CompatibilityStatusSchema,
     placementIds: z.array(z.string().uuid()).max(50).default([]),
+    /** Required exactly when approving, and rejected otherwise. See ADR-015. */
+    unitPriceMinor: MoneyMinorSchema.optional(),
+    currency: CurrencySchema.optional(),
   })
   .refine((value) => new Set(value.placementIds).size === value.placementIds.length, {
     message: 'Compatibility placement identifiers must be unique.',
     path: ['placementIds'],
-  });
+  })
+  .refine(
+    (value) =>
+      value.status === 'APPROVED'
+        ? value.unitPriceMinor !== undefined && value.currency !== undefined
+        : value.unitPriceMinor === undefined && value.currency === undefined,
+    {
+      message: 'An approved compatibility requires a price and currency, and only then.',
+      path: ['unitPriceMinor'],
+    },
+  );
 export type ArtworkGarmentCompatibilityInput = z.infer<
   typeof ArtworkGarmentCompatibilityInputSchema
 >;
@@ -599,6 +673,26 @@ export const DesignConfigurationInputSchema = z.object({
 });
 export type DesignConfigurationInput = z.infer<typeof DesignConfigurationInputSchema>;
 
+/**
+ * Why a priced, approved configuration still cannot be bought right now. Stock is deliberately
+ * absent: garment inventory is TMS-B4-001 and will refine this, so `AVAILABLE` here means
+ * "the catalogue permits this sale", never "a unit is reserved for you".
+ */
+export const AvailabilityStateSchema = z.enum([
+  'AVAILABLE',
+  'DROP_NOT_OPEN',
+  'DROP_ENDED',
+  'EDITION_EXHAUSTED',
+]);
+export type AvailabilityState = z.infer<typeof AvailabilityStateSchema>;
+
+export interface ConfigurationAvailability {
+  state: AvailabilityState;
+  /** Present only when the state is time-bounded by a drop. */
+  opensAt: string | null;
+  closesAt: string | null;
+}
+
 export interface GarmentConfigurationValidation {
   valid: true;
   artworkId: string;
@@ -609,4 +703,60 @@ export interface GarmentConfigurationValidation {
   scalePresetId: string;
   view: GarmentView;
   quantity: number;
+  /** Server-authoritative. Never trust a browser-supplied price. */
+  unitPrice: Money;
+  /** unitPrice.amountMinor * quantity, computed server-side in integer minor units. */
+  totalPrice: Money;
+  availability: ConfigurationAvailability;
+}
+
+export const DesignVisibilitySchema = z.enum(['PRIVATE', 'UNLISTED']);
+export type DesignVisibility = z.infer<typeof DesignVisibilitySchema>;
+
+/**
+ * A saved design is the approved tuple only. Quantity is deliberately absent: it is a cart
+ * concern, not part of a design's identity, so re-saving the same design at a different
+ * quantity must not create a second design. See ADR-013.
+ */
+export const SaveDesignInputSchema = z.object({
+  artworkVersionId: z.string().uuid(),
+  garmentVariantId: z.string().uuid(),
+  placementId: z.string().uuid(),
+  scalePreset: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  view: GarmentViewSchema,
+  name: z.string().trim().min(1).max(120).optional(),
+});
+export type SaveDesignInput = z.infer<typeof SaveDesignInputSchema>;
+
+export const UpdateDesignInputSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).nullable().optional(),
+    visibility: DesignVisibilitySchema.optional(),
+  })
+  .refine((value) => value.name !== undefined || value.visibility !== undefined, {
+    message: 'Provide a name or a visibility to update.',
+  });
+export type UpdateDesignInput = z.infer<typeof UpdateDesignInputSchema>;
+
+export interface DesignConfigurationSummary {
+  id: string;
+  artworkId: string;
+  artworkVersionId: string;
+  garmentTemplateId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+  /** Deterministic SHA-256 of the approved tuple; identical designs share one hash. */
+  configurationHash: string;
+  name: string | null;
+  visibility: DesignVisibility;
+  /** Present only while the design is UNLISTED and the owner is reading it. */
+  shareToken: string | null;
+  createdAt: string;
+  updatedAt: string;
 }

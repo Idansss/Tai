@@ -42,3 +42,7 @@ Webhook work must validate signatures, persist raw events safely, reject amount/
 - A garment cannot publish until it has published colour, size, variant, placement, and scale members. An exact artwork-version compatibility cannot be approved until the version, both roots, and every allowlisted placement are published.
 - Configuration validation is server-authoritative and binds the exact immutable artwork version to one published variant, placement, scale preset, and view. Invalid combinations return `CONFIGURATION_NOT_APPROVED` without leaking unpublished catalogue state.
 - PostgreSQL independently prevents cross-template variant members, cross-template compatibility placements, invalid normalized geometry, and invalid lifecycle timestamps.
+
+## Media trust boundary
+
+Upload declarations are untrusted. The server combines a 25 MB transport limit with magic-byte detection, MIME/extension agreement, bounded decoding, 512–20,000px original/mockup dimensions, decompression-pixel limits, and a provider-neutral malware scan before storage. Object keys are derived from exact version IDs and SHA-256 digests. Originals are private and immutable. Signed URLs are short-lived; public media queries expose only ready web derivatives/thumbnails and explicitly approved mockups. Scanner, storage, and queue failures return sanitized public errors while persistent records retain safe operational state.
