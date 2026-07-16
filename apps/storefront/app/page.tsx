@@ -10,18 +10,22 @@ import { ArrowRight, ArrowUpRight, Palette } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
+import { HeroPlate } from '@/components/hero-plate';
+import { resolveArtworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
-  title: 'Art-led apparel',
-  description: 'A premium digital gallery and interactive design studio. The artwork is the hero.',
+  title: 'From Africa, to You',
+  description:
+    'Original African-heritage illustration, drawn by hand and printed on considered garments. A premium digital gallery and interactive design studio — the artwork is the hero.',
 };
 
 export default async function HomePage() {
   const { items: artworks } = await dataProvider.listArtworks({ limit: 7 });
   const hero = artworks[0];
   const featured = artworks.slice(1, 7);
+  const heroImage = hero ? resolveArtworkImage(hero.slug) : null;
 
   return (
     <>
@@ -30,45 +34,47 @@ export default async function HomePage() {
         <div className="mx-auto max-w-[90rem] px-4 py-2.5 sm:px-6 lg:px-8">
           <Marquee
             items={[
-              'New drop — “Nightline” chapter live',
+              'From Africa, to you',
               'Hand-drawn, studio-printed',
               'Limited editions, numbered',
-              'Free UK shipping over £75',
+              'Worldwide shipping, tracked',
               'Design your own piece in the studio',
             ]}
           />
         </div>
       </div>
 
-      {/* Hero — art-led, editorial, asymmetric */}
+      {/* Hero — art-led, editorial, asymmetric. Amber press-glow blooms behind the plate. */}
       <section className="relative overflow-hidden border-b border-line">
-        <div className="mx-auto grid max-w-[90rem] items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:py-24">
+        <span className="press-glow left-[52%] top-[8%] hidden size-[38rem] lg:block" aria-hidden />
+        <div className="relative mx-auto grid max-w-[90rem] items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:py-24">
           <div className="lg:col-span-6 lg:pr-8 xl:col-span-6">
             <Reveal className="flex items-center gap-3">
-              <SectionIndex index={0} />
-              <span className="font-mono text-xs uppercase tracking-[0.14em] text-muted">
-                Independent art-fashion studio · Est. 2021
+              <span className="inline-block size-1.5 rotate-45 bg-accent-2" aria-hidden />
+              <span className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
+                Independent art-fashion studio · Heritage in every line
               </span>
             </Reveal>
             <Reveal
               as="h1"
               delay={60}
-              className="mt-6 font-display text-[clamp(2.75rem,7vw,5.75rem)] font-semibold leading-[0.98] tracking-[-0.02em] text-ink"
+              className="mt-6 font-display text-[clamp(3rem,7.4vw,6.25rem)] font-bold uppercase leading-[0.92] tracking-[-0.02em] text-ink"
             >
-              The artwork
+              From <span className="text-accent-2">Africa</span>,
               <br />
-              is the hero.
+              to you.
             </Reveal>
             <Reveal
               as="p"
               delay={120}
-              className="mt-6 max-w-prose font-sans text-lg leading-relaxed text-ink-2"
+              className="mt-7 max-w-prose font-sans text-lg leading-relaxed text-ink-2"
             >
-              Original drawings and comic-line illustrations, applied to considered garments.
-              Explore the gallery, then step into the design studio to make a piece your own.
+              Original illustration rooted in African heritage — Nigeria, Ghana, Ethiopia, Kenya and
+              beyond — drawn by hand and printed on considered garments. Explore the gallery, then
+              step into the studio to make a piece your own.
             </Reveal>
             <Reveal delay={180} className="mt-9 flex flex-wrap items-center gap-3">
-              <Link href="/artworks" className={buttonVariants({ size: 'lg' })}>
+              <Link href="/artworks" className={buttonVariants({ size: 'lg', variant: 'accent' })}>
                 Explore artworks <ArrowRight className="size-4" aria-hidden />
               </Link>
               <Link
@@ -80,25 +86,34 @@ export default async function HomePage() {
             </Reveal>
           </div>
 
-          {/* Hero plate — the artwork, large */}
+          {/* Hero plate — the artwork, large, on a cursor-reactive 3D tilt */}
           <Reveal delay={140} from="none" className="lg:col-span-6">
             {hero ? (
-              <Link
-                href={`/artworks/${hero.slug}`}
-                className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-              >
-                <Frame ratio="wide" interactive className="shadow-md">
-                  <ArtworkVisual seed={hero.slug} title={hero.title} label={hero.collection} />
-                </Frame>
-                <div className="mt-3 flex items-center justify-between gap-4">
-                  <span className="font-mono text-xs uppercase tracking-[0.12em] text-muted">
-                    Featured · {hero.collection}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-sm text-ink transition-colors group-hover:text-accent-2">
-                    {hero.title} <ArrowUpRight className="size-4" aria-hidden />
-                  </span>
-                </div>
-              </Link>
+              <HeroPlate>
+                <Link
+                  href={`/artworks/${hero.slug}`}
+                  className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+                >
+                  <Frame ratio="wide" interactive className="shadow-lg ring-1 ring-line/60">
+                    <ArtworkMedia
+                      src={heroImage}
+                      seed={hero.slug}
+                      title={hero.title}
+                      label={hero.collection}
+                      priority
+                    />
+                  </Frame>
+                  {/* Edition stamp — the studio's press signature */}
+                  <div className="mt-4 flex items-center justify-between gap-4">
+                    <span className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-muted">
+                      <span className="text-accent-2">◆</span> Featured · {hero.collection}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-ink transition-colors group-hover:text-accent-2">
+                      {hero.title} <ArrowUpRight className="size-4" aria-hidden />
+                    </span>
+                  </div>
+                </Link>
+              </HeroPlate>
             ) : null}
           </Reveal>
         </div>
@@ -150,12 +165,8 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-[90rem] items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:py-28">
           <Reveal from="none" className="lg:col-span-5">
             {hero ? (
-              <Frame ratio="artwork" mat="canvas" className="border-line">
-                <ArtworkVisual
-                  seed={`${hero.slug}-studio`}
-                  title={hero.title}
-                  label="Process"
-                />
+              <Frame ratio="artwork" mat="canvas" interactive className="border-line">
+                <ArtworkMedia src={heroImage} seed={hero.slug} title={hero.title} label="Process" />
               </Frame>
             ) : null}
           </Reveal>
@@ -173,12 +184,13 @@ export default async function HomePage() {
             >
               Drawn by hand.
               <br />
-              Made for colour.
+              Rooted in heritage.
             </Reveal>
             <Reveal as="p" delay={120} className="mt-6 max-w-prose text-lg leading-relaxed text-ink-2">
-              Every piece begins as ink on paper. We print on considered garments so the line work
-              keeps its weight and the colour reads the way it was drawn. No mass runs, no filler,
-              nothing that gets in the way of the work.
+              Every piece begins as ink and colour on paper — Adinkra symbols, market scenes,
+              portraits of the diaspora. We print on considered garments so the linework keeps its
+              weight and the colour reads the way it was drawn. No mass runs, no filler, nothing that
+              gets in the way of the work.
             </Reveal>
             <Reveal delay={180} className="mt-9 flex flex-wrap gap-3">
               <Link href="/about" className={buttonVariants({ size: 'lg' })}>
@@ -241,8 +253,8 @@ export default async function HomePage() {
           <Rule label="Tai Manic Studios" />
           <Reveal className="mt-10">
             <p className="max-w-4xl font-display text-3xl font-medium leading-[1.15] tracking-[-0.01em] text-ink sm:text-4xl">
-              An independent studio for original comic-line art, released as limited apparel — where
-              the work always comes first.
+              An independent studio for original African-heritage art, released as limited apparel —
+              from Africa, to you.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/artworks" className={buttonVariants({ size: 'lg' })}>

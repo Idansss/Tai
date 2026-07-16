@@ -4,9 +4,12 @@
  * These exact semantic names are the token contract; theme.css aliases them to Tailwind.
  *
  * F6 "Gallery Press" direction (docs/frontend/PREMIUM_UI_RESEARCH.md):
- * neutral gallery paper + near-black ink primary + teal print-shop signature.
- * Chrome recedes so the artwork carries the colour. All pairs re-verified for WCAG 2.2 AA
- * in tokens.ts / tokens.spec.ts (the gate of record). Keep the two files in sync.
+ * neutral gallery paper + near-black ink primary + burnt-amber print-shop signature.
+ * The amber is the studio's press ink: it carries identity on labels, states, edition
+ * stamps and glows, while chrome recedes so the artwork stays the hero. Text-bearing amber
+ * passes WCAG 2.2 AA; --color-glow is a brighter decorative amber for gradients only (no
+ * text sits on it). All pairs re-verified in tokens.ts / tokens.spec.ts (the gate of
+ * record). Keep the two files in sync.
  */
 
 :root {
@@ -26,9 +29,13 @@
   --color-border-default: #dcd9d2;
   --color-border-strong: #bcb8ae;
 
-  /* Accents — near-black brand ink (dominant) + teal signature (sparing) */
+  /* Accents — near-black brand ink (dominant) + burnt-amber press-ink signature */
   --color-accent-primary: #16171a;
-  --color-accent-secondary: #0f6b63;
+  --color-accent-secondary: #a8481c;
+
+  /* Decorative amber for gradients / glows only (never carries text) */
+  --color-glow: #e07b34;
+  --color-glow-soft: #f2b072;
 
   /* Status */
   --color-success: #1f7a52;
@@ -98,7 +105,10 @@
   --color-border-strong: #474a50;
 
   --color-accent-primary: #edebe4;
-  --color-accent-secondary: #43bbb0;
+  --color-accent-secondary: #e2924a;
+
+  --color-glow: #e88b3c;
+  --color-glow-soft: #b5601f;
 
   --color-success: #4ecf95;
   --color-warning: #d6a044;

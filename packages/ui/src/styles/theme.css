@@ -139,3 +139,113 @@
     transform: translateX(-50%);
   }
 }
+
+/* ============================================================================
+ * Gallery Press — depth, glow & motion primitives (F6/UX overhaul)
+ * The amber signature carries identity through light rather than fill:
+ * a soft press-glow behind the artwork, a disciplined lift on interactive
+ * plates, and a cursor-reactive 3D tilt for the hero. All degrade to a calm
+ * static state under prefers-reduced-motion.
+ * ==========================================================================*/
+
+/* Amber press-glow: a decorative radial bloom placed behind hero art / bands.
+   Never carries text — uses the brighter --color-glow. Position via inset/size
+   utilities on the element; it self-blurs and drifts slowly. */
+@utility press-glow {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--color-glow) 62%, transparent),
+    color-mix(in oklab, var(--color-glow) 20%, transparent) 60%,
+    transparent 100%
+  );
+  filter: blur(44px);
+  opacity: 0.55;
+  animation: tms-glow-drift 14s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes tms-glow-drift {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4%, 3%, 0) scale(1.08);
+  }
+}
+
+/* Fine matte-paper grain: an almost-subliminal print texture over bands.
+   pointer-events:none, sits above bg, below content. */
+@utility press-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+/* Interactive plate lift: for cards / art plates. Raises + deepens shadow and
+   warms the hairline toward amber on hover or keyboard focus-within. */
+@utility lift {
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+  will-change: transform;
+}
+.lift:hover,
+.lift:focus-within {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press-glow {
+    animation: none !important;
+  }
+  .lift:hover,
+  .lift:focus-within {
+    transform: none;
+  }
+}
+
+/* Cursor-reactive 3D tilt for the hero plate. The client component writes
+   --tms-rx / --tms-ry (deg) and --tms-gx / --tms-gy (%) from pointer position;
+   CSS renders the transform + a moving specular sheen. Falls back flat when the
+   vars are unset (SSR, touch, reduced motion). */
+@utility tilt-plate {
+  transform: perspective(1100px) rotateX(var(--tms-rx, 0deg)) rotateY(var(--tms-ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform var(--duration-base) var(--ease-out);
+}
+.tilt-sheen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    38% 38% at var(--tms-gx, 50%) var(--tms-gy, 0%),
+    rgb(255 255 255 / 0.28),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+  mix-blend-mode: soft-light;
+}
+.tilt-plate:hover .tilt-sheen::after,
+.tilt-plate:focus-within .tilt-sheen::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce), (hover: none) {
+  .tilt-plate {
+    transform: none !important;
+    transition: none;
+  }
+  .tilt-sheen::after {
+    display: none;
+  }
+}

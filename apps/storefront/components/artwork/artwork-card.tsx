@@ -1,7 +1,8 @@
 import { Badge, Eyebrow, Frame, Heading, Price, Text } from '@tms/ui';
 import Link from 'next/link';
+import { resolveArtworkImage } from '@/lib/artwork-images';
 import type { ArtworkSummary } from '@/lib/data';
-import { ArtworkVisual } from './artwork-visual';
+import { ArtworkMedia } from './artwork-media';
 
 const availabilityTone = {
   available: 'success',
@@ -16,13 +17,23 @@ const availabilityLabel = {
 } as const;
 
 export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
+  const image = resolveArtworkImage(artwork.slug);
   return (
     <Link
       href={`/artworks/${artwork.slug}`}
       className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
     >
-      <Frame ratio="artwork" interactive>
-        <ArtworkVisual seed={artwork.slug} title={artwork.title} label={artwork.collection} />
+      <Frame
+        ratio="artwork"
+        interactive
+        className="lift shadow-sm group-hover:border-line-2 group-focus-visible:border-line-2"
+      >
+        <ArtworkMedia
+          src={image}
+          seed={artwork.slug}
+          title={artwork.title}
+          label={artwork.collection}
+        />
         <div className="pointer-events-none absolute left-3 top-3">
           <Badge tone={availabilityTone[artwork.availability]}>
             {availabilityLabel[artwork.availability]}

@@ -4,9 +4,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
-import { ArtworkVisual } from '@/components/artwork/artwork-visual';
+import { ArtworkMedia } from '@/components/artwork/artwork-media';
 import { CommunityBoard } from '@/components/community/community-board';
 import { Reviews } from '@/components/review/reviews';
+import { resolveArtworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 
 interface Params {
@@ -45,6 +46,7 @@ export default async function ArtworkDetailPage({ params }: Params) {
   if (!artwork) notFound();
   const reviews = await dataProvider.getReviews('artwork', slug);
   const communityPhotos = await dataProvider.listArtworkCommunityPhotos(slug);
+  const image = resolveArtworkImage(slug);
 
   return (
     <>
@@ -68,10 +70,12 @@ export default async function ArtworkDetailPage({ params }: Params) {
             <div className="lg:sticky lg:top-[5.5rem]">
               <Reveal from="none">
                 <Frame ratio="artwork" interactive className="shadow-md">
-                  <ArtworkVisual
+                  <ArtworkMedia
+                    src={image}
                     seed={artwork.slug}
                     title={artwork.title}
                     label={artwork.collection}
+                    priority
                   />
                 </Frame>
               </Reveal>
