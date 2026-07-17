@@ -20,9 +20,14 @@ export interface ArtworkSummary {
   title: string;
   collection: string;
   shortStory: string;
-  availability: Availability;
-  startingPriceMinor: number;
-  currency: string;
+  /**
+   * Null when the source cannot state it. ADR-015 puts price on the approved artwork and
+   * garment pair, so the API's artwork response carries no price and no availability state.
+   * Null means "not known here" and must render as absent, never as ₦0 or "in stock".
+   */
+  availability: Availability | null;
+  startingPriceMinor: number | null;
+  currency: string | null;
   compatibleGarments: string[];
   limitedEdition: boolean;
 }

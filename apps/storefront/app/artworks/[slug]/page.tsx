@@ -73,12 +73,16 @@ export default async function ArtworkDetailPage({ params }: Params) {
               <Badge tone={artwork.limitedEdition ? 'warning' : 'neutral'}>
                 {artwork.edition ?? 'Open edition'}
               </Badge>
-              <Price
-                amountMinor={artwork.startingPriceMinor}
-                currency={artwork.currency}
-                className="text-ink"
-              />
-              <span className="text-xs text-muted">from</span>
+              {artwork.startingPriceMinor !== null && artwork.currency ? (
+                <>
+                  <Price
+                    amountMinor={artwork.startingPriceMinor}
+                    currency={artwork.currency}
+                    className="text-ink"
+                  />
+                  <span className="text-xs text-muted">from</span>
+                </>
+              ) : null}
             </div>
 
             <Text size="lg" tone="secondary" className="mt-6">

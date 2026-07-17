@@ -1,9 +1,9 @@
 {
   "agent": "Claude Code",
   "area": "frontend",
-  "currentPhase": "F5 complete → F6 next",
-  "lastVerifiedTask": "TMS-F5-010",
-  "nextRecommendedTask": "F5 (growth & AI) COMPLETE — all of 001–010 Verified. Next: F6 (hardening) — audit-and-fix + real-API cutover (several tasks depend on Codex delivering endpoints TMS-FBR-001/002/004/005/007/008/009). F0–F4 merged to main; TMS-F1-DEF-001 fixed for production.",
+  "currentPhase": "F7 API integration (in progress)",
+  "lastVerifiedTask": "TMS-F7-004",
+  "nextRecommendedTask": "F7 in progress on claude/f7-api-integration. DONE: TMS-F7-001 http foundation, TMS-F7-002 per-domain data source (replaces all-or-nothing DATA_SOURCE; per-method mock fallback rejected because it hides outages), TMS-F7-003 artworks+collections on the real API, TMS-F7-004 nullable price/availability so nothing is faked. NEXT: TMS-F7-005 Studio rework (getStudioOptions -> artwork-scoped /artworks/{slug}/compatible-garments, TMS-FBR-017), then TMS-F7-006 cart (never send unitPriceMinor; server totals; render issue lines; block checkout on hasIssues; no hold countdown per ADR-017), then TMS-F7-007 saved designs. BLOCKER for real verification: local Postgres has only B1 identity tables, so no live API can serve artworks; api.ts is verified against stubs only. Backend asks recorded as TMS-FBR-010..019; TMS-FBR-011 (artwork startingPrice) and -012 (availability) gate flipping the gallery to DATA_SOURCE=api.",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-002",
@@ -47,7 +47,11 @@
     "TMS-F5-005",
     "TMS-F5-008",
     "TMS-F5-009",
-    "TMS-F5-010"
+    "TMS-F5-010",
+    "TMS-F7-001",
+    "TMS-F7-002",
+    "TMS-F7-003",
+    "TMS-F7-004"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": [],

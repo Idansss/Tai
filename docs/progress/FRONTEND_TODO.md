@@ -810,3 +810,60 @@ Codex delivering endpoints.
       CSP/security-header recommendations.
 - [ ] **TMS-F6-010** Staging acceptance & launch checklist — run all required journeys (§27) on
       staging, real-data smoke, sign-off, and a launch checklist.
+
+## F7 — API integration (in progress, 2026-07-17)
+
+Branch `claude/f7-api-integration`, cut from `main` after PR #9 (F5) merged.
+
+- [x] **TMS-F7-001** API client foundation — `lib/data/http.ts`: one `apiFetch` for every call, with
+      `{data,meta}` unwrapping, `{error:{code}}` → typed `ApiRequestError`, unreachable-API →
+      `ApiNetworkError` (so the UI can offer retry rather than explain a rejection that never
+      happened), `credentials: 'include'` on every request (`tms_session` + guest `tms_cart`),
+      204 handling, and `apiFetchOrNull` mapping 404 → `null` (a resource you do not own is a 404,
+      never a 403). Unit-tested in `lib/data/http.spec.ts`. **Verified:** format/lint/typecheck/
+      test/build green.
+- [x] **TMS-F7-002** Data source policy — replaced the all-or-nothing `DATA_SOURCE` switch with
+      per-domain composition in `lib/data/index.ts`; rejected the per-method mock fallback because a
+      silent fallback hides a real outage behind plausible fake data. `api` is opt-in, since SSG
+      makes `pnpm build` fetch and CI has no API. Rationale recorded in `FRONTEND_HANDOFF.md`
+      ("Data source policy"). **Verified.**
+- [x] **TMS-F7-003** Artworks + collections on the real API — `lib/data/api.ts` implements
+      `listArtworks`/`getArtwork`/`searchArtworks`/`listCollections`/`listCollectionSummaries`/
+      `getCollection` against `/api/v1/artworks` and `/api/v1/collections`. Filters the contract
+      rejects (`availability`, `sort=popular`) are deliberately not forwarded. Every other method
+      throws with the reason + its TMS-FBR id rather than returning invented data. Tested in
+      `lib/data/api.spec.ts`. **Verified** at the unit level; see the caveat below.
+- [x] **TMS-F7-004** Never fake money — `ArtworkSummary.startingPriceMinor`/`currency`/
+      `availability` are nullable, because ADR-015 puts price on the approved artwork+garment pair
+      and the artwork response carries none. Cards/detail/Studio render price and the availability
+      badge only when known; the Studio refuses to add or save a configuration with no known price
+      rather than guess one. **Verified** in-browser on the mock path (gallery renders unchanged).
+
+### Caveat on TMS-F7-003 verification
+
+Verified against stubbed responses, **not a live API**. The local Postgres (`tai-postgres-1`, host
+port 5433) only has the B1 identity tables — the B2/B3/B4 migrations (artworks, garments, carts)
+are not applied — so there is nothing for the API to serve. Applying them would change shared local
+DB state that the parallel backend session may be relying on, so it was left alone. **Before
+flipping `DATA_SOURCE=api` anywhere real, someone must exercise these calls against a migrated and
+seeded API.**
+
+### Next on this branch
+
+- [ ] **TMS-F7-005** Studio rework (ADR-013) — `getStudioOptions()` → artwork-scoped
+      `/artworks/{slug}/compatible-garments` (TMS-FBR-017); the picker keys on the approved
+      `placementId` + `scalePreset` slug; shareable Studio URLs carry approved ids, not percentages.
+      **Note:** `main`'s Studio is already a picker over approved placements/scale presets and has
+      no freeform or crop controls — the freeform `printX/printY/printWidth` + `cropZoom/cropX/cropY`
+      work exists only on `claude/f6-premium-ui-overhaul` (commit 67bc14d) and must be dropped there
+      when it rebases; ADR-013 wins.
+- [ ] **TMS-F7-006** Cart on the real API — `GET/POST /cart`, `PATCH|DELETE /cart/items/{lineId}`,
+      promotion apply/remove. Send the approved tuple + quantity and **never** `unitPriceMinor`
+      (400). Render server totals; keep `lib/cart.ts` preview helpers for optimistic UI only.
+      `lineId()` should delegate to `configurationCanonicalForm()` from `@tms/contracts` rather than
+      inventing a second identity scheme. Render lines with an `issue` as "no longer available" with
+      the reason, keep them out of the subtotal, and block checkout on `cart.hasIssues`. No hold
+      countdown — nothing is reserved by the cart (ADR-017).
+- [ ] **TMS-F7-007** Saved designs — `GET/POST /designs`, `PATCH|DELETE /designs/{id}`, share +
+      rotate. 200 on re-save is success, not an error (idempotent); quantity is not part of a design
+      (ADR-014); rotating a share link breaks the old URL and must say so.

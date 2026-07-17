@@ -29,9 +29,11 @@ export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
         <div className="space-y-2 p-5">
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>{artwork.collection}</Eyebrow>
-            <Badge tone={availabilityTone[artwork.availability]}>
-              {availabilityLabel[artwork.availability]}
-            </Badge>
+            {artwork.availability ? (
+              <Badge tone={availabilityTone[artwork.availability]}>
+                {availabilityLabel[artwork.availability]}
+              </Badge>
+            ) : null}
           </div>
           <Heading as={3} size="md">
             {artwork.title}
@@ -39,14 +41,16 @@ export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
           <Text size="sm" tone="muted">
             {artwork.shortStory}
           </Text>
-          <div className="flex items-center justify-between pt-2">
-            <Price
-              amountMinor={artwork.startingPriceMinor}
-              currency={artwork.currency}
-              className="text-ink"
-            />
-            <span className="text-xs text-muted">from</span>
-          </div>
+          {artwork.startingPriceMinor !== null && artwork.currency ? (
+            <div className="flex items-center justify-between pt-2">
+              <Price
+                amountMinor={artwork.startingPriceMinor}
+                currency={artwork.currency}
+                className="text-ink"
+              />
+              <span className="text-xs text-muted">from</span>
+            </div>
+          ) : null}
         </div>
       </Card>
     </Link>

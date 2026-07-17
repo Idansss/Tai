@@ -1,5 +1,44 @@
 # Frontend Handoff
 
+## Data source policy (F7, 2026-07-17) — DECIDED
+
+**The question.** `DATA_SOURCE` was one all-or-nothing switch (`api` or `mock`) chosen when no
+domain had a backend. That no longer fits: artworks, catalogue, garments, designs, cart and auth
+are merged, while reviews, community photos, loyalty, the passport, delivery, orders, payments and
+production are not. One flag forces a choice between "throw on half the screens" and "mock
+everything".
+
+**The decision: per-domain composition, in `apps/storefront/lib/data/index.ts`.**
+`API_CAPABLE_DOMAINS` names every domain and whether the API can serve it. `dataProvider` binds
+each method to the adapter that owns its domain. To adopt a new backend you flip one entry.
+
+**The rejected alternative: a per-method mock fallback** inside `apiProvider` (try the API, fall
+back to the mock on failure). It reads as convenient and behaves as a trap — a real endpoint going
+down would silently serve plausible fake data, so an outage becomes invisible in exactly the
+domains we most need to trust. Failures stay loud instead. This also satisfies "do not build a
+second mock system": there is still exactly one mock adapter (`lib/data/mock.ts`), just composed
+per domain rather than swapped wholesale.
+
+**Two rules that fall out of it:**
+
+1. _A domain with no backend is pinned to `mock` and no flag can point it at the API_, because
+   there is nothing to point it at. `sourceFor()` ignores the env var for those.
+2. _`api` is opt-in via `DATA_SOURCE=api`, not the default._ The catalogue routes are statically
+   generated, so `pnpm build` fetches. An `api` default would make every build — including CI —
+   depend on a reachable API and fail without one. Mock stays the zero-dependency default;
+   deployments with an API set `DATA_SOURCE=api`.
+
+**Current state.** API-capable: `artworks`, `collections`. Everything else is mock-backed, each
+for a recorded reason (see the TMS-FBR-010…019 register in
+`docs/coordination/FRONTEND_TO_BACKEND.md`). Note `drops`, `stories` and `studio` have endpoints
+but are still mock: their F5 view models ask for fields the contract does not carry, and turning
+them on today would mean inventing data.
+
+**Honesty rule for the adapter.** `lib/data/api.ts` never synthesises a price, a stock level or an
+availability state. Anything the contract does not carry maps to `null`/empty (and
+`ArtworkSummary.startingPriceMinor`/`currency`/`availability` are now nullable for exactly this
+reason), or the method throws. `mockBackedDomains()` exposes the list for an in-app honesty banner.
+
 ## Current frontend phase
 
 **F0–F4 all Verified AND MERGED TO `main`** (2026-07-15). The F0→F4 PR stack (#4→#5→#6→#7→#8)

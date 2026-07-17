@@ -141,6 +141,12 @@ export function DesignStudio({
       setStatus('Choose an artwork, garment, colour and size to continue.');
       return;
     }
+    // A configuration with no known price cannot be previewed in the bag. Guessing at one
+    // would show a number the server never agreed to (ADR-015).
+    if (artwork.startingPriceMinor === null || !artwork.currency) {
+      setStatus('This artwork has no price yet, so it cannot be added to your bag.');
+      return;
+    }
     addItem({
       productSlug: `${artwork.slug}-studio`,
       href: `/design-studio${buildStudioQuery(config)}`,
@@ -170,6 +176,10 @@ export function DesignStudio({
     if (!user) {
       // Saving belongs to an account — send guests to sign in and return here.
       router.push(`/login?next=${encodeURIComponent(`/design-studio${buildStudioQuery(config)}`)}`);
+      return;
+    }
+    if (artwork.startingPriceMinor === null || !artwork.currency) {
+      setStatus('This artwork has no price yet, so it cannot be saved.');
       return;
     }
     persistSavedDesign(user.email, {
@@ -386,11 +396,13 @@ export function DesignStudio({
                 <Heading as={2} size="md">
                   {artwork.title}
                 </Heading>
-                <Price
-                  amountMinor={artwork.startingPriceMinor}
-                  currency={artwork.currency}
-                  className="text-ink"
-                />
+                {artwork.startingPriceMinor !== null && artwork.currency ? (
+                  <Price
+                    amountMinor={artwork.startingPriceMinor}
+                    currency={artwork.currency}
+                    className="text-ink"
+                  />
+                ) : null}
               </div>
             ) : (
               <Text size="sm" tone="muted" className="mt-2">
