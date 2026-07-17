@@ -2,8 +2,8 @@
   "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
   "currentPhase": "B5",
-  "lastVerifiedTask": "TMS-B5-001",
-  "nextRecommendedTask": "TMS-B5-002 (Flutterwave adapter behind the PaymentProvider port)",
+  "lastVerifiedTask": "TMS-B5-002",
+  "nextRecommendedTask": "TMS-B5-003 (ShippingProvider contract, mock shipping, GIGL adapter)",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -29,14 +29,17 @@
     "TMS-B4-001",
     "TMS-B4-002",
     "TMS-B4-003",
-    "TMS-B5-001"
+    "TMS-B5-001",
+    "TMS-B5-002"
   ],
   "inProgressTasks": [],
-  "blockedTasks": [],
+  "blockedTasks": [
+    "TMS-B5-002 live Flutterwave credential verification (no sandbox keys; adapter and contract tests complete)"
+  ],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified; orders-checkout-pr-open; payments-pr-open (12 migrations)",
-  "lastUpdated": "2026-07-17T02:45:00Z",
+  "migrationStatus": "orders-checkout-pr-open; payments-pr-open; flutterwave-adds-no-migration (12 migrations)",
+  "lastUpdated": "2026-07-17T03:10:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -272,6 +275,21 @@
       "PAYMENT_PROVIDER=mock is rejected in production by config validation.",
       "The migration-count guard is now 12; each remaining open PR that adds a migration must raise it again.",
       "main.ts now creates the app with rawBody:true so webhook signatures verify against exact bytes; e2e apps must pass { rawBody: true } to createNestApplication."
+    ]
+  },
+  "flutterwave": {
+    "task": "TMS-B5-002",
+    "branch": "codex/b5-flutterwave",
+    "status": "verified-pr-open (live credentials blocked)",
+    "stackedOn": "codex/b5-payment-provider (TMS-B5-001)",
+    "migration": "none-required",
+    "qualityGate": "passed",
+    "paymentSuiteFiles": 3,
+    "concerns": [
+      "Live verification is Blocked: no Flutterwave sandbox keys, so create/verify/refund are proven against a fake fetch. Supply FLUTTERWAVE_SECRET_KEY/FLUTTERWAVE_WEBHOOK_HASH and run one sandbox transaction to close it.",
+      "Flutterwave settles in naira (major units); the adapter is the single kobo<->naira conversion point and is unit-tested both directions.",
+      "verif-hash is a static shared secret, not a body HMAC; the adapter compares the header to the configured hash in constant time.",
+      "PAYMENT_PROVIDER selects mock or flutterwave; config validation requires the Flutterwave credentials when it is chosen."
     ]
   }
 }

@@ -3,6 +3,7 @@ import { loadEnvironment } from '@tms/configuration';
 
 import { DatabaseService } from '../database/database.service.js';
 import { OrderModule } from '../orders/order.module.js';
+import { FlutterwavePaymentProvider } from './flutterwave-payment-provider.js';
 import { MockPaymentProvider } from './mock-payment-provider.js';
 import { PaymentController } from './payment.controller.js';
 import {
@@ -30,6 +31,11 @@ import { PaymentWebhookController } from './payment-webhook.controller.js';
           provider: environment.PAYMENT_PROVIDER,
           mockWebhookSecret: environment.MOCK_PAYMENT_WEBHOOK_SECRET,
           appPublicUrl: environment.APP_PUBLIC_URL,
+          flutterwave: {
+            baseUrl: environment.FLUTTERWAVE_BASE_URL,
+            secretKey: environment.FLUTTERWAVE_SECRET_KEY ?? '',
+            webhookHash: environment.FLUTTERWAVE_WEBHOOK_HASH ?? '',
+          },
         };
       },
     },
@@ -37,8 +43,16 @@ import { PaymentWebhookController } from './payment-webhook.controller.js';
       provide: PAYMENT_PROVIDER,
       inject: [PAYMENT_CONFIG],
       useFactory: (config: PaymentConfig): PaymentProvider => {
-        // Only the mock exists in this task; TMS-B5-002 adds the Flutterwave adapter behind the
-        // same port and selects it here by config.
+        // The gateway is selected by config. Configuration validation guarantees the Flutterwave
+        // credentials are present whenever it is the chosen provider.
+        if (config.provider === 'flutterwave') {
+          return new FlutterwavePaymentProvider({
+            baseUrl: config.flutterwave.baseUrl,
+            secretKey: config.flutterwave.secretKey,
+            webhookHash: config.flutterwave.webhookHash,
+            appPublicUrl: config.appPublicUrl,
+          });
+        }
         return new MockPaymentProvider(config.mockWebhookSecret, config.appPublicUrl);
       },
     },

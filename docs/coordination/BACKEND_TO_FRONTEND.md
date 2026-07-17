@@ -404,3 +404,8 @@ SHOPPABLE`). Its `content` is free-form object JSON; the seed uses
 - **The webhook endpoint is backend-only** (`POST /api/v1/payments/webhooks/{provider}`, HMAC-signed). The frontend never calls it.
 - **Refunds** are not a storefront action; they arrive as an admin operation in B6. A refunded order simply reads `REFUNDED`/`PARTIALLY_REFUNDED` on `GET /orders/{reference}`.
 - To simulate outcomes against the mock in a dev environment, place an order whose contact email begins with `decline` to drive the failure branch; anything else succeeds.
+
+## 2026-07-17 — TMS-B5-002 Flutterwave adapter (no frontend change)
+
+- Status: implemented on `codex/b5-flutterwave`, stacked on TMS-B5-001. **Nothing changes for the storefront:** the payment endpoints, the `OrderPaymentHandoff` shape, and the flow are identical. The real Flutterwave gateway now sits behind the same interface and is selected by a backend env var (`PAYMENT_PROVIDER=flutterwave`).
+- Keep driving the pay/processing/success/failure screens off `POST/GET /orders/{reference}/payment` and `.../payment/verify`, and treat `redirectUrl` as opaque (it will be Flutterwave's hosted checkout when the gateway is live). **Live Flutterwave verification is Blocked** pending credentials, so development/staging stays on the mock.

@@ -78,4 +78,9 @@ export interface PaymentConfig {
   provider: string;
   mockWebhookSecret: string;
   appPublicUrl: string;
+  flutterwave: {
+    baseUrl: string;
+    secretKey: string;
+    webhookHash: string;
+  };
 }
