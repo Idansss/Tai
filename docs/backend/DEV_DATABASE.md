@@ -28,7 +28,9 @@ migration in order, and runs the seed. Related scripts:
 | `pnpm --filter @tms/database db:seed`    | Run the seed only (idempotent; safe to re-run).  |
 | `pnpm --filter @tms/database db:reset`   | Migrate from scratch **and** seed.               |
 
-Set `TMS_SEED_CATALOGUE=false` to seed only the RBAC roles/permissions and skip the catalogue.
+The dev seed lives in `prisma/seed-dev.ts` (RBAC + catalogue). It is deliberately separate from
+`prisma/seed.ts`, which is the `prisma.config.ts` seed command the API integration tests invoke
+(`prisma db seed`) and which stays **RBAC-only** so every test starts from an empty catalogue.
 
 ## Why `tai_dev` and not `tai_manic`
 

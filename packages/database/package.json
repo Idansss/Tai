@@ -11,9 +11,9 @@
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force --skip-generate",
-    "lint": "eslint src prisma.config.ts prisma/seed.ts prisma/seed-catalogue.ts --max-warnings=0",
+    "db:seed": "tsx prisma/seed-dev.ts",
+    "db:reset": "prisma migrate reset --force && tsx prisma/seed-dev.ts",
+    "lint": "eslint src prisma.config.ts prisma/seed.ts prisma/seed-catalogue.ts prisma/seed-dev.ts --max-warnings=0",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit"
