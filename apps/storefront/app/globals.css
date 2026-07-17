@@ -4,3 +4,34 @@
 
 /* App files are auto-detected; explicitly scan the shared UI package source. */
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
+
+/*
+ * Marquee — the moving brand ticker (the STRETKAT oversized-type energy, made honest).
+ * Two identical tracks sit side by side and translate left by exactly half the pair, so the loop
+ * is seamless. Decorative and marketing-only; it pauses entirely under reduced motion, where a
+ * drifting strip would be both pointless and hostile.
+ */
+@keyframes tms-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.tms-marquee-track {
+  display: inline-flex;
+  min-width: max-content;
+  animation: tms-marquee 32s linear infinite;
+}
+
+.tms-marquee:hover .tms-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tms-marquee-track {
+    animation: none;
+  }
+}

@@ -4,6 +4,7 @@ import { Alert, Badge, Price, cn } from '@tms/ui';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { WishlistButton } from '@/components/account/wishlist-button';
+import { Accordion } from '@/components/site/accordion';
 import { useCart } from '@/components/cart/cart-provider';
 import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import { WaitlistForm } from '@/components/waitlist/waitlist-form';
@@ -282,24 +283,27 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
           </div>
         ) : null}
 
-        {/* Details */}
-        <dl className="mt-8 space-y-3 border-t border-line pt-6 text-sm">
-          {(
-            [
-              ['Fabric', product.fabric],
-              ['Fit', product.fit],
-              ['Print', product.printMethod],
-              ['Care', product.care],
-              ['Delivery', product.deliveryEstimate],
-              ['Returns', product.returnSummary],
-            ] as const
-          ).map(([label, value]) => (
-            <div key={label} className="flex gap-3">
-              <dt className="w-24 shrink-0 text-muted">{label}</dt>
-              <dd className="text-ink-2">{value}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Details — collapsible, the Nextgen / AURORA product-detail pattern. */}
+        <div className="mt-8 border-t border-line">
+          <Accordion title="Details & fit" defaultOpen>
+            <DetailList
+              rows={[
+                ['Fabric', product.fabric],
+                ['Fit', product.fit],
+                ['Print', product.printMethod],
+                ['Care', product.care],
+              ]}
+            />
+          </Accordion>
+          <Accordion title="Shipping & returns">
+            <DetailList
+              rows={[
+                ['Delivery', product.deliveryEstimate],
+                ['Returns', product.returnSummary],
+              ]}
+            />
+          </Accordion>
+        </div>
       </div>
 
       {/* Sticky mobile purchase bar */}
@@ -322,5 +326,19 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** The spec rows inside a details accordion — a small, quiet definition list. */
+function DetailList({ rows }: { rows: readonly (readonly [string, string])[] }) {
+  return (
+    <dl className="space-y-3 text-sm">
+      {rows.map(([label, value]) => (
+        <div key={label} className="flex gap-3">
+          <dt className="w-24 shrink-0 text-muted">{label}</dt>
+          <dd className="text-ink-2">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

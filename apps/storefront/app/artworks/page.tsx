@@ -1,16 +1,17 @@
-import { buttonVariants, Container, EmptyState, Eyebrow, Heading, Text } from '@tms/ui';
+import { buttonVariants, Container, EmptyState } from '@tms/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
-import { Panel, PanelGrid, panelSizes } from '@/components/gallery/panel-grid';
 import { ArtworkFilters } from '@/components/gallery/artwork-filters';
+import { PageHeader } from '@/components/site/page-header';
+import { Reveal } from '@/components/site/reveal';
 import { dataProvider } from '@/lib/data';
 import { hasActiveFilters, parseArtworkFilters } from '@/lib/gallery-params';
 
 export const metadata: Metadata = {
   title: 'Artworks',
   description:
-    'Browse original drawings and comic-line illustrations. The gallery leads; garments follow.',
+    'Browse original hand-drawn art from across Africa. The gallery leads; garments follow.',
 };
 
 interface PageProps {
@@ -33,16 +34,14 @@ export default async function ArtworksPage({ searchParams }: PageProps) {
 
   return (
     <Container className="py-14">
-      <header>
-        <Eyebrow>Gallery</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Artworks
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          {artworks.length} {artworks.length === 1 ? 'piece' : 'pieces'}
-          {active ? ' match your filters' : ' in view'}.
-        </Text>
-      </header>
+      <PageHeader
+        eyebrow="The gallery"
+        title="Artworks"
+        lead={`${artworks.length} ${artworks.length === 1 ? 'piece' : 'pieces'}${
+          active ? ' match your filters' : ' in view'
+        } — hand-drawn, printed to order.`}
+        contained={false}
+      />
 
       <div className="mt-8">
         <ArtworkFilters collections={collections} filters={filters} />
@@ -61,14 +60,20 @@ export default async function ArtworksPage({ searchParams }: PageProps) {
           />
         </div>
       ) : (
-        <PanelGrid className="mt-8">
+        <ul className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-6 lg:grid-cols-3">
           {artworks.map((art, i) => (
-            <Panel key={art.id} index={i}>
-              {/* The first page's establishing panel is above the fold: load it eagerly. */}
-              <ArtworkCard artwork={art} sizes={panelSizes(i)} priority={i === 0} />
-            </Panel>
+            <li key={art.id}>
+              {/* Stagger caps at the first row or two — a long ripple down a full page reads slow. */}
+              <Reveal delay={Math.min(i, 5) * 60}>
+                <ArtworkCard
+                  artwork={art}
+                  sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 50vw"
+                  priority={i < 2}
+                />
+              </Reveal>
+            </li>
           ))}
-        </PanelGrid>
+        </ul>
       )}
     </Container>
   );
