@@ -311,6 +311,18 @@ export interface Artwork {
   slug: string;
   status: ArtworkStatus;
   publishedVersion: ArtworkVersion | null;
+  /**
+   * The lowest approved price across every garment this artwork's published version is approved
+   * on, resolved server-side (ADR-015). `null` when no approved, priced pair exists yet, i.e. the
+   * artwork is published but not purchasable. Answers TMS-FBR-011.
+   */
+  startingPrice?: Money | null;
+  /**
+   * Whether the catalogue permits selling this artwork right now, derived from its drop windows
+   * (never from stock — stock is not public). One of `AVAILABLE`, `DROP_NOT_OPEN`, `DROP_ENDED`.
+   * Answers TMS-FBR-012. `AVAILABLE` means "the catalogue permits this sale", not "in stock".
+   */
+  availability?: AvailabilityState;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;

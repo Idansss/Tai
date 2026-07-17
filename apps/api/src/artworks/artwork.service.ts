@@ -16,6 +16,7 @@ import type {
 } from '../admin-auth/admin-auth.types.js';
 import type { AdminAuthConfig } from '../admin-auth/admin-auth.types.js';
 import { hashOpaqueValue } from '../auth/auth-crypto.js';
+import { deriveArtworkAvailability, deriveStartingPrice } from '../catalogue/artwork-read-model.js';
 import { DatabaseService } from '../database/database.service.js';
 import { ApiProblemException } from '../platform/api-problem.exception.js';
 
@@ -276,11 +277,31 @@ export class ArtworkService {
     const artwork = await this.database.client.artwork.findFirst({
       where: { slug, status: ArtworkStatus.PUBLISHED },
       include: {
-        versions: { where: { status: ArtworkVersionStatus.PUBLISHED }, take: 1 },
+        versions: {
+          where: { status: ArtworkVersionStatus.PUBLISHED },
+          take: 1,
+          include: {
+            garmentCompatibilities: {
+              where: { status: 'APPROVED' },
+              select: { unitPriceMinor: true, currency: true },
+            },
+          },
+        },
+        drops: {
+          where: { drop: { status: ArtworkStatus.PUBLISHED } },
+          include: { drop: { select: { startsAt: true, endsAt: true } } },
+        },
       },
     });
     if (!artwork) throw this.notFound('Artwork not found.');
-    return this.toArtwork(artwork);
+    return {
+      ...this.toArtwork(artwork),
+      startingPrice: deriveStartingPrice(artwork.versions[0]?.garmentCompatibilities ?? []),
+      availability: deriveArtworkAvailability(
+        artwork.drops.map(({ drop }) => ({ startsAt: drop.startsAt, endsAt: drop.endsAt })),
+        new Date(),
+      ),
+    };
   }
 
   private page<TRecord extends { id: string }, TOutput>(
