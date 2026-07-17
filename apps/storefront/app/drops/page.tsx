@@ -1,6 +1,8 @@
-import { Container, EmptyState, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container, EmptyState } from '@tms/ui';
 import type { Metadata } from 'next';
 import { DropCard } from '@/components/drop/drop-card';
+import { PageHeader } from '@/components/site/page-header';
+import { artworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 import { sortDrops } from '@/lib/drops';
 
@@ -17,18 +19,23 @@ export default async function DropsPage() {
   const now = Date.now();
   const drops = sortDrops(await dataProvider.listDrops(), now);
 
+  // Drop summaries carry no cover, so fetch each drop's pieces and use the first drawing we hold.
+  const details = await Promise.all(drops.map((d) => dataProvider.getDrop(d.slug)));
+  const covers = new Map(
+    drops.map((d, i) => [
+      d.slug,
+      details[i]?.artworks.find((a) => artworkImage(a.slug) !== null)?.slug ?? null,
+    ]),
+  );
+
   return (
     <Container className="py-14">
-      <header>
-        <Eyebrow>Limited releases</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Drops
-        </Heading>
-        <Text tone="secondary" className="mt-2 max-w-prose">
-          Small, timed releases of new artwork. Members get early access; live drops are made to
-          order and close when the window ends.
-        </Text>
-      </header>
+      <PageHeader
+        eyebrow="Limited releases"
+        title="Drops"
+        lead="Small, timed releases of new artwork. Members get early access; live drops are made to order and close when the window ends."
+        contained={false}
+      />
 
       {drops.length === 0 ? (
         <div className="mt-10">
@@ -38,10 +45,10 @@ export default async function DropsPage() {
           />
         </div>
       ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {drops.map((drop) => (
             <li key={drop.slug}>
-              <DropCard drop={drop} now={now} />
+              <DropCard drop={drop} now={now} coverSlug={covers.get(drop.slug)} />
             </li>
           ))}
         </ul>

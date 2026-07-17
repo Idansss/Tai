@@ -1,5 +1,4 @@
-import { Card, Eyebrow, Heading, Text } from '@tms/ui';
-import { ArrowRight, ShoppingBag } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import type { StorySummary } from '@/lib/data';
 
@@ -8,49 +7,37 @@ const fmtDate = (iso: string) =>
     new Date(iso),
   );
 
-/** A story tile for the journal index. */
+/**
+ * A story tile for the journal index. Stories carry no cover drawing, so this is a bold dark
+ * editorial tile (docs/frontend/UI_DIRECTION.md §7): category, a big uppercase title, and the
+ * shoppable/read meta — a confident chapter cover made of type, not a grey placeholder.
+ */
 export function StoryCard({ story }: { story: StorySummary }) {
   return (
     <Link
       href={`/stories/${story.slug}`}
-      className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+      className="group block rounded-2xl outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-focus-ring)]"
     >
-      <Card variant="surface" interactive padded={false} className="overflow-hidden">
-        <div
-          className="relative aspect-[16/9] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-          role="img"
-          aria-label={`${story.title} — story cover placeholder`}
-        >
+      <div className="relative flex aspect-[4/5] flex-col justify-between overflow-hidden rounded-2xl bg-neutral-950 p-6 text-white transition-colors group-hover:bg-neutral-800">
+        <div className="flex items-start justify-between gap-3">
+          <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+            {story.category}
+          </p>
           {story.shoppableCount > 0 ? (
-            <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-medium text-ink">
-              <ShoppingBag className="size-3.5 text-accent" aria-hidden />
-              {story.shoppableCount} shoppable
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[0.7rem] font-medium text-white">
+              <ShoppingBag className="size-3.5" aria-hidden />
+              {story.shoppableCount}
             </span>
           ) : null}
         </div>
-        <div className="space-y-2 p-5">
-          <div className="flex items-center justify-between gap-2">
-            <Eyebrow>{story.category}</Eyebrow>
-            <Text size="sm" tone="muted">
-              {story.readMinutes} min read
-            </Text>
-          </div>
-          <Heading as={3} size="md">
-            {story.title}
-          </Heading>
-          <Text size="sm" tone="muted">
-            {story.excerpt}
-          </Text>
-          <div className="flex items-center justify-between pt-2">
-            <Text size="sm" tone="muted">
-              {fmtDate(story.publishedOn)}
-            </Text>
-            <span className="inline-flex items-center gap-1 text-sm text-accent group-hover:gap-2">
-              Read story <ArrowRight className="size-4" aria-hidden />
-            </span>
-          </div>
-        </div>
-      </Card>
+        <h3 className="font-display text-2xl font-bold uppercase leading-[0.98] tracking-tight sm:text-3xl">
+          {story.title}
+        </h3>
+        <p className="text-xs uppercase tracking-[0.14em] text-white/50">
+          {fmtDate(story.publishedOn)} · {story.readMinutes} min read
+        </p>
+      </div>
+      <p className="mt-3 text-sm text-muted">{story.excerpt}</p>
     </Link>
   );
 }

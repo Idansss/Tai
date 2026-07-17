@@ -1,6 +1,7 @@
-import { Container, Eyebrow, Heading } from '@tms/ui';
+import { Container } from '@tms/ui';
 import type { Metadata } from 'next';
 import { CartView } from '@/components/cart/cart-view';
+import { PageHeader } from '@/components/site/page-header';
 
 export const metadata: Metadata = {
   title: 'Your bag',
@@ -11,12 +12,9 @@ export const metadata: Metadata = {
 export default function CartPage() {
   return (
     <Container className="py-10">
-      <header className="mb-8">
-        <Eyebrow>Bag</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Your bag
-        </Heading>
-      </header>
+      <div className="mb-8">
+        <PageHeader eyebrow="Bag" title="Your bag" contained={false} />
+      </div>
       <CartView />
     </Container>
   );

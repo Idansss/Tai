@@ -5,6 +5,48 @@ build has a thesis to execute rather than a style to guess at.
 
 ---
 
+## 0. Revision — direction change (F8, current)
+
+> **This is the active direction. It supersedes the "From Sketch to Skin" recommendation in
+> sections 5 and 7 below, which are kept for their research trail, not as the build target.**
+
+The studio chose a **bold, art-forward streetwear** direction after reviewing the paper-and-graphite
+build against a reference streetwear storefront. The site now reads like a contemporary apparel
+label whose product happens to be hand-drawn African art, rather than like a quiet gallery.
+
+**What changed from the original recommendation**
+
+- **Dark stages are allowed and wanted.** The hero and accent panels are near-black
+  (`neutral-950`), full-bleed, with the artwork behind a scrim. Colour is no longer withheld as a
+  reward; the work is loud from the first screen.
+- **Type is bold, condensed and uppercase.** Space Grotesk set large, `font-bold uppercase
+  tracking-tight`, is the display voice. Confident, not quiet.
+- **Text may sit over artwork** where a legibility scrim carries it (a deliberate, controlled use of
+  the thing section 3 originally forbade — see the revised guardrails).
+- **Cards are product tiles.** Rounded image tiles with an overlaid badge (NEW / status), an
+  uppercase title and a price. The marketplace-grid taboo is lifted; the badge and the price are
+  features, not clutter.
+- **Numbered pillar strips** (01–05) replace the "museum caption" restraint as the hero's
+  supporting device.
+
+**What did NOT change — the non-negotiables that keep this from becoming a generic template**
+
+- **The art is still the subject.** Every hero and tile is a real drawing from `/public/artworks`.
+  No stock photography, no fake model shots. When a drawing is used behind a dark scrim it is chosen
+  for it (e.g. the night pieces).
+- **The Africanness stays specific.** Real cities, the muse and her cap, real artefacts. No
+  "tribal" pattern tax, no costume.
+- **Honesty in commerce.** No fabricated "was" prices or fake discounts (ADR-015 — price lives on
+  the approved artwork+garment pair). Placement is still the studio's approved decision, not a
+  freeform slider (ADR-013).
+- **Warm ground for browsing.** Away from the dark hero/accent panels the page ground stays warm
+  paper (`canvas`), never cool grey. Dark is used as punctuation, not as the whole site.
+
+The revised guardrails (section 3) and design-system principles (section 7) below carry the current
+rules; where they conflict with the original section 5, the current rules win.
+
+---
+
 ## 1. Research findings
 
 ### The most important finding is in our own repository
@@ -115,23 +157,27 @@ what it is.
 
 ---
 
-## 3. What to avoid
+## 3. What to avoid (revised for the current direction)
 
-- **Discount modals over the first impression.** If a welcome offer must exist, it earns its place
-  after the work, never over it.
-- **Chrome on top of artwork.** No dark panels, no text overlays, no gradient scrims across a
-  drawing. The Zeitz mistake. If text needs a background, give it its own space.
-- **Carousels with arrows.** Dated, low engagement, and they hide the work.
-- **Cool neutrals.** Grey-teal against warm pencil makes the art look muddy. This is the F6 error.
-- **The generic marketplace grid** — uniform cards, badges, star ratings, "You may also like".
+- **Discount modals over the first impression.** Still true. No welcome-offer popup over the hero.
+  A promo may live in a bar or after the work, never as a modal over the brand moment.
+- **Fabricated discounts.** No struck-through "was" prices, no invented urgency. Prices are real
+  (ADR-015). The reference streetwear site fakes `$89 ~~$120~~`; we do not.
+- **Text over artwork _without_ a legibility scrim.** Overlaying is now allowed, but only with a
+  gradient scrim strong enough to keep contrast (WCAG AA) on the text. Never drop raw text onto a
+  busy drawing and hope.
+- **Carousels with arrows.** Still avoided. The numbered pillar strip is static; the work does not
+  hide behind prev/next.
+- **Cool neutrals as the ground.** The browsing ground stays warm paper. Dark surfaces are
+  intentional near-black stages, not a cool grey-teal wash. (The original F6 error still stands.)
+- **Stock photography / fake product shots.** Every image is a real drawing. No model photos we do
+  not have; no AI-generated garment mockups.
 - **Gimmick motion.** Anything that says "look at the website" instead of "look at the drawing".
-- **The three AI defaults**, per the frontend-design calibration: cream + high-contrast serif +
-  terracotta; near-black + acid accent; broadsheet hairline rules. Paper-and-graphite is
-  dangerously adjacent to the first and third — it earns its place _only_ because it is literally
-  the artwork's own material. If it ever stops being specific to this art, it becomes a default and
-  should be cut.
-- **Erasing the Africanness into tasteful minimalism.** The gravest risk. Sanding a Lagos market at
-  sunset down to a beige grid with a serif headline is not restraint, it is deletion.
+  Hover-scale on a tile and a settling transition are fine; bounce/parallax theatre is not.
+- **Erasing the Africanness into tasteful minimalism, _or_ into generic streetwear.** The gravest
+  risk, now from two sides: sanding the work down to a beige grid, or dressing it up as an
+  anonymous hype label. The art's specificity — the muse, the cities, the artefacts — must survive
+  the bold treatment.
 
 ---
 
@@ -274,43 +320,62 @@ garment, placement. Money is the only other colour on the page.
 
 ---
 
-## 7. Design system principles
+## 7. Design system principles (current — streetwear direction)
 
-**Visual tone.** Paper, graphite, and one hot accent borrowed from the current piece. Warm
-neutrals only — the ground is paper cream, never cool grey. The interface never competes with a
-drawing.
+**Visual tone.** Two registers, used deliberately. **Warm paper** (`canvas`) is the browsing
+ground — lists, detail pages, reading. **Near-black stages** (`neutral-950`) are the punctuation —
+the hero, the studio/brand accent panels, badge pills. The art is always the loudest thing; the
+dark stages exist to make it louder, not to theme the whole site.
 
-**Colour philosophy.** Colour is a reward, not a decoration. Chrome is achromatic. Saturation
-belongs to artwork, to money, and to a single primary action. If a screen has colour that is not
-one of those three, remove it.
+**Colour philosophy.** Saturation belongs to the artwork. Chrome is achromatic (paper, ink,
+near-black, white). The warm accent (`accent`, a burnt ochre) is the single interactive colour for
+non-pill controls (links, form focus). Money is stated plainly. No decorative colour that is not
+artwork, accent, or a CTA.
 
-**Component philosophy.** Components are frames and captions. A card is a mat around a picture, not
-a container with a badge. No component may cover artwork. Ever.
+**Component philosophy.** The card is a **product tile**: a rounded image (or dark type tile where
+no image exists), an overlaid badge (NEW / status), an uppercase title, and a price or meta line.
+Tiles may overlay a badge on the image; they may not bury the image under chrome. Detail pages
+still show the whole piece, uncropped.
 
-**Spacing.** Gallery spacing: the space around a piece is part of the piece. Gutters are the grid,
-inherited from the panel work. Cramped is cheap.
+**Type.** Space Grotesk is the display voice — large, `font-bold uppercase tracking-tight` for
+heroes and section titles; `text-xs uppercase tracking-[0.2em]` for eyebrows. IBM Plex Sans is the
+body/reading face. Prices and titles on tiles use the display face for weight.
 
-**Typography.** A characterful display face with some drawn irregularity — it must sit beside
-hand-drawn linework without feeling machined — used with restraint. A warm humanist body face for
-reading. A quiet utility face for captions, specs and prices. Museum caption discipline: small,
-set, unsold.
+**CTAs.** The pill is the primary action: a rounded pill with a small circular arrow badge. Two
+tones — dark pill (near-black on paper) on light surfaces, white pill on dark stages. Secondary
+actions are outline/ghost. One primary pill per view.
 
-**Motion.** Motion is ink, not UI. Things warm, bleed and settle; they do not bounce, slide or
-pop. One orchestrated moment per page, not scattered effects. Colour-reveal is the only signature
-transition. Everything respects `prefers-reduced-motion`, and the sketch state is a legitimate
-resting state — reduced motion means the colour is simply already there.
+**Spacing.** Generous. Section rhythm is `py-16`/`py-20`; tiles breathe in a 1/2/3 responsive grid
+with `gap-6`. Cramped still reads cheap.
 
-**Imagery.** Never crop a piece to fit a component; build the component around the piece. Never
-overlay text on a drawing. Paper edges and deckle stay visible — the object is a drawing on paper
-and the site should not pretend otherwise.
+**Motion.** Restrained and physical, built on the shared `--duration-*` / `--ease-emphasis`
+tokens, animating transform + opacity only. The vocabulary, in order of how often it fires:
 
-**3D.** Not in this phase. The art is flat, on paper, and its power is in the linework. A 3D shirt
-would add cost, weight and a lie about placement freedom that ADR-013 forbids. Revisit only for the
-product preview, only if a real garment photograph proves insufficient.
+- **Hover** — a tile image `scale-[1.03]`, pill arrows nudge. Gated to fine pointers.
+- **Scroll-reveal** (`components/site/reveal.tsx`) — the signature entrance: sections and grid
+  tiles fade + rise once as they enter view, with a capped 40–80ms per-item stagger. Prevents
+  content teleporting in on a page seen occasionally.
+- **Accordion** (`components/site/accordion.tsx`) — product details expand with a real
+  `grid-rows` height transition instead of snapping (state indication).
+- **Marquee** — one decorative brand ticker, `aria-hidden`, paused on hover.
 
-**Consistency rules.** One ground colour across the site — no page goes dark. One accent per view,
-taken from the artwork on screen. Chrome is identical everywhere. If a page needs a new component
-to feel special, the direction is failing.
+No parallax, no bounce, no attention-seeking scroll theatre. Everything respects
+`prefers-reduced-motion` — reveals resolve instantly, the marquee stops, the accordion jumps.
+
+**Imagery.** Real drawings only, from `/public/artworks`. Never crop the subject out on a detail
+page. On a tile or hero, a considered crop (`object-cover`) is allowed; behind a dark scrim, pick a
+piece that suits the dark (the night studies). Deckle/paper edges are welcome but no longer
+mandatory.
+
+**Africanness.** Non-negotiable and specific. The muse, her cap, named cities, real artefacts.
+Bold treatment must not sand this off; if a screen could belong to any hype label, it has failed.
+
+**3D.** Not in this phase (unchanged). ADR-013 forbids implying freeform placement; a 3D toy would
+lie about what we sell.
+
+**Consistency rules.** Warm paper is the default ground; dark is used as intentional stages, not
+scattered. One display face, one body face, one accent, one primary pill per view. If a page needs
+a brand-new component to feel special, prefer composing the existing kit first.
 
 ---
 
