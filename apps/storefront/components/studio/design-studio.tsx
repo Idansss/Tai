@@ -2,11 +2,13 @@
 
 import { Alert, cn, Eyebrow, Heading, Price, Text } from '@tms/ui';
 import { Check, Copy, Heart, RotateCcw, ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
 import { designSignature, persistSavedDesign } from '@/lib/account';
+import { artworkImage } from '@/lib/artwork-images';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import {
   buildStudioQuery,
@@ -126,6 +128,8 @@ export function DesignStudio({
       ([] as string[]),
     [garment, config.colour],
   );
+  // The drawing itself, for the print preview.
+  const artworkPrint = artwork ? artworkImage(artwork.slug) : null;
   const complete = isStudioConfigComplete(config);
   const artworkOnThisView = placement && placement.area === config.view;
 
@@ -232,10 +236,13 @@ export function DesignStudio({
   };
 
   return (
-    <div
-      data-theme="dark"
-      className="rounded-[var(--radius-xl)] border border-line bg-canvas p-4 sm:p-6"
-    >
+    /*
+     * Paper, like every other page. This used to force data-theme="dark", which made the Studio
+     * a second identity: the one screen where the site went black. The drawings live on white
+     * paper, so a dark ground turns every piece into a lightbox (docs/frontend/UI_DIRECTION.md —
+     * "one ground colour across the site; no page goes dark").
+     */
+    <div className="rounded-[var(--radius-xl)] border border-line bg-canvas-2 p-4 sm:p-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* Preview */}
         <div className="lg:sticky lg:top-20 lg:self-start">
@@ -255,23 +262,40 @@ export function DesignStudio({
               className="absolute rounded-sm border border-dashed border-white/40"
               style={{ left: '18%', top: '16%', width: '64%', height: '60%' }}
             />
-            {/* Artwork overlay */}
-            {artwork && artworkOnThisView && placement && scale ? (
-              // Position and size both come from the approved placement and preset. Nothing here
-              // is customer-authored — this is a rendering of an approved print (ADR-013).
+            {/*
+             * The print. This used to be a white box with the artwork's title typed into it — the
+             * Studio never showed the drawing you were buying.
+             *
+             * Position and size come from the approved placement and preset; nothing here is
+             * customer-authored (ADR-013).
+             *
+             * The print keeps its paper, as a panel. Dropping the paper out with `multiply` was
+             * the first attempt and it is wrong twice: the drawings are JPEGs with no alpha, and
+             * multiply against a dark garment — Black is the default colour — erases the drawing
+             * entirely. A printed panel is honest about what we hold (a drawing on paper) and
+             * reads as intentional against a brand whose own work is comic panels.
+             *
+             * This is a guide. Real per-garment mockups are approved assets from the media
+             * pipeline (MediaAssetKind.MOCKUP, TMS-B2-004) and will replace it.
+             */}
+            {artwork && artworkOnThisView && placement && scale && artworkPrint ? (
               <div
-                className="absolute overflow-hidden rounded-sm bg-gradient-to-br from-white/80 to-white/50 shadow-lg"
+                className="absolute -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[1px] shadow-sm ring-1 ring-black/10"
                 style={{
                   left: `${placement.x}%`,
                   top: `${placement.y}%`,
                   width: `${scale.widthPct}%`,
-                  aspectRatio: '4 / 5',
-                  transform: 'translate(-50%, -50%)',
                 }}
               >
-                <span className="grid size-full place-items-center px-1 text-center text-[10px] font-medium text-black/70">
-                  {artwork.title}
-                </span>
+                <Image
+                  src={artworkPrint}
+                  alt=""
+                  aria-hidden
+                  width={600}
+                  height={800}
+                  sizes="(min-width: 1024px) 25vw, 45vw"
+                  className="h-auto w-full"
+                />
               </div>
             ) : null}
             <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
@@ -327,10 +351,26 @@ export function DesignStudio({
                         : 'border-line-2 hover:border-line',
                     )}
                   >
-                    <span
-                      aria-hidden
-                      className="block aspect-[4/5] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-                    />
+                    {/* The drawing, not a gradient. Unchosen pieces rest in graphite and the
+                        chosen one is in colour — the same rule as the wall: colour is a reward,
+                        and here it marks what you picked. */}
+                    <span className="relative block aspect-[4/5] w-full overflow-hidden bg-canvas-2">
+                      {artworkImage(a.slug) ? (
+                        <Image
+                          src={artworkImage(a.slug) as string}
+                          alt=""
+                          aria-hidden
+                          fill
+                          sizes="120px"
+                          className={cn(
+                            'object-cover transition-[filter] duration-[var(--duration-base)] motion-reduce:transition-none',
+                            config.artwork === a.slug
+                              ? 'grayscale-0'
+                              : 'grayscale group-hover:grayscale-0 motion-reduce:grayscale-0',
+                          )}
+                        />
+                      ) : null}
+                    </span>
                     <span className="block truncate px-2 py-1.5 text-xs text-ink">{a.title}</span>
                   </button>
                 </li>
