@@ -3238,6 +3238,36 @@ components:
         name: { type: string, minLength: 1, maxLength: 120, nullable: true }
         visibility: { type: string, enum: [PRIVATE, UNLISTED] }
       additionalProperties: false
+    ConfigurationDisplay:
+      type: object
+      description: >
+        Human-readable labels for an approved configuration, resolved server-side so a cart line or
+        saved design renders without the client re-joining the catalogue (TMS-FBR-020).
+      required:
+        [
+          artworkTitle,
+          artworkSlug,
+          garmentTitle,
+          colourName,
+          colourHex,
+          sizeLabel,
+          placementName,
+          scaleName,
+          thumbnailUrl,
+        ]
+      properties:
+        artworkTitle: { type: string }
+        artworkSlug: { type: string }
+        garmentTitle: { type: string }
+        colourName: { type: string }
+        colourHex: { type: string }
+        sizeLabel: { type: string }
+        placementName: { type: string }
+        scaleName: { type: string }
+        thumbnailUrl:
+          type: string
+          nullable: true
+          description: A READY thumbnail for the artwork version, or null until media derivatives exist.
     DesignConfiguration:
       type: object
       required:
@@ -3254,6 +3284,7 @@ components:
           name,
           visibility,
           shareToken,
+          display,
           createdAt,
           updatedAt,
         ]
@@ -3276,6 +3307,7 @@ components:
           type: string
           nullable: true
           description: Present only while the design is UNLISTED and its owner is reading it. A shared read never returns it.
+        display: { $ref: '#/components/schemas/ConfigurationDisplay' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
     DesignResponse:
@@ -3335,6 +3367,7 @@ components:
           lineTotal,
           availableQuantity,
           issue,
+          display,
         ]
       properties:
         lineId: { type: string, format: uuid }
@@ -3360,6 +3393,7 @@ components:
         issue:
           allOf: [{ $ref: '#/components/schemas/CartLineIssue' }]
           nullable: true
+        display: { $ref: '#/components/schemas/ConfigurationDisplay' }
     AppliedPromotion:
       type: object
       required: [code, label, discount]

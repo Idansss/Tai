@@ -755,6 +755,24 @@ export const UpdateDesignInputSchema = z
   });
 export type UpdateDesignInput = z.infer<typeof UpdateDesignInputSchema>;
 
+/**
+ * Human-readable labels for an approved configuration, resolved server-side so a cart line or a
+ * saved design can be rendered ("Market Day on a Black Classic T-shirt, size M") without the
+ * client re-joining the catalogue. Answers TMS-FBR-020. IDs remain on the parent for actions.
+ */
+export interface ConfigurationDisplay {
+  artworkTitle: string;
+  artworkSlug: string;
+  garmentTitle: string;
+  colourName: string;
+  colourHex: string;
+  sizeLabel: string;
+  placementName: string;
+  scaleName: string;
+  /** A READY thumbnail for the artwork version, or null until media derivatives exist. */
+  thumbnailUrl: string | null;
+}
+
 export interface DesignConfigurationSummary {
   id: string;
   artworkId: string;
@@ -770,6 +788,8 @@ export interface DesignConfigurationSummary {
   visibility: DesignVisibility;
   /** Present only while the design is UNLISTED and the owner is reading it. */
   shareToken: string | null;
+  /** Labels for rendering the design without a catalogue re-join (TMS-FBR-020). */
+  display: ConfigurationDisplay;
   createdAt: string;
   updatedAt: string;
 }
@@ -829,6 +849,8 @@ export interface CartLine {
   availableQuantity: number;
   /** Null when the line is currently purchasable. */
   issue: CartLineIssue | null;
+  /** Labels for rendering the line without a catalogue re-join (TMS-FBR-020). */
+  display: ConfigurationDisplay;
 }
 
 export interface AppliedPromotion {
