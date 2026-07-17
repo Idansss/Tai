@@ -21,6 +21,7 @@ tags:
   - name: administrator-media
   - name: checkout
   - name: orders
+  - name: payments
 paths:
   /api/v1/auth/register:
     post:
@@ -1918,6 +1919,62 @@ paths:
         '200': { $ref: '#/components/responses/Order' }
         '401': { $ref: '#/components/responses/ApiError' }
         '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/orders/{reference}/payment:
+    post:
+      operationId: initiateOrderPayment
+      tags: [payments]
+      summary: Start (or resume) a payment for an order awaiting payment
+      description: >
+        Keyed by the order reference so a guest can complete checkout. Reusing an existing pending
+        attempt keeps this idempotent. The order moves into PAYMENT_PROCESSING. TMS-B4-003 leaves
+        the order AWAITING_PAYMENT; this begins the payment.
+      parameters: [{ $ref: '#/components/parameters/OrderReference' }]
+      responses:
+        '200': { $ref: '#/components/responses/OrderPayment' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+    get:
+      operationId: getOrderPayment
+      tags: [payments]
+      summary: Read the current payment handoff for an order
+      parameters: [{ $ref: '#/components/parameters/OrderReference' }]
+      responses:
+        '200': { $ref: '#/components/responses/OrderPayment' }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /api/v1/orders/{reference}/payment/verify:
+    post:
+      operationId: verifyOrderPayment
+      tags: [payments]
+      summary: Reconcile the order against the provider when a webhook may have been missed
+      parameters: [{ $ref: '#/components/parameters/OrderReference' }]
+      responses:
+        '200': { $ref: '#/components/responses/OrderPayment' }
+        '404': { $ref: '#/components/responses/ApiError' }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /api/v1/payments/webhooks/{provider}:
+    post:
+      operationId: receivePaymentWebhook
+      tags: [payments]
+      summary: Receive a signed provider webhook
+      description: >
+        Authenticated by an HMAC signature over the raw body (header `x-tms-signature`), not a
+        session. The event is deduplicated by its provider event id, its amount and currency are
+        checked against the payment, and the outcome is applied through the audited order state
+        machine. A replayed webhook is a no-op.
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string, maxLength: 40 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { $ref: '#/components/responses/PaymentWebhookAck' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
 components:
   parameters:
     Cursor:
@@ -2161,6 +2218,16 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/OrderListResponse' }
+    OrderPayment:
+      description: The payment handoff for an order.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/OrderPaymentResponse' }
+    PaymentWebhookAck:
+      description: The webhook was received.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PaymentWebhookAckResponse' }
     StockLevel:
       description: One garment variant stock level.
       content:
@@ -3726,6 +3793,22 @@ components:
         data:
           type: array
           items: { $ref: '#/components/schemas/OrderSummary' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    OrderPaymentResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/OrderPaymentHandoff' }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    PaymentWebhookAckResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [received]
+          properties:
+            received: { type: boolean, const: true }
         meta: { $ref: '#/components/schemas/ApiMeta' }
     InventoryReceiptInput:
       type: object

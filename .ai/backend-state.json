@@ -1,9 +1,9 @@
 {
   "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
-  "currentPhase": "B4",
-  "lastVerifiedTask": "TMS-B4-003",
-  "nextRecommendedTask": "TMS-B5-001 (PaymentProvider contract and MockPaymentProvider)",
+  "currentPhase": "B5",
+  "lastVerifiedTask": "TMS-B5-001",
+  "nextRecommendedTask": "TMS-B5-002 (Flutterwave adapter behind the PaymentProvider port)",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -28,14 +28,15 @@
     "TMS-B3-002",
     "TMS-B4-001",
     "TMS-B4-002",
-    "TMS-B4-003"
+    "TMS-B4-003",
+    "TMS-B5-001"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified; orders-checkout-pr-open (11 migrations)",
-  "lastUpdated": "2026-07-17T01:15:00Z",
+  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified; orders-checkout-pr-open; payments-pr-open (12 migrations)",
+  "lastUpdated": "2026-07-17T02:45:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -251,6 +252,26 @@
       "Delivery fees and VAT are a fixed server catalogue; TMS-B5-003 replaces them with live shipping rates without changing the contract.",
       "The production/dispatch/returns transitions are declared in ORDER_TRANSITIONS but exercised by later B6 operations tasks.",
       "The migration-count guard is now 11; each remaining open PR that adds a migration must raise it again."
+    ]
+  },
+  "payment": {
+    "task": "TMS-B5-001",
+    "branch": "codex/b5-payment-provider",
+    "status": "verified-pr-open",
+    "stackedOn": "codex/b4-checkout-orders (TMS-B4-003, PR #22)",
+    "migration": "20260717093000_payments",
+    "qualityGate": "passed",
+    "apiPaymentTests": 13,
+    "databaseTests": 8,
+    "decisions": [
+      "ADR-019 payments sit behind a provider-neutral PaymentProvider port and settle only through the audited order state machine; webhooks are HMAC-signed, deduplicated by (provider, provider_event_id), amount/currency-checked, and reconcilable"
+    ],
+    "concerns": [
+      "TMS-B5-002 adds the Flutterwave adapter behind the same port and refunds a REVERSED charge on a real gateway; credentials are absent so live verification is Blocked.",
+      "The administrator refund endpoint and a payments RBAC permission land with the B6 operations surface; refund is a service operation here.",
+      "PAYMENT_PROVIDER=mock is rejected in production by config validation.",
+      "The migration-count guard is now 12; each remaining open PR that adds a migration must raise it again.",
+      "main.ts now creates the app with rawBody:true so webhook signatures verify against exact bytes; e2e apps must pass { rawBody: true } to createNestApplication."
     ]
   }
 }
