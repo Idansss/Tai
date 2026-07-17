@@ -2,6 +2,7 @@ import { buttonVariants, Container, EmptyState, Eyebrow, Heading, Text } from '@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { Panel, PanelGrid, panelSizes } from '@/components/gallery/panel-grid';
 import { ArtworkFilters } from '@/components/gallery/artwork-filters';
 import { dataProvider } from '@/lib/data';
 import { hasActiveFilters, parseArtworkFilters } from '@/lib/gallery-params';
@@ -60,13 +61,14 @@ export default async function ArtworksPage({ searchParams }: PageProps) {
           />
         </div>
       ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {artworks.map((art) => (
-            <li key={art.id}>
-              <ArtworkCard artwork={art} />
-            </li>
+        <PanelGrid className="mt-8">
+          {artworks.map((art, i) => (
+            <Panel key={art.id} index={i}>
+              {/* The first page's establishing panel is above the fold: load it eagerly. */}
+              <ArtworkCard artwork={art} sizes={panelSizes(i)} priority={i === 0} />
+            </Panel>
           ))}
-        </ul>
+        </PanelGrid>
       )}
     </Container>
   );

@@ -12,7 +12,16 @@ import { Plate } from './plate';
  * carries the work and its caption; this adds only what a buyer needs: the price, and whether the
  * piece can be had.
  */
-export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
+export function ArtworkCard({
+  artwork,
+  /** How wide this card will render, from the panel it sits in. See gallery/panel-grid.tsx. */
+  sizes,
+  priority = false,
+}: {
+  artwork: ArtworkSummary;
+  sizes?: string;
+  priority?: boolean;
+}) {
   return (
     <Link
       href={`/artworks/${artwork.slug}`}
@@ -23,6 +32,8 @@ export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
         title={artwork.title}
         city={artwork.collection}
         medium="Pencil on paper"
+        {...(sizes ? { sizes } : {})}
+        priority={priority}
       />
       <div className="mt-1.5 flex items-baseline justify-between gap-3">
         {/* Null price is not ₦0: ADR-015 puts price on the approved artwork+garment pair, so the
