@@ -422,6 +422,18 @@ describe.sequential('cart and promotion HTTP integration', () => {
       unitPrice: { amountMinor: 1_400_000, currency: 'NGN' },
       lineTotal: { amountMinor: 2_800_000, currency: 'NGN' },
       issue: null,
+      // The line renders from its own response, with no catalogue re-join (TMS-FBR-020).
+      display: {
+        artworkTitle: 'Lagos Dusk',
+        artworkSlug: 'lagos-dusk',
+        garmentTitle: 'Cart Classic Tee',
+        colourName: 'ink-black',
+        colourHex: '#333333',
+        sizeLabel: 'CART-TEE-M',
+        placementName: 'Center chest',
+        scaleName: 'Standard',
+        thumbnailUrl: null,
+      },
     });
     expect(added.body.data.subtotal).toEqual({ amountMinor: 2_800_000, currency: 'NGN' });
   });

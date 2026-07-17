@@ -431,6 +431,18 @@ describe.sequential('design configuration HTTP integration', () => {
     expect(created.body.data.configurationHash).toMatch(/^[0-9a-f]{64}$/);
     expect(created.body.data.scalePresetId).toEqual(expect.any(String));
     expect(created.body.data.garmentTemplateId).toEqual(expect.any(String));
+    // A saved design renders from its own response, with no catalogue re-join (TMS-FBR-020).
+    expect(created.body.data.display).toEqual({
+      artworkTitle: 'River Song',
+      artworkSlug: 'river-song',
+      garmentTitle: 'Design Classic Tee',
+      colourName: 'Washed Black',
+      colourHex: '#111111',
+      sizeLabel: 'Medium',
+      placementName: 'Center chest',
+      scaleName: 'Standard',
+      thumbnailUrl: null,
+    });
 
     // Re-saving the same approved tuple is idempotent rather than a duplicate or a conflict.
     const again = await api()

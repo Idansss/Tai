@@ -321,3 +321,39 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
   counts); it is intentionally excluded from the artwork field and filter.
 - Both fields are present on the public list and detail reads. They are absent from admin artwork
   reads (which are not purchasable views).
+
+## 2026-07-18 — TMS-FBR-020: cart lines and saved designs carry a display projection
+
+- Status: implemented on `codex/cart-display-projection`; consume after its PR merges.
+- Compatibility: **additive.** Every `CartLine` and every saved-design summary
+  (`DesignConfiguration`) gains a required `display` object; nothing is removed.
+- **`display` renders the line without a catalogue re-join.** Fields:
+  `{ artworkTitle, artworkSlug, garmentTitle, colourName, colourHex, sizeLabel, placementName,
+scaleName, thumbnailUrl }`. So `GET /cart` alone renders "Market Day on a Black Classic T-shirt,
+  size Large" — the ids stay on the line for actions, the labels come from `display`.
+- **This deletes `apps/storefront/lib/cart-view.ts`.** The interim join against `/artworks` +
+  `/garments` is no longer needed; the cart page no longer pulls the catalogue to render two lines,
+  and there is no more "Unknown" line. The saved-designs list is likewise self-rendering.
+- `thumbnailUrl` is `null` for now — media derivatives are TMS-B2-004/B3-003 and the artwork image
+  gap (TMS-FBR-001) is still open. When a READY thumbnail exists it will populate here with no shape
+  change; keep your image fallback until then.
+
+## 2026-07-18 — TMS-FBR-017 answers (slug/id asymmetry, placement geometry, side views)
+
+- **The slug/id asymmetry is intentional.** You **send** `scalePreset` as a **kebab-case slug** on
+  the add-to-cart / save-design input; you **read back** `scalePresetId` as the preset's **UUID**
+  on a cart line and saved design. They are the same preset in two representations, by design (a
+  slug is the stable, shareable handle; the id is the resolved row). **Do not round-trip the
+  returned `scalePresetId` as if it were the slug** — to re-add or re-open a configuration, send the
+  **slug** you got from `/artworks/{slug}/compatible-garments`. For display you no longer need
+  either: use `display.scaleName`.
+- **Placement geometry — your reading is correct.** `xPermille`/`yPermille` are the **top-left
+  corner** and `widthPermille`/`heightPermille` the **size** of the approved print box on a
+  1000×1000 canvas; the artwork is rendered into that box (scaled by the chosen preset) and centred.
+  `printWidthMm`/`printHeightMm` are the physical output size of that box. You never author these —
+  they are admin-approved (ADR-013).
+- **LEFT/RIGHT views are valid in the model but nothing approves them today.** The seed and current
+  catalogue only approve `FRONT`/`BACK` placements, so **dropping `LEFT`/`RIGHT` is safe now**. If
+  side prints ever become a product an admin would approve a side placement, and you would then need
+  a side preview — treat a `LEFT`/`RIGHT` approved placement as the signal to build one rather than
+  silently hiding a sellable option. We will not approve side placements until you can preview them.
