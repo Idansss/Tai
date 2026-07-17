@@ -22,7 +22,8 @@
 | Production rendering                 | TMS-B3-003     | Future renderer and render queue                                    | Renderer, checksum, retry tests                                      |
 | Inventory and reservations           | TMS-B4-001     | `apps/api/src/inventory`, ledger migration, row-locked reservations | Final-unit race, expiry, append-only, permission tests               |
 | Carts and promotions                 | TMS-B4-002     | `apps/api/src/cart`, cart/promotion migration, ADR-017              | Repricing, merge, out-of-stock, promotion, ownership tests           |
-| Checkout/orders/notifications        | TMS-B4-003–004 | Future B4 modules                                                   | State-machine, snapshot, idempotency, E2E tests                      |
+| Checkout, orders, snapshots          | TMS-B4-003     | `apps/api/src/orders`, orders migration, state machine, ADR-018     | Snapshot, idempotency, reservation-expiry, invalid-transition tests  |
+| Order notifications and recovery     | TMS-B4-004     | Future notifications/recovery jobs                                  | Idempotent job, failure, retry, preference tests                     |
 | Flutterwave/GIGL-ready integrations  | TMS-B5-001–003 | Future provider interfaces/adapters                                 | Webhook, duplicate, timeout, contract tests                          |
 | Production/admin operations          | TMS-B6-001–002 | Future operations/admin APIs                                        | Permission, transition, export tests                                 |
 | Growth/AI/analytics                  | TMS-B7-001–003 | Future modules/provider-neutral AI                                  | Approval, grounding, failure, analytics tests                        |
