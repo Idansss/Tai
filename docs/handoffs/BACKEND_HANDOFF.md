@@ -2,41 +2,29 @@
 
 ## Current backend phase
 
-B2 — Artwork and catalogue is active. TMS-B2-001 through TMS-B2-003 are Verified and merged. TMS-B2-004 is In progress on `codex/b2-media-pipeline`.
+B4 — Commerce core is active. TMS-B4-001 (inventory + reservations) and TMS-B4-002 (carts + promotions) are Verified. TMS-B4-003 (checkout, guest orders, immutable order snapshots, audited order state machine) is Verified on `codex/b4-checkout-orders` with its PR open. TMS-B5-001 (PaymentProvider + MockPaymentProvider) is next.
 
 ## Work completed
 
-TMS-B2-003 adds approved blank-garment canvases without weakening the artwork-first catalogue. Garment templates own colours, measured sizes, colour/size SKU variants, normalized view placements, and scale presets. Compatibility approval binds an exact immutable published artwork version to one published garment template and an explicit placement allowlist. A replacement artwork version never inherits an older version's approval.
+TMS-B4-003 adds checkout and orders on top of the cart (TMS-B4-002) and inventory (TMS-B4-001). Placing an order refuses an empty or issue-carrying cart before anything else (ADR-017 — fail at the cart, never at the card), takes the ADR-016 inventory hold per line at a fifteen-minute TTL, snapshots every line with copied price, currency, and descriptive fields (ADR-015/018 — a later catalogue or price change never rewrites a placed order), then writes the immutable order and empties the cart in one transaction. The order begins AWAITING_PAYMENT.
 
-Published garment structure is locked until the template leaves publication. Leaving publication archives approved compatibility decisions so structural edits and republication require fresh approval. Public configuration validation accepts only an exact published artwork version, published template/variant/colour/size, published placement/view/scale, and approved exact-version compatibility. Inventory quantities remain variant-based deferred scope.
+Order status only ever changes through one `ORDER_TRANSITIONS` map; `OrderService` refuses any move the map forbids, guards each update on the expected current status, and appends an `order_events` row that a trigger makes append-only. `confirmPayment` commits every hold and moves to PAID; `failPayment` releases them; a hold that expired underneath a checkout blocks confirmation before the order is marked paid. Delivery fees and Nigerian VAT (7.5% on the discounted goods subtotal) are server-authoritative integer arithmetic from a fixed catalogue. Idempotency is a per-customer key; a guest resubmission is caught by the emptied cart. Guest orders reconcile onto an account by verified contact email.
 
 ## Tasks verified
 
-TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, and TMS-B2-001 through TMS-B2-003.
-
-## Merge record
-
-- PR #1: `88a00912d8e5a0f5c05c07e9269add663f1c4fdf`, main CI 29339734452.
-- PR #3: `5c6da304223b3aec7c3fdeb2a31178c90c4343ae`, CI 29461825758.
-- PR #10: `88801c1374415eddf318a95e56ac3be7ab864c98`, CI 29464793865.
-- PR #11: `30bd5c087baf0f9b281f5422d43e5c54e26ace94`, CI 29467786313.
-- PR #12: `daae9f37ea6119fdf8d4cc387fdd701d80a2de6c`, CI 29483761718.
-- PR #13: `ce8bca4f7e7866cee698a77c9a94319418e8ca8a`, CI 29489686858.
-- PR #14: `4e8b76bbd6266ccb2c7959e38f2c78112f7e0f79`, CI 29497566759.
+TMS-B0-001 through TMS-B0-011, TMS-B1-001 through TMS-B1-003, TMS-B2-001 through TMS-B2-004 (+ B2-004a), TMS-B3-001, TMS-B3-002, TMS-B4-001, TMS-B4-002, and TMS-B4-003.
 
 ## Next task
 
-Implement TMS-B2-004 exact-version media ingestion, validation/scanning, immutable originals, web/thumbnail derivative jobs, mockups, and approval workflow.
+Implement TMS-B5-001: the `PaymentProvider` contract and a complete `MockPaymentProvider` — end-to-end mock checkout, verification, signed webhook simulation, refunds, duplicate/replay handling, and reconciliation. It drives the order state machine through `OrderService.beginPayment`/`confirmPayment`/`failPayment` and populates the order's payment handoff.
 
 ## API contracts added or changed
 
-Four public operations add published garment list/detail, exact published-artwork-version compatible garments, and exact configuration validation. Twenty-two administrator operations under `/api/v1/admin/garments` manage templates, colours, sizes/measurements, variants, placements, scale presets, and exact artwork-version compatibility. Administrator reads require `catalogue.read`; mutations require `catalogue.write`.
-
-The shared contract adds garment types/views/lifecycle entities and inputs plus `CONFIGURATION_NOT_APPROVED`. Static OpenAPI and compiled runtime Swagger match at 68 paths and 91 stable operation IDs with both session-cookie schemes.
+Five operations: `GET /api/v1/checkout/delivery-options`, `POST /api/v1/checkout/quote`, `POST /api/v1/orders`, `GET /api/v1/orders`, and `GET /api/v1/orders/{reference}`. Checkout and order placement are guest-friendly (the `tms_cart` cookie); order reads require the `tms_session` cookie. The shared contract adds `CheckoutAddressInput`, `CheckoutContactInput`, `CheckoutQuoteInput`, `PlaceOrderInput`, `DeliveryMethod`/`DeliveryOption`, `CheckoutQuote`, `Order`, `OrderItem`, `OrderSummary`, `OrderTimelineEntry`, and `OrderPaymentHandoff`. No new error code was needed (`CONFLICT`, `INVENTORY_UNAVAILABLE`, `VALIDATION_FAILED`, `RESOURCE_NOT_FOUND`, `SESSION_INVALID` cover it). Every OpenAPI `$ref` resolves.
 
 ## Database migration
 
-`20260716112000_garment_catalogue` adds nine garment and compatibility tables, enum types, foreign keys, indexes, checks, and membership triggers. Geometry is normalized to a 1000-by-1000 integer canvas while physical print dimensions remain positive millimetres. Compatibility references `ArtworkVersion`, not the mutable `Artwork` root. The persistence suite deploys all five migrations and seeds twice.
+`20260717090000_orders_checkout` adds `orders`, `order_items`, and the append-only `order_events` ledger, plus the `OrderStatus` and `DeliveryMethod` enums. Constraints enforce integer non-negative money, `total = subtotal - discount + delivery + tax`, `discount <= subtotal`, a positive subtotal (no empty order can be written), the copied line total, per-customer idempotency uniqueness, and an UPDATE/DELETE trigger on `order_events`. Snapshot columns are copied; the tuple foreign keys are RESTRICT for traceability. This is the eleventh migration, so the persistence guard now asserts 11.
 
 ## Environment variables added
 
@@ -44,28 +32,28 @@ None.
 
 ## Files changed
 
-Only backend-owned API/database code and tests, shared contracts/OpenAPI, backend/contract/coordination documentation, TODO/handoff/state ledgers, and the existing backend seed's bounded transaction configuration. No frontend-owned implementation, frontend documentation, UI package, or frontend state file was modified.
+Only backend-owned code and tests: `apps/api/src/orders`, `packages/database` schema/migration/exports and the migration-count guard, `packages/contracts`, `docs/contracts/openapi.yaml`, and backend/coordination/decision documentation, TODO/traceability/handoff/state ledgers. No frontend-owned implementation, frontend documentation, UI package, or frontend state file was modified. `apps/api/src/app.module.ts` registers the new `OrderModule`.
 
 ## Commands and results
 
-The exact `pnpm check` passes formatting, all workspace lint/type/test suites, all production builds, and Prisma validation. The API has 53 passing tests across 12 files; the database package has seven passing tests. `pnpm install --frozen-lockfile`, Compose validation, high-severity production audit, static OpenAPI YAML/reference/operation validation, and compiled Swagger/static parity pass. The audit reports one moderate advisory below the configured failure threshold.
+`pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm db:validate` pass. The orders slice adds 12 real-PostgreSQL HTTP scenarios plus a delivery/VAT/state-machine unit spec; the database persistence suite (8 tests) deploys all 11 migrations and verifies the migration count. `pnpm audit` is broken locally (retired npm endpoint), so CI remains the sole source of truth for the security gate.
 
 ## Known defects and deferred scope
 
-Readiness still reports process readiness only. Authentication throttling remains process-local and must move to Redis before horizontal scaling. MFA encryption needs multi-key rotation before changing the production key. TMS-B2-004 owns exact-version media originals, derivatives, previews, mockups, and approval. TMS-B4-001 owns garment inventory quantities, movements, alerts, and reservations.
+Order `payment` is a status-only stub (provider/reference/redirect null) until TMS-B5-001 adds the real handoff and webhooks. Reading a guest order back by reference needs the payment return token TMS-B5-001 adds. Delivery fees and VAT are a fixed server catalogue; TMS-B5-003 replaces them with live shipping rates. The production/dispatch/returns transitions are declared in `ORDER_TRANSITIONS` but exercised by later B6 operations tasks. Readiness reports process readiness only; authentication throttling is process-local (move to Redis before horizontal scaling); MFA encryption needs multi-key rotation before changing the production key.
 
 ## Blockers
 
-No B2 blocker is currently known. Live Flutterwave and GIGL verification remains credential-blocked later in B5.
+No B4-003 blocker. Live Flutterwave and GIGL verification remains credential-blocked later in B5.
 
 ## Requests for Claude Code
 
-Continue to own the frontend directories identified by `AGENTS.md`. Consume the TMS-B2-003 contract only after its focused PR merges. Use the exact-version compatibility endpoints and treat `422 CONFIGURATION_NOT_APPROVED` as an unavailable selection requiring refresh. Do not infer compatibility, price, stock, or media URLs client-side.
+Continue to own the frontend directories in `AGENTS.md`. Consume the checkout/orders contract only after this PR merges (see the 2026-07-17 note in `BACKEND_TO_FRONTEND.md`). Render server totals and the order snapshot rather than recomputing delivery/VAT or reading live catalogue for a placed order. Treat a checkout `409 CONFLICT` as "resolve the cart first". Keep `lib/payment.ts` on the mock resolver until TMS-B5-001 lands the real payment intent and webhook-backed status; never trust a client `?outcome=` param.
 
 ## Do not redo
 
-Do not recreate B0/B1 foundations, authentication/RBAC, artwork roots/versioning, catalogue discovery/editorial content, or the garment schema and exact-version compatibility work in this slice.
+Do not recreate B0/B1 foundations, authentication/RBAC, artwork/catalogue, garments/compatibility, media, designs, pricing/availability, inventory/reservations, carts/promotions, or the checkout/orders schema and state machine in later slices.
 
 ## Exact continuation instruction
 
-Continue TMS-B2-004 on `codex/b2-media-pipeline`, validate, document, publish, resolve CI, and merge its focused PR without modifying frontend-owned files.
+Merge the TMS-B4-003 PR from `codex/b4-checkout-orders`, then continue TMS-B5-001 on a fresh backend branch from the latest `main`, driving the order state machine through `OrderService` and populating the order payment handoff, without modifying frontend-owned files.

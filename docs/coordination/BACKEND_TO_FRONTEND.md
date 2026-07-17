@@ -228,14 +228,32 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - `total` is `subtotal - discount`, never below zero. **Delivery and tax are deliberately absent** and belong to the checkout quote (TMS-B4-003), exactly as TMS-FBR-003 requested.
 - A line you do not own returns `404`, not `403`.
 
+## 2026-07-17 — TMS-B4-003 checkout and orders are available
+
+- Status: implemented on `codex/b4-checkout-orders`; consume after its PR is merged. This answers request TMS-FBR-004 and the order-history half of TMS-FBR-005.
+- **This replaces `apps/storefront/lib/checkout.ts` mock delivery/VAT, `lib/order.ts` local order snapshots, and the order-history part of `lib/account.ts`.** Five operations:
+  - `GET /api/v1/checkout/delivery-options?state=<state>` — server-authoritative methods and fees.
+  - `POST /api/v1/checkout/quote` — `{ address, deliveryMethodId }` → authoritative `{ subtotal, discount, delivery, tax, total, deliveryMethod, promotion }`.
+  - `POST /api/v1/orders` — `{ address, deliveryMethodId, contact }` places the order from the current cart.
+  - `GET /api/v1/orders` and `GET /api/v1/orders/{reference}` — the signed-in customer's history and one order (require `tms_session`).
+- **Checkout is guest-friendly.** `POST /orders` and `/checkout/quote` work with the same `tms_cart` guest cookie the cart uses; a signed-in customer's order is attached to their account. Always send credentials/cookies.
+- **Delivery and VAT are server-authoritative — stop mocking them.** VAT is 7.5% on the discounted goods subtotal; delivery is a fixed catalogue (`STANDARD`/`EXPRESS`, Lagos cheaper than nationwide, fees in kobo). `total = subtotal - discount + delivery + tax`, all integer minor units. Render the quote's numbers; do not recompute. A shipping provider with live rates replaces the catalogue later (TMS-B5-003) without changing the shape.
+- **The promotion comes from the cart, not the checkout.** Apply/clear codes via the cart endpoints (TMS-B4-002); the quote and order read the cart's applied promotion. There is no promotion field on the quote or order request.
+- **Checkout refuses before payment, never at it.** If any cart line has an `issue` (or the cart is empty), `POST /orders` and `/checkout/quote` return `409 CONFLICT`. Resolve the cart issues first — the customer can lose the last unit between cart and checkout (ADR-017), so re-read the cart and show the `issue` rather than failing at the card.
+- **Idempotent placement.** Send an `Idempotency-Key` header (8–120 chars) on `POST /orders`; a retry with the same key returns the same order rather than placing a second one. Generate one key per checkout attempt and reuse it across retries.
+- **The order is an immutable snapshot.** Each item carries the copied `unitPrice`, `lineTotal`, `artworkTitle`, `garmentTitle`, `colourName`, `sizeLabel`, and `sku` — a later catalogue or price change never rewrites a placed order (ADR-015/018). Render from the snapshot, not from live catalogue lookups.
+- **`status` is the shared `OrderStatus` enum; map it to customer copy, never render the raw code** (spec §17). `timeline[]` is the append-only status history (oldest first) for a fulfilment timeline. `payment` is a handoff stub in this slice: `{ status, provider: null, reference: null, redirectUrl: null }` with `status` derived from the order (`PENDING` until paid). **The real payment intent/redirect and webhook-backed status arrive in TMS-B5-001** — keep `lib/payment.ts` on the mock resolver until then, and never trust a client `?outcome=` param.
+- **Order history is auth-scoped.** `GET /orders` needs a session (`401` without). Another customer's order reference returns `404`, not `403`. A signed-in customer also sees guest orders placed with their **verified** contact email, so a guest purchase reconciles on sign-in. Reading a guest order back by reference before sign-in needs the payment return token TMS-B5-001 adds; for now use the full order returned by `POST /orders` for the confirmation page.
+
 ## 2026-07-17 — A seeded, runnable dev database exists — `DATA_SOURCE=api` now works end to end
 
 - Status: implemented on `codex/dev-seed`; consume after its PR merges. This unblocks all frontend
   verification — until now every claim about these endpoints was **stub-verified only** because
   no seeded database existed.
-- **What changed:** `packages/database/prisma/seed.ts` now also seeds a full development catalogue
-  (new file `prisma/seed-catalogue.ts`). One documented command migrates and seeds a working local
-  database. See `docs/backend/DEV_DATABASE.md`.
+- **What changed:** a dev-only seed (`prisma/seed-dev.ts`, run by `db:seed` / `db:reset`) seeds a
+  full development catalogue (`prisma/seed-catalogue.ts`) on top of the RBAC roles. The
+  prisma-config seed (`prisma/seed.ts`, used by the integration tests) stays RBAC-only. One
+  documented command migrates and seeds a working local database. See `docs/backend/DEV_DATABASE.md`.
 - **The single command** (run from the repo root, against the local Docker Postgres on host port
   **5433**):
 

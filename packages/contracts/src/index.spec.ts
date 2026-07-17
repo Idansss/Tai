@@ -285,6 +285,11 @@ describe('shared contracts', () => {
       'deleteAdministratorGarmentScalePreset',
       'setAdministratorArtworkGarmentCompatibility',
       'deleteAdministratorArtworkGarmentCompatibility',
+      'getDeliveryOptions',
+      'createCheckoutQuote',
+      'placeOrder',
+      'listCustomerOrders',
+      'getCustomerOrder',
     ]) {
       expect(openApi).toContain(`operationId: ${operationId}`);
     }

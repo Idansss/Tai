@@ -2,8 +2,8 @@
   "agent": "Codex; TMS-B2-004 landed by Claude Code",
   "area": "backend",
   "currentPhase": "B4",
-  "lastVerifiedTask": "TMS-B4-002",
-  "nextRecommendedTask": "TMS-B4-003 (checkout and orders)",
+  "lastVerifiedTask": "TMS-B4-003",
+  "nextRecommendedTask": "TMS-B5-001 (PaymentProvider contract and MockPaymentProvider)",
   "completedTasks": [
     "TMS-B0-001",
     "TMS-B0-002",
@@ -27,14 +27,15 @@
     "TMS-B3-001",
     "TMS-B3-002",
     "TMS-B4-001",
-    "TMS-B4-002"
+    "TMS-B4-002",
+    "TMS-B4-003"
   ],
   "inProgressTasks": [],
   "blockedTasks": [],
   "buildStatus": "passed",
   "testStatus": "passed",
-  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified",
-  "lastUpdated": "2026-07-16T21:15:00Z",
+  "migrationStatus": "identity-foundation-merged; customer-authentication-verified-no-new-migration; admin-authentication-merged; artwork-versioning-merged; catalogue-content-verified; orders-checkout-pr-open (11 migrations)",
+  "lastUpdated": "2026-07-17T01:15:00Z",
   "foundationMerge": {
     "pullRequest": 1,
     "method": "squash",
@@ -231,6 +232,25 @@
       "TMS-B4-003 order snapshots must copy the resolved amount and currency, never reference the compatibility (ADR-015).",
       "The storefront's lineId() helper keys on freeform geometry removed by ADR-013 and must be reworked before it can consume this API.",
       "Abandoned-cart cleanup is not implemented; carts carry lastActivityAt for a future TMS-B4-004 recovery job."
+    ]
+  },
+  "checkout": {
+    "task": "TMS-B4-003",
+    "branch": "codex/b4-checkout-orders",
+    "status": "verified-pr-open",
+    "migration": "20260717090000_orders_checkout",
+    "qualityGate": "passed",
+    "databaseTests": 8,
+    "answersFrontendRequest": "TMS-FBR-004 and the order-history half of TMS-FBR-005",
+    "decisions": [
+      "ADR-018 orders are immutable snapshots advanced by an audited state machine; checkout takes the hold and refuses before payment; delivery and 7.5% VAT are server-authoritative; idempotency is a per-customer key"
+    ],
+    "concerns": [
+      "TMS-B5-001 owns the real payment handoff: order.payment is a status-only stub (provider/reference/redirect null) until then.",
+      "Reading a guest order back by reference needs the payment return token TMS-B5-001 adds; the placement response returns the full order for the confirmation page.",
+      "Delivery fees and VAT are a fixed server catalogue; TMS-B5-003 replaces them with live shipping rates without changing the contract.",
+      "The production/dispatch/returns transitions are declared in ORDER_TRANSITIONS but exercised by later B6 operations tasks.",
+      "The migration-count guard is now 11; each remaining open PR that adds a migration must raise it again."
     ]
   }
 }
