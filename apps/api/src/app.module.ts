@@ -13,6 +13,7 @@ import { HealthService } from './health/health.service.js';
 import { GarmentModule } from './garments/garment.module.js';
 import { InventoryModule } from './inventory/inventory.module.js';
 import { MediaModule } from './media/media.module.js';
+import { OrderModule } from './orders/order.module.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MediaModule } from './media/media.module.js';
     DesignModule,
     InventoryModule,
     MediaModule,
+    OrderModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: loadEnvironment().LOG_LEVEL,
