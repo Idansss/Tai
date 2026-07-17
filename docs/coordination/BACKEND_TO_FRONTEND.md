@@ -227,3 +227,56 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Promotions: `POST /cart/promotion` with `{ code }`. An invalid code is `422 PROMOTION_INVALID` with one message for unknown/ended/unlaunched — do not try to distinguish them in the UI. A valid code that does not qualify (below its minimum) returns `200` with `promotion: null`; say "code doesn't apply to this order" rather than showing an error.
 - `total` is `subtotal - discount`, never below zero. **Delivery and tax are deliberately absent** and belong to the checkout quote (TMS-B4-003), exactly as TMS-FBR-003 requested.
 - A line you do not own returns `404`, not `403`.
+
+## 2026-07-17 — A seeded, runnable dev database exists — `DATA_SOURCE=api` now works end to end
+
+- Status: implemented on `codex/dev-seed`; consume after its PR merges. This unblocks all frontend
+  verification — until now every claim about these endpoints was **stub-verified only** because
+  no seeded database existed.
+- **What changed:** `packages/database/prisma/seed.ts` now also seeds a full development catalogue
+  (new file `prisma/seed-catalogue.ts`). One documented command migrates and seeds a working local
+  database. See `docs/backend/DEV_DATABASE.md`.
+- **The single command** (run from the repo root, against the local Docker Postgres on host port
+  **5433**):
+
+  ```bash
+  DATABASE_URL="postgresql://tai:local_development_only@localhost:5433/tai_dev?schema=public" \
+    pnpm --filter @tms/database db:reset
+  ```
+
+  `db:reset` runs every migration then the seed. `db:migrate` (deploy only) and `db:seed` (seed
+  only) also exist. Point the API at the same `DATABASE_URL` and it serves this data.
+
+- **Important — use `tai_dev`, not `tai_manic`.** The pre-existing `tai_manic` database in the
+  same container carries a _stale, incompatible_ Prisma migration history (`20260711_*`) from an
+  earlier iteration and would fail `migrate deploy` on drift. The seed command creates and uses a
+  clean `tai_dev`; `tai_manic` is left untouched.
+
+- **Seed contents** (mirrors the storefront):
+  - All eight artwork slugs the storefront uses — `midnight-in-lagos`, `paper-tigers`,
+    `harmattan-bloom`, `lantern-keeper`, `the-getaway`, `rainy-season`, `market-day`, `okada-run`
+    — each PUBLISHED with one published version.
+  - Three garment templates: `classic-tee` (₦14,000), `heavyweight-hoodie` (₦28,000),
+    `canvas-tote` (₦9,000), with colours, sizes, variants, front/back placements, and scale
+    presets (`standard`/`medium`/`small`). Prices are integer kobo on the approved pair (ADR-015).
+  - Approved, priced compatibilities for every artwork on the tee + hoodie (tote for `market-day`
+    and `okada-run`), each with its placement allowlist.
+  - Inventory on every variant: most healthy (40), one **low-stock** example
+    (`heavyweight-hoodie` / Ash / XL = 3, threshold 5) and one **out-of-stock** example
+    (`classic-tee` / White / XL = 0) so you can exercise `lowStock` and the `OUT_OF_STOCK` line
+    `issue`.
+  - Two collections (`lagos-nights`, `seasons`), one live drop (`harmattan-2026`), one shoppable
+    story (`making-of-market-day`), one limited edition, and two promotion codes: **`STUDIO10`**
+    (10% off) and **`WELCOME`** (₦2,000 off, min subtotal ₦10,000).
+
+- **Verified end to end against a live API** (first time these endpoints have run against a real
+  server, not a stub): `GET /artworks` → 8 items; `GET /artworks/market-day/compatible-garments`
+  → 3 priced garments with placements; `POST /cart/items` (tote ×2) → `200` with server
+  `unitPrice` 900,000 kobo and `lineTotal` 1,800,000; `GET /cart` subtotal 1,800,000;
+  `POST /cart/promotion STUDIO10` → −180,000 (total 1,620,000); an unknown code →
+  `422 PROMOTION_INVALID`.
+
+- **Frontend action:** switch the affected domains to `DATA_SOURCE=api` and re-verify against real
+  data. The seed admin account (`studio@taimanic.dev`) owns the content but has **no usable
+  password** — it is a content owner, not a login. Customer registration via `/api/v1/auth/*`
+  works against the seeded DB, so sign-in flows can be exercised for real.

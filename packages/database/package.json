@@ -10,7 +10,10 @@
     "clean": "rimraf dist generated tsconfig.tsbuildinfo",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
-    "lint": "eslint src prisma.config.ts prisma/seed.ts --max-warnings=0",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force --skip-generate",
+    "lint": "eslint src prisma.config.ts prisma/seed.ts prisma/seed-catalogue.ts --max-warnings=0",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit"

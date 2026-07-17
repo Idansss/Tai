@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { pathToFileURL } from 'node:url';
 
 import { PrismaClient } from '../generated/client/client.js';
+import { seedCatalogue } from './seed-catalogue.js';
 
 export const permissionSeeds = [
   ['system.manage', 'system', 'manage', 'Manage platform-wide settings and access.'],
@@ -112,6 +113,13 @@ export async function seed(): Promise<void> {
       },
       { maxWait: 30_000, timeout: 60_000 },
     );
+
+    // Development catalogue: artworks, garments, approved priced pairs, inventory, promotions.
+    // Idempotent and safe to re-run; kept outside the RBAC transaction so a large catalogue seed
+    // does not hold a single long transaction open.
+    if (process.env.TMS_SEED_CATALOGUE !== 'false') {
+      await seedCatalogue(prisma);
+    }
   } finally {
     await prisma.$disconnect();
   }
