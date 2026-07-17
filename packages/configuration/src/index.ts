@@ -21,6 +21,11 @@ const EnvironmentSchema = z
     S3_ACCESS_KEY: z.string().min(1).default('minio'),
     S3_SECRET_KEY: z.string().min(8).default('local_development_only'),
     MEDIA_MALWARE_SCAN_URL: z.string().url().optional(),
+    PAYMENT_PROVIDER: z.enum(['mock']).default('mock'),
+    MOCK_PAYMENT_WEBHOOK_SECRET: z
+      .string()
+      .min(16)
+      .default('local-development-mock-webhook-secret'),
     EMAIL_FROM: z.string().email().default('no-reply@taimanic.local'),
     AUTH_TOKEN_PEPPER: z.string().min(32).default(localAuthPepper),
     AUTH_COOKIE_NAME: z
@@ -69,6 +74,14 @@ const EnvironmentSchema = z
         code: 'custom',
         path: ['MEDIA_MALWARE_SCAN_URL'],
         message: 'MEDIA_MALWARE_SCAN_URL is required in production.',
+      });
+    }
+    // The mock payment provider settles nothing; it must never be the production gateway.
+    if (environment.NODE_ENV === 'production' && environment.PAYMENT_PROVIDER === 'mock') {
+      context.addIssue({
+        code: 'custom',
+        path: ['PAYMENT_PROVIDER'],
+        message: 'PAYMENT_PROVIDER must be a real gateway in production, not the mock.',
       });
     }
   });

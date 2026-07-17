@@ -24,7 +24,8 @@
 | Carts and promotions                 | TMS-B4-002     | `apps/api/src/cart`, cart/promotion migration, ADR-017              | Repricing, merge, out-of-stock, promotion, ownership tests           |
 | Checkout, orders, snapshots          | TMS-B4-003     | `apps/api/src/orders`, orders migration, state machine, ADR-018     | Snapshot, idempotency, reservation-expiry, invalid-transition tests  |
 | Order notifications and recovery     | TMS-B4-004     | Future notifications/recovery jobs                                  | Idempotent job, failure, retry, preference tests                     |
-| Flutterwave/GIGL-ready integrations  | TMS-B5-001–003 | Future provider interfaces/adapters                                 | Webhook, duplicate, timeout, contract tests                          |
+| PaymentProvider port + mock gateway  | TMS-B5-001     | `apps/api/src/payments`, payments migration, ADR-019                | Webhook signature/dedupe, reconcile, refund, mismatch tests          |
+| Flutterwave/GIGL-ready integrations  | TMS-B5-002–003 | Future provider adapters behind the ports                           | Signature, duplicate, timeout, contract tests                        |
 | Production/admin operations          | TMS-B6-001–002 | Future operations/admin APIs                                        | Permission, transition, export tests                                 |
 | Growth/AI/analytics                  | TMS-B7-001–003 | Future modules/provider-neutral AI                                  | Approval, grounding, failure, analytics tests                        |
 | Supabase development hosting         | TMS-B8-004     | `tai` schema, private media bucket, deployment documentation        | Schema isolation, bucket privacy, UUID default checks                |

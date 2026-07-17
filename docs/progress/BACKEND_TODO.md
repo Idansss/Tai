@@ -227,14 +227,14 @@ Only tasks with Status `Verified` are checked. Evidence and test results must be
 
 ## B5 — Provider integrations
 
-- [ ] TMS-B5-001 Implement PaymentProvider contract and complete MockPaymentProvider
-  - Status: Not started
+- [x] TMS-B5-001 Implement PaymentProvider contract and complete MockPaymentProvider
+  - Status: Verified
   - Owner: Codex
   - Dependencies: TMS-B4-003
   - Acceptance criteria: End-to-end mock checkout, verification, signed webhook simulation, refunds, duplicates, and reconciliation tests.
-  - Implementation evidence:
-  - Tests:
-  - Notes:
+  - Implementation evidence: `apps/api/src/payments` — the provider-neutral `PaymentProvider` port, a complete `MockPaymentProvider` (real HMAC-SHA256 webhook signing/verification, deterministic outcomes, refunds), `PaymentService`, the payment + webhook controllers, and the module wiring the provider by config. Migration `20260717093000_payments` adds `payments` and the append-only `payment_events` ledger (UPDATE/DELETE trigger) with a unique `(provider, provider_event_id)` for webhook idempotency, a `PaymentStatus` enum, and money/refund check constraints. Config adds `PAYMENT_PROVIDER` (rejected as `mock` in production) and `MOCK_PAYMENT_WEBHOOK_SECRET`; `main.ts` captures the raw body for signature verification. Four OpenAPI operations under `/api/v1/orders/{reference}/payment` and `/api/v1/payments/webhooks/{provider}`. ADR-019. Payments drive the order state machine through `OrderService`; OrderModule takes no dependency on PaymentModule.
+  - Tests: Eight HTTP/PostgreSQL scenarios pass — an end-to-end mock checkout completing through a signed webhook (order PAID, stock committed once); a replayed webhook processed exactly once (one ledger row, committed once); an unsigned and a wrongly signed webhook both rejected (400) with the order untouched; a signed webhook whose amount does not match the payment rejected (400); reconciliation applying the provider's status when a webhook is missed; a declined payment failing the order and releasing the hold; an initiation refused on an order not awaiting payment (409) and an unknown reference (404); and a full and a partial refund advancing the order through the state machine. Plus a MockPaymentProvider unit spec (signature verify, outcome rule, parse, refund). Payment suite 2 files / 13 tests; database persistence 8 (migration count 12). `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm db:validate` pass. Every OpenAPI `$ref` resolves.
+  - Notes: The mock settles no money; it decides an outcome at creation (a customer email beginning `decline` fails) and reports it consistently through its signed webhook and `verify`. Webhook signature is HMAC over the raw body; exactly-once processing is enforced by the unique `(provider, provider_event_id)`; amount/currency are checked against the payment before applying. A hold that expired after a successful charge marks the payment REVERSED and fails the order (a real gateway is refunded there in TMS-B5-002). The administrator refund endpoint and its RBAC permission land with the B6 operations surface; refunds are a service operation here. Stacked on `codex/b4-checkout-orders` (TMS-B4-003, PR #22); merge that first.
 - [ ] TMS-B5-002 Implement Flutterwave adapter architecture and sandbox handoff
   - Status: Not started
   - Owner: Codex

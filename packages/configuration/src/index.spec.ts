@@ -18,6 +18,8 @@ describe('loadEnvironment', () => {
       S3_BUCKET: 'tai-manic-local',
       S3_ACCESS_KEY: 'minio',
       S3_SECRET_KEY: 'local_development_only',
+      PAYMENT_PROVIDER: 'mock',
+      MOCK_PAYMENT_WEBHOOK_SECRET: 'local-development-mock-webhook-secret',
       EMAIL_FROM: 'no-reply@taimanic.local',
       AUTH_TOKEN_PEPPER: 'local-development-auth-pepper-change-me',
       AUTH_COOKIE_NAME: 'tms_session',
@@ -60,5 +62,16 @@ describe('loadEnvironment', () => {
         ADMIN_MFA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
       }),
     ).toThrow('MEDIA_MALWARE_SCAN_URL is required in production.');
+  });
+
+  it('refuses the mock payment provider in production', () => {
+    expect(() =>
+      loadEnvironment({
+        NODE_ENV: 'production',
+        AUTH_TOKEN_PEPPER: 'a-production-authentication-pepper',
+        ADMIN_MFA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        MEDIA_MALWARE_SCAN_URL: 'https://scanner.example.com',
+      }),
+    ).toThrow('PAYMENT_PROVIDER must be a real gateway in production, not the mock.');
   });
 });

@@ -150,6 +150,21 @@ enum DeliveryMethod {
   EXPRESS
 }
 
+/// Payment lifecycle, mirroring the shared PaymentStatus contract. Provider-neutral: the same
+/// states describe the mock provider and any real gateway added behind the PaymentProvider port.
+enum PaymentStatus {
+  CREATED
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REVERSED
+  PARTIALLY_REFUNDED
+  REFUNDED
+  DISPUTED
+}
+
 enum InventoryMovementKind {
   RECEIPT
   ADJUSTMENT
@@ -1016,6 +1031,7 @@ model Order {
   user               User?         @relation("OrderCustomer", fields: [userId], references: [id], onDelete: SetNull)
   items              OrderItem[]
   events             OrderEvent[]
+  payments           Payment[]
 
   @@unique([userId, idempotencyKey], map: "orders_user_idempotency_key")
   @@index([userId, placedAt], map: "orders_user_placed_at_idx")
@@ -1075,6 +1091,51 @@ model OrderEvent {
 
   @@index([orderId, createdAt], map: "order_events_order_created_idx")
   @@map("order_events")
+}
+
+/// A payment attempt against an order, held behind the provider-neutral PaymentProvider port
+/// (ADR-004). The provider reference is the gateway's own identifier; money is integer minor
+/// units. Multiple attempts per order are allowed (a failed payment can be retried), matched by
+/// the unique provider reference. Success is applied to the order only through the audited state
+/// machine (ADR-018).
+model Payment {
+  id                String         @id @default(uuid()) @db.Uuid
+  orderId           String         @map("order_id") @db.Uuid
+  provider          String         @db.VarChar(40)
+  providerReference String         @unique(map: "payments_provider_reference_key") @map("provider_reference") @db.VarChar(200)
+  status            PaymentStatus  @default(PENDING)
+  amountMinor       Int            @map("amount_minor")
+  currency          String         @db.Char(3)
+  refundedMinor     Int            @default(0) @map("refunded_minor")
+  redirectUrl       String?        @map("redirect_url") @db.VarChar(2000)
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  order             Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  events            PaymentEvent[]
+
+  @@index([orderId, createdAt], map: "payments_order_created_idx")
+  @@map("payments")
+}
+
+/// Every raw provider event (webhook or reconciliation), stored append-only. The unique
+/// (provider, providerEventId) makes replayed webhooks idempotent: a duplicate is a no-op rather
+/// than a second state change. A trigger rejects UPDATE and DELETE, so the record of what a
+/// provider told us can be replayed but never rewritten.
+model PaymentEvent {
+  id              String        @id @default(uuid()) @db.Uuid
+  paymentId       String        @map("payment_id") @db.Uuid
+  provider        String        @db.VarChar(40)
+  providerEventId String        @map("provider_event_id") @db.VarChar(200)
+  type            String        @db.VarChar(80)
+  status          PaymentStatus
+  amountMinor     Int?          @map("amount_minor")
+  payload         Json?         @db.JsonB
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  payment         Payment       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerEventId], map: "payment_events_provider_event_key")
+  @@index([paymentId, createdAt], map: "payment_events_payment_created_idx")
+  @@map("payment_events")
 }
 
 model EmailVerificationToken {
