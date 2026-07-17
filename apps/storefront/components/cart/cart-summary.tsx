@@ -3,6 +3,7 @@
 import { Price } from '@tms/ui';
 import { Tag, X } from 'lucide-react';
 import { useId, useState } from 'react';
+import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import { useCart } from './cart-provider';
 
 /** Promotion entry + subtotal/total breakdown, shared by the drawer and page. */
@@ -107,6 +108,8 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
           </dd>
         </div>
       </dl>
+
+      <MadeToOrderNote />
 
       <button
         type="button"

@@ -35,6 +35,177 @@ export interface ArtworkDetail extends ArtworkSummary {
   related: ArtworkSummary[];
 }
 
+/**
+ * Artwork Passport (TMS-F5-006) — authenticity & provenance for a specific
+ * artwork *version*. The `versionId` is a deterministic, content-addressed id
+ * (see `lib/passport.ts`): same content → same id, and it is meant to be
+ * immutable for a given release. Today it is derived on the frontend from the
+ * stable artwork fields; TMS-FBR-001 will make it server-authoritative and add
+ * a real per-piece serial ledger + ownership record.
+ */
+export interface ProvenanceEvent {
+  label: string;
+  detail: string;
+  /** A year or human date — textual, not machine-parsed. */
+  date: string;
+}
+
+export interface ArtworkPassport {
+  artworkSlug: string;
+  title: string;
+  collection: string;
+  /** Immutable, content-addressed version id, e.g. "AP-1A2B-3C4D". */
+  versionId: string;
+  /** Human edition label, e.g. "Limited edition of 100" / "Open edition". */
+  edition: string;
+  /** Total run size for limited editions; null for open editions. */
+  editionSize: number | null;
+  /** Illustrative serial for the edition; null for open editions. Placeholder. */
+  serialExample: string | null;
+  /** When the artwork was released. */
+  releasedOn: string;
+  /** The studio/artist attribution that signs the passport. */
+  issuedBy: string;
+  /** Authenticity / provenance narrative, earliest first. */
+  provenance: ProvenanceEvent[];
+}
+
+/**
+ * Loyalty & referrals (TMS-F5-010). The tier is *derived* from points by the
+ * pure helpers in `lib/loyalty.ts` (single source of truth), so the provider
+ * returns raw points + the rewards catalogue + a referral code. All of it is
+ * illustrative preview data — real earning, tiers, redemption, and referral
+ * attribution are server-authoritative (TMS-FBR-008).
+ */
+export interface LoyaltyReward {
+  id: string;
+  name: string;
+  description: string;
+  pointsCost: number;
+}
+
+export interface LoyaltyProfile {
+  points: number;
+  /** Lifetime points earned, for display. */
+  lifetimePoints: number;
+  /** ISO date the customer joined the programme. */
+  memberSince: string;
+  referralCode: string;
+  /** What a successful referral gives, in plain words. */
+  referralRewardText: string;
+  rewards: LoyaltyReward[];
+}
+
+/**
+ * Community gallery (TMS-F5-005) — customer photos of pieces in the wild. Every
+ * photo carries a `status`; only `approved` photos are ever shown publicly. The
+ * mock's public methods return approved photos only, and the pure helpers in
+ * `lib/community.ts` enforce that filter. Real UGC intake + moderation is
+ * backend (TMS-FBR-008); submit-a-photo is preview-only here (no real upload).
+ */
+export type ModerationStatus = 'approved' | 'pending' | 'rejected';
+
+export interface CommunityPhoto {
+  id: string;
+  artworkSlug: string;
+  artworkTitle: string;
+  /** Display handle, e.g. "@ada.wears". */
+  handle: string;
+  caption: string;
+  status: ModerationStatus;
+  /** ISO timestamp. */
+  createdAt: string;
+}
+
+/**
+ * Reviews & ratings (TMS-F5-004). Reviews attach to a product or an artwork by
+ * slug. `verifiedPurchase` is a server-vouched flag (a real order backs the
+ * review) — the client never sets it. Aggregate stats are derived by the pure
+ * helpers in `lib/reviews.ts`. Read + write + moderation are backend
+ * (TMS-FBR-008); today the mock seeds a deterministic set and writes are
+ * preview-only.
+ */
+export type ReviewTargetType = 'product' | 'artwork';
+
+export interface Review {
+  id: string;
+  /** Whole-star rating, 1–5. */
+  rating: number;
+  title: string;
+  body: string;
+  author: string;
+  /** ISO timestamp. */
+  createdAt: string;
+  verifiedPurchase: boolean;
+}
+
+export interface ReviewStats {
+  /** Mean rating (0 when there are no reviews). */
+  average: number;
+  count: number;
+  /** Number of reviews at each whole-star rating, keyed 1–5. */
+  distribution: Record<number, number>;
+}
+
+export interface ReviewCollection {
+  stats: ReviewStats;
+  /** Reviews, newest first. */
+  items: Review[];
+}
+
+/**
+ * Shoppable editorial stories (TMS-F5-007). A story is an editorial article
+ * whose "scene" blocks carry positioned **hotspots** that link into the
+ * catalogue (an artwork, a product, a collection, or the Design Studio). The
+ * hotspot geometry (x/y percentages) is authored data; the href + action label
+ * for each target are derived by the pure helpers in `lib/stories.ts`. Content
+ * is mock/editorial today; a real CMS feed can map onto these shapes later.
+ */
+export type StoryHotspotTarget =
+  | { kind: 'artwork'; slug: string; label: string }
+  | { kind: 'product'; slug: string; label: string; priceMinor: number; currency: string }
+  | { kind: 'collection'; slug: string; label: string }
+  | { kind: 'studio'; label: string };
+
+export interface StoryHotspot {
+  id: string;
+  /** Centre of the hotspot on the scene, as percentages (0–100). */
+  x: number;
+  y: number;
+  /** Short caption shown alongside the linked item. */
+  caption: string;
+  target: StoryHotspotTarget;
+}
+
+export interface StoryScene {
+  id: string;
+  /** Alt/label for the scene placeholder image. */
+  caption: string;
+  hotspots: StoryHotspot[];
+}
+
+export type StoryBlock =
+  | { kind: 'heading'; text: string }
+  | { kind: 'paragraph'; text: string }
+  | { kind: 'scene'; scene: StoryScene };
+
+export interface StorySummary {
+  slug: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  readMinutes: number;
+  /** ISO date the story was published. */
+  publishedOn: string;
+  /** Count of shoppable (artwork/product) hotspots across the story. */
+  shoppableCount: number;
+}
+
+export interface StoryDetail extends StorySummary {
+  intro: string;
+  blocks: StoryBlock[];
+}
+
 export interface CollectionSummary {
   slug: string;
   name: string;
@@ -125,9 +296,39 @@ export interface ListArtworksParams {
   sort?: ArtworkSort;
 }
 
+/**
+ * Limited drops (TMS-F5-001). A drop is a timed release of a set of artworks.
+ * Timestamps are ISO strings; the *status* is derived from them relative to the
+ * current time by the pure helpers in `lib/drops.ts` (never trust a status the
+ * client could forge). `earlyAccessAt`/`endsAt` are null when there is no early
+ * window / the drop is open-ended. The mock adapter generates timestamps
+ * relative to "now" so the countdowns are live in the preview; the real API
+ * (TMS-FBR-008) will provide server-authoritative absolute timestamps.
+ */
+export interface DropSummary {
+  slug: string;
+  title: string;
+  tagline: string;
+  collection: string;
+  earlyAccessAt: string | null;
+  releaseAt: string;
+  endsAt: string | null;
+  pieceCount: number;
+  /** Server-authoritative sell-through flag; overrides the time window. */
+  soldOut: boolean;
+}
+
+export interface DropDetail extends DropSummary {
+  story: string;
+  /** The artworks released in this drop. */
+  artworks: ArtworkSummary[];
+}
+
 export interface StorefrontDataProvider {
   listArtworks(params?: ListArtworksParams): Promise<CursorPage<ArtworkSummary>>;
   getArtwork(slug: string): Promise<ArtworkDetail | null>;
+  /** Authenticity/provenance passport for an artwork version, or null if unknown. */
+  getArtworkPassport(slug: string): Promise<ArtworkPassport | null>;
   /** Distinct collection names available for filtering. */
   listCollections(): Promise<string[]>;
   /** Free-text search across the catalogue. Empty query returns no results. */
@@ -144,4 +345,20 @@ export interface StorefrontDataProvider {
   getStudioOptions(): Promise<StudioOptions>;
   /** Available delivery methods with fees + ETAs for checkout. */
   getDeliveryOptions(): Promise<DeliveryOption[]>;
+  /** Limited drops for the drops index, newest release first (TMS-F5-001). */
+  listDrops(): Promise<DropSummary[]>;
+  /** A drop and its released artworks, or null if the slug is unknown. */
+  getDrop(slug: string): Promise<DropDetail | null>;
+  /** Shoppable editorial stories for the journal index, newest first (TMS-F5-007). */
+  listStories(): Promise<StorySummary[]>;
+  /** A story with its editorial blocks + hotspots, or null if the slug is unknown. */
+  getStory(slug: string): Promise<StoryDetail | null>;
+  /** Reviews + aggregate stats for a product or artwork (empty when none). */
+  getReviews(targetType: ReviewTargetType, slug: string): Promise<ReviewCollection>;
+  /** Approved community photos for the gallery, newest first (TMS-F5-005). */
+  listCommunityPhotos(): Promise<CommunityPhoto[]>;
+  /** Approved community photos for a single artwork, newest first. */
+  listArtworkCommunityPhotos(slug: string): Promise<CommunityPhoto[]>;
+  /** Loyalty & referral profile for a signed-in customer (TMS-F5-010). */
+  getLoyalty(email: string): Promise<LoyaltyProfile>;
 }

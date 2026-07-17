@@ -5,7 +5,10 @@ import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { WishlistButton } from '@/components/account/wishlist-button';
 import { useCart } from '@/components/cart/cart-provider';
+import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
+import { WaitlistForm } from '@/components/waitlist/waitlist-form';
 import type { ProductDetail } from '@/lib/data';
+import { waitlistKey } from '@/lib/waitlist';
 
 type View = 'front' | 'back';
 
@@ -257,6 +260,19 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
             }}
           />
         </div>
+
+        {soldOut ? (
+          <div className="mt-4">
+            <WaitlistForm
+              listKey={waitlistKey('product', product.slug)}
+              title="Notify me when it's back"
+              description={`We’ll let you know when ${product.title} is available again.`}
+              submitLabel="Notify me"
+            />
+          </div>
+        ) : (
+          <MadeToOrderNote className="mt-4" />
+        )}
 
         {status ? (
           <div className="mt-4" aria-live="polite">

@@ -1,9 +1,9 @@
 {
   "agent": "Claude Code",
   "area": "frontend",
-  "currentPhase": "F4",
-  "lastVerifiedTask": "TMS-F4-006",
-  "nextRecommendedTask": "Merge the F0–F4 PR stack to main (bottom-up #4→#8); then TMS-F1-DEF-001 (soft 404) or F5. All enumerated F0–F4 tasks now Verified.",
+  "currentPhase": "F5 complete → F6 next",
+  "lastVerifiedTask": "TMS-F5-010",
+  "nextRecommendedTask": "F5 (growth & AI) COMPLETE — all of 001–010 Verified. Next: F6 (hardening) — audit-and-fix + real-API cutover (several tasks depend on Codex delivering endpoints TMS-FBR-001/002/004/005/007/008/009). F0–F4 merged to main; TMS-F1-DEF-001 fixed for production.",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-002",
@@ -37,12 +37,24 @@
     "TMS-F4-003",
     "TMS-F4-004",
     "TMS-F4-005",
-    "TMS-F4-006"
+    "TMS-F4-006",
+    "TMS-F5-001",
+    "TMS-F5-002",
+    "TMS-F5-003",
+    "TMS-F5-006",
+    "TMS-F5-007",
+    "TMS-F5-004",
+    "TMS-F5-005",
+    "TMS-F5-008",
+    "TMS-F5-009",
+    "TMS-F5-010"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": [],
   "blockedTasks": [],
-  "knownDefects": ["TMS-F1-DEF-001 (soft 404 on /artworks/[slug] under Turbopack prod)"],
+  "knownDefects": [
+    "TMS-F1-DEF-001 (soft 404) — FIXED for production hosting: /artworks|/collections|/products/[slug] now generateStaticParams + dynamicParams=false (fallback:false → genuine 404 on static/CDN/edge). Root cause corrected: NOT Turbopack-specific (webpack build identical) — general Next 16 next-start behavior. Residual: self-hosted next start still returns 200 for unknown slugs (styled not-found renders); no NextResponse.rewrite variant overrides rendered status. Add a middleware/proxy slug-guard if self-hosting."
+  ],
   "buildStatus": "passing",
   "testStatus": "passing",
   "visualRegressionStatus": "baselines-committed (4 viewports, homepage; Windows-rendered, not in CI)",
@@ -65,9 +77,19 @@
     "admin:artwork list/detail/versions/mockups + publishing lifecycle + upload — typed mock provider + local state, no admin catalogue write API (TMS-FBR-007)",
     "admin:garment list/detail + colours/sizes/size charts/media/print rules/prices + inventory (stock edits, colour availability, lifecycle) — typed mock provider + local state, no admin catalogue read/write API (TMS-FBR-007)",
     "admin:production board (jobs derived from orders) + stage transitions (queue/print/QC pass/reprint/dispatch/exception) — typed mock provider + local state, no admin fulfilment API or audited state machine (TMS-FBR-007)",
-    "admin:error centre (safe integration failures — correlation id + resolution lifecycle, no stack traces/secrets) + customers (derived from orders) + analytics (daily series/status mix/top lists derived from orders) — typed mock provider + local state, no admin ops/customer/analytics API (TMS-FBR-007)"
+    "admin:error centre (safe integration failures — correlation id + resolution lifecycle, no stack traces/secrets) + customers (derived from orders) + analytics (daily series/status mix/top lists derived from orders) — typed mock provider + local state, no admin ops/customer/analytics API (TMS-FBR-007)",
+    "admin:brand storyteller (/storyteller) — deterministic mock copy generator (lib/storyteller.ts), no LLM; drafts in local state only and always 'draft' (never publishes); real generation endpoint + draft persistence are backend (TMS-FBR-009)",
+    "storefront:/drops list + detail (limited drops, live countdowns, status, early-access panel) — typed mock provider (listDrops/getDrop) with now-relative timestamps; early-access gate + waitlist are UI-only (no real membership/notify); needs the drops API + server-authoritative timeline/inventory (TMS-FBR-008)",
+    "storefront:waitlist / back-in-stock (sold-out products + sold-out/upcoming drops) — client localStorage store (tms.waitlist.v1), no real notification sent; needs the waitlist/notify endpoint (TMS-FBR-008)",
+    "storefront:made-to-order / pre-order lead-time (product + cart + checkout + drops) — client-side working-day estimate (lib/fulfilment.ts), no real reservation; real ship timeline is server-authoritative + pre-order hold is backend (TMS-FBR-004/008)",
+    "storefront:artwork passport (/artworks/[slug]/passport) — frontend-derived immutable version id + illustrative serial (lib/passport.ts, deterministic FNV-1a), ownership-record placeholder, no real authenticity proof; server-authoritative version id + per-piece serial/ownership ledger are backend (TMS-FBR-001)",
+    "storefront:shoppable stories (/stories + /stories/[slug]) — mock/editorial story seeds with hotspots over placeholder scene imagery; hotspot targets built from existing artwork/product/collection data (no new backend); a real CMS feed maps onto the Story* shapes + real scene photography/authored coordinates replace placeholders",
+    "storefront:reviews & ratings (product + artwork detail) — read-only seeded reviews + aggregate stars (lib/reviews.ts); write-a-review is preview-only (local state, no network); real read/write, verified-purchase vouch, and moderation are backend (TMS-FBR-008)",
+    "storefront:community gallery (/community + artwork 'styled by the community') — approved-only seeded photos (placeholder tiles, no real upload); submit-a-photo is preview-only (local 'in review', nothing sent); real UGC intake/storage + moderation are backend (TMS-FBR-008)",
+    "storefront:studio guide (/studio-guide) — deterministic mock assistant (lib/studio-guide.ts), no LLM/live tools; guardrails deflect stock/price/delivery; order-status = tool_error + retry; real assistant endpoint + tool results are backend (TMS-FBR-009)",
+    "storefront:loyalty & referrals (/account/loyalty) — illustrative email-derived points/tier + rewards + referral code (lib/loyalty.ts); redeem/share are preview-only; real ledger/earn/redeem + referral attribution are backend (TMS-FBR-008)"
   ],
-  "branch": "claude/f4-admin",
-  "buildStatusNote": "All enumerated frontend tasks F0–F4 now Verified (pnpm check green this session). This session cleared the last three loose ends: TMS-F1-006 (real editorial/policy content across 12 routes), TMS-F0-010 (Playwright visual baselines — 4 viewports, 8/8 pass, committed), and TMS-F0-002 (Base44 reference breakpoint screenshots captured — with an honest note they show the mismatched moda.studio template). implementedNotVerified is now empty. Nothing merged to main yet — F0→F4 PR stack (#4→#8) ready to merge bottom-up. Only open item is defect TMS-F1-DEF-001 (soft 404, SEO-only). Admin Vitest 116 tests; storefront 89. Note: pnpm audit 410 outage since F3-004; no new deps added.",
-  "lastUpdated": "2026-07-15T21:30:00Z"
+  "branch": "claude/f5-post-merge",
+  "buildStatusNote": "F5 (growth & AI) COMPLETE — all of TMS-F5-001…010 Verified (pnpm check green). Storefront: 001 drops, 002 waitlist, 003 pre-order/made-to-order, 004 reviews, 005 community gallery, 006 artwork passport, 007 shoppable stories, 008 studio guide, 010 loyalty & referrals. Admin: 009 brand storyteller. F0–F4 Verified AND MERGED TO MAIN (2026-07-15). The F0→F4 PR stack (#4→#8) was merged bottom-up with merge commits (main HEAD e919e7e; merge commits 9599d35/190d8c7/d0201a1/f0de066/e919e7e) and all five phase branches deleted; pnpm check re-run green on the integrated main (13/13 build tasks, all unit tests, format/lint/typecheck/db:validate). Recovery note: PR #5 auto-closed when gh's --delete-branch removed its base (f0) before the auto-retarget fired; recovered by recreating the f0 branch, reopening #5, retargeting to main — thereafter each next PR was retargeted to main BEFORE merge and branches were deleted only as final cleanup. Only open item is defect TMS-F1-DEF-001 (soft 404, SEO-only). Admin Vitest 125 tests (was 116 — +9 storyteller); storefront 195 (was 89 — +24 drops, +6 waitlist, +10 fulfilment, +11 passport, +11 stories, +13 reviews, +12 community, +8 studio-guide, +11 loyalty). Note: pnpm audit 410 outage since F3-004 (this is the only failing CI 'quality' check — a retired npm endpoint, not a code issue); no new deps added.",
+  "lastUpdated": "2026-07-16T03:30:00Z"
 }

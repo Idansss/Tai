@@ -1,7 +1,7 @@
 'use client';
 
 import { Badge, Heading, Price, Skeleton, Text } from '@tms/ui';
-import { ChevronRight, Heart, Package, Palette, UserRound } from 'lucide-react';
+import { Award, ChevronRight, Heart, Package, Palette, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -69,6 +69,13 @@ export function AccountOverview() {
       description: 'Saved pieces',
       icon: Heart,
       count: wishlistCount,
+    },
+    {
+      href: '/account/loyalty',
+      label: 'Loyalty & referrals',
+      description: 'Points, rewards & your referral link',
+      icon: Award,
+      count: null,
     },
     {
       href: '/account/profile',

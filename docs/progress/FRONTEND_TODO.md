@@ -170,11 +170,27 @@ lint, build, visual evidence, docs updated).
 
 ### Known defects
 
-- **TMS-F1-DEF-001** — `/artworks/[slug]` renders the correct not-found UI for unknown slugs but
-  returns **HTTP 200 instead of 404** under the Next 16 Turbopack production server (soft 404).
-  `notFound()` is used correctly in both the page and `generateMetadata`; the streamed shell
-  commits a 200 before `notFound()` resolves. Impacts SEO (§25). Next step: confirm against a
-  Next patch / non-Turbopack build, or add a status workaround. UI/UX is unaffected.
+- **TMS-F1-DEF-001** — soft 404 on catalogue detail routes. **Fixed for production hosting**
+  (2026-07-15) and root-caused. `/artworks/[slug]`, `/collections/[slug]` and `/products/[slug]`
+  now use `generateStaticParams` + `export const dynamicParams = false`, so all valid detail
+  pages are prerendered (`●` SSG) and the build records **`fallback: false`** for each dynamic
+  route — which returns a **genuine HTTP 404** for unknown slugs on static/CDN/edge hosting.
+  All three list off the finite mock catalogue today (swap to the real API under TMS-FBR-001/002).
+  - **Root cause (corrected):** the earlier note blamed Turbopack — **wrong**. A **webpack**
+    production build behaves identically, so this is general Next 16 App Router behavior, not a
+    Turbopack bug. On the self-hosted `next start` Node server, a _matched_ dynamic route that
+    resolves to not-found is rendered dynamically and the streamed response commits **200**
+    before the status can be set; only _completely unmatched_ paths (e.g. `/totally-unknown`) get
+    the routing-layer 404 (verified: root not-found → 404, dynamic-slug not-found → 200).
+  - **Residual (verified):** under `next start` the three routes still return **200** for unknown
+    slugs (the styled not-found UI renders correctly). `NextResponse.rewrite` — with or without a
+    `status: 404` init — does **not** override the rendered-page status, so there is no clean
+    middleware fix that preserves the styled page; only a bare `new NextResponse(body, {status:404})`
+    would, at the cost of the styled UI. Given the fix yields correct 404s on CDN/edge deployment
+    (`fallback: false`), the residual is a self-hosted-serving artifact, not a code defect. SEO-only;
+    UI/UX unaffected. Re-verify the 404 status on the chosen production host; if the app is
+    self-hosted behind `next start`, add a lightweight slug-guard (middleware returning a real 404
+    for unknown catalogue slugs, or a reverse-proxy rule) before launch.
 
 ## Phase F2 — Design Studio (TMS-F2-001 done)
 
@@ -496,10 +512,301 @@ customers + analytics.
   - Follow-ups: real error-centre feed (retry/resolve as audited ops actions, correlation-id search across
     systems); real customer records (account status, saved designs via TMS-FBR-005, lifetime value);
     server-computed analytics (funnels, cohorts, date-range controls) once the reporting API lands.
-  - **F4 (admin platform) is complete** (001–006). Nothing is merged to `main` yet — the F0→F4 PR stack
-    (#4 → #5 → #6 → #7 → #8) still needs merging bottom-up.
+  - **F4 (admin platform) is complete** (001–006). **The F0→F4 PR stack (#4→#5→#6→#7→#8) is now
+    merged to `main`** (bottom-up, merge commits, branches deleted; `pnpm check` green on the
+    integrated `main`, HEAD `e919e7e`). Active work continues on `claude/f5-post-merge`.
 
-## Later phases
+## Phase F5 — Growth & AI (scoped 2026-07-15; TMS-F5-001, -002, -003 Verified)
 
-F1 (remaining: gallery filters, collections, shop/product, search, editorial/policy content) ·
-F2 Design Studio · F3 Commerce & account · F4 Admin platform · F5 Growth & AI · F6 Hardening.
+Scoped from the master prompt §19 (AI interfaces), §20 (editorial & growth) and §29 (phase
+definition). **Everything builds on the typed mock adapter** — no growth/AI backend exists yet
+(Codex is at B0/B1). New backend gaps: **TMS-FBR-008** (growth/commerce-adjacent endpoints) and
+**TMS-FBR-009** (AI endpoints), to be logged in FRONTEND_TO_BACKEND.md as each task lands. Guiding
+rule (§20): **prioritise core commerce before future features** — core commerce (F1–F4) is done, so
+these are additive. AI surfaces must have a clear assistant identity, honest tool-failure/retry
+states, source/product references, a human-support route, **no invented stock/price/delivery
+claims**, and **must never auto-publish or auto-act**.
+
+- [x] **TMS-F5-001** Limited drops & countdown
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **113 storefront tests**, up from 89: +21 drop-domain + 3 provider). Served-route +
+    in-browser pass on the live build: `/drops` (200) lists all five sample drops **sorted**
+    live → early access → upcoming → sold out → closed, each with the correct status badge and a
+    live countdown (or a static label for finished drops); all five detail routes (200) render the
+    hero, status, big countdown, early-access panel, story and the drop's pieces; the countdown
+    **ticks live** (verified seconds 17→15 in-browser); **no console/hydration errors**; mobile
+    375px has **zero horizontal overflow** and the countdown row fits. Unknown drop slug → the
+    documented soft-404 (see note below). Nav gained a **Drops** item (header + footer).
+  - Scope delivered: pure domain in `lib/drops.ts` (`dropStatus` upcoming/early_access/live/ended/
+    sold_out from timestamps + `soldOut`; `dropStatusLabel`/`dropStatusTone`; `nextMilestone` — what
+    the countdown targets; `countdownParts`/`countdownLabel`; `sortDrops`) with **24 unit tests**.
+    Provider gained `listDrops()` + `getDrop(slug)` (+ api stubs + 3 provider tests) over a 5-drop
+    dataset spanning every state, with mock timestamps generated relative to now so the preview
+    countdowns are always live. Components: `Countdown` (client, hydration-safe — digits render after
+    mount, `role="timer"` accessible summary, reduced-motion safe, no animation deps), `DropCard`,
+    `DropStatusBadge`, `DropEarlyAccess` (client — routes guests to sign in, confirms members;
+    **UI-only, no real gating/waitlist**, honest preview notices). Routes `/drops` + `/drops/[slug]`
+    (+ loading + not-found). Backend gap logged as **TMS-FBR-008**.
+  - **Rendering note:** the two drops routes are **`dynamic = 'force-dynamic'`** (request-time) so the
+    live status + countdown are never frozen at build — a deliberate divergence from the stable
+    catalogue detail routes (static + `dynamicParams=false`). Trade-off: an unknown drop slug is a
+    soft 404 under self-hosted `next start` (SEO-only, same residual class as TMS-F1-DEF-001).
+  - Follow-ups: real drops API + server-authoritative timeline/inventory (TMS-FBR-008); wire the
+    early-access gate + waitlist to real membership/notify (pairs with TMS-F5-002); promote the
+    countdown into `packages/ui` if reused; real drop imagery.
+- [x] **TMS-F5-002** Waitlist & back-in-stock
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **119 storefront tests**, up from 113: +6 waitlist). In-browser on the served build:
+    the **sold-out product** page (`okada-run-oversized-tee`, flipped to sold_out in the mock) shows
+    "Sold out" + a **back-in-stock** form; a valid submit → "You're on the list" and **persists** to
+    `localStorage` (`tms.waitlist.v1` → `product:okada-run-oversized-tee`); an invalid email →
+    "Enter a valid email address." (`role="alert"`, `aria-invalid`) with success blocked. The
+    **sold-out drop** (`comic-line-reprint`) shows "Notify me if it restocks" and the **upcoming
+    drop** (`harmattan-editions`) shows the sign-in CTA **plus** "Remind me when it opens" — both
+    client-rendered waitlist forms with the preview notice. No console/hydration errors.
+  - Scope delivered: pure `lib/waitlist.ts` (`waitlistKey`, `hasEmail`, `addEntry` — case-insensitive
+    dedupe, non-mutating; `joinWaitlist` validate + persist with an idempotent already-joined result;
+    SSR-guarded `localStorage` wrappers; reuses `isValidEmail`/`normalizeEmail`) with **6 unit tests**.
+    Reusable client `WaitlistForm` (labelled email input, `role="alert"` error, success/already-joined
+    states, session email prefill, honest "no notification sent" preview notice). Wired into the
+    product configurator (sold-out → back-in-stock) and `DropEarlyAccess` (sold-out/ended → restock/
+    next-drop; upcoming → "remind me when it opens", alongside the sign-in CTA). Backend gap under
+    **TMS-FBR-008** (waitlist/notify + back-in-stock).
+  - Follow-ups: real waitlist/notify endpoint + membership-scoped early access (TMS-FBR-008); an
+    account view of "things I'm waiting on"; artwork-level back-in-stock once artworks are directly
+    purchasable; double-opt-in + unsubscribe when real email lands.
+- [x] **TMS-F5-003** Pre-order & made-to-order
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **129 storefront tests**, up from 119: +10 fulfilment). In-browser on the served
+    build: the **product** page (available), the **cart** summary, and the **checkout** order summary
+    all show a made-to-order note — "Made to order — printed and finished in 2–4 working days" plus a
+    client-computed **ship window** ("Estimated ship 17 Jul–21 Jul", correct working-day maths skipping
+    the weekend). **Upcoming/early-access drops** show a **Pre-order** badge and a pre-order note whose
+    window starts from the drop's release ("Estimated ship 21 Jul–23 Jul, after the drop opens"), while
+    a **live** drop shows the plain made-to-order note. Sold-out product shows the F5-002 back-in-stock
+    form instead. No console/hydration errors.
+  - Scope delivered: pure `lib/fulfilment.ts` — `addWorkingDays` (UTC, weekend-skipping),
+    `madeToOrderWindow`, `preOrderWindow` (production starts when the drop opens), `isPreOrderStatus`,
+    `madeToOrderSummary`, `PRODUCTION_LEAD` — with **10 unit tests** (anchored on a known weekday for
+    determinism). Client `MadeToOrderNote` (clock-free summary on the server; absolute ship dates
+    computed after mount to avoid a hydration mismatch — same pattern as the countdown). Wired into the
+    product configurator (not-sold-out), cart summary, checkout order summary, and the drop detail
+    (pre-order badge + note for upcoming/early access, made-to-order for live).
+  - **Note:** the lead-time is a **frontend estimate** — the real fulfilment timeline is
+    server-authoritative (spec "server is authoritative for … shipping"; TMS-FBR-004/008), and a real
+    pre-order **reservation** (hold + charge policy) is a backend concern (TMS-FBR-008).
+  - Follow-ups: server-authoritative ship estimates + a real pre-order reservation/hold; per-item lead
+    times if garments diverge; surface the estimate on the order confirmation + account order detail.
+- [x] **TMS-F5-004** Reviews & ratings
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **164 storefront tests**, up from 151: +13 reviews — 9 lib + 4 mock). In-browser on
+    the served build: **product** pages (`midnight-in-lagos-classic-tee`) and **artwork** pages
+    (`midnight-in-lagos`) show a **rating summary** (average to 1 dp + fractional star row + count), a
+    **5→1 star distribution** with proportional bars, and a **review list** (per-review stars, title,
+    author, date, and a **Verified purchase** badge where the seed vouches it). A target with no seed
+    reviews (`okada-run-oversized-tee`) shows the **empty state** ("Be the first to review …"). The
+    **write-a-review** form validates (star rating 1–5, title ≥3, body ≥10, name), prefills the name
+    from the signed-in session, and on submit **prepends the review locally** with a success notice —
+    honestly flagged as preview-only (not sent/moderated, never granted the verified badge). No
+    console/hydration errors.
+  - Scope delivered: pure `lib/reviews.ts` — `summariseReviews` (average + count + per-star
+    distribution, clamps out-of-range ratings), `distributionPercents`, `formatAverage`,
+    `validateReviewInput` — with **9 unit tests**. `Review`/`ReviewStats`/`ReviewCollection` types +
+    `getReviews(targetType, slug)` on the provider (mock seeds product + artwork reviews, empty for
+    others; api stub throws; **4 mock tests** incl. stats-match-list + empty-collection). Presentational
+    `RatingStars` (fractional fill, a11y label) + client `Reviews` section (summary + distribution +
+    list + `WriteReviewForm` with star radio input). Wired into the product and artwork detail pages.
+  - **Note:** reviews are **read-only mock data** and writes are **preview-only** (local state, no
+    network) — real read/write, the verified-purchase vouch, and **moderation** are backend
+    (**TMS-FBR-008**). Skeleton-loading + failure surfaces (from `@tms/ui`) activate on the real async
+    API; the deterministic mock exercises the empty/populated/submitting states.
+  - Follow-ups: real reviews API + moderation queue (TMS-FBR-008); server verified-purchase check tied
+    to orders; helpful-vote + sort/filter; media in reviews; aggregate rating on cards + `AggregateRating`
+    structured data for SEO.
+- [x] **TMS-F5-005** Community gallery
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **176 storefront tests**, up from 164: +12 community — 8 lib + 4 mock). In-browser on
+    the served build: a new **`/community`** gallery shows the **approved** customer-photo feed (grid of
+    handle + caption + artwork link) and a **submit-a-photo** form (artwork picker, handle, caption,
+    mock file chooser). Each **artwork** detail page gains a **"Styled by the community"** section
+    scoped to that artwork (no picker). The display is **moderation-aware**: seeded **pending/rejected**
+    photos (`@pending.user`, `@rejected.user`) **never appear** in the public feed, enforced by a
+    single pure filter. Submitting validates (handle/caption/photo), then shows the photo back **only
+    to the submitter** as an **"In review"** card with an honest "not uploaded or published, all photos
+    moderated" notice. "Community" added to the footer nav. No console/hydration errors.
+  - Scope delivered: pure `lib/community.ts` — `isPublic`, `filterApproved`, `moderationLabel`,
+    `moderationTone`, `formatHandle`, `validatePhotoSubmission` — with **8 unit tests**.
+    `CommunityPhoto`/`ModerationStatus` types + `listCommunityPhotos`/`listArtworkCommunityPhotos` on
+    the provider (approved-only, newest first; api stub throws; **4 mock tests** incl. a check that
+    pending/rejected are never returned). Presentational `CommunityPhotoCard` + client `CommunityBoard`
+    (approved grid + local in-review previews + `SubmitPhoto` form). New static `/community` route;
+    section wired into the artwork detail page.
+  - **Note:** photos are **placeholder tiles** (no real image upload) and submit is **preview-only**
+    (local state, nothing sent/stored) — real UGC intake, storage, and **moderation** are backend
+    (**TMS-FBR-008**). The client only ever displays approved photos publicly; the submitter's own
+    pending preview is local and never shared.
+  - Follow-ups: real image upload + moderation queue + reporting (TMS-FBR-008); like/feature controls;
+    pull-through to the homepage; EXIF stripping + content policy on the real upload path.
+- [x] **TMS-F5-006** Artwork Passport
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **140 storefront tests**, up from 129: +11 passport — 7 lib + 4 mock). In-browser on
+    the served build (`next start`): a new **per-artwork passport** at `/artworks/[slug]/passport`
+    renders a **certificate of authenticity** with an **immutable version id** (`AP-XXXX-XXXX`,
+    monospace — e.g. `paper-tigers` → `AP-48FC-BF2C`), edition, an **illustrative serial** for limited
+    editions (`No. 042 / 100`), release, and issuer (Tai Manic Studios); an **open edition**
+    (`midnight-in-lagos`) shows a different id, "Open edition", and **no** serial line. An **ownership-
+    record placeholder** ("No owner is on record yet"), a **provenance timeline**, and a **Share
+    passport** control (Web Share → clipboard fallback) all render. The artwork detail page links to it
+    ("View passport"). Unknown slugs are a **genuine 404** (SSG + `dynamicParams=false`, same DEF-001
+    fix as the detail route). No console/hydration errors.
+  - Scope delivered: pure `lib/passport.ts` — `artworkVersionId` (deterministic, content-addressed
+    FNV-1a id; same content → same id, any field change → a new version) + `passportSerial`
+    (width-padded serial) with **7 unit tests**. `ArtworkPassport`/`ProvenanceEvent` types +
+    `getArtworkPassport(slug)` on the provider (mock composes from artwork detail; api stub throws;
+    **4 mock tests**). New SSG route `app/artworks/[slug]/passport/page.tsx` (certificate / ownership
+    placeholder / share / provenance) + client `PassportShare`. "View passport" link on the artwork
+    detail page.
+  - **Note:** the version id + serial are a **frontend derivation** for the preview — the
+    server-authoritative version id, per-piece serial ledger, and ownership record are a backend
+    concern (**TMS-FBR-001** extends artwork data with version + edition fields).
+  - Follow-ups: server-authoritative version id + real per-piece serial/ownership ledger (TMS-FBR-001);
+    a scannable/verifiable proof (QR / signed link) once the ledger exists; per-purchase passport in
+    the account order detail.
+- [x] **TMS-F5-007** Shoppable stories
+  - Status: **Verified** (2026-07-15) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **151 storefront tests**, up from 140: +11 stories — 7 lib + 4 mock). In-browser on
+    the served build: the **`/stories`** placeholder is replaced by an **editorial journal index** (3
+    seeded stories as cards with category, read-time, publish date, and a "N shoppable" badge, newest
+    first). Each **`/stories/[slug]`** renders editorial blocks (headings/paragraphs) interleaved with
+    **shoppable scenes** — a placeholder scene image carrying **numbered hotspots**; opening a hotspot
+    reveals a card linking into the catalogue (**artwork → /artworks**, **product → /products** with
+    price, **collection → /collections**, **studio → /design-studio**), each with a distinct CTA
+    ("View artwork" / "Shop this piece" / "Explore collection" / "Open in Studio"). Every hotspot is
+    **also** listed below the scene ("In this scene") as reachable links — a keyboard/no-JS/screen-
+    reader fallback. Unknown story slugs are a **genuine 404** (SSG + `dynamicParams=false`).
+    "Stories" added to the primary nav. No console/hydration errors.
+  - Scope delivered: pure `lib/stories.ts` — `hotspotHref`, `hotspotActionLabel`, `hotspotKindLabel`,
+    `isShoppable`, `storyHotspotTargets`, `countShoppableItems` — with **7 unit tests**. `Story*`/
+    `StoryHotspot*` types + `listStories`/`getStory` on the provider (mock seeds 3 stories whose
+    hotspot targets are built from the **same** artwork/product/collection data so titles + prices
+    never drift; api stub throws; **4 mock tests** incl. a slug-integrity check that every hotspot
+    resolves to a real catalogue slug). New SSG routes `app/stories/page.tsx` + `app/stories/[slug]/
+page.tsx`, `StoryCard`, and the client `ShoppableScene` (Escape-to-close, one-open-at-a-time,
+    flip-above-when-low + horizontal clamp so cards stay in frame).
+  - **Note:** stories are **mock/editorial** content on placeholder scene imagery; a real CMS feed can
+    map onto the `Story*` shapes, and real scene photography + authored hotspot coordinates would
+    replace the placeholders. Hotspot links reuse the existing catalogue routes.
+  - Follow-ups: CMS-backed stories + real scene imagery with authored hotspots; add-to-cart directly
+    from a product hotspot; tag/related-story navigation; feature the newest story on the homepage.
+- [x] **TMS-F5-008** Studio Guide (customer AI assistant)
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **184 storefront tests**, up from 176: +8 studio-guide lib). In-browser on the served
+    build: a new **`/studio-guide`** chat shell with an **assistant identity** header (name + role +
+    honest "mock, no live data, never places orders" preview note), **suggested-prompt** chips, a
+    **message list** (user/assistant bubbles), a **typing** indicator, **reference cards** (Design
+    Studio / catalogue / policy / support links) under replies, and a **human-support route**. Asking
+    **"Where is my order?"** surfaces a **tool-failure** card ("Couldn’t reach a tool") with a **Retry**
+    button + account/contact links. **Guardrails** hold: price/stock/delivery questions get a deflection
+    to the authoritative source (product page / delivery page / studio) with a "not guessed" note and
+    **never a number**. No auto-actions. No console/hydration errors.
+  - Scope delivered: pure `lib/studio-guide.ts` — `studioGuideRespond(prompt)` returning a discriminated
+    `GuideOutcome` (`reply` with references + a `guardrail` flag, or `tool_error` for order-status) +
+    `SUGGESTED_PROMPTS`, with **8 unit tests** (guardrails assert no invented digits, order-status →
+    tool_error, topic routing, fallback). Client `StudioGuideChat` (message log with `role="log"`
+    aria-live, typing dots, suggested prompts, Enter-to-send composer, tool-error + retry, reference
+    cards). New `/studio-guide` route; "Studio Guide" added to the footer Help nav.
+  - **Note:** the responder is a **deterministic mock** — no LLM, no live tools. The real assistant
+    endpoint + tool results land under **TMS-FBR-009**; the guardrails (never invent stock/price/
+    delivery) and the no-auto-actions rule are encoded in the mock and must carry over to the real one.
+  - Follow-ups: wire the real assistant endpoint + streaming (TMS-FBR-009); real tool calls (order
+    lookup, stock/price) behind the same guardrails; conversation history + feedback; an optional
+    floating launcher across the storefront.
+- [x] **TMS-F5-009** Brand Storyteller (admin AI)
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **125 admin tests**, up from 116: +9 storyteller lib). In-browser on the served admin
+    build: a new **`/storyteller`** console page — **1 · Configure** (source = artwork **or**
+    collection + a picker, content type select with a description, optional brief), **Generate drafts**
+    (mock, ~600ms, with a loading state) → **2 · Compare variants** (3 tone variants — Editorial /
+    Punchy / Minimal — side by side, each selectable) with **generation metadata** (model · variant
+    count · temperature · batch id · timestamp) → **3 · Edit & approve** (editable textarea, **Approve
+    & save draft** / **Reject**) → **Saved drafts** list, each stamped **"Draft — not published"** with
+    source/tone/edited flag + metadata. **Never auto-publishes** (approving only saves a draft; a
+    persistent note states going live is a separate human step). "Brand Storyteller" added to the admin
+    nav. No console/hydration errors.
+  - Scope delivered: pure `apps/admin/lib/storyteller.ts` — `CONTENT_TYPES`/`contentTypeLabel`,
+    `canGenerate`, `generateVariants` (deterministic per input+clock, per-content-type tone templates,
+    generation metadata + batch id, optional brief), `draftFromVariant` (**status always `draft`**,
+    tracks `edited`) — with **9 unit tests**. Client `BrandStorytellerView` (loads artworks from the
+    admin provider, derives collections, generate→compare→edit→approve/reject→drafts state machine).
+    New `/storyteller` route + admin nav entry.
+  - **Note:** generation is a **deterministic mock** (no LLM) and drafts live in local component state
+    only — the real generation endpoint + draft persistence are backend (**TMS-FBR-009**). The
+    **never-auto-publish** guarantee is structural: the tool only ever produces a `draft` status.
+  - Follow-ups: wire the real generation endpoint + streaming (TMS-FBR-009); persist drafts + a review/
+    publish workflow (with RBAC) feeding the artwork/collection editors; regenerate-with-feedback;
+    per-brand tone presets.
+- [x] **TMS-F5-010** Loyalty & referrals
+  - Status: **Verified** (2026-07-16) — full `pnpm check` green (format/lint/typecheck/test/build ×2/
+    db:validate; **195 storefront tests**, up from 184: +11 loyalty — 8 lib + 3 mock). In-browser on the
+    served build (signed in): a new **`/account/loyalty`** page shows the **points balance + tier**
+    (Bronze/Silver/Gold, derived from lifetime points) with a **progress bar** and "N points to
+    {nextTier}" (or "top tier"), a **rewards** grid (each with a points cost + a Redeem button that
+    disables when the balance is short and, on redeem, shows a preview note), a **refer-a-friend** card
+    (referral **code** + shareable **link** with copy/Web-Share, reward text), and a **how-it-works**
+    list — all under honest **"preview"** notices. A "Loyalty & referrals" tile was added to the
+    account overview. No console/hydration errors.
+  - Scope delivered: pure `lib/loyalty.ts` — `TIERS`, `tierForPoints`, `nextTier`, `pointsToNextTier`,
+    `tierProgressPercent`, `referralUrl`, `canRedeem` — with **8 unit tests** (tier boundaries, progress
+    within a band, top-tier, referral URL, redemption). `LoyaltyProfile`/`LoyaltyReward` types +
+    `getLoyalty(email)` on the provider (deterministic, email-derived balance + referral code + rewards
+    catalogue; api stub throws; **3 mock tests** incl. determinism + case-insensitivity). Client
+    `LoyaltyView` (tier/progress, rewards, referral share, how-it-works) via `AccountShell` +
+    `useRequireAuth`; account-overview tile.
+  - **Note:** points, tiers, rewards and the referral code are **illustrative preview data** derived
+    client-side from the email — earning, redemption, tier calculation, and referral attribution are
+    server-authoritative (**TMS-FBR-008**). Redeeming and referral sharing do nothing beyond the
+    preview.
+  - Follow-ups: real loyalty ledger + earn/redeem + referral attribution (TMS-FBR-008); apply a
+    redeemed reward at checkout; points history; tier perks surfaced across the storefront.
+- _Deferred (per "core commerce first"):_ gift cards, gifting flow, collaborations — add rows if
+  prioritised. Sequencing recommendation: **F5-001 → 002 → 003** (drops cluster) first (fully
+  mockable, high brand value), then **006/007** (passport/stories), then reviews/community
+  (004/005), then the AI shells (008/009) and loyalty (010) which lean hardest on absent backends.
+
+## Phase F6 — Hardening (scoped 2026-07-15; not started)
+
+Scoped from master prompt §29 (F6), §24 (performance), §25 (SEO), §21 (states), §27 (testing),
+§28 (visual regression). Largely audit-and-fix + real-API cutover; several tasks partly depend on
+Codex delivering endpoints.
+
+- [ ] **TMS-F6-001** Accessibility audit — route-level axe sweeps across all storefront + admin
+      routes; keyboard traversal, screen-reader labels, reduced-motion, focus management; fix findings.
+- [ ] **TMS-F6-002** Performance audit — measure LCP/INP/CLS against budgets (≤2.5s / ≤200ms / ≤0.1);
+      responsive images + modern formats + explicit dimensions + lazy/priority; route code-splitting;
+      isolate the Design Studio bundle; skeletons that preserve layout.
+- [ ] **TMS-F6-003** Visual review & regression coverage — extend Playwright baselines to gallery,
+      artwork detail, collection, shop, product, Design Studio, cart, checkout, account, admin dashboard,
+      artwork manager, order detail, production queue (§28); manual diff review; wire into CI once a
+      stable render env exists.
+- [ ] **TMS-F6-004** Mobile & responsive review — 360/390/430/768/1024/1280/1440; nav, galleries,
+      Design Studio, colour/size selectors, sticky actions, data tables, admin forms, modals/drawers,
+      image zoom. Mobile is a complete experience, not a reduced desktop.
+- [ ] **TMS-F6-005** Cross-browser testing — Chromium / WebKit / Firefox via Playwright on the
+      required journeys (§27).
+- [ ] **TMS-F6-006** Error-state audit — verify the §21 state matrix (loading/incremental/empty/
+      no-results/offline/slow/image-unavailable/API-failure/auth-expired/access-denied/validation/
+      inventory-changed/payment-failure/quote-failure/background/maintenance) across every important
+      feature; no raw JSON/HTML errors; every error says what happened, what to do, whether data was kept.
+- [ ] **TMS-F6-007** Real API replacement — as Codex ships endpoints, swap mock → api adapter per
+      surface, add integration tests, verify loading/failure/permission behaviour, remove dead mock
+      paths (§26). Depends on backend delivery (TMS-FBR-001…009).
+- [ ] **TMS-F6-008** SEO completion — sitemap.xml, robots, canonical + OG/social images, breadcrumbs,
+      product structured data + variant relationships, artwork/collection internal linking, slug-change
+      redirects, and a full `noindex` coverage audit (admin/account/checkout/private designs). **Includes
+      closing the TMS-F1-DEF-001 residual on the chosen production host** (confirm the `fallback: false`
+      404 on the real host, or add the self-hosted slug-guard).
+- [ ] **TMS-F6-009** Security-facing frontend review — no secrets in client bundles, safe error
+      surfaces (no stack traces/secrets, §18), auth/permission gating, admin RBAC readiness (TMS-FBR-006),
+      CSP/security-header recommendations.
+- [ ] **TMS-F6-010** Staging acceptance & launch checklist — run all required journeys (§27) on
+      staging, real-data smoke, sign-off, and a launch checklist.

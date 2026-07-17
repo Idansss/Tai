@@ -9,6 +9,19 @@ interface Params {
   params: Promise<{ slug: string }>;
 }
 
+// Finite, enumerable catalogue: statically generate every collection page and
+// reject anything else. `dynamicParams = false` makes an unknown slug a genuine
+// 404 (fallback:false → real 404 status on static/CDN hosting), which is the
+// idiomatic Next fix for the soft-404 tracked as TMS-F1-DEF-001. When the
+// catalogue API lands (TMS-FBR-001), enumerate from it here; switch to ISR only
+// if slugs must resolve without a rebuild.
+export const dynamicParams = false;
+
+export async function generateStaticParams() {
+  const collections = await dataProvider.listCollectionSummaries();
+  return collections.map((collection) => ({ slug: collection.slug }));
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const collection = await dataProvider.getCollection(slug);

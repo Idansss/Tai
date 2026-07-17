@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
+import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import type { DeliveryOption } from '@/lib/data';
 import {
   type CheckoutForm,
@@ -440,6 +441,8 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
             </dd>
           </div>
         </dl>
+
+        <MadeToOrderNote className="mt-5" />
 
         <button
           type="submit"

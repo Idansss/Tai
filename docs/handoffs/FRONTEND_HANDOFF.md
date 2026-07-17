@@ -2,16 +2,171 @@
 
 ## Current frontend phase
 
-F4 — Admin platform (**complete**). **TMS-F4-001 (foundation) + TMS-F4-002 (order management) +
-TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) + TMS-F4-005 (production +
-QC + fulfilment) + TMS-F4-006 (error centre + customers + analytics) Verified** (2026-07-15).
-Branch `claude/f4-admin` is **stacked on
-`claude/f3-commerce` → `claude/f2-design-studio` → `claude/f1-storefront` →
-`claude/f0-visual-foundation`** — merge F0 (#4) → F1 (#5) → F2 (#6) → F3 (#7) first, then F4 (#8).
-Nothing is merged to `main` yet.
+**F0–F4 all Verified AND MERGED TO `main`** (2026-07-15). The F0→F4 PR stack (#4→#5→#6→#7→#8)
+was merged **bottom-up with merge commits** and all five phase branches deleted; `pnpm check`
+re-run **green on the integrated `main`** (HEAD `e919e7e`; 13/13 build tasks, all unit tests,
+format/lint/typecheck/db:validate). Active work now happens on `claude/f5-post-merge` cut from
+that `main`. F4 — Admin platform is **complete**: TMS-F4-001 (foundation) + TMS-F4-002 (order
+management) + TMS-F4-003 (artwork manager) + TMS-F4-004 (garment manager + inventory) +
+TMS-F4-005 (production + QC + fulfilment) + TMS-F4-006 (error centre + customers + analytics).
+
+> **Merge recovery note (for future stacked merges):** GitHub's auto-retarget did **not** fire
+> when `gh pr merge --delete-branch` deleted a PR's base branch — the dependent PR was **auto-closed**
+> (and a closed PR whose base branch is gone can't be reopened or retargeted). Recovered by pushing
+> the deleted base branch back, reopening the PR, and retargeting it to `main`. **Safe procedure:**
+> retarget each next PR to `main` **before** merging, and delete phase branches only as a final
+> cleanup step — never `--delete-branch` a branch that is still another open PR's base.
 
 F3 — Commerce & account is **complete:** TMS-F3-001 (cart) + TMS-F3-002 (checkout) +
 TMS-F3-003 (payment states) + TMS-F3-004 (auth) + TMS-F3-005 (account build-out) all Verified.
+
+### F5 progress this session
+
+> **F5 (growth & AI) is COMPLETE** — all of TMS-F5-001…010 Verified. Storefront tests 195, admin 125.
+
+- **Loyalty & referrals (TMS-F5-010) — Verified.** Pure `lib/loyalty.ts` owns the tier ladder +
+  progress: `TIERS`, `tierForPoints`, `nextTier`, `pointsToNextTier`, `tierProgressPercent`,
+  `referralUrl`, `canRedeem`, with **8 unit tests**. New provider method `getLoyalty(email)` returns a
+  deterministic, email-derived `LoyaltyProfile` (points, lifetime points, referral code, rewards
+  catalogue; api stub throws; **3 mock tests** incl. determinism + case-insensitivity). Client
+  `LoyaltyView` (via `AccountShell` + `useRequireAuth`) shows the balance + tier with a progress bar,
+  a rewards grid (Redeem disabled when short; preview note on redeem), a refer-a-friend card (code +
+  shareable link with copy/Web-Share), and a how-it-works list — all under honest preview notices.
+  Account-overview tile added. Points/tiers/rewards/referral are illustrative preview data; the real
+  ledger + earn/redeem + referral attribution are backend (**TMS-FBR-008**). Verified in the browser
+  signed in; full `pnpm check` green (**195 storefront tests**).
+
+- **Brand Storyteller — admin AI (TMS-F5-009) — Verified.** Pure `apps/admin/lib/storyteller.ts` is a
+  deterministic mock generator: `CONTENT_TYPES` + `contentTypeLabel`, `canGenerate`, `generateVariants`
+  (per-content-type tone templates — Editorial/Punchy/Minimal — with generation metadata + a
+  reproducible batch id, honouring an optional brief), and `draftFromVariant` whose **status is always
+  `draft`** (tracks whether the operator edited it), with **9 unit tests**. Client
+  `BrandStorytellerView` runs the flow: configure (artwork **or** collection + content type + brief) →
+  generate (mock, loading state) → compare 3 variants with metadata → edit → approve/reject → a saved-
+  drafts list stamped "Draft — not published". New admin `/storyteller` route + nav entry. It **never
+  auto-publishes** — that's structural (the tool only produces a `draft`). Verified in the browser on
+  the served admin build: generate → compare → edit → approve appends a draft; nothing publishes; no
+  console errors. Full `pnpm check` green (**125 admin tests**). Real generation endpoint + draft
+  persistence are backend (**TMS-FBR-009**).
+
+- **Studio Guide — customer AI assistant (TMS-F5-008) — Verified.** Pure `lib/studio-guide.ts` is a
+  deterministic mock responder: `studioGuideRespond(prompt)` returns a discriminated `GuideOutcome`
+  (`reply` with reference cards + a `guardrail` flag, or `tool_error` for order-status), plus
+  `SUGGESTED_PROMPTS`, with **8 unit tests**. Guardrails are the point: price/stock/delivery questions
+  deflect to the authoritative source and **never emit a number** (asserted in tests); order-status
+  returns a recoverable `tool_error`. Client `StudioGuideChat` renders the assistant identity, a
+  `role="log"` aria-live message list, a typing indicator, suggested-prompt chips, reference cards, a
+  tool-failure card with **Retry**, and a human-support route — Enter-to-send composer, no
+  auto-actions. New `/studio-guide` route; "Studio Guide" added to the footer Help nav. Verified in the
+  browser: topic replies link to the right routes; "Where is my order?" shows the retry card; "how
+  much / in stock / delivery" deflect with no invented figures; no console errors. Full `pnpm check`
+  green (**184 storefront tests**). No LLM/live tools — the real endpoint + tool results are backend
+  (**TMS-FBR-009**); the guardrails + no-auto-actions rule must carry over.
+
+- **Community gallery (TMS-F5-005) — Verified.** Pure `lib/community.ts` makes the display
+  moderation-aware in one place: `isPublic`/`filterApproved` (approved only), `moderationLabel`/
+  `moderationTone`, `formatHandle`, and `validatePhotoSubmission`, with **8 unit tests**. New provider
+  methods `listCommunityPhotos`/`listArtworkCommunityPhotos` return approved photos only, newest first
+  (mock seeds include pending/rejected on purpose to prove they're filtered; api stub throws; **4 mock
+  tests**). New static `/community` route (approved feed grid + submit form with artwork picker) and a
+  "Styled by the community" section on each artwork detail page (scoped, no picker), built from a
+  presentational `CommunityPhotoCard` + client `CommunityBoard`. Submissions are **preview-only** — no
+  real upload; a submitted photo is shown back to the submitter as an **"In review"** card with an
+  honest notice, never published. "Community" added to the footer nav. Verified in the browser:
+  `/community` shows approved photos and hides `@pending.user`/`@rejected.user`; artwork section
+  scopes correctly; no console errors. Full `pnpm check` green (**176 storefront tests**). Real UGC +
+  moderation is backend (**TMS-FBR-008**).
+
+- **Reviews & ratings (TMS-F5-004) — Verified.** Pure `lib/reviews.ts` aggregates reviews into an
+  average + count + per-star distribution (`summariseReviews`, clamps out-of-range ratings),
+  `distributionPercents`, `formatAverage`, and `validateReviewInput`, with **9 unit tests**. New
+  provider method `getReviews(targetType, slug)` returns a `ReviewCollection` (mock seeds product +
+  artwork reviews, empty for others; api stub throws; **4 mock tests**). Presentational `RatingStars`
+  (fractional fill + a11y label) + a client `Reviews` section render the summary, a 5→1 distribution,
+  the list (verified-purchase badge), and a validated `WriteReviewForm` (star radio input, name
+  prefilled from the session). Wired into the **product** and **artwork** detail pages. Writes are
+  **preview-only** — a submitted review is prepended locally (never granted the verified badge) with an
+  honest notice; real read/write + verified-purchase vouch + moderation are backend (**TMS-FBR-008**).
+  Verified in the browser: product + artwork pages show stars/distribution/list; a no-review target
+  shows the empty state; submitting prepends the review; no console errors. Full `pnpm check` green
+  (**164 storefront tests**).
+
+- **Shoppable stories (TMS-F5-007) — Verified.** Pure `lib/stories.ts` derives each hotspot's href +
+  CTA + kind label and counts shoppable items (`hotspotHref`, `hotspotActionLabel`, `hotspotKindLabel`,
+  `isShoppable`, `storyHotspotTargets`, `countShoppableItems`), with **7 unit tests**. New provider
+  methods `listStories`/`getStory` return editorial stories whose scene blocks carry positioned
+  hotspots; the mock seeds **3 stories** with targets built from the **same** artwork/product/
+  collection data (titles + prices never drift), api stub throws (**4 mock tests**, incl. a check that
+  every hotspot resolves to a real catalogue slug). The `/stories` placeholder is replaced by an
+  **SSG journal index** (`StoryCard` grid, "N shoppable" badge, newest first) and **SSG**
+  `/stories/[slug]` (`dynamicParams=false` → genuine 404 for unknown slugs) that interleaves editorial
+  blocks with the client **`ShoppableScene`** — a placeholder scene image with numbered hotspots that
+  open a catalogue-linking card (artwork/product-with-price/collection/studio), plus an always-present
+  "In this scene" list as the keyboard/no-JS/screen-reader fallback. "Stories" added to the primary
+  nav. Verified in the browser on the served build: index + 3 detail pages 200, unknown slug 404,
+  hotspot links resolve to `/artworks`·`/products`·`/collections`·`/design-studio` with correct CTAs
+  and prices (₦12,000 / ₦18,000); no console/hydration errors. Full `pnpm check` green (**151
+  storefront tests**). Content is **mock/editorial** on placeholder imagery — a real CMS feed maps
+  onto the `Story*` shapes and real scene photography + authored hotspot coordinates replace the
+  placeholders.
+
+- **Artwork Passport (TMS-F5-006) — Verified.** Pure `lib/passport.ts` derives an **immutable,
+  content-addressed version id** (`artworkVersionId` — deterministic FNV-1a over slug+edition+release,
+  formatted `AP-XXXX-XXXX`; same content → same id, any field change → a new version) plus a
+  width-padded `passportSerial` (`No. 042 / 100`), with **7 unit tests**. New provider method
+  `getArtworkPassport(slug)` returns an `ArtworkPassport` (version id, edition + run size, illustrative
+  serial for limited editions, released date, issuer, provenance timeline); the mock composes it from
+  artwork detail, the api stub throws loudly (**4 mock tests**). New **SSG** route
+  `/artworks/[slug]/passport` (`dynamicParams=false`, so unknown slugs are a genuine 404 — same
+  DEF-001 fix as the detail route) renders a certificate of authenticity, an **ownership-record
+  placeholder**, a provenance timeline, and a client `PassportShare` (Web Share API → clipboard
+  fallback). The artwork detail page links to it ("View passport"). Verified in the browser on the
+  served build: `paper-tigers` → `AP-48FC-BF2C` + "Limited edition of 100" + "No. 042 / 100";
+  `midnight-in-lagos` → a different id + "Open edition" with no serial line; unknown slug → 404; no
+  console/hydration errors. Full `pnpm check` green (**140 storefront tests**). The version id + serial
+  are a **frontend derivation** for the preview — the server-authoritative version id, per-piece serial
+  ledger, and ownership record are backend (**TMS-FBR-001**).
+
+- **Pre-order & made-to-order (TMS-F5-003) — Verified.** Pure `lib/fulfilment.ts` computes a
+  made-to-order ship window from working-day production lead time (`addWorkingDays` in UTC,
+  `madeToOrderWindow`, `preOrderWindow` — production starts when a drop opens, `isPreOrderStatus`,
+  `madeToOrderSummary`) with **10 unit tests** (weekday-anchored for determinism). A client
+  `MadeToOrderNote` renders the clock-free summary on the server and the absolute "estimated ship"
+  dates after mount (hydration-safe, same pattern as the countdown). Wired into the product
+  configurator (not-sold-out), cart summary, checkout order summary, and the drop detail (a
+  **Pre-order** badge + ships-after-open estimate for upcoming/early-access; made-to-order for live).
+  Verified in the browser: product/cart/checkout show "17 Jul–21 Jul" and the pre-order drop shows
+  "21 Jul–23 Jul, after the drop opens" (correct weekend-skipping maths); no console errors. Full
+  `pnpm check` green (129 storefront tests). Lead-time is a **frontend estimate** — real ship timing
+  is server-authoritative and a real pre-order reservation is a backend concern (TMS-FBR-004/008).
+
+- **Waitlist & back-in-stock (TMS-F5-002) — Verified.** Pure `lib/waitlist.ts` (`waitlistKey`,
+  `hasEmail`, non-mutating case-insensitive `addEntry`, `joinWaitlist` validate + persist with an
+  idempotent already-joined result; SSR-guarded `localStorage`; reuses `isValidEmail`/`normalizeEmail`)
+  with **6 unit tests**. A reusable client `WaitlistForm` (labelled email input, `role="alert"` error,
+  success/already-joined states, session prefill, honest "no notification sent" preview) is wired into
+  the product configurator (sold-out → back-in-stock) and `DropEarlyAccess` (sold-out/ended → restock/
+  next-drop; upcoming → "remind me when it opens" beside the sign-in CTA). One mock product
+  (`okada-run-oversized-tee`) is now `sold_out` so the back-in-stock path is exercisable. Verified in
+  the browser: valid submit → success + `localStorage` persist; invalid email → error + blocked; the
+  drop forms render client-side; no console errors. Full `pnpm check` green (119 storefront tests). Gap
+  under **TMS-FBR-008** (waitlist/notify).
+
+- **Limited drops & countdown (TMS-F5-001) — Verified.** First F5 (growth) task, on the typed mock
+  adapter. Pure `lib/drops.ts` derives drop status (upcoming / early access / live / ended / sold out)
+  from timestamps + a `soldOut` flag relative to an explicit `now`, plus `nextMilestone` (the countdown
+  target), `countdownParts`/`countdownLabel`, and `sortDrops` (active → finished, soonest first) —
+  **24 new unit tests**. Provider gained `listDrops`/`getDrop` (+ api stubs) over a 5-drop dataset
+  spanning every state, with now-relative mock timestamps so the preview countdowns stay live.
+  `/drops` (index) + `/drops/[slug]` (detail: hero, status, big live countdown, early-access panel,
+  story, pieces) with loading + not-found; a **Drops** nav item. `Countdown` is a client component that
+  is hydration-safe (digits after mount), accessible (`role="timer"` summary) and reduced-motion safe;
+  `DropEarlyAccess` is **UI-only** (routes guests to sign in, confirms members) with honest "preview —
+  not enforced" notices (no real membership/waitlist). Both routes are **`force-dynamic`** so the clock
+  is never frozen at build (a deliberate divergence from the static catalogue routes — see the TODO).
+  Verified: full `pnpm check` green (113 storefront tests); in-browser — all states render + sort
+  correctly, the countdown **ticks** (17→15s), no console/hydration errors, mobile 375px no overflow.
+  Still 100% mock — gap logged as **TMS-FBR-008** (drops API + server-authoritative timeline/inventory).
 
 ### F4 progress this session
 
@@ -292,9 +447,10 @@ them to `main` with everything else.
 
 ## First recommended next task
 
-**F4 (admin platform) is complete.** Next: either (a) **merge the F0→F4 PR stack to `main`** bottom-up
-(#4 → #5 → #6 → #7 → #8) — nothing is merged yet; (b) clear the tracked soft-404 defect
-**TMS-F1-DEF-001**; or (c) begin **F5 (growth & AI)** / remaining F1 content. No F4 work outstanding.
+**F0–F4 are merged to `main`.** Next: (a) clear the tracked soft-404 defect **TMS-F1-DEF-001**
+(`/artworks/[slug]` returns 200 instead of 404 for unknown slugs under Next 16 Turbopack prod —
+SEO-only, not-found UI already correct); then (b) scope **F5 (growth & AI)** and **F6 (hardening)**
+into task rows from the master prompt/spec and build on the established patterns.
 
 ## Routes completed
 
@@ -364,9 +520,16 @@ Build: 13/13 pass (both apps prerender). No app-level Vitest suites yet (Playwri
 
 ## Known defects
 
-- **TMS-F1-DEF-001** — soft 404: `/artworks/[slug]` returns HTTP 200 instead of 404 for unknown
-  slugs under the Next 16 Turbopack production server (correct not-found UI still renders).
-  `notFound()` used correctly; the streamed shell commits 200 first. SEO impact only.
+- **TMS-F1-DEF-001** — soft 404 on catalogue detail routes. **Fixed for production hosting**
+  (2026-07-15): `/artworks/[slug]`, `/collections/[slug]` and `/products/[slug]` now use
+  `generateStaticParams` + `dynamicParams = false` (build records `fallback: false`), so unknown
+  slugs return a **genuine 404 on static/CDN/edge hosting** and all valid pages are prerendered.
+  Root cause corrected: **not Turbopack-specific** — a webpack build behaves identically; it's
+  general Next 16 `next start` behavior where a matched dynamic route resolving to not-found
+  streams a 200. **Residual (verified):** self-hosted `next start` still returns 200 for unknown
+  slugs (styled not-found UI renders); no `NextResponse.rewrite` variant overrides the rendered
+  status. If self-hosting behind `next start`, add a middleware/proxy slug-guard before launch.
+  SEO-only; UI/UX unaffected. See FRONTEND_TODO.md for the full write-up.
 - F0 follow-ups (Base44 PNG screenshots, Playwright baselines) are now **done** — see TMS-F0-002 /
   TMS-F0-010 above.
 

@@ -20,6 +20,9 @@ export const apiProvider: StorefrontDataProvider = {
   getArtwork() {
     return notImplemented('getArtwork');
   },
+  getArtworkPassport() {
+    return notImplemented('getArtworkPassport');
+  },
   listCollections() {
     return notImplemented('listCollections');
   },
@@ -43,5 +46,29 @@ export const apiProvider: StorefrontDataProvider = {
   },
   getDeliveryOptions() {
     return notImplemented('getDeliveryOptions');
+  },
+  listDrops() {
+    return notImplemented('listDrops');
+  },
+  getDrop() {
+    return notImplemented('getDrop');
+  },
+  listStories() {
+    return notImplemented('listStories');
+  },
+  getStory() {
+    return notImplemented('getStory');
+  },
+  getReviews() {
+    return notImplemented('getReviews');
+  },
+  listCommunityPhotos() {
+    return notImplemented('listCommunityPhotos');
+  },
+  listArtworkCommunityPhotos() {
+    return notImplemented('listArtworkCommunityPhotos');
+  },
+  getLoyalty() {
+    return notImplemented('getLoyalty');
   },
 };

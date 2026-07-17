@@ -77,6 +77,198 @@ describe('mockProvider delivery options', () => {
   });
 });
 
+describe('mockProvider drops', () => {
+  it('lists drops with valid timestamps and piece counts', async () => {
+    const drops = await mockProvider.listDrops();
+    expect(drops.length).toBeGreaterThan(0);
+    for (const d of drops) {
+      expect(d.slug).toMatch(/^[a-z0-9-]+$/);
+      expect(Number.isNaN(Date.parse(d.releaseAt))).toBe(false);
+      if (d.earlyAccessAt !== null) expect(Number.isNaN(Date.parse(d.earlyAccessAt))).toBe(false);
+      if (d.endsAt !== null) expect(Number.isNaN(Date.parse(d.endsAt))).toBe(false);
+      expect(d.pieceCount).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns a drop with its released artworks', async () => {
+    const drop = await mockProvider.getDrop('night-market');
+    expect(drop).not.toBeNull();
+    expect(drop?.artworks.length).toBe(drop?.pieceCount);
+    expect(drop?.artworks.every((a) => a.collection === drop.collection)).toBe(true);
+    expect(drop?.story).toBeTruthy();
+  });
+
+  it('returns null for an unknown drop slug', async () => {
+    expect(await mockProvider.getDrop('does-not-exist')).toBeNull();
+  });
+});
+
+describe('mockProvider artwork passport', () => {
+  it('issues a passport with a stable version id for a limited artwork', async () => {
+    const passport = await mockProvider.getArtworkPassport('paper-tigers');
+    expect(passport).not.toBeNull();
+    expect(passport?.versionId).toMatch(/^AP-[0-9A-F]{4}-[0-9A-F]{4}$/);
+    expect(passport?.editionSize).toBe(100);
+    expect(passport?.serialExample).toMatch(/^No\. \d+ \/ 100$/);
+    expect(passport?.provenance.length).toBeGreaterThan(0);
+    expect(passport?.issuedBy).toBe('Tai Manic Studios');
+  });
+
+  it('marks an open edition with no run size or serial', async () => {
+    const passport = await mockProvider.getArtworkPassport('midnight-in-lagos');
+    expect(passport?.editionSize).toBeNull();
+    expect(passport?.serialExample).toBeNull();
+    expect(passport?.edition).toBe('Open edition');
+  });
+
+  it('is deterministic — the version id does not change between reads', async () => {
+    const a = await mockProvider.getArtworkPassport('market-day');
+    const b = await mockProvider.getArtworkPassport('market-day');
+    expect(a?.versionId).toBe(b?.versionId);
+  });
+
+  it('returns null for an unknown artwork slug', async () => {
+    expect(await mockProvider.getArtworkPassport('does-not-exist')).toBeNull();
+  });
+});
+
+describe('mockProvider shoppable stories', () => {
+  it('lists stories newest first with a shoppable count', async () => {
+    const stories = await mockProvider.listStories();
+    expect(stories.length).toBeGreaterThan(0);
+    for (const s of stories) {
+      expect(s.slug).toMatch(/^[a-z0-9-]+$/);
+      expect(s.readMinutes).toBeGreaterThan(0);
+      expect(Number.isNaN(Date.parse(s.publishedOn))).toBe(false);
+      expect(s.shoppableCount).toBeGreaterThanOrEqual(0);
+    }
+    const dates = stories.map((s) => s.publishedOn);
+    expect(dates).toEqual([...dates].sort((a, b) => b.localeCompare(a)));
+  });
+
+  it('returns a story whose scene hotspots point at real catalogue slugs', async () => {
+    const story = await mockProvider.getStory('how-midnight-in-lagos-came-together');
+    expect(story).not.toBeNull();
+    expect(story?.blocks.length).toBeGreaterThan(0);
+
+    const scenes = story!.blocks.filter((b) => b.kind === 'scene');
+    expect(scenes.length).toBeGreaterThan(0);
+
+    const { items: allArtworks } = await mockProvider.listArtworks({ limit: 100 });
+    const artworkSlugs = new Set(allArtworks.map((a) => a.slug));
+    const productSlugs = new Set((await mockProvider.listProducts()).map((p) => p.slug));
+
+    for (const block of scenes) {
+      if (block.kind !== 'scene') continue;
+      for (const h of block.scene.hotspots) {
+        if (h.target.kind === 'artwork') expect(artworkSlugs.has(h.target.slug)).toBe(true);
+        if (h.target.kind === 'product') expect(productSlugs.has(h.target.slug)).toBe(true);
+      }
+    }
+  });
+
+  it('counts only shoppable (artwork/product) hotspots in the summary', async () => {
+    const story = await mockProvider.getStory('how-midnight-in-lagos-came-together');
+    const shoppable = story!.blocks
+      .filter((b) => b.kind === 'scene')
+      .flatMap((b) => (b.kind === 'scene' ? b.scene.hotspots : []))
+      .filter((h) => h.target.kind === 'artwork' || h.target.kind === 'product').length;
+    expect(story?.shoppableCount).toBe(shoppable);
+  });
+
+  it('returns null for an unknown story slug', async () => {
+    expect(await mockProvider.getStory('does-not-exist')).toBeNull();
+  });
+});
+
+describe('mockProvider reviews', () => {
+  it('returns reviews newest first with matching aggregate stats', async () => {
+    const { stats, items } = await mockProvider.getReviews(
+      'product',
+      'midnight-in-lagos-classic-tee',
+    );
+    expect(items.length).toBe(stats.count);
+    expect(stats.count).toBeGreaterThan(0);
+    const dates = items.map((r) => r.createdAt);
+    expect(dates).toEqual([...dates].sort((a, b) => b.localeCompare(a)));
+
+    const sumFromDistribution = Object.values(stats.distribution).reduce((a, b) => a + b, 0);
+    expect(sumFromDistribution).toBe(stats.count);
+    const mean = items.reduce((sum, r) => sum + r.rating, 0) / items.length;
+    expect(stats.average).toBeCloseTo(mean);
+  });
+
+  it('marks at least one review as a verified purchase', async () => {
+    const { items } = await mockProvider.getReviews('product', 'midnight-in-lagos-classic-tee');
+    expect(items.some((r) => r.verifiedPurchase)).toBe(true);
+  });
+
+  it('serves reviews for an artwork target too', async () => {
+    const { stats } = await mockProvider.getReviews('artwork', 'midnight-in-lagos');
+    expect(stats.count).toBeGreaterThan(0);
+  });
+
+  it('returns an empty collection for a target with no reviews', async () => {
+    const { stats, items } = await mockProvider.getReviews('product', 'okada-run-oversized-tee');
+    expect(items).toEqual([]);
+    expect(stats.count).toBe(0);
+    expect(stats.average).toBe(0);
+  });
+});
+
+describe('mockProvider community gallery', () => {
+  it('returns only approved photos, newest first', async () => {
+    const photos = await mockProvider.listCommunityPhotos();
+    expect(photos.length).toBeGreaterThan(0);
+    expect(photos.every((p) => p.status === 'approved')).toBe(true);
+    const dates = photos.map((p) => p.createdAt);
+    expect(dates).toEqual([...dates].sort((a, b) => b.localeCompare(a)));
+  });
+
+  it('never surfaces pending or rejected submissions publicly', async () => {
+    const photos = await mockProvider.listCommunityPhotos();
+    expect(photos.some((p) => p.handle === '@pending.user')).toBe(false);
+    expect(photos.some((p) => p.handle === '@rejected.user')).toBe(false);
+  });
+
+  it('scopes artwork photos to that artwork and to approved only', async () => {
+    const photos = await mockProvider.listArtworkCommunityPhotos('midnight-in-lagos');
+    expect(photos.length).toBeGreaterThan(0);
+    expect(photos.every((p) => p.artworkSlug === 'midnight-in-lagos')).toBe(true);
+    expect(photos.every((p) => p.status === 'approved')).toBe(true);
+  });
+
+  it('returns an empty list for an artwork with no approved photos', async () => {
+    expect(await mockProvider.listArtworkCommunityPhotos('okada-run')).toEqual([]);
+  });
+});
+
+describe('mockProvider loyalty', () => {
+  it('returns a stable, well-formed profile for a customer', async () => {
+    const a = await mockProvider.getLoyalty('ada@example.com');
+    const b = await mockProvider.getLoyalty('ada@example.com');
+    expect(a).toEqual(b); // deterministic per email
+    expect(a.points).toBeGreaterThan(0);
+    expect(a.lifetimePoints).toBeGreaterThanOrEqual(a.points);
+    expect(a.referralCode).toMatch(/^TAI-[0-9A-Z]{1,6}$/);
+    expect(a.rewards.length).toBeGreaterThan(0);
+    expect(a.rewards.every((r) => r.pointsCost > 0)).toBe(true);
+  });
+
+  it('is case-insensitive on the email', async () => {
+    const a = await mockProvider.getLoyalty('Ada@Example.com');
+    const b = await mockProvider.getLoyalty('ada@example.com');
+    expect(a.points).toBe(b.points);
+    expect(a.referralCode).toBe(b.referralCode);
+  });
+
+  it('gives different customers different balances', async () => {
+    const a = await mockProvider.getLoyalty('ada@example.com');
+    const c = await mockProvider.getLoyalty('kelechi@example.com');
+    expect(a.referralCode).not.toBe(c.referralCode);
+  });
+});
+
 describe('mockProvider filters & search', () => {
   it('filters artworks by availability', async () => {
     const { items } = await mockProvider.listArtworks({ availability: 'sold_out' });
