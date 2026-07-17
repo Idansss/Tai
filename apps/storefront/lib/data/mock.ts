@@ -168,22 +168,22 @@ const collectionMeta: { slug: string; name: string; description: string }[] = [
   {
     slug: 'night-studies',
     name: 'Night Studies',
-    description: 'Ink and neon drawn after dark, when the city is at its most honest.',
+    description: 'The city after dark in warm coloured pencil — dusk light, street life and the last colour of the day.',
   },
   {
     slug: 'comic-line',
     name: 'Comic Line',
-    description: 'Comic-panel storytelling, told one bold, uninterrupted line at a time.',
+    description: 'Comic-panel storytelling — gutters, speech bubbles and the recurring muse, a panel at a time.',
   },
   {
     slug: 'season-sketches',
     name: 'Season Sketches',
-    description: 'Quiet studies that follow the turning of the seasons.',
+    description: 'Pieces that follow the turning of the seasons — harmattan dust, rain and bloom.',
   },
   {
     slug: 'city-portraits',
     name: 'City Portraits',
-    description: 'Street-level scenes rendered in confident, tangled linework.',
+    description: 'Street-level scenes across African cities — the muse at market and on the move, in full colour.',
   },
 ];
 
@@ -193,7 +193,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'midnight-in-lagos',
     title: 'Midnight in Lagos',
     collection: 'Night Studies',
-    shortStory: 'Ink and neon from a restless city that never fully sleeps.',
+    shortStory: 'The muse against the Lagos skyline at dusk, in warm coloured pencil.',
     availability: 'available',
     startingPriceMinor: 1200000,
     currency: 'NGN',
@@ -205,7 +205,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'paper-tigers',
     title: 'Paper Tigers',
     collection: 'Comic Line',
-    shortStory: 'A comic-panel study of courage that is mostly bluff.',
+    shortStory: 'A comic-panel spread on courage that is mostly bluff — in full colour.',
     availability: 'limited',
     startingPriceMinor: 1500000,
     currency: 'NGN',
@@ -217,7 +217,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'harmattan-bloom',
     title: 'Harmattan Bloom',
     collection: 'Season Sketches',
-    shortStory: 'Dust-season florals drawn in a single unbroken line.',
+    shortStory: 'Harmattan-season blooms in warm coloured pencil — dust-gold and pink.',
     availability: 'available',
     startingPriceMinor: 1100000,
     currency: 'NGN',
@@ -265,7 +265,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'market-day',
     title: 'Market Day',
     collection: 'City Portraits',
-    shortStory: 'A crowded stall rendered in confident, tangled linework.',
+    shortStory: 'A crowded market stall in full sunset colour — the muse mid-haggle.',
     availability: 'limited',
     startingPriceMinor: 1400000,
     currency: 'NGN',
@@ -277,7 +277,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'okada-run',
     title: 'Okada Run',
     collection: 'City Portraits',
-    shortStory: 'Motion blur on two wheels, told entirely in ink.',
+    shortStory: 'Motion blur on two wheels — an okada run through the city, in colour.',
     availability: 'available',
     startingPriceMinor: 1250000,
     currency: 'NGN',
@@ -313,7 +313,7 @@ const dropSeeds: DropSeed[] = [
     title: 'Night Market',
     tagline: 'The Night Studies drop, live now.',
     story:
-      'Four pieces pulled from the quietest hours of the city — ink, neon and the last warm light on the street. Made to order in a limited run.',
+      'Four pieces from the city after dark — dusk light, street life and the last warm colour of the day. Made to order in a limited run.',
     collection: 'Night Studies',
     earlyOffset: -2 * DAY_MS,
     releaseOffset: -1 * DAY_MS,
@@ -325,7 +325,7 @@ const dropSeeds: DropSeed[] = [
     title: 'City Portraits, Vol. 1',
     tagline: 'Early access is open for members.',
     story:
-      'Street-level scenes rendered in confident, tangled linework. Members get first access before the public release.',
+      'Street-level scenes across African cities, in full colour. Members get first access before the public release.',
     collection: 'City Portraits',
     earlyOffset: -1 * HOUR_MS,
     releaseOffset: 1 * DAY_MS,
@@ -337,7 +337,7 @@ const dropSeeds: DropSeed[] = [
     title: 'Harmattan Editions',
     tagline: 'Dust-season florals, dropping soon.',
     story:
-      'A short seasonal set drawn in single unbroken lines. Join early access to be first in the queue when it opens.',
+      'A short seasonal set in warm coloured pencil — harmattan dust and bloom. Join early access to be first in the queue when it opens.',
     collection: 'Season Sketches',
     earlyOffset: 1 * DAY_MS,
     releaseOffset: 2 * DAY_MS,
@@ -427,16 +427,16 @@ const storySeeds: StorySeed[] = [
     title: 'How Midnight in Lagos came together',
     category: 'Process',
     excerpt:
-      'From a blurred phone photo on a night bus to a single unbroken line — the making of our most-worn piece.',
+      'From a blurred phone photo on a night bus to a finished coloured-pencil drawing — the making of our most-worn piece.',
     readMinutes: 5,
     publishedOn: '2026-06-20',
     intro:
       'Every piece starts on paper. Midnight in Lagos began as a photograph taken through a bus window and ended as a drawing we could not stop returning to.',
     blocks: [
-      { kind: 'heading', text: 'From a photograph to a line' },
+      { kind: 'heading', text: 'From a photograph to a drawing' },
       {
         kind: 'paragraph',
-        text: 'The first sketches chased the neon — too much of it. Stripping the scene back to one continuous line was what finally made the city feel awake rather than lit up.',
+        text: 'The first sketches chased every light in the frame — too much of it. Building the scene up from a graphite construction and spending colour only where it mattered was what finally made the city feel awake rather than lit up.',
       },
       {
         kind: 'scene',
@@ -505,7 +505,7 @@ const storySeeds: StorySeed[] = [
       { kind: 'heading', text: 'The street, by daylight' },
       {
         kind: 'paragraph',
-        text: 'Market Day wants room to breathe, so we paired the long-sleeve with soft neutrals and let the linework do the talking.',
+        text: 'Market Day wants room to breathe, so we paired the long-sleeve with soft neutrals and let the colour do the talking.',
       },
       {
         kind: 'scene',
@@ -568,26 +568,26 @@ const storySeeds: StorySeed[] = [
     ],
   },
   {
-    slug: 'comic-line-one-unbroken-line',
-    title: 'Comic Line, one unbroken line',
+    slug: 'comic-line-telling-it-in-panels',
+    title: 'Comic Line: telling it in panels',
     category: 'Studio notes',
     excerpt:
-      'The rule behind the Comic Line collection: tell the whole story without lifting the pen.',
+      'The rule behind the Comic Line collection: tell a whole story on a single page of panels.',
     readMinutes: 6,
     publishedOn: '2026-05-15',
     intro:
-      'Comic Line is a self-imposed constraint — every panel drawn in a single continuous stroke. The constraint is the point.',
+      'Comic Line borrows the grammar of a comic page — panels, gutters and the occasional speech bubble — to tell a whole story on one sheet. The page is the point.',
     blocks: [
-      { kind: 'heading', text: 'One line, no lifting the pen' },
+      { kind: 'heading', text: 'The page is the frame' },
       {
         kind: 'paragraph',
-        text: 'Working in one unbroken line forces every decision to the front. There is no going back to fix a corner, so the corner has to be right the first time.',
+        text: 'Composing across panels forces every beat to earn its place. The gutters carry the time between them, so each panel has to land the moment it holds.',
       },
       {
         kind: 'scene',
         scene: {
-          id: 'scene-inking',
-          caption: 'Inking a Comic Line panel',
+          id: 'scene-page',
+          caption: 'Laying out a Comic Line page',
           hotspots: [
             {
               id: 'h-paper',
@@ -655,7 +655,7 @@ const reviewSeeds: Record<string, Review[]> = {
       id: 'rv-mil-2',
       rating: 4,
       title: 'Lovely, runs a touch large',
-      body: 'Gorgeous heavyweight cotton and the neon reads exactly like the artwork. I would size down for a classic fit.',
+      body: 'Gorgeous heavyweight cotton and the colour reads exactly like the artwork. I would size down for a classic fit.',
       author: 'Tunde A.',
       createdAt: '2026-06-15T09:30:00.000Z',
       verifiedPurchase: true,
@@ -703,7 +703,7 @@ const reviewSeeds: Record<string, Review[]> = {
     {
       id: 'rv-a-mil-2',
       rating: 4,
-      title: 'Beautiful linework',
+      title: 'Beautiful colour',
       body: 'One of my favourite pieces in the collection. Would love to see it on more garment types.',
       author: 'Zainab I.',
       createdAt: '2026-05-22T12:00:00.000Z',
@@ -723,7 +723,7 @@ const communityPhotoSeeds: CommunityPhoto[] = [
     artworkSlug: 'midnight-in-lagos',
     artworkTitle: 'Midnight in Lagos',
     handle: '@ada.wears',
-    caption: 'Caught the neon just right on the island bridge.',
+    caption: 'Caught the colour just right on the island bridge.',
     status: 'approved',
     createdAt: '2026-07-05T18:00:00.000Z',
   },
@@ -952,8 +952,8 @@ export const mockProvider: StorefrontDataProvider = {
     if (!summary) return delay(null);
     return delay({
       ...summary,
-      story: `${summary.shortStory} The full piece explores line, restraint, and contrast.`,
-      inspiration: 'Street photography, comic inking, and West African textiles.',
+      story: `${summary.shortStory} The full piece is coloured pencil and marker on paper, with colour spent where it matters most.`,
+      inspiration: 'Street photography, comic-panel composition, and West African textiles.',
       edition: summary.limitedEdition ? 'Limited edition of 100' : 'Open edition',
       release: '2026',
       related: artworks.filter((a) => a.id !== summary.id).slice(0, 3),
@@ -972,7 +972,7 @@ export const mockProvider: StorefrontDataProvider = {
     const provenance: ProvenanceEvent[] = [
       {
         label: 'Drawn in the studio',
-        detail: `${detail.title} — original linework by the Tai Manic Studios team.`,
+        detail: `${detail.title} — original drawing by the Tai Manic Studios team.`,
         date: release,
       },
       {
