@@ -16,41 +16,80 @@ import { ArrowRight, Palette } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArtworkCard } from '@/components/artwork/artwork-card';
+import { Plate } from '@/components/artwork/plate';
 import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Art-led apparel',
-  description: 'A premium digital gallery and interactive design studio. The artwork is the hero.',
+  description:
+    'Hand-drawn art from across Africa, printed on cotton. From Africa, to you — Tai Manic Studios.',
 };
 
 export default async function HomePage() {
-  const { items: artworks } = await dataProvider.listArtworks({ limit: 3 });
+  const { items: artworks } = await dataProvider.listArtworks({ limit: 4 });
+  // The opening piece leads; the rest form the featured row beneath it.
+  const [hero, ...featured] = artworks;
 
   return (
     <>
-      {/* Hero */}
+      {/*
+       * The hero is the work.
+       *
+       * This page used to headline "The artwork is the hero" above no artwork at all — a text
+       * wall and two buttons. The most characteristic thing in this studio's world is a drawing,
+       * so the drawing opens the page.
+       *
+       * It is hung, not cropped into a banner: the pieces are 3:4 on paper, and the direction
+       * forbids both cropping a piece to fit a component and putting text over one
+       * (docs/frontend/UI_DIRECTION.md). So the work sits uncovered on the right and its label
+       * sits beside it, the way a wall label sits beside a painting.
+       */}
       <section className="border-b border-line">
-        <Container className="py-20 sm:py-28">
-          <div className="max-w-3xl">
-            <Eyebrow>Art-led apparel · Independent studio</Eyebrow>
-            <Heading as={1} size="display-2xl" className="mt-4">
-              The artwork is the hero.
-            </Heading>
-            <Text size="lg" tone="secondary" className="mt-6 max-w-prose">
-              Original drawings and comic-line illustrations, applied to considered garments.
-              Explore the gallery, then step into the design studio to make a piece your own.
-            </Text>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/artworks" className={buttonVariants({ size: 'lg' })}>
-                Explore artworks <ArrowRight className="size-4" aria-hidden />
-              </Link>
-              <Link
-                href="/design-studio"
-                className={buttonVariants({ size: 'lg', variant: 'secondary' })}
-              >
-                <Palette className="size-4" aria-hidden /> Open Design Studio
-              </Link>
+        <Container className="py-14 sm:py-20">
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <div>
+              <Eyebrow>Tai Manic Studios</Eyebrow>
+              <Heading as={1} size="display-2xl" className="mt-4">
+                From Africa,
+                <br />
+                to you.
+              </Heading>
+              <Text size="lg" tone="secondary" className="mt-6 max-w-prose">
+                Drawings from Lagos, Addis, Accra and Cape Town — pencil and colour on paper, by
+                hand. Choose a piece and we print it on cotton, positioned the way the studio
+                approved it.
+              </Text>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="/artworks" className={buttonVariants({ size: 'lg' })}>
+                  See the gallery <ArrowRight className="size-4" aria-hidden />
+                </Link>
+                <Link
+                  href="/design-studio"
+                  className={buttonVariants({ size: 'lg', variant: 'secondary' })}
+                >
+                  <Palette className="size-4" aria-hidden /> Open the Design Studio
+                </Link>
+              </div>
             </div>
+
+            {/* The opening piece, in colour: the one place on the site where colour is not
+                earned by hover, because this is the argument. */}
+            {hero ? (
+              <Link
+                href={`/artworks/${hero.slug}`}
+                className="group block rounded-[var(--radius-sm)] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-focus-ring)]"
+              >
+                <Plate
+                  slug={hero.slug}
+                  title={hero.title}
+                  city={hero.collection}
+                  medium="Pencil on paper"
+                  alwaysColour
+                  priority
+                  sizes="(min-width: 1024px) 55vw, 92vw"
+                />
+              </Link>
+            ) : null}
           </div>
         </Container>
       </section>
@@ -74,7 +113,7 @@ export default async function HomePage() {
           </div>
 
           <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {artworks.map((art) => (
+            {featured.map((art) => (
               <li key={art.id}>
                 <ArtworkCard artwork={art} />
               </li>
