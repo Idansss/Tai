@@ -28,7 +28,9 @@ import type {
   StoryDetail,
   StoryHotspotTarget,
   StorySummary,
+  StudioGarment,
   StudioOptions,
+  StudioPlacement,
 } from './types';
 
 const COLOUR_PALETTE: Record<string, string> = {
@@ -827,6 +829,106 @@ function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
 
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * The placements an administrator has "approved" in mock-land, mirroring the real model:
+ * geometry belongs to the placement, and scale presets belong to a placement rather than to the
+ * garment. Keeping the mock the same shape as the contract is what stops the UI from growing a
+ * dependency the backend would reject (ADR-013).
+ */
+const MOCK_PLACEMENTS: Array<Omit<StudioPlacement, 'id'> & { slug: string }> = [
+  {
+    slug: 'left-chest',
+    label: 'Left chest',
+    area: 'front',
+    x: 33,
+    y: 30,
+    printWidthMm: 100,
+    printHeightMm: 125,
+    scalePresets: [
+      { slug: 'small', label: 'Small', widthPct: 14 },
+      { slug: 'medium', label: 'Medium', widthPct: 20 },
+    ],
+  },
+  {
+    slug: 'centre-chest',
+    label: 'Centre chest',
+    area: 'front',
+    x: 50,
+    y: 38,
+    printWidthMm: 280,
+    printHeightMm: 350,
+    scalePresets: [
+      { slug: 'small', label: 'Small', widthPct: 30 },
+      { slug: 'medium', label: 'Medium', widthPct: 44 },
+      { slug: 'large', label: 'Large', widthPct: 56 },
+    ],
+  },
+  {
+    slug: 'full-front',
+    label: 'Full front',
+    area: 'front',
+    x: 50,
+    y: 52,
+    printWidthMm: 320,
+    printHeightMm: 400,
+    scalePresets: [
+      { slug: 'medium', label: 'Medium', widthPct: 52 },
+      { slug: 'large', label: 'Large', widthPct: 64 },
+    ],
+  },
+  {
+    slug: 'back',
+    label: 'Back',
+    area: 'back',
+    x: 50,
+    y: 42,
+    printWidthMm: 320,
+    printHeightMm: 400,
+    scalePresets: [
+      { slug: 'medium', label: 'Medium', widthPct: 48 },
+      { slug: 'large', label: 'Large', widthPct: 64 },
+    ],
+  },
+];
+
+/**
+ * Build the approved canvas for one artwork+garment pair. Ids are derived from the pair so a
+ * shared Studio URL keeps resolving across reloads, the way a real approved id would.
+ */
+function mockStudioGarment(artworkSlug: string, title: string): StudioGarment {
+  const garmentSlug = slugify(title);
+  const colours = Object.entries(COLOUR_PALETTE).map(([name, hex]) => ({
+    name,
+    hex,
+    available: true,
+  }));
+  return {
+    slug: garmentSlug,
+    title,
+    artworkVersionId: `mock-version-${artworkSlug}`,
+    colours,
+    sizes: SIZES,
+    variants: colours.flatMap((colour) =>
+      SIZES.map((size) => ({
+        id: `mock-variant-${garmentSlug}-${slugify(colour.name)}-${size.toLowerCase()}`,
+        colour: colour.name,
+        size,
+      })),
+    ),
+    placements: MOCK_PLACEMENTS.map((placement) => ({
+      ...placement,
+      id: `mock-placement-${artworkSlug}-${garmentSlug}-${placement.slug}`,
+    })),
+  };
+}
+
 /** Deterministic in-memory provider. Types match the real contract for a clean swap. */
 export const mockProvider: StorefrontDataProvider = {
   async listArtworks(params: ListArtworksParams = {}): Promise<CursorPage<ArtworkSummary>> {
@@ -939,25 +1041,11 @@ export const mockProvider: StorefrontDataProvider = {
     return delay(seed ? toProductDetail(seed) : null);
   },
 
-  async getStudioOptions(): Promise<StudioOptions> {
+  async getStudioOptions(artworkSlug: string): Promise<StudioOptions> {
+    const artwork = artworks.find((entry) => entry.slug === artworkSlug);
+    if (!artwork) return delay({ garments: [] });
     return delay({
-      colours: Object.entries(COLOUR_PALETTE).map(([name, hex]) => ({
-        name,
-        hex,
-        available: true,
-      })),
-      sizes: SIZES,
-      placements: [
-        { id: 'left-chest', label: 'Left chest', area: 'front', x: 33, y: 30 },
-        { id: 'centre-chest', label: 'Centre chest', area: 'front', x: 50, y: 38 },
-        { id: 'full-front', label: 'Full front', area: 'front', x: 50, y: 52 },
-        { id: 'back', label: 'Back', area: 'back', x: 50, y: 42 },
-      ],
-      scalePresets: [
-        { id: 'small', label: 'Small', widthPct: 20 },
-        { id: 'medium', label: 'Medium', widthPct: 44 },
-        { id: 'large', label: 'Large', widthPct: 64 },
-      ],
+      garments: artwork.compatibleGarments.map((title) => mockStudioGarment(artworkSlug, title)),
     });
   },
 

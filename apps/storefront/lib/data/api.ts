@@ -1,4 +1,10 @@
-import type { Artwork, CatalogueEntry, CursorPage } from '@tms/contracts';
+import type {
+  Artwork,
+  ArtworkGarmentCompatibility,
+  CatalogueEntry,
+  CursorPage,
+  GarmentPlacement,
+} from '@tms/contracts';
 
 import { apiFetch, apiFetchOrNull } from './http';
 import type {
@@ -8,6 +14,9 @@ import type {
   CollectionSummary,
   ListArtworksParams,
   StorefrontDataProvider,
+  StudioGarment,
+  StudioOptions,
+  StudioPlacement,
 } from './types';
 
 /**
@@ -77,7 +86,95 @@ function toCollectionSummary(entry: CatalogueEntry & { artworkCount?: number }):
   };
 }
 
+/**
+ * The Studio preview only draws a front and a back. Placements approved for a LEFT/RIGHT view
+ * have nowhere to render, so they are dropped rather than mislabelled onto the front.
+ */
+function toStudioArea(view: GarmentPlacement['view']): 'front' | 'back' | null {
+  if (view === 'FRONT') return 'front';
+  if (view === 'BACK') return 'back';
+  return null;
+}
+
+/**
+ * Map an approved placement. Permille is the contract's unit (0–999 across the canvas); the
+ * preview works in percentages, and the placement's own approved box is the reference for a
+ * scale preset, so `scalePercent` resolves against the placement width rather than the garment.
+ */
+function toStudioPlacement(placement: GarmentPlacement): StudioPlacement | null {
+  const area = toStudioArea(placement.view);
+  if (!area) return null;
+  const widthPct = placement.widthPermille / 10;
+  const heightPct = placement.heightPermille / 10;
+  return {
+    id: placement.id,
+    label: placement.name,
+    area,
+    // The contract gives the box's top-left corner; the preview centres the print on it.
+    x: placement.xPermille / 10 + widthPct / 2,
+    y: placement.yPermille / 10 + heightPct / 2,
+    printWidthMm: placement.printWidthMm,
+    printHeightMm: placement.printHeightMm,
+    scalePresets: placement.scalePresets
+      .filter((preset) => preset.status === 'PUBLISHED')
+      .sort((a, b) => a.position - b.position)
+      .map((preset) => ({
+        slug: preset.slug,
+        label: preset.name,
+        widthPct: (widthPct * preset.scalePercent) / 100,
+      })),
+  };
+}
+
+function toStudioGarment(compatibility: ArtworkGarmentCompatibility): StudioGarment | null {
+  const template = compatibility.template;
+  // Only the placements approved for THIS artwork+garment pair, never the template's full set.
+  const placements = compatibility.placements
+    .map((entry) => toStudioPlacement(entry.placement))
+    .filter((placement): placement is StudioPlacement => placement !== null)
+    .filter((placement) => placement.scalePresets.length > 0);
+  if (placements.length === 0) return null;
+
+  const variants = template.variants
+    .filter((variant) => variant.status === 'PUBLISHED')
+    .map((variant) => {
+      const colour = template.colours.find((entry) => entry.id === variant.colourId);
+      const size = template.sizes.find((entry) => entry.id === variant.sizeId);
+      return colour && size ? { id: variant.id, colour: colour.name, size: size.label } : null;
+    })
+    .filter((variant): variant is NonNullable<typeof variant> => variant !== null);
+  if (variants.length === 0) return null;
+
+  // Offer only colours and sizes that a buyable variant actually exists for.
+  const colourNames = new Set(variants.map((variant) => variant.colour));
+  const sizeLabels = new Set(variants.map((variant) => variant.size));
+  return {
+    slug: template.slug,
+    title: template.title,
+    artworkVersionId: compatibility.artworkVersionId,
+    colours: template.colours
+      .filter((colour) => colourNames.has(colour.name))
+      .map((colour) => ({ name: colour.name, hex: colour.hex, available: true })),
+    sizes: template.sizes.filter((size) => sizeLabels.has(size.label)).map((size) => size.label),
+    variants,
+    placements,
+  };
+}
+
 export const apiProvider: StorefrontDataProvider = {
+  async getStudioOptions(artworkSlug: string): Promise<StudioOptions> {
+    const compatibilities = await apiFetch<ArtworkGarmentCompatibility[]>(
+      `/api/v1/artworks/${encodeURIComponent(artworkSlug)}/compatible-garments`,
+    );
+    const garments = compatibilities
+      // Defence in depth: the endpoint returns approved pairs, but an unapproved canvas must
+      // never reach the picker (ADR-013).
+      .filter((compatibility) => compatibility.status === 'APPROVED')
+      .map(toStudioGarment)
+      .filter((garment): garment is StudioGarment => garment !== null);
+    return { garments };
+  },
+
   async listArtworks(params: ListArtworksParams = {}): Promise<CursorPage<ArtworkSummary>> {
     // `availability` and sort=popular are deliberately not forwarded: the contract supports
     // neither (sort accepts only `newest`). Passing them would 400. TMS-FBR-012 / -015.
@@ -149,12 +246,6 @@ export const apiProvider: StorefrontDataProvider = {
     return notImplemented(
       'getProduct',
       'a product is a storefront composition of an artwork and a garment, and there is no /products endpoint (TMS-FBR-010).',
-    );
-  },
-  getStudioOptions() {
-    return notImplemented(
-      'getStudioOptions',
-      'approved placements are artwork-scoped via /artworks/{slug}/compatible-garments, but this method takes no artwork (TMS-FBR-017).',
     );
   },
   listDrops() {

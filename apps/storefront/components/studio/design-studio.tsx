@@ -10,7 +10,11 @@ import { designSignature, persistSavedDesign } from '@/lib/account';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import {
   buildStudioQuery,
+  findGarment,
+  findPlacement,
+  findVariantId,
   isStudioConfigComplete,
+  resolveStudioConfig,
   type StudioConfig,
   type StudioView,
 } from '@/lib/studio';
@@ -78,12 +82,11 @@ export function DesignStudio({
   options: StudioOptions;
   initialConfig: StudioConfig;
 }) {
-  const [config, setConfig] = useState<StudioConfig>(() => ({
-    ...initialConfig,
-    colour: initialConfig.colour ?? options.colours[0]?.name ?? null,
-    placement: initialConfig.placement ?? 'centre-chest',
-    scale: initialConfig.scale ?? 'medium',
-  }));
+  // Everything unapproved is dropped up front, so a shared link can never seed the picker with a
+  // placement or scale this artwork was not approved for.
+  const [config, setConfig] = useState<StudioConfig>(() =>
+    resolveStudioConfig(initialConfig, options),
+  );
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
@@ -92,37 +95,54 @@ export function DesignStudio({
   const { user } = useAuth();
   const router = useRouter();
 
-  const update = useCallback((patch: Partial<StudioConfig>) => {
-    setCopied(false);
-    setStatus(null);
-    setAdded(false);
-    setSaved(false);
-    setConfig((c) => ({ ...c, ...patch }));
-  }, []);
+  /**
+   * Re-resolve on every change rather than trusting the patch: choices are interdependent, so
+   * picking a placement can invalidate the scale (presets belong to a placement) and picking a
+   * colour can invalidate the size (not every pair is a variant).
+   */
+  const update = useCallback(
+    (patch: Partial<StudioConfig>) => {
+      setCopied(false);
+      setStatus(null);
+      setAdded(false);
+      setSaved(false);
+      setConfig((c) => resolveStudioConfig({ ...c, ...patch }, options));
+    },
+    [options],
+  );
 
   const artwork = useMemo(
     () => artworks.find((a) => a.slug === config.artwork) ?? null,
     [artworks, config.artwork],
   );
-  const garments = artwork?.compatibleGarments ?? [];
-  const colour = options.colours.find((c) => c.name === config.colour) ?? null;
-  const placement = options.placements.find((p) => p.id === config.placement) ?? null;
-  const scale = options.scalePresets.find((s) => s.id === config.scale) ?? null;
+  const garment = findGarment(options, config.garment);
+  const colour = garment?.colours.find((c) => c.name === config.colour) ?? null;
+  const placement = findPlacement(garment, config.placement);
+  // Scale presets belong to the placement, so the options change with it.
+  const scale = placement?.scalePresets.find((s) => s.slug === config.scale) ?? null;
+  const sizes = useMemo(
+    () =>
+      garment?.variants.filter((v) => v.colour === config.colour).map((v) => v.size) ??
+      ([] as string[]),
+    [garment, config.colour],
+  );
   const complete = isStudioConfigComplete(config);
   const artworkOnThisView = placement && placement.area === config.view;
 
+  /**
+   * Approval is per artwork+garment pair, so a different artwork means a different set of
+   * approved canvases. Navigate so the server fetches that artwork's options rather than
+   * re-using the ones on screen.
+   */
   const selectArtwork = (slug: string) => {
-    const next = artworks.find((a) => a.slug === slug);
-    update({
-      artwork: slug,
-      // Reset the garment if it is no longer compatible.
-      garment: next?.compatibleGarments.includes(config.garment ?? '') ? config.garment : null,
-    });
+    if (slug === config.artwork) return;
+    router.push(`/design-studio?artwork=${encodeURIComponent(slug)}`);
   };
 
   const selectPlacement = (id: string) => {
-    const p = options.placements.find((pl) => pl.id === id);
-    update({ placement: id, view: p?.area ?? config.view });
+    const next = findPlacement(garment, id);
+    // Turn the garment to the side the print is actually on.
+    update({ placement: id, ...(next ? { view: next.area } : {}) });
   };
 
   const copyShareLink = useCallback(async () => {
@@ -147,24 +167,39 @@ export function DesignStudio({
       setStatus('This artwork has no price yet, so it cannot be added to your bag.');
       return;
     }
+    const variantId = findVariantId(config, garment);
+    if (!variantId || !garment || !placement || !scale) {
+      setStatus('That combination is not available — choose a different colour or size.');
+      return;
+    }
     addItem({
       productSlug: `${artwork.slug}-studio`,
       href: `/design-studio${buildStudioQuery(config)}`,
       artworkTitle: artwork.title,
-      garment: config.garment,
+      garment: garment.title,
       colour: config.colour,
       size: config.size,
       priceMinor: artwork.startingPriceMinor,
       currency: artwork.currency,
       quantity: Math.max(1, config.quantity),
-      placement: placement?.label,
-      scale: scale?.label,
+      placement: placement.label,
+      scale: scale.label,
       view: config.view,
+      // The approved tuple. Carrying it means the line's identity is the contract's
+      // canonical form rather than a slug string we made up, and it is what a
+      // server-backed add will post (never a price).
+      configuration: {
+        artworkVersionId: garment.artworkVersionId,
+        garmentVariantId: variantId,
+        placementId: placement.id,
+        scalePresetId: scale.slug,
+        view: config.view === 'back' ? 'BACK' : 'FRONT',
+      },
     });
     setAdded(true);
     setStatus(
-      `Added to your bag: ${artwork.title} on ${config.garment}, ${config.colour}, size ${config.size}, ` +
-        `${placement?.label.toLowerCase()} · ${scale?.label.toLowerCase()}.`,
+      `Added to your bag: ${artwork.title} on ${garment.title}, ${config.colour}, size ${config.size}, ` +
+        `${placement.label.toLowerCase()} · ${scale.label.toLowerCase()}.`,
     );
   };
 
@@ -210,7 +245,7 @@ export function DesignStudio({
             role="img"
             aria-label={
               artwork
-                ? `${artwork.title} on ${config.colour} ${config.garment ?? 'garment'}, ${config.view} view`
+                ? `${artwork.title} on ${config.colour} ${garment?.title ?? 'garment'}, ${config.view} view`
                 : 'Design preview — choose an artwork to begin'
             }
           >
@@ -222,6 +257,8 @@ export function DesignStudio({
             />
             {/* Artwork overlay */}
             {artwork && artworkOnThisView && placement && scale ? (
+              // Position and size both come from the approved placement and preset. Nothing here
+              // is customer-authored — this is a rendering of an approved print (ADR-013).
               <div
                 className="absolute overflow-hidden rounded-sm bg-gradient-to-br from-white/80 to-white/50 shadow-lg"
                 style={{
@@ -303,27 +340,31 @@ export function DesignStudio({
 
           <Section step={2} title="Garment" disabled={!artwork}>
             <div className="flex flex-wrap gap-2">
-              {garments.length === 0 ? (
+              {!artwork ? (
                 <Text size="sm" tone="muted">
                   Select an artwork to see its garments.
                 </Text>
+              ) : options.garments.length === 0 ? (
+                <Text size="sm" tone="muted">
+                  This artwork has no approved garments yet.
+                </Text>
               ) : (
-                garments.map((g) => (
+                options.garments.map((g) => (
                   <ChipButton
-                    key={g}
-                    selected={config.garment === g}
-                    onClick={() => update({ garment: g })}
+                    key={g.slug}
+                    selected={config.garment === g.slug}
+                    onClick={() => update({ garment: g.slug })}
                   >
-                    {g}
+                    {g.title}
                   </ChipButton>
                 ))
               )}
             </div>
           </Section>
 
-          <Section step={3} title={`Colour: ${config.colour ?? ''}`} disabled={!artwork}>
+          <Section step={3} title={`Colour: ${config.colour ?? ''}`} disabled={!garment}>
             <div className="flex flex-wrap gap-3">
-              {options.colours.map((c) => (
+              {(garment?.colours ?? []).map((c) => (
                 <button
                   key={c.name}
                   type="button"
@@ -346,9 +387,10 @@ export function DesignStudio({
             </div>
           </Section>
 
-          <Section step={4} title="Size" disabled={!artwork}>
+          <Section step={4} title="Size" disabled={!garment}>
             <div className="flex flex-wrap gap-2">
-              {options.sizes.map((s) => (
+              {/* Only sizes that pair with the chosen colour as a real variant. */}
+              {sizes.map((s) => (
                 <ChipButton
                   key={s}
                   selected={config.size === s}
@@ -360,9 +402,10 @@ export function DesignStudio({
             </div>
           </Section>
 
-          <Section step={5} title="Placement" disabled={!artwork}>
+          <Section step={5} title="Placement" disabled={!garment}>
             <div className="flex flex-wrap gap-2">
-              {options.placements.map((p) => (
+              {/* Approved for this artwork on this garment — never a free-form position. */}
+              {(garment?.placements ?? []).map((p) => (
                 <ChipButton
                   key={p.id}
                   selected={config.placement === p.id}
@@ -372,15 +415,22 @@ export function DesignStudio({
                 </ChipButton>
               ))}
             </div>
+            {placement ? (
+              <Text size="sm" tone="muted" className="mt-2">
+                Printed at {placement.printWidthMm} × {placement.printHeightMm} mm, positioned to
+                studio standards.
+              </Text>
+            ) : null}
           </Section>
 
-          <Section step={6} title="Scale" disabled={!artwork}>
+          <Section step={6} title="Scale" disabled={!placement}>
             <div className="flex flex-wrap gap-2">
-              {options.scalePresets.map((s) => (
+              {/* Presets belong to the placement, so these change when the placement does. */}
+              {(placement?.scalePresets ?? []).map((s) => (
                 <ChipButton
-                  key={s.id}
-                  selected={config.scale === s.id}
-                  onClick={() => update({ scale: s.id })}
+                  key={s.slug}
+                  selected={config.scale === s.slug}
+                  onClick={() => update({ scale: s.slug })}
                 >
                   {s.label}
                 </ChipButton>
@@ -414,7 +464,8 @@ export function DesignStudio({
               <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
                 {(
                   [
-                    ['Garment', config.garment],
+                    // The garment's name, not its slug: `config.garment` is an identifier now.
+                    ['Garment', garment?.title ?? null],
                     ['Colour', config.colour],
                     ['Size', config.size],
                     ['Placement', placement?.label],

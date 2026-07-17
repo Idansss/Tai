@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F7 API integration (in progress)",
-  "lastVerifiedTask": "TMS-F7-004",
-  "nextRecommendedTask": "F7 in progress on claude/f7-api-integration. DONE: TMS-F7-001 http foundation, TMS-F7-002 per-domain data source (replaces all-or-nothing DATA_SOURCE; per-method mock fallback rejected because it hides outages), TMS-F7-003 artworks+collections on the real API, TMS-F7-004 nullable price/availability so nothing is faked. NEXT: TMS-F7-005 Studio rework (getStudioOptions -> artwork-scoped /artworks/{slug}/compatible-garments, TMS-FBR-017), then TMS-F7-006 cart (never send unitPriceMinor; server totals; render issue lines; block checkout on hasIssues; no hold countdown per ADR-017), then TMS-F7-007 saved designs. BLOCKER for real verification: local Postgres has only B1 identity tables, so no live API can serve artworks; api.ts is verified against stubs only. Backend asks recorded as TMS-FBR-010..019; TMS-FBR-011 (artwork startingPrice) and -012 (availability) gate flipping the gallery to DATA_SOURCE=api.",
+  "lastVerifiedTask": "TMS-F7-006a",
+  "nextRecommendedTask": "F7 on claude/f7-api-integration. DONE: TMS-F7-001..004 (http foundation, per-domain data source, artworks+collections on the API, nullable price so nothing is faked), TMS-F7-005 Studio rework (artwork-scoped getStudioOptions via /artworks/{slug}/compatible-garments; placements approved per artwork+garment pair; scale presets scoped to their placement; shared URLs carry approved ids and are sanitised via resolveStudioConfig), TMS-F7-006a (lineId delegates to configurationCanonicalForm; lib/cart-api.ts cannot send a price). NEXT: TMS-F7-006b wire the cart UI to the server (render server subtotal/total, keep issue lines visible and out of the subtotal with a reason, block checkout on hasIssues, no hold countdown per ADR-017), then TMS-F7-007 saved designs. BLOCKER: local Postgres has only B1 identity tables, so no live API can serve artworks/cart; everything is verified against stubs + the mock path in-browser. Open backend question: TMS-FBR-017 scalePreset slug vs scalePresetId UUID asymmetry.",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-002",
@@ -51,7 +51,9 @@
     "TMS-F7-001",
     "TMS-F7-002",
     "TMS-F7-003",
-    "TMS-F7-004"
+    "TMS-F7-004",
+    "TMS-F7-005",
+    "TMS-F7-006a"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": [],

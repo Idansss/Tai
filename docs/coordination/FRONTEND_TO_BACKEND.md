@@ -342,18 +342,28 @@ parameter rather than 400.
 The artwork detail page shows "related". We approximate it as "others in the same collection,
 limit 5". Fine as an approximation; flagging it so nobody mistakes it for a curated relationship.
 
-### TMS-FBR-017 — Studio options are artwork-scoped (blocks ADR-013 rework)
+### TMS-FBR-017 — Studio options are artwork-scoped — RESOLVED our side; one question open
 
-`getStudioOptions()` takes no artwork, but approved placements/scale presets come from the
-artwork-scoped `/artworks/{slug}/compatible-garments`. This is ours to fix (we own the signature)
-and is the next step of the Studio rework. Recorded here because two contract details drive it:
+**Done (2026-07-17):** `getStudioOptions(artworkSlug)` is now artwork-scoped and served by
+`/artworks/{slug}/compatible-garments`. The Studio offers only approved garments, placements and
+scale presets, and shareable URLs carry the approved placement id + preset slug. Two contract
+details drove the model, and the second is still a question for you:
 
-- `DesignConfigurationInput.scalePreset` is a **kebab-case slug**, while `artworkVersionId`,
-  `garmentVariantId` and `placementId` are **UUIDs**. A cart line then reads back `scalePresetId`.
-  Sending a slug and reading an id is easy to get wrong; **please confirm this asymmetry is
-  intended** rather than an oversight.
+- **OPEN QUESTION.** `DesignConfigurationInput.scalePreset` is a **kebab-case slug**, while
+  `artworkVersionId`, `garmentVariantId` and `placementId` are **UUIDs**. A cart line then reads
+  back `scalePresetId`. So we send a slug and read an id for the same thing. We have implemented
+  it as specified, but **please confirm the asymmetry is intended** rather than an oversight — and
+  if `scalePresetId` on a cart line is the preset's UUID rather than its slug, say so explicitly,
+  because we currently round-trip the slug.
 - Placement geometry (`xPermille`/`yPermille`/`widthPermille`/`heightPermille`) is admin-approved
-  and render-only for us. Confirmed: we will never let a customer author it (ADR-013).
+  and render-only for us. Confirmed: we will never let a customer author it (ADR-013). We read the
+  permille box as top-left + size and centre the print on it — **tell us if that is wrong** and the
+  fields mean something else.
+- **A scale preset belongs to a placement** (`GarmentScalePreset.placementId`), so we scope the
+  scale options to the selected placement. Flagging it because the previous UI treated scales as
+  global, which the contract does not support.
+- We drop approved placements whose `view` is `LEFT`/`RIGHT`: the Studio preview only draws a
+  front and a back. If those views are meant to be sellable, we need a preview design for them.
 
 ### TMS-FBR-018 — drops read model is thinner than the drops UI
 

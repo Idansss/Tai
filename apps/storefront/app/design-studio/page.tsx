@@ -1,7 +1,7 @@
 import { Container, Eyebrow, Heading, Text } from '@tms/ui';
 import type { Metadata } from 'next';
 import { DesignStudio } from '@/components/studio/design-studio';
-import { dataProvider } from '@/lib/data';
+import { dataProvider, type StudioOptions } from '@/lib/data';
 import { parseStudioParams } from '@/lib/studio';
 
 export const metadata: Metadata = {
@@ -15,10 +15,14 @@ interface PageProps {
 
 export default async function DesignStudioPage({ searchParams }: PageProps) {
   const initialConfig = parseStudioParams(await searchParams);
-  const [{ items: artworks }, options] = await Promise.all([
-    dataProvider.listArtworks({ limit: 24 }),
-    dataProvider.getStudioOptions(),
-  ]);
+  const { items: artworks } = await dataProvider.listArtworks({ limit: 24 });
+
+  // Approved placements are per artwork+garment pair (ADR-013), so there is nothing to fetch
+  // until an artwork is chosen. Choosing one navigates here again with ?artwork=, which is what
+  // loads that artwork's approved canvases.
+  const options: StudioOptions = initialConfig.artwork
+    ? await dataProvider.getStudioOptions(initialConfig.artwork)
+    : { garments: [] };
 
   return (
     <Container className="py-10">

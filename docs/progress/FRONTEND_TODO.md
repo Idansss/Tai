@@ -850,20 +850,38 @@ seeded API.**
 
 ### Next on this branch
 
-- [ ] **TMS-F7-005** Studio rework (ADR-013) — `getStudioOptions()` → artwork-scoped
-      `/artworks/{slug}/compatible-garments` (TMS-FBR-017); the picker keys on the approved
-      `placementId` + `scalePreset` slug; shareable Studio URLs carry approved ids, not percentages.
-      **Note:** `main`'s Studio is already a picker over approved placements/scale presets and has
-      no freeform or crop controls — the freeform `printX/printY/printWidth` + `cropZoom/cropX/cropY`
-      work exists only on `claude/f6-premium-ui-overhaul` (commit 67bc14d) and must be dropped there
-      when it rebases; ADR-013 wins.
-- [ ] **TMS-F7-006** Cart on the real API — `GET/POST /cart`, `PATCH|DELETE /cart/items/{lineId}`,
-      promotion apply/remove. Send the approved tuple + quantity and **never** `unitPriceMinor`
-      (400). Render server totals; keep `lib/cart.ts` preview helpers for optimistic UI only.
-      `lineId()` should delegate to `configurationCanonicalForm()` from `@tms/contracts` rather than
-      inventing a second identity scheme. Render lines with an `issue` as "no longer available" with
-      the reason, keep them out of the subtotal, and block checkout on `cart.hasIssues`. No hold
-      countdown — nothing is reserved by the cart (ADR-017).
+- [x] **TMS-F7-005** Studio rework (ADR-013) — **Verified.** `getStudioOptions(artworkSlug)` is now
+      artwork-scoped and served by `/artworks/{slug}/compatible-garments`; the picker offers only
+      approved garments, placements and scale presets. Two contract facts drove the model and were
+      previously wrong in the UI: placements are approved **per artwork+garment pair**, and scale
+      presets belong to a **placement** (`GarmentScalePreset.placementId`), so changing placement
+      changes the scales. `resolveStudioConfig` drops anything unapproved from a shared URL and
+      falls back to an approved option. Shareable URLs carry the approved placement id + preset
+      slug — never percentages. Unapproved pairs and placements on views the preview cannot draw
+      (LEFT/RIGHT) are filtered out. **Verified in-browser:** Left chest → Small/Medium @ 100×125mm
+      vs Full front → Medium/Large @ 320×400mm; a URL carrying another garment's placement,
+      `scale=enormous`, `colour=Chartreuse`, `printX` and `cropZoom` was fully sanitised.
+      **Note:** `main` never had freeform/crop controls; that work exists only on
+      `claude/f6-premium-ui-overhaul` (67bc14d) and must be dropped there. ADR-013 wins.
+- [x] **TMS-F7-006a** Cart identity + client — **Verified at unit level.** `lineId()` now delegates
+      to `configurationCanonicalForm()` from `@tms/contracts` when the approved tuple is present,
+      so a cart line and a saved design cannot disagree about identity; quantity stays out of it
+      (ADR-014). New `lib/cart-api.ts` wraps `GET /cart`, `POST /cart/items`, `PATCH|DELETE
+/cart/items/{lineId}` and promotion apply/remove. `AddCartItemInput` is the approved tuple +
+      quantity **only**, so `unitPriceMinor` cannot be sent even by accident (it is a 400).
+      `cartIssueMessage` distinguishes OUT_OF_STOCK from INSUFFICIENT_STOCK and never promises a
+      hold (ADR-017); `isRecoverableByQuantity` only offers "reduce quantity" where it would help.
+      Verified in-browser that a Studio add produces a canonical-form line id carrying the tuple.
+
+### Still to do
+
+- [ ] **TMS-F7-006b** Cart UI on the real API — swap `cart-provider`/cart page/drawer from the
+      local preview cart to `lib/cart-api.ts`: render **server** `subtotal`/`total`, render lines
+      with an `issue` as "no longer available" with the reason while keeping them visible and out
+      of the subtotal, and block checkout on `cart.hasIssues`. Keep `lib/cart.ts`'s preview helpers
+      for optimistic UI only. Promotions: 422 PROMOTION_INVALID is ONE message for
+      unknown/ended/unlaunched; a 200 with `promotion: null` means "doesn't apply to this order",
+      which is not an error. Blocked in practice by the same live-API gap as TMS-F7-003.
 - [ ] **TMS-F7-007** Saved designs — `GET/POST /designs`, `PATCH|DELETE /designs/{id}`, share +
-      rotate. 200 on re-save is success, not an error (idempotent); quantity is not part of a design
-      (ADR-014); rotating a share link breaks the old URL and must say so.
+      rotate. 200 on re-save is success, not an error (idempotent); quantity is not part of a
+      design (ADR-014); rotating a share link breaks the old URL and must say so.
