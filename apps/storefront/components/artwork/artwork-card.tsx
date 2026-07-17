@@ -1,58 +1,44 @@
-import { Badge, Card, Eyebrow, Heading, Price, Text } from '@tms/ui';
+import { Price } from '@tms/ui';
 import Link from 'next/link';
 import type { ArtworkSummary } from '@/lib/data';
+import { Plate } from './plate';
 
-const availabilityTone = {
-  available: 'success',
-  limited: 'warning',
-  sold_out: 'neutral',
-} as const;
-
-const availabilityLabel = {
-  available: 'Available',
-  limited: 'Limited edition',
-  sold_out: 'Sold out',
-} as const;
-
+/**
+ * One piece on the wall.
+ *
+ * The card is a mat around a picture, not a container with a badge (see
+ * docs/frontend/UI_DIRECTION.md). What used to be here — a coloured availability badge, a story
+ * excerpt and a bordered card — was marketplace furniture competing with the drawing. The Plate
+ * carries the work and its caption; this adds only what a buyer needs: the price, and whether the
+ * piece can be had.
+ */
 export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
   return (
     <Link
       href={`/artworks/${artwork.slug}`}
-      className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+      className="group block rounded-[var(--radius-sm)] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-focus-ring)]"
     >
-      <Card variant="surface" interactive padded={false} className="overflow-hidden">
-        <div
-          className="aspect-[4/5] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-          role="img"
-          aria-label={`${artwork.title} — artwork preview placeholder`}
-        />
-        <div className="space-y-2 p-5">
-          <div className="flex items-center justify-between gap-2">
-            <Eyebrow>{artwork.collection}</Eyebrow>
-            {artwork.availability ? (
-              <Badge tone={availabilityTone[artwork.availability]}>
-                {availabilityLabel[artwork.availability]}
-              </Badge>
-            ) : null}
-          </div>
-          <Heading as={3} size="md">
-            {artwork.title}
-          </Heading>
-          <Text size="sm" tone="muted">
-            {artwork.shortStory}
-          </Text>
-          {artwork.startingPriceMinor !== null && artwork.currency ? (
-            <div className="flex items-center justify-between pt-2">
-              <Price
-                amountMinor={artwork.startingPriceMinor}
-                currency={artwork.currency}
-                className="text-ink"
-              />
-              <span className="text-xs text-muted">from</span>
-            </div>
-          ) : null}
-        </div>
-      </Card>
+      <Plate
+        slug={artwork.slug}
+        title={artwork.title}
+        city={artwork.collection}
+        medium="Pencil on paper"
+      />
+      <div className="mt-1.5 flex items-baseline justify-between gap-3">
+        {/* Null price is not ₦0: ADR-015 puts price on the approved artwork+garment pair, so the
+            API's artwork response carries none. Render nothing rather than invent a number. */}
+        {artwork.startingPriceMinor !== null && artwork.currency ? (
+          <Price amountMinor={artwork.startingPriceMinor} currency={artwork.currency} />
+        ) : (
+          <span />
+        )}
+        {/* Sold out is information a buyer needs; it does not need to be red to say so. */}
+        {artwork.availability === 'sold_out' ? (
+          <span className="text-xs text-muted">Sold out</span>
+        ) : artwork.limitedEdition ? (
+          <span className="text-xs text-muted">Limited edition</span>
+        ) : null}
+      </div>
     </Link>
   );
 }
