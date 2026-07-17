@@ -10,7 +10,9 @@ import { useCart } from './cart-provider';
 
 /** Full-page bag: line items on the left, a sticky order summary on the right. */
 export function CartView() {
-  const { items, count, ready } = useCart();
+  // Read the lines from the cart view, not the local items array: in server mode the local
+  // array is always empty, and checking it would show "your bag is empty" over a full bag.
+  const { cart, count, ready } = useCart();
   const router = useRouter();
 
   if (!ready) {
@@ -26,7 +28,7 @@ export function CartView() {
     );
   }
 
-  if (items.length === 0) {
+  if (cart.lines.length === 0) {
     return (
       <EmptyState
         icon={<ShoppingBag className="size-6" aria-hidden />}

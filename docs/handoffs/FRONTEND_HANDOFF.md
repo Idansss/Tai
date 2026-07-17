@@ -39,6 +39,20 @@ availability state. Anything the contract does not carry maps to `null`/empty (a
 `ArtworkSummary.startingPriceMinor`/`currency`/`availability` are now nullable for exactly this
 reason), or the method throws. `mockBackedDomains()` exposes the list for an in-app honesty banner.
 
+**The cart follows the same one flag.** The cart is not a `dataProvider` domain — it has its own
+client (`lib/cart-api.ts`) — but it must not have its own switch. `isCartServerBacked()` reads the
+same server-only `DATA_SOURCE`, and the root layout passes the result to `CartProvider`. That
+deliberately avoids a `NEXT_PUBLIC_DATA_SOURCE` twin, which could disagree with the server's flag
+and leave the catalogue mocked while the cart talked to a real API. Both sources produce one
+`CartView` (`lib/cart-view.ts`), so cart components never branch on where the cart came from — and
+the local preview cart honestly reports `availableQuantity: null` and `hasIssues: false`, because
+it cannot know either.
+
+**Where money comes from.** `lib/cart.ts`'s preview helpers are for optimistic UI only. When the
+cart is server-backed, every number rendered is the server's, and the server has already excluded
+unavailable lines from its subtotal — components must not re-add anything up. A second opinion
+about money is a bug.
+
 ## Current frontend phase
 
 **F0–F4 all Verified AND MERGED TO `main`** (2026-07-15). The F0→F4 PR stack (#4→#5→#6→#7→#8)

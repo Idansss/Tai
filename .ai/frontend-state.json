@@ -2,8 +2,8 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F7 API integration (in progress)",
-  "lastVerifiedTask": "TMS-F7-006a",
-  "nextRecommendedTask": "F7 on claude/f7-api-integration. DONE: TMS-F7-001..004 (http foundation, per-domain data source, artworks+collections on the API, nullable price so nothing is faked), TMS-F7-005 Studio rework (artwork-scoped getStudioOptions via /artworks/{slug}/compatible-garments; placements approved per artwork+garment pair; scale presets scoped to their placement; shared URLs carry approved ids and are sanitised via resolveStudioConfig), TMS-F7-006a (lineId delegates to configurationCanonicalForm; lib/cart-api.ts cannot send a price). NEXT: TMS-F7-006b wire the cart UI to the server (render server subtotal/total, keep issue lines visible and out of the subtotal with a reason, block checkout on hasIssues, no hold countdown per ADR-017), then TMS-F7-007 saved designs. BLOCKER: local Postgres has only B1 identity tables, so no live API can serve artworks/cart; everything is verified against stubs + the mock path in-browser. Open backend question: TMS-FBR-017 scalePreset slug vs scalePresetId UUID asymmetry.",
+  "lastVerifiedTask": "TMS-F7-006b",
+  "nextRecommendedTask": "F7 on claude/f7-api-integration (PR #23). DONE: TMS-F7-001..004 (http foundation, per-domain data source, artworks+collections, nullable price), F7-005 (Studio on approved placements), F7-006a (canonical lineId + cart client), F7-006b (cart UI on the server cart: server totals, issue lines kept + reasons, hasIssues blocks checkout, promotion 422 vs 200-with-null). NEXT: TMS-F7-008 customer auth cutover (/api/v1/auth/*, opaque tms_session cookie) — it unblocks TMS-F7-007 saved designs (client + tests already done in lib/designs-api.ts) and makes the guest-cart merge real. BLOCKERS: (1) no live API locally — Postgres has only B1 identity tables and migrating it would disturb the parallel backend session, so everything is stub-verified; (2) TMS-FBR-020 — a cart line is pure ids and cannot be rendered from its own response, so lib/cart-view.ts joins labels from /artworks + /garments as an interim.",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-002",
@@ -53,7 +53,8 @@
     "TMS-F7-003",
     "TMS-F7-004",
     "TMS-F7-005",
-    "TMS-F7-006a"
+    "TMS-F7-006a",
+    "TMS-F7-006b"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": [],

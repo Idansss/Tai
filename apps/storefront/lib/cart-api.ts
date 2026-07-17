@@ -17,22 +17,29 @@
  * - **Nothing is reserved by the cart** (ADR-017). `availableQuantity` is what is sellable now,
  *   not what is held for this shopper, so there is no hold and no countdown to show.
  */
-import type { Cart, CartLineIssue, GarmentView } from '@tms/contracts';
+import type { AddCartLineInput, Cart, CartLineIssue, UpdateCartLineInput } from '@tms/contracts';
 
 import { apiFetch } from './data/http';
 
 /**
- * What a caller may add. This is the approved tuple and a quantity — deliberately nothing else,
- * so a price cannot be sent even by accident.
+ * What a caller may add: the contract's own input type, imported rather than redeclared.
+ *
+ * This is the approved tuple plus a quantity and deliberately nothing else, so a price cannot be
+ * sent even by accident. Using the contract's type means its rules (quantity 1–20, the
+ * `scalePreset` slug) are enforced here by the same definition the server validates against,
+ * instead of a local copy free to drift.
  */
-export interface AddCartItemInput {
-  artworkVersionId: string;
-  garmentVariantId: string;
-  placementId: string;
-  /** The approved preset's slug (not its id) — see TMS-FBR-017. */
-  scalePreset: string;
-  view: GarmentView;
-  quantity: number;
+export type AddCartItemInput = AddCartLineInput;
+
+/**
+ * Whether the cart is server-backed.
+ *
+ * Server-only: it reads the same `DATA_SOURCE` flag as the catalogue rather than introducing a
+ * `NEXT_PUBLIC_` twin, so there is one switch for "is there an API" and no way for the two to
+ * disagree. The root layout reads this and passes it to the client provider.
+ */
+export function isCartServerBacked(): boolean {
+  return process.env.DATA_SOURCE === 'api';
 }
 
 /** Read the current cart. Creates a guest cart server-side when there is no session. */
@@ -45,10 +52,13 @@ export function addCartItem(input: AddCartItemInput): Promise<Cart> {
   return apiFetch<Cart>('/api/v1/cart/items', { method: 'POST', body: input });
 }
 
-export function updateCartItemQuantity(lineId: string, quantity: number): Promise<Cart> {
+export function updateCartItemQuantity(
+  lineId: string,
+  quantity: UpdateCartLineInput['quantity'],
+): Promise<Cart> {
   return apiFetch<Cart>(`/api/v1/cart/items/${encodeURIComponent(lineId)}`, {
     method: 'PATCH',
-    body: { quantity },
+    body: { quantity } satisfies UpdateCartLineInput,
   });
 }
 

@@ -54,7 +54,8 @@ const inputClass =
   'h-11 w-full rounded-md border bg-canvas px-3 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]';
 
 export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOption[] }) {
-  const { items, ready, subtotalMinor, estimatedTotalMinor, promotion } = useCart();
+  const { items, ready, cart, promotion } = useCart();
+  const { subtotalMinor, totalMinor: estimatedTotalMinor } = cart;
   const { user } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState<CheckoutForm>(EMPTY_CHECKOUT_FORM);

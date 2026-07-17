@@ -875,13 +875,40 @@ seeded API.**
 
 ### Still to do
 
-- [ ] **TMS-F7-006b** Cart UI on the real API — swap `cart-provider`/cart page/drawer from the
-      local preview cart to `lib/cart-api.ts`: render **server** `subtotal`/`total`, render lines
-      with an `issue` as "no longer available" with the reason while keeping them visible and out
-      of the subtotal, and block checkout on `cart.hasIssues`. Keep `lib/cart.ts`'s preview helpers
-      for optimistic UI only. Promotions: 422 PROMOTION_INVALID is ONE message for
-      unknown/ended/unlaunched; a 200 with `promotion: null` means "doesn't apply to this order",
-      which is not an error. Blocked in practice by the same live-API gap as TMS-F7-003.
-- [ ] **TMS-F7-007** Saved designs — `GET/POST /designs`, `PATCH|DELETE /designs/{id}`, share +
-      rotate. 200 on re-save is success, not an error (idempotent); quantity is not part of a
-      design (ADR-014); rotating a share link breaks the old URL and must say so.
+- [x] **TMS-F7-006b** Cart UI on the real API — **Verified.** `CartProvider` now has two sources
+      behind one flag (`DATA_SOURCE`, passed from the root layout via `isCartServerBacked()` so
+      there is no `NEXT_PUBLIC_` twin). Both produce the same `CartView`, so the components never
+      branch on where the cart came from. The cart page renders **server** subtotal/total; lines
+      with an `issue` stay visible, show the reason, show no price, and are already out of the
+      server's subtotal; `hasIssues` disables Checkout. The quantity stepper is capped by
+      `availableQuantity` and only offered where changing quantity helps. No hold countdown
+      anywhere (ADR-017). Promotions: 422 is ONE message; a 200 with `promotion: null` renders as
+      "doesn't apply to this order" via `role="status"`, not as an error.
+      **Verified in-browser against a contract-shaped stub API** (scratchpad only, not committed):
+      labels joined from pure ids, subtotal ₦28,000 excluding the out-of-stock line, Checkout
+      `disabled`, and all three promotion paths. Driving it also caught a real bug the tests
+      missed — the cart page and drawer keyed their empty state off the _local_ items array, so a
+      full server cart rendered "Your bag is empty".
+- [ ] **TMS-F7-007** Saved designs — **client done, UI blocked.** `lib/designs-api.ts` +
+      `designs-api.spec.ts` cover list/save/get/update/delete/share-rotate: 201 vs 200 is surfaced
+      as `created` (a 200 is success, not an error — saving is idempotent), no quantity is ever
+      sent (ADR-014), a design you do not own returns null (404, never 403), and rotation is
+      documented as immediately breaking the old URL. **Blocked on TMS-FBR-021:** the storefront's
+      customer auth is still the client-side demo session in `lib/auth.ts`, so nothing can call
+      `/api/v1/designs` as a signed-in customer. Wiring `saved-designs-view.tsx` needs the auth
+      cutover first.
+
+### Next task
+
+- [ ] **TMS-F7-008** Customer auth cutover — replace the demo session in `lib/auth.ts` with
+      `/api/v1/auth/*` (opaque `tms_session` cookie; never read or persist it client-side). This
+      unblocks saved designs, and it is also what makes the guest-cart merge real: signing in
+      merges the guest cart on the next cart read, with no merge call to make. Recovery UI must
+      not distinguish known from unknown email addresses.
+
+### Verification debt (applies to every F7 task)
+
+Everything server-facing is verified against **stubs**, never a live API: the local Postgres has
+only the B1 identity tables, and applying the B2/B3/B4 migrations would mutate shared local DB
+state the parallel backend session is using. Before `DATA_SOURCE=api` ships anywhere real,
+somebody must run these flows against a migrated, seeded API.

@@ -15,7 +15,8 @@ import { useCart } from './cart-provider';
  * can open it. Body scroll is locked while open.
  */
 export function CartDrawer() {
-  const { items, count, isOpen, closeCart } = useCart();
+  // Lines come from the cart view: the local items array is always empty in server mode.
+  const { cart, count, isOpen, closeCart } = useCart();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -79,7 +80,7 @@ export function CartDrawer() {
         />
       </div>
 
-      {items.length === 0 ? (
+      {cart.lines.length === 0 ? (
         <div className="flex flex-1 items-center justify-center p-6">
           <EmptyState
             icon={<ShoppingBag className="size-6" aria-hidden />}

@@ -1,37 +1,41 @@
 'use client';
 
 import { Price, cn } from '@tms/ui';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Minus, Plus, Trash2, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
-import type { CartItem } from '@/lib/cart';
 import { MAX_LINE_QUANTITY } from '@/lib/cart';
+import { cartIssueMessage, isRecoverableByQuantity } from '@/lib/cart-api';
+import type { CartLineView } from '@/lib/cart-view';
 import { useCart } from './cart-provider';
 
 /** Human summary of a line's configuration (colour · size · placement · scale). */
-function lineDetail(item: CartItem): string {
-  return [item.colour, `Size ${item.size}`, item.placement, item.scale].filter(Boolean).join(' · ');
+function lineDetail(line: CartLineView): string {
+  return [line.colour, `Size ${line.size}`, line.placement, line.scale].filter(Boolean).join(' · ');
 }
 
-function QuantityStepper({ item }: { item: CartItem }) {
+function QuantityStepper({ line }: { line: CartLineView }) {
   const { setQuantity } = useCart();
+  // Never offer more than the server says is sellable. Nothing is reserved (ADR-017), so this is
+  // what is available now, not what is being held for this shopper.
+  const max = Math.min(MAX_LINE_QUANTITY, line.availableQuantity ?? MAX_LINE_QUANTITY);
   return (
     <div className="inline-flex items-center rounded-md border border-line-2">
       <button
         type="button"
-        onClick={() => setQuantity(item.id, item.quantity - 1)}
-        aria-label={`Decrease quantity of ${item.artworkTitle}, ${item.colour}, size ${item.size}`}
+        onClick={() => setQuantity(line.id, line.quantity - 1)}
+        aria-label={`Decrease quantity of ${line.artworkTitle}, ${line.colour}, size ${line.size}`}
         className="grid size-9 place-items-center rounded-l-md text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
       >
         <Minus className="size-4" aria-hidden />
       </button>
       <span aria-live="polite" className="grid min-w-9 place-items-center text-sm tabular-nums">
-        {item.quantity}
+        {line.quantity}
       </span>
       <button
         type="button"
-        onClick={() => setQuantity(item.id, item.quantity + 1)}
-        disabled={item.quantity >= MAX_LINE_QUANTITY}
-        aria-label={`Increase quantity of ${item.artworkTitle}, ${item.colour}, size ${item.size}`}
+        onClick={() => setQuantity(line.id, line.quantity + 1)}
+        disabled={line.quantity >= max}
+        aria-label={`Increase quantity of ${line.artworkTitle}, ${line.colour}, size ${line.size}`}
         className="grid size-9 place-items-center rounded-r-md text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:text-disabled-ink"
       >
         <Plus className="size-4" aria-hidden />
@@ -41,14 +45,15 @@ function QuantityStepper({ item }: { item: CartItem }) {
 }
 
 export function CartLineList({ compact = false }: { compact?: boolean }) {
-  const { items, removeItem } = useCart();
+  const { cart, removeItem } = useCart();
 
   return (
     <ul className="divide-y divide-line">
-      {items.map((item) => {
-        const href = item.href ?? `/products/${item.productSlug}`;
+      {cart.lines.map((line) => {
+        const href = line.href ?? '#';
+        const unavailable = line.issue !== null;
         return (
-          <li key={item.id} className={cn('flex gap-4', compact ? 'py-4' : 'py-6')}>
+          <li key={line.id} className={cn('flex gap-4', compact ? 'py-4' : 'py-6')}>
             {/* Swatch stand-in for the configured garment. */}
             <Link
               href={href}
@@ -57,6 +62,8 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
               className={cn(
                 'shrink-0 overflow-hidden rounded-md border border-line',
                 compact ? 'size-16' : 'size-20',
+                // Dim it, but keep the line: a line that vanishes is worse than one that explains.
+                unavailable && 'opacity-50',
               )}
             >
               <span
@@ -70,25 +77,46 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
                 <div className="min-w-0">
                   <Link
                     href={href}
-                    className="rounded-sm text-sm font-medium text-ink outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+                    className={cn(
+                      'rounded-sm text-sm font-medium outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                      unavailable ? 'text-ink-2' : 'text-ink',
+                    )}
                   >
-                    {item.artworkTitle}
+                    {line.artworkTitle}
                   </Link>
-                  <p className="text-xs text-muted">{item.garment}</p>
-                  <p className="mt-1 text-xs text-ink-2">{lineDetail(item)}</p>
+                  <p className="text-xs text-muted">{line.garment}</p>
+                  <p className="mt-1 text-xs text-ink-2">{lineDetail(line)}</p>
                 </div>
-                <Price
-                  amountMinor={item.priceMinor * item.quantity}
-                  currency={item.currency}
-                  className="shrink-0 text-sm text-ink"
-                />
+                {/* An unavailable line contributes nothing to the subtotal, so it shows no total. */}
+                {!unavailable && line.lineTotalMinor !== null ? (
+                  <Price
+                    amountMinor={line.lineTotalMinor}
+                    currency={line.currency}
+                    className="shrink-0 text-sm text-ink"
+                  />
+                ) : null}
               </div>
 
+              {line.issue ? (
+                <p
+                  role="status"
+                  className="mt-2 inline-flex items-start gap-1.5 text-xs font-medium text-error"
+                >
+                  <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
+                  <span>{cartIssueMessage(line.issue, line.availableQuantity ?? 0)}</span>
+                </p>
+              ) : null}
+
               <div className="mt-3 flex items-center justify-between gap-3">
-                <QuantityStepper item={item} />
+                {/* Only offer the stepper where changing the quantity can actually help. */}
+                {!unavailable || isRecoverableByQuantity(line.issue) ? (
+                  <QuantityStepper line={line} />
+                ) : (
+                  <span className="text-xs text-muted">Remove this to continue</span>
+                )}
                 <button
                   type="button"
-                  onClick={() => removeItem(item.id)}
+                  onClick={() => removeItem(line.id)}
                   className="inline-flex items-center gap-1 rounded-sm text-xs text-muted outline-none hover:text-error focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
                 >
                   <Trash2 className="size-3.5" aria-hidden />
@@ -96,7 +124,7 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
                     Remove
                     <span className="sr-only">
                       {' '}
-                      {item.artworkTitle}, {item.colour}, size {item.size}
+                      {line.artworkTitle}, {line.colour}, size {line.size}
                     </span>
                   </span>
                 </button>

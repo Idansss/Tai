@@ -377,3 +377,36 @@ server-authoritative `soldOut`. The `Drop` contract carries none of these.
 `slug/title/excerpt/blocks` only. `readMinutes` we can derive from blocks; `category` and
 `shoppableCount` we cannot.
 **Ask:** add `category` (or a tag) and confirm whether hotspots are a block type we should count.
+
+### TMS-FBR-020 — a cart line cannot be rendered from its own response
+
+`CartLine` is entirely identifiers (`artworkId`, `garmentTemplateId`, `garmentVariantId`,
+`placementId`, `scalePresetId`) and carries no title, garment name, colour, size or image. So the
+cart response alone cannot render "Market Day on a Black Classic T-shirt, size M" — the one thing
+a bag has to say. `DesignConfigurationSummary` has the same shape and the same problem.
+
+**What we did meanwhile:** `apps/storefront/lib/cart-view.ts` joins the labels in from
+`/artworks` and `/garments` and builds a lookup once per cart, so it is two extra requests rather
+than five per line. It works, and it is verified, but it means the cart page pulls the catalogue
+to render two lines, and a line whose ids we cannot resolve renders as "Unknown".
+
+**Ask:** add a display projection to the cart line (and to a saved design) — artwork title +
+slug, garment title, colour name, size label, placement name, scale name, and a thumbnail. The
+server already has all of it at read time; every client otherwise has to rebuild this join.
+If you would rather not widen the line, an alternative is a `GET /cart?expand=display`.
+
+**Also note:** the public catalogue endpoints are addressed by **slug** (`/artworks/{slug}`,
+`/garments/{slug}`) while cart and design responses reference resources by **id**. There is no
+id-based public read, so a client cannot resolve one line without listing the catalogue. That
+asymmetry is the root of this request.
+
+### TMS-FBR-021 — saved designs need customer auth to be cut over first (frontend-owned, tracked here)
+
+`/api/v1/designs` requires a `tms_session`, but the storefront's customer auth is still the
+client-side demo session in `apps/storefront/lib/auth.ts` — there is no real session cookie, so
+nothing can call the designs endpoints as a signed-in customer yet. The designs client
+(`lib/designs-api.ts`) and its tests are done; wiring the saved-designs UI is blocked behind
+replacing the demo auth with `/api/v1/auth/*`.
+
+No backend action needed — recorded so the dependency is visible on both sides. The auth contract
+(TMS-B1-002) is already published and unchanged.
