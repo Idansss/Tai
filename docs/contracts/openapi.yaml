@@ -403,6 +403,12 @@ paths:
           in: query
           description: When true, return only artworks with a published edition.
           schema: { type: boolean }
+        - name: availability
+          in: query
+          description: >
+            Filter by catalogue-level availability (TMS-FBR-012). Values match the per-card
+            availability field exactly; there is no sold-out value because stock is not public.
+          schema: { type: string, enum: [AVAILABLE, DROP_NOT_OPEN, DROP_ENDED] }
         - name: sort
           in: query
           schema: { type: string, enum: [newest], default: newest }
@@ -2760,6 +2766,21 @@ components:
           oneOf:
             - $ref: '#/components/schemas/ArtworkVersion'
             - type: 'null'
+        startingPrice:
+          description: >
+            The lowest approved price across every garment this artwork's published version is
+            approved on, resolved server-side (ADR-015). Null when no approved priced pair exists
+            yet. Present on public reads (TMS-FBR-011).
+          oneOf:
+            - $ref: '#/components/schemas/Money'
+            - type: 'null'
+        availability:
+          description: >
+            Catalogue-level availability derived from drop windows only, never from stock
+            (TMS-FBR-012). AVAILABLE means the catalogue permits this sale now. Present on public
+            reads.
+          type: string
+          enum: [AVAILABLE, DROP_NOT_OPEN, DROP_ENDED]
         tags:
           type: array
           items: { $ref: '#/components/schemas/Tag' }

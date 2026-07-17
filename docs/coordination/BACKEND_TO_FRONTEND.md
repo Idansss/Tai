@@ -298,3 +298,26 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
   data. The seed admin account (`studio@taimanic.dev`) owns the content but has **no usable
   password** — it is a content owner, not a login. Customer registration via `/api/v1/auth/*`
   works against the seeded DB, so sign-in flows can be exercised for real.
+
+## 2026-07-17 — TMS-FBR-011 + TMS-FBR-012: the artwork gallery has price and availability
+
+- Status: implemented on `codex/artwork-price-availability`; consume after its PR merges. Answers
+  the two blockers that pinned the gallery to mocks.
+- Compatibility: **additive.** `GET /api/v1/artworks` and `GET /api/v1/artworks/{slug}` gain two
+  fields; the list gains one query parameter. No field is removed or renamed.
+- **TMS-FBR-011 — `startingPrice: Money | null`.** The server-side minimum approved price across
+  every garment the artwork's published version is approved on (ADR-015, integer kobo). It is
+  `null` when no approved, priced pair exists yet — render "no price" / "coming soon", not ₦0. The
+  card no longer needs a per-garment `validate` call.
+- **TMS-FBR-012 — `availability` + filter.** Each artwork carries
+  `availability: 'AVAILABLE' | 'DROP_NOT_OPEN' | 'DROP_ENDED'`, derived from its drop windows only.
+  `GET /api/v1/artworks?availability=AVAILABLE` filters to that state, and the filter agrees with
+  the per-card field exactly. **`AVAILABLE` means "the catalogue permits this sale", not "in
+  stock"** — stock is still not public, so there is deliberately **no `sold_out` value**.
+- **Map your existing control:** the gallery's `available` → `availability=AVAILABLE`; `limited` →
+  the existing `limitedEdition=true` filter; **`sold_out` has no server equivalent yet** — drop or
+  disable that option until public stock exists (a later task). `EDITION_EXHAUSTED` exists in the
+  configuration-availability enum but an artwork card never emits it (it needs per-edition sold
+  counts); it is intentionally excluded from the artwork field and filter.
+- Both fields are present on the public list and detail reads. They are absent from admin artwork
+  reads (which are not purchasable views).

@@ -46,6 +46,15 @@ export class ArtworkCatalogueQueryDto extends CatalogueListQueryDto {
   @IsOptional()
   @IsIn(['newest'])
   sort = 'newest' as const;
+  /**
+   * Filter by catalogue-level availability (TMS-FBR-012). `AVAILABLE` = the catalogue permits the
+   * sale now; `DROP_NOT_OPEN` / `DROP_ENDED` = gated by a drop window. Stock is not public, so
+   * there is no sold-out filter here. Values match the per-card `availability` field exactly.
+   */
+  @ApiPropertyOptional({ enum: ['AVAILABLE', 'DROP_NOT_OPEN', 'DROP_ENDED'] })
+  @IsOptional()
+  @IsIn(['AVAILABLE', 'DROP_NOT_OPEN', 'DROP_ENDED'])
+  availability?: 'AVAILABLE' | 'DROP_NOT_OPEN' | 'DROP_ENDED';
 }
 export class CatalogueEntryDto {
   @ApiProperty({ maxLength: 160 })

@@ -7,6 +7,7 @@ import type {
 } from '../admin-auth/admin-auth.types.js';
 import { DatabaseService } from '../database/database.service.js';
 import { ApiProblemException } from '../platform/api-problem.exception.js';
+import { deriveArtworkAvailability, deriveStartingPrice } from './artwork-read-model.js';
 import type {
   AssociationDto,
   ArtworkCatalogueQueryDto,
@@ -400,11 +401,18 @@ export class CatalogueService {
   }
 
   async searchArtworks(input: ArtworkCatalogueQueryDto) {
+    const now = new Date();
     const tagConditions: Prisma.TagWhereInput[] = [];
     if (input.tag) tagConditions.push({ slug: input.tag });
     if (input.theme) tagConditions.push({ slug: input.theme, kind: 'THEME' });
     if (input.mood) tagConditions.push({ slug: input.mood, kind: 'MOOD' });
     if (input.colourFamily) tagConditions.push({ slug: input.colourFamily, kind: 'COLOUR_FAMILY' });
+    const andConditions: Prisma.ArtworkWhereInput[] = tagConditions.map((condition) => ({
+      tags: { some: { tag: condition } },
+    }));
+    if (input.availability) {
+      andConditions.push(this.availabilityWhere(input.availability, now));
+    }
     const records = await this.database.client.artwork.findMany({
       where: {
         status: ArtworkStatus.PUBLISHED,
@@ -427,11 +435,20 @@ export class CatalogueService {
         drops: input.drop
           ? { some: { drop: { slug: input.drop, status: ArtworkStatus.PUBLISHED } } }
           : undefined,
-        AND: tagConditions.map((condition) => ({ tags: { some: { tag: condition } } })),
+        AND: andConditions,
         editions: input.limitedEdition ? { some: { status: ArtworkStatus.PUBLISHED } } : undefined,
       },
       include: {
-        versions: { where: { status: ArtworkStatus.PUBLISHED }, take: 1 },
+        versions: {
+          where: { status: ArtworkStatus.PUBLISHED },
+          take: 1,
+          include: {
+            garmentCompatibilities: {
+              where: { status: 'APPROVED' },
+              select: { unitPriceMinor: true, currency: true },
+            },
+          },
+        },
         tags: { include: { tag: true } },
         collections: {
           where: { collection: { status: ArtworkStatus.PUBLISHED } },
@@ -456,6 +473,11 @@ export class CatalogueService {
           id: record.id,
           slug: record.slug,
           status: record.status,
+          startingPrice: deriveStartingPrice(version?.garmentCompatibilities ?? []),
+          availability: deriveArtworkAvailability(
+            record.drops.map(({ drop }) => ({ startsAt: drop.startsAt, endsAt: drop.endsAt })),
+            now,
+          ),
           publishedVersion: version
             ? {
                 id: version.id,
@@ -507,6 +529,38 @@ export class CatalogueService {
       }),
       nextCursor: records.length > input.limit ? (visible.at(-1)?.id ?? null) : null,
     };
+  }
+
+  /**
+   * A WHERE fragment that selects artworks whose derived availability equals `state`. It must stay
+   * in exact agreement with `deriveArtworkAvailability` so a card's badge and the filter never
+   * disagree. Availability is drop-window derived only (TMS-FBR-012).
+   */
+  private availabilityWhere(
+    state: 'AVAILABLE' | 'DROP_NOT_OPEN' | 'DROP_ENDED',
+    now: Date,
+  ): Prisma.ArtworkWhereInput {
+    const publishedDrop = { drop: { status: ArtworkStatus.PUBLISHED } };
+    const anyDrop: Prisma.ArtworkWhereInput = { drops: { some: publishedDrop } };
+    const openDrop: Prisma.ArtworkWhereInput = {
+      drops: {
+        some: {
+          drop: {
+            status: ArtworkStatus.PUBLISHED,
+            AND: [
+              { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+              { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+            ],
+          },
+        },
+      },
+    };
+    const upcomingDrop: Prisma.ArtworkWhereInput = {
+      drops: { some: { drop: { status: ArtworkStatus.PUBLISHED, startsAt: { gt: now } } } },
+    };
+    if (state === 'AVAILABLE') return { OR: [{ NOT: anyDrop }, openDrop] };
+    if (state === 'DROP_NOT_OPEN') return { AND: [anyDrop, { NOT: openDrop }, upcomingDrop] };
+    return { AND: [anyDrop, { NOT: openDrop }, { NOT: upcomingDrop }] };
   }
 
   private lifecycle(status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED') {

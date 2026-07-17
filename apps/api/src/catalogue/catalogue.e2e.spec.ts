@@ -319,6 +319,80 @@ describe.sequential('catalogue content and search HTTP integration', () => {
     ).toBe(artworkId);
   });
 
+  it('exposes startingPrice and drop-derived availability with a matching filter (TMS-FBR-011/012)', async () => {
+    const now = Date.now();
+    const day = 86_400_000;
+    const iso = (offset: number) => new Date(now + offset).toISOString();
+
+    const plain = await api()
+      .post('/api/v1/admin/artworks')
+      .set('Cookie', contentCookie)
+      .send({ slug: 'availability-plain', title: 'Availability Plain' })
+      .expect(201);
+    await api()
+      .post(
+        `/api/v1/admin/artworks/${plain.body.data.id}/versions/${plain.body.data.versions[0].id}/publish`,
+      )
+      .set('Cookie', contentCookie)
+      .expect(200);
+
+    const upcoming = await api()
+      .post('/api/v1/admin/artworks')
+      .set('Cookie', contentCookie)
+      .send({ slug: 'availability-upcoming', title: 'Availability Upcoming' })
+      .expect(201);
+    await api()
+      .post(
+        `/api/v1/admin/artworks/${upcoming.body.data.id}/versions/${upcoming.body.data.versions[0].id}/publish`,
+      )
+      .set('Cookie', contentCookie)
+      .expect(200);
+    const drop = await api()
+      .post('/api/v1/admin/catalogue/drops')
+      .set('Cookie', contentCookie)
+      .send({
+        slug: 'availability-upcoming-drop',
+        title: 'Upcoming Drop',
+        startsAt: iso(2 * day),
+        endsAt: iso(9 * day),
+      })
+      .expect(201);
+    await api()
+      .put(`/api/v1/admin/catalogue/drops/${drop.body.data.id}/artworks/${upcoming.body.data.id}`)
+      .set('Cookie', contentCookie)
+      .send({ position: 0 })
+      .expect(200);
+    await api()
+      .patch(`/api/v1/admin/catalogue/drops/${drop.body.data.id}`)
+      .set('Cookie', contentCookie)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+
+    // An artwork outside any drop permits the sale now; with no approved garment it has no price.
+    const plainDetail = (await api().get('/api/v1/artworks/availability-plain').expect(200)).body
+      .data;
+    expect(plainDetail.availability).toBe('AVAILABLE');
+    expect(plainDetail.startingPrice).toBeNull();
+
+    // An artwork gated behind an upcoming drop is not open yet.
+    const upcomingDetail = (await api().get('/api/v1/artworks/availability-upcoming').expect(200))
+      .body.data;
+    expect(upcomingDetail.availability).toBe('DROP_NOT_OPEN');
+
+    // The availability filter agrees with the per-card badge exactly.
+    const availableSlugs = (
+      await api().get('/api/v1/artworks?availability=AVAILABLE&limit=100').expect(200)
+    ).body.data.items.map((item: { slug: string }) => item.slug);
+    expect(availableSlugs).toContain('availability-plain');
+    expect(availableSlugs).not.toContain('availability-upcoming');
+
+    const notOpenSlugs = (
+      await api().get('/api/v1/artworks?availability=DROP_NOT_OPEN&limit=100').expect(200)
+    ).body.data.items.map((item: { slug: string }) => item.slug);
+    expect(notOpenSlugs).toContain('availability-upcoming');
+    expect(notOpenSlugs).not.toContain('availability-plain');
+  });
+
   it('creates ordered editorial story blocks and keeps drafts private', async () => {
     const created = await api()
       .post('/api/v1/admin/catalogue/stories')
