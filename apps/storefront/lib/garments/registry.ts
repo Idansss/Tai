@@ -122,11 +122,14 @@ function hexToRgb(hex: string): [number, number, number] {
 
 /** Perceptual (sRGB) relative luminance, 0..1. */
 export function luminanceOf(hex: string): number {
-  const [r, g, b] = hexToRgb(hex).map((v) => {
+  // Keep the tuple: `.map` would widen it to number[], leaving each channel possibly-undefined
+  // under noUncheckedIndexedAccess.
+  const linear = (v: number) => {
     const s = v / 255;
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [r, g, b] = hexToRgb(hex);
+  return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
 }
 
 function clamp(v: number): number {
