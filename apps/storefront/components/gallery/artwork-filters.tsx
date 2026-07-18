@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge, IconButton, cn } from '@tms/ui';
+import { Badge, IconButton, Select } from '@tms/ui';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useRef } from 'react';
@@ -24,9 +24,6 @@ const availabilityLabel: Record<string, string> = {
   limited: 'Limited edition',
   sold_out: 'Sold out',
 };
-
-const selectClass =
-  'h-10 w-full rounded-md border border-line-2 bg-surface px-3 text-sm text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]';
 
 export function ArtworkFilters({
   collections,
@@ -52,61 +49,48 @@ export function ArtworkFilters({
 
   const clear = useCallback(() => navigate({ sort: 'newest' }), [navigate]);
 
+  const collectionOptions = [
+    { value: '', label: 'All collections' },
+    ...collections.map((c) => ({ value: c, label: c })),
+  ];
+
   const controls = (idPrefix: string): ReactNode => (
     <>
       <div>
         <label htmlFor={`${idPrefix}-collection`} className="text-xs font-medium text-ink-2">
           Collection
         </label>
-        <select
+        <Select
           id={`${idPrefix}-collection`}
-          className={cn(selectClass, 'mt-1')}
+          className="mt-1 h-10"
           value={filters.collection ?? ''}
-          onChange={(e) => set({ collection: e.target.value || undefined })}
-        >
-          <option value="">All collections</option>
-          {collections.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => set({ collection: v || undefined })}
+          options={collectionOptions}
+        />
       </div>
       <div>
         <label htmlFor={`${idPrefix}-availability`} className="text-xs font-medium text-ink-2">
           Availability
         </label>
-        <select
+        <Select
           id={`${idPrefix}-availability`}
-          className={cn(selectClass, 'mt-1')}
+          className="mt-1 h-10"
           value={filters.availability ?? ''}
-          onChange={(e) =>
-            set({ availability: (e.target.value || undefined) as Filters['availability'] })
-          }
-        >
-          {availabilityOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => set({ availability: (v || undefined) as Filters['availability'] })}
+          options={availabilityOptions}
+        />
       </div>
       <div>
         <label htmlFor={`${idPrefix}-sort`} className="text-xs font-medium text-ink-2">
           Sort
         </label>
-        <select
+        <Select
           id={`${idPrefix}-sort`}
-          className={cn(selectClass, 'mt-1')}
+          className="mt-1 h-10"
           value={filters.sort}
-          onChange={(e) => set({ sort: e.target.value as Filters['sort'] })}
-        >
-          {sortOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => set({ sort: v as Filters['sort'] })}
+          options={sortOptions}
+        />
       </div>
     </>
   );

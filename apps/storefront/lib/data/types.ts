@@ -204,6 +204,12 @@ export interface StorySummary {
   publishedOn: string;
   /** Count of shoppable (artwork/product) hotspots across the story. */
   shoppableCount: number;
+  /**
+   * Cover drawing for the index tile, derived from the story's first artwork hotspot. Optional:
+   * a story with no artwork hotspot (or whose art has no plate yet) falls back to the dark
+   * editorial tile, and the API provider does not carry it yet (TMS-FBR-019).
+   */
+  coverImage?: string | null;
 }
 
 export interface StoryDetail extends StorySummary {

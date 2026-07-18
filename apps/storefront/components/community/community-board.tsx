@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Button, EmptyState, Heading, Text } from '@tms/ui';
+import { Alert, Button, EmptyState, Heading, Select, Text } from '@tms/ui';
 import { Camera, ImagePlus } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import type { CommunityPhoto } from '@/lib/data';
@@ -161,18 +161,13 @@ function SubmitPhoto({
               <label htmlFor={artworkId} className="text-sm font-medium text-ink">
                 Which piece?
               </label>
-              <select
+              <Select
                 id={artworkId}
                 value={artworkSlug}
-                onChange={(e) => setArtworkSlug(e.target.value)}
-                className="mt-1 w-full rounded-[var(--radius-sm)] border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-              >
-                {artworks.map((a) => (
-                  <option key={a.slug} value={a.slug}>
-                    {a.title}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setArtworkSlug}
+                options={artworks.map((a) => ({ value: a.slug, label: a.title }))}
+                className="mt-1 border-line"
+              />
             </div>
           ) : null}
 

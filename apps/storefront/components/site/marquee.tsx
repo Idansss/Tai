@@ -29,9 +29,9 @@ export function Marquee({
   return (
     <div
       aria-hidden
-      className={cn('tms-marquee overflow-hidden whitespace-nowrap', className)}
+      className={cn('group overflow-hidden whitespace-nowrap', className)}
     >
-      <div className="tms-marquee-track">
+      <div className="inline-flex min-w-max animate-marquee group-hover:[animation-play-state:paused] motion-reduce:animate-none">
         {copy}
         {copy}
       </div>

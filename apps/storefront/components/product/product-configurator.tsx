@@ -8,7 +8,9 @@ import { Accordion } from '@/components/site/accordion';
 import { useCart } from '@/components/cart/cart-provider';
 import { MadeToOrderNote } from '@/components/fulfilment/made-to-order-note';
 import { WaitlistForm } from '@/components/waitlist/waitlist-form';
+import { GarmentMockup } from '@/components/garment/garment-mockup';
 import type { ProductDetail } from '@/lib/data';
+import { artworkImage } from '@/lib/artwork-images';
 import { waitlistKey } from '@/lib/waitlist';
 
 type View = 'front' | 'back';
@@ -30,6 +32,7 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
 
   const selectedColour = product.colours.find((c) => c.name === colour);
   const soldOut = product.availability === 'sold_out';
+  const print = artworkImage(product.artworkSlug);
 
   function addToBag() {
     if (soldOut) return;
@@ -65,11 +68,19 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
       {/* Preview */}
       <div>
         <div
-          className="relative aspect-[3/4] w-full overflow-hidden rounded-[var(--radius-lg)] border border-line"
-          style={{ backgroundColor: selectedColour?.hex ?? 'var(--color-surface-secondary)' }}
+          className="relative w-full overflow-hidden rounded-[var(--radius-lg)] border border-line bg-canvas-2"
           role="img"
-          aria-label={`${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view (preview placeholder)`}
+          aria-label={`${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view`}
         >
+          <GarmentMockup
+            garment={product.garment}
+            colour={colour ?? selectedColour?.hex}
+            view={view}
+            artwork={print ? { src: print, area: 'front', alt: '' } : null}
+            priority
+            className="p-4 sm:p-6"
+            sizes="(min-width: 1024px) 40vw, 90vw"
+          />
           <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
             {view}
           </span>

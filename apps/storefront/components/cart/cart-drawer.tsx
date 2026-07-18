@@ -67,7 +67,7 @@ export function CartDrawer() {
       ref={dialogRef}
       aria-label="Shopping bag"
       onClick={onDialogClick}
-      className="m-0 ml-auto h-dvh max-h-none w-[min(28rem,92vw)] max-w-none bg-canvas p-0 text-ink backdrop:bg-black/40 open:flex open:flex-col"
+      className="tms-slideover m-0 ml-auto h-dvh max-h-none w-[min(28rem,92vw)] max-w-none bg-canvas p-0 text-ink open:flex open:flex-col"
     >
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-5">
         <h2 className="font-display text-sm font-semibold tracking-tight">

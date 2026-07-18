@@ -3,7 +3,8 @@ import { artworkVersionId, passportSerial } from '../passport';
 import { artworkMatchesQuery } from '../search';
 import { filterApproved } from '../community';
 import { summariseReviews } from '../reviews';
-import { countShoppableItems } from '../stories';
+import { artworkImage } from '../artwork-images';
+import { countShoppableItems, storyHotspotTargets } from '../stories';
 import type {
   ArtworkDetail,
   ArtworkPassport,
@@ -25,6 +26,7 @@ import type {
   ReviewCollection,
   ReviewTargetType,
   StorefrontDataProvider,
+  StoryBlock,
   StoryDetail,
   StoryHotspotTarget,
   StorySummary,
@@ -621,6 +623,21 @@ function toStoryDetail(seed: StorySeed): StoryDetail {
   return { ...seed, shoppableCount: countShoppableItems(seed.blocks) };
 }
 
+/**
+ * The story's index cover: the drawing behind its first artwork hotspot. Stories carry no cover
+ * field of their own, but every one leads with a piece from the gallery, so that piece is the
+ * honest tile image. Falls back to null (the dark editorial tile) if none has a plate yet.
+ */
+function storyCoverImage(blocks: StoryBlock[]): string | null {
+  for (const target of storyHotspotTargets(blocks)) {
+    if (target.kind === 'artwork') {
+      const image = artworkImage(target.slug);
+      if (image) return image;
+    }
+  }
+  return null;
+}
+
 function toStorySummary(seed: StorySeed): StorySummary {
   const { slug, title, category, excerpt, readMinutes, publishedOn } = seed;
   return {
@@ -631,6 +648,7 @@ function toStorySummary(seed: StorySeed): StorySummary {
     readMinutes,
     publishedOn,
     shoppableCount: countShoppableItems(seed.blocks),
+    coverImage: storyCoverImage(seed.blocks),
   };
 }
 

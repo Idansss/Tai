@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, EmptyState, Heading, Price, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, EmptyState, Heading, Price, Select, Skeleton, Text, cn } from '@tms/ui';
 import { Lock, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -52,6 +52,8 @@ function Field({
 
 const inputClass =
   'h-11 w-full rounded-md border bg-canvas px-3 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]';
+
+const stateOptions = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
 export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOption[] }) {
   const { items, ready, cart, promotion } = useCart();
@@ -260,22 +262,16 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
               />
             </Field>
             <Field id="state" label="State" error={err('delivery.state')}>
-              <select
+              <Select
                 id="state"
-                autoComplete="address-level1"
                 value={form.delivery.state}
-                onChange={(e) => setDelivery('state', e.target.value)}
+                onValueChange={(v) => setDelivery('state', v)}
+                placeholder="Select a state…"
+                options={stateOptions}
                 aria-invalid={err('delivery.state') ? true : undefined}
                 aria-describedby={err('delivery.state') ? 'state-error' : undefined}
-                className={cn(inputClass, err('delivery.state') ? 'border-error' : 'border-line-2')}
-              >
-                <option value="">Select a state…</option>
-                {NIGERIAN_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                className={cn('bg-canvas', err('delivery.state') ? 'border-error' : 'border-line-2')}
+              />
             </Field>
           </div>
         </section>
