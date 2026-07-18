@@ -192,7 +192,14 @@ export interface StoryScene {
 export type StoryBlock =
   | { kind: 'heading'; text: string }
   | { kind: 'paragraph'; text: string }
-  | { kind: 'scene'; scene: StoryScene };
+  | { kind: 'scene'; scene: StoryScene }
+  /**
+   * A flat shoppable call-to-action. The API's `SHOPPABLE` blocks (TMS-FBR-019) carry a link
+   * target and a label but no scene image or hotspot geometry — that imagery is the un-shipped
+   * media work (TMS-B2-004/B3-003) — so they render as an inline "shop this" link rather than a
+   * positioned `scene`. The mock adapter still authors rich `scene` blocks; both kinds render.
+   */
+  | { kind: 'shoppable'; href: string; label: string };
 
 export interface StorySummary {
   slug: string;

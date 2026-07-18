@@ -222,3 +222,134 @@ describe('apiProvider.getStudioOptions', () => {
     await expect(apiProvider.getStudioOptions('market-day')).resolves.toEqual({ garments: [] });
   });
 });
+
+/**
+ * Route a stubbed fetch by URL fragment so a mapper that makes more than one request (a drop plus
+ * its /artworks lookup) sees the right body for each. The first matching fragment wins, so list
+ * "/artworks" before "/drops".
+ */
+function stubByUrl(routes: Array<[fragment: string, payload: unknown]>, status = 200) {
+  const spy = vi.fn().mockImplementation((url: unknown) => {
+    const match = routes.find(([fragment]) => String(url).includes(fragment));
+    return Promise.resolve({ ok: status < 400, status, json: async () => match?.[1] });
+  });
+  vi.stubGlobal('fetch', spy);
+  return spy;
+}
+
+const publishedDrop = {
+  id: 'd1',
+  slug: 'harmattan-2026',
+  title: 'Harmattan 2026',
+  description: 'A dry-season release.',
+  status: 'PUBLISHED',
+  publishedAt: '2026-01-01T00:00:00.000Z',
+  archivedAt: null,
+  tagline: 'Dust and gold.',
+  earlyAccessAt: '2026-01-01T00:00:00.000Z',
+  startsAt: '2026-01-02T00:00:00.000Z',
+  endsAt: null,
+  soldOut: false,
+  pieceCount: 3,
+};
+
+const artworkPage = { data: { items: [publishedArtwork], nextCursor: null }, meta: {} };
+
+describe('apiProvider.listDrops', () => {
+  it('maps a drop and takes its collection eyebrow from the first piece', async () => {
+    stubByUrl([
+      ['/artworks', artworkPage],
+      ['/drops', { data: { items: [publishedDrop], nextCursor: null }, meta: {} }],
+    ]);
+    const drops = await apiProvider.listDrops();
+    expect(drops[0]).toMatchObject({
+      slug: 'harmattan-2026',
+      tagline: 'Dust and gold.',
+      collection: 'Lagos Mornings',
+      releaseAt: '2026-01-02T00:00:00.000Z',
+      // The server's count, not the length of the resolved array.
+      pieceCount: 3,
+      soldOut: false,
+    });
+  });
+});
+
+describe('apiProvider.getDrop', () => {
+  it('joins the drop narrative and its pieces', async () => {
+    stubByUrl([
+      ['/artworks', artworkPage],
+      ['/drops', { data: publishedDrop, meta: {} }],
+    ]);
+    const drop = await apiProvider.getDrop('harmattan-2026');
+    expect(drop).toMatchObject({ slug: 'harmattan-2026', story: 'A dry-season release.' });
+    expect(drop?.artworks).toHaveLength(1);
+    expect(drop?.artworks[0]?.slug).toBe('market-day');
+  });
+
+  it('returns null for an unknown slug', async () => {
+    stubJson({ error: { code: 'RESOURCE_NOT_FOUND', message: 'No.', correlationId: 'c1' } }, 404);
+    await expect(apiProvider.getDrop('nope')).resolves.toBeNull();
+  });
+});
+
+const publishedStory = {
+  id: 's1',
+  slug: 'making-of-market-day',
+  title: 'The Making of Market Day',
+  excerpt: 'How a standing-up sketch became a wall of pattern.',
+  category: 'Process',
+  status: 'PUBLISHED',
+  artworkId: 'a1',
+  collectionId: null,
+  blocks: [
+    { id: 'b1', position: 0, type: 'TEXT', content: { text: 'A paragraph.' } },
+    {
+      id: 'b2',
+      position: 2,
+      type: 'SHOPPABLE',
+      content: { target: { kind: 'artwork', slug: 'market-day' }, label: 'Shop the print' },
+    },
+    { id: 'b3', position: 1, type: 'QUOTE', content: { text: 'A quote.' } },
+    { id: 'b4', position: 3, type: 'IMAGE', content: {} },
+  ],
+  readMinutes: 4,
+  shoppableCount: 1,
+  publishedAt: '2026-06-20T00:00:00.000Z',
+  archivedAt: null,
+};
+
+describe('apiProvider.listStories', () => {
+  it('maps a story onto the summary with server-derived fields and a client cover', async () => {
+    stubJson({ data: { items: [publishedStory], nextCursor: null }, meta: {} });
+    const stories = await apiProvider.listStories();
+    expect(stories[0]).toMatchObject({
+      slug: 'making-of-market-day',
+      category: 'Process',
+      readMinutes: 4,
+      shoppableCount: 1,
+      publishedOn: '2026-06-20T00:00:00.000Z',
+      // Derived client-side from the first artwork the story links to (TMS-FBR-019).
+      coverImage: '/artworks/market-day.jpg',
+    });
+  });
+});
+
+describe('apiProvider.getStory', () => {
+  it('orders blocks, renders SHOPPABLE as a link, and drops unrenderable blocks', async () => {
+    stubJson({ data: publishedStory, meta: {} });
+    const story = await apiProvider.getStory('making-of-market-day');
+    // The excerpt doubles as the standfirst; the read model has no separate intro.
+    expect(story?.intro).toBe('How a standing-up sketch became a wall of pattern.');
+    // Sorted by position: TEXT(0), QUOTE(1), SHOPPABLE(2). IMAGE(3) has no renderable body.
+    expect(story?.blocks).toEqual([
+      { kind: 'paragraph', text: 'A paragraph.' },
+      { kind: 'paragraph', text: 'A quote.' },
+      { kind: 'shoppable', href: '/artworks/market-day', label: 'Shop the print' },
+    ]);
+  });
+
+  it('returns null for an unknown slug', async () => {
+    stubJson({ error: { code: 'RESOURCE_NOT_FOUND', message: 'No.', correlationId: 'c1' } }, 404);
+    await expect(apiProvider.getStory('nope')).resolves.toBeNull();
+  });
+});

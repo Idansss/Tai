@@ -4,16 +4,23 @@ import type {
   CatalogueEntry,
   CursorPage,
   GarmentPlacement,
+  Story,
 } from '@tms/contracts';
 
+import { artworkImage } from '../artwork-images';
 import { apiFetch, apiFetchOrNull } from './http';
 import type {
   ArtworkDetail,
   ArtworkSummary,
   CollectionDetail,
   CollectionSummary,
+  DropDetail,
+  DropSummary,
   ListArtworksParams,
   StorefrontDataProvider,
+  StoryBlock,
+  StoryDetail,
+  StorySummary,
   StudioGarment,
   StudioOptions,
   StudioPlacement,
@@ -161,6 +168,146 @@ function toStudioGarment(compatibility: ArtworkGarmentCompatibility): StudioGarm
   };
 }
 
+/**
+ * The public drop read model (TMS-FBR-018). It is a `CatalogueEntry` widened with the drop's
+ * timing, its manual `soldOut` flag, and a server-derived `pieceCount`. It does NOT carry its
+ * artworks as summaries (only ids) nor a collection name, so those are resolved from `/artworks`.
+ */
+interface DropResponse extends CatalogueEntry {
+  tagline: string | null;
+  earlyAccessAt: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  soldOut: boolean;
+  pieceCount: number;
+}
+
+/** The pieces released in a drop, addressed by slug so their labels and images resolve. */
+async function dropArtworks(slug: string): Promise<ArtworkSummary[]> {
+  const page = await apiFetch<CursorPage<Artwork>>('/api/v1/artworks', {
+    query: { drop: slug, limit: 100 },
+  });
+  return page.items.map(toArtworkSummary);
+}
+
+/**
+ * A drop has no collection field of its own — it groups pieces that each belong to a collection.
+ * The eyebrow on the card and detail is the collection those pieces come from, so read it off the
+ * first piece rather than inventing one. Empty when the drop has no resolvable pieces yet.
+ */
+function toDropSummary(drop: DropResponse, artworks: ArtworkSummary[]): DropSummary {
+  return {
+    slug: drop.slug,
+    title: drop.title,
+    tagline: drop.tagline ?? '',
+    collection: artworks[0]?.collection ?? '',
+    earlyAccessAt: drop.earlyAccessAt,
+    // A published drop carries a start time; `?? ''` only guards the open-ended edge, which the
+    // status helpers read as "no release yet".
+    releaseAt: drop.startsAt ?? '',
+    endsAt: drop.endsAt,
+    // Server-authoritative count of published pieces; never derived from the resolved array.
+    pieceCount: drop.pieceCount,
+    soldOut: drop.soldOut,
+  };
+}
+
+type StoryBlockContent = Record<string, unknown>;
+
+function contentText(content: StoryBlockContent): string | null {
+  return typeof content.text === 'string' && content.text.trim() !== '' ? content.text : null;
+}
+
+/** The catalogue URL a SHOPPABLE block's target points at, or null if it is not linkable. */
+function shoppableHref(content: StoryBlockContent): string | null {
+  const target = content.target;
+  if (!target || typeof target !== 'object') return null;
+  const { kind, slug } = target as { kind?: unknown; slug?: unknown };
+  const s = typeof slug === 'string' ? slug : null;
+  switch (kind) {
+    case 'artwork':
+      return s ? `/artworks/${s}` : null;
+    case 'product':
+      return s ? `/products/${s}` : null;
+    case 'collection':
+      return s ? `/collections/${s}` : null;
+    case 'studio':
+      return '/design-studio';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Map one API story block onto a renderable one. `TEXT`/`QUOTE` become paragraphs; `SHOPPABLE`
+ * becomes an inline shoppable link (the server carries no hotspot geometry to build a scene from).
+ * `IMAGE`/`EMBED` have no image URL in the read model yet, so they are dropped rather than rendered
+ * empty. Returns null for a block we cannot render, which the caller filters out.
+ */
+function toStoryBlock(block: Story['blocks'][number]): StoryBlock | null {
+  const content = (block.content ?? {}) as StoryBlockContent;
+  switch (block.type) {
+    case 'TEXT':
+    case 'QUOTE': {
+      const text = contentText(content);
+      return text ? { kind: 'paragraph', text } : null;
+    }
+    case 'SHOPPABLE': {
+      const href = shoppableHref(content);
+      if (!href) return null;
+      const label = typeof content.label === 'string' ? content.label : 'Shop this piece';
+      return { kind: 'shoppable', href, label };
+    }
+    default:
+      return null;
+  }
+}
+
+/**
+ * The story's index cover. Stories carry no cover field (TMS-FBR-019, `thumbnailUrl` still null),
+ * but a shoppable story leads with a piece from the gallery, so the first artwork it links to is
+ * the honest tile — resolved client-side from the static plates, exactly as the mock does. Falls
+ * back to null (the dark editorial tile) when no linked piece has a plate yet.
+ */
+function storyCoverImage(story: Story): string | null {
+  for (const block of story.blocks) {
+    if (block.type !== 'SHOPPABLE') continue;
+    const target = (block.content as StoryBlockContent).target;
+    if (target && typeof target === 'object') {
+      const { kind, slug } = target as { kind?: unknown; slug?: unknown };
+      if (kind === 'artwork' && typeof slug === 'string') {
+        const image = artworkImage(slug);
+        if (image) return image;
+      }
+    }
+  }
+  return null;
+}
+
+function toStorySummary(story: Story): StorySummary {
+  return {
+    slug: story.slug,
+    title: story.title,
+    // Server-derived (TMS-FBR-019). Null category renders as no eyebrow rather than "null".
+    category: story.category ?? '',
+    excerpt: story.excerpt ?? '',
+    readMinutes: story.readMinutes,
+    publishedOn: story.publishedAt ?? '',
+    shoppableCount: story.shoppableCount,
+    coverImage: storyCoverImage(story),
+  };
+}
+
+function toStoryDetail(story: Story): StoryDetail {
+  const blocks = [...story.blocks]
+    .sort((a, b) => a.position - b.position)
+    .map(toStoryBlock)
+    .filter((block): block is StoryBlock => block !== null);
+  // The read model has no separate intro; the excerpt is the story's own lead-in, so it doubles as
+  // the standfirst rather than inventing one.
+  return { ...toStorySummary(story), intro: story.excerpt ?? '', blocks };
+}
+
 export const apiProvider: StorefrontDataProvider = {
   async getStudioOptions(artworkSlug: string): Promise<StudioOptions> {
     const compatibilities = await apiFetch<ArtworkGarmentCompatibility[]>(
@@ -248,29 +395,39 @@ export const apiProvider: StorefrontDataProvider = {
       'a product is a storefront composition of an artwork and a garment, and there is no /products endpoint (TMS-FBR-010).',
     );
   },
-  listDrops() {
-    return notImplemented(
-      'listDrops',
-      '/drops carries no tagline, pieceCount or soldOut (TMS-FBR-018).',
+  async listDrops(): Promise<DropSummary[]> {
+    const page = await apiFetch<CursorPage<DropResponse>>('/api/v1/drops', {
+      query: { limit: 100 },
+    });
+    // A drop's collection eyebrow comes from its pieces, which the list response does not embed, so
+    // resolve them per drop. The catalogue is small and drops are few; correctness over a round-trip.
+    return Promise.all(
+      page.items.map(async (drop) => toDropSummary(drop, await dropArtworks(drop.slug))),
     );
   },
-  getDrop() {
-    return notImplemented(
-      'getDrop',
-      '/drops carries no tagline, pieceCount or soldOut (TMS-FBR-018).',
-    );
+
+  async getDrop(slug: string): Promise<DropDetail | null> {
+    const drop = await apiFetchOrNull<DropResponse>(`/api/v1/drops/${encodeURIComponent(slug)}`);
+    if (!drop) return null;
+    const artworks = await dropArtworks(slug);
+    return {
+      ...toDropSummary(drop, artworks),
+      // The drop's narrative is its catalogue-entry description; empty renders as no body.
+      story: drop.description ?? '',
+      artworks,
+    };
   },
-  listStories() {
-    return notImplemented(
-      'listStories',
-      '/stories carries no category, readMinutes or shoppableCount (TMS-FBR-019).',
-    );
+
+  async listStories(): Promise<StorySummary[]> {
+    const page = await apiFetch<CursorPage<Story>>('/api/v1/stories', {
+      query: { limit: 100 },
+    });
+    return page.items.map(toStorySummary);
   },
-  getStory() {
-    return notImplemented(
-      'getStory',
-      '/stories carries no category, readMinutes or shoppableCount (TMS-FBR-019).',
-    );
+
+  async getStory(slug: string): Promise<StoryDetail | null> {
+    const story = await apiFetchOrNull<Story>(`/api/v1/stories/${encodeURIComponent(slug)}`);
+    return story ? toStoryDetail(story) : null;
   },
   getArtworkPassport() {
     return notImplemented('getArtworkPassport', 'the passport endpoint does not exist yet.');

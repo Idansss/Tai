@@ -41,18 +41,23 @@ type DomainSource = 'api' | 'mock';
  * Domains the backend has actually merged AND whose view model the API can fill. Only
  * these may be served by `api`.
  *
- * `drops`, `stories` and `studio` have endpoints but are still false: their F5 view models
- * were designed against mocks and ask for fields the contract does not carry (a drop's
- * tagline/pieceCount/soldOut, a story's category/readMinutes/shoppableCount), and
- * getStudioOptions() takes no artwork, while /artworks/{slug}/compatible-garments is
- * artwork-scoped. Flipping them on today would mean inventing data. Each is filed in
- * docs/coordination/FRONTEND_TO_BACKEND.md; flip the entry when its gap closes.
+ * `drops` and `stories` are now `true`: TMS-FBR-018/019 added the fields their view models needed
+ * (a drop's tagline/earlyAccessAt/soldOut/pieceCount, a story's category/readMinutes/
+ * shoppableCount), so the api adapter fills them from the real read model — a drop's pieces and
+ * collection are resolved from /artworks?drop=, and a story's SHOPPABLE blocks render as inline
+ * links since the server carries no hotspot geometry. Cover images stay a client-side fallback
+ * (no server cover field; `thumbnailUrl` still null).
+ *
+ * `studio` is still false: getStudioOptions() takes no artwork, while
+ * /artworks/{slug}/compatible-garments is artwork-scoped. Flipping it on today would mean
+ * inventing data. It is filed in docs/coordination/FRONTEND_TO_BACKEND.md; flip the entry when
+ * its gap closes.
  */
 const API_CAPABLE_DOMAINS = {
   artworks: true,
   collections: true,
-  drops: false,
-  stories: false,
+  drops: true,
+  stories: true,
   studio: false,
   // `product` is a storefront composition (an artwork on a garment), not a backend
   // resource: there is no /products endpoint. Deriving it from /artworks plus

@@ -92,6 +92,22 @@ export default async function StoryDetailPage({ params }: Params) {
                 </Text>
               );
             }
+            if (block.kind === 'shoppable') {
+              return (
+                <Link
+                  key={index}
+                  href={block.href}
+                  className={buttonVariants({
+                    size: 'lg',
+                    variant: 'secondary',
+                    className: 'mt-6',
+                  })}
+                >
+                  <ShoppingBag className="size-4 text-accent" aria-hidden />
+                  {block.label}
+                </Link>
+              );
+            }
             return <ShoppableScene key={block.scene.id} scene={block.scene} />;
           })}
         </div>
