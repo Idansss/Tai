@@ -1,5 +1,6 @@
-import { Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container, Text } from '@tms/ui';
 import type { Metadata } from 'next';
+import { PageHeader } from '@/components/site/page-header';
 import { StoryCard } from '@/components/story/story-card';
 import { dataProvider } from '@/lib/data';
 
@@ -13,17 +14,13 @@ export default async function StoriesPage() {
   const stories = await dataProvider.listStories();
 
   return (
-    <Container className="py-10">
-      <div className="max-w-2xl">
-        <Eyebrow>Editorial</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Stories
-        </Heading>
-        <Text size="lg" tone="secondary" className="mt-3">
-          Notes from the studio — how a drawing becomes a piece you can wear, and how we style each
-          release. Tap a hotspot in any story to shop the piece.
-        </Text>
-      </div>
+    <Container className="py-14">
+      <PageHeader
+        eyebrow="Editorial"
+        title="Stories"
+        lead="Notes from the studio — how a drawing becomes a piece you can wear. Tap a hotspot in any story to shop the piece."
+        contained={false}
+      />
 
       {stories.length > 0 ? (
         <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

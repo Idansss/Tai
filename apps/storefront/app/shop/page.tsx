@@ -1,6 +1,8 @@
-import { Container, EmptyState, Eyebrow, Heading, Text } from '@tms/ui';
+import { Container, EmptyState } from '@tms/ui';
 import type { Metadata } from 'next';
 import { ProductCard } from '@/components/product/product-card';
+import { PageHeader } from '@/components/site/page-header';
+import { Reveal } from '@/components/site/reveal';
 import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
@@ -13,25 +15,24 @@ export default async function ShopPage() {
 
   return (
     <Container className="py-14">
-      <header>
-        <Eyebrow>Shop</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Shop
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Original artwork applied to considered garments, ready to order.
-        </Text>
-      </header>
+      <PageHeader
+        eyebrow="Shop"
+        title="The shop"
+        lead="Original artwork on considered garments — hand-drawn, printed to order."
+        contained={false}
+      />
 
       {products.length === 0 ? (
         <div className="mt-10">
           <EmptyState title="Nothing in the shop yet" description="New drops are on their way." />
         </div>
       ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
+        <ul className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-6 lg:grid-cols-3">
+          {products.map((product, i) => (
             <li key={product.id}>
-              <ProductCard product={product} />
+              <Reveal delay={Math.min(i, 5) * 60}>
+                <ProductCard product={product} />
+              </Reveal>
             </li>
           ))}
         </ul>

@@ -1,4 +1,4 @@
-import { Container, Eyebrow, Heading } from '@tms/ui';
+import { Container } from '@tms/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -51,10 +51,12 @@ export default async function ProductPage({ params }: Params) {
       </nav>
 
       <header className="mt-6">
-        <Eyebrow>{product.garment}</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
+        <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+          {product.garment}
+        </p>
+        <h1 className="mt-2 font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl">
           {product.artworkTitle}
-        </Heading>
+        </h1>
         <p className="mt-2 text-sm text-muted">
           From the{' '}
           <Link

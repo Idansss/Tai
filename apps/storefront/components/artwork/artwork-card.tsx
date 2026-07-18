@@ -1,58 +1,62 @@
-import { Badge, Card, Eyebrow, Heading, Price, Text } from '@tms/ui';
+import { Price } from '@tms/ui';
 import Link from 'next/link';
+import { TileBadge, TileImage } from '@/components/site/tile';
+import { artworkImage } from '@/lib/artwork-images';
 import type { ArtworkSummary } from '@/lib/data';
 
-const availabilityTone = {
-  available: 'success',
-  limited: 'warning',
-  sold_out: 'neutral',
-} as const;
+/**
+ * One piece on the wall, as a streetwear product tile (docs/frontend/UI_DIRECTION.md §7):
+ * a colour image that lifts on hover, a status badge, an uppercase title and the price.
+ *
+ * The old paper-mat "Plate" with its graphite-to-colour reveal belonged to the gallery direction;
+ * this direction shows the work in colour, loud, from the first frame.
+ */
+export function ArtworkCard({
+  artwork,
+  /** How wide this card will render, passed to the image for a correct source size. */
+  sizes,
+  priority = false,
+}: {
+  artwork: ArtworkSummary;
+  sizes?: string;
+  priority?: boolean;
+}) {
+  const src = artworkImage(artwork.slug);
+  const soldOut = artwork.availability === 'sold_out';
 
-const availabilityLabel = {
-  available: 'Available',
-  limited: 'Limited edition',
-  sold_out: 'Sold out',
-} as const;
-
-export function ArtworkCard({ artwork }: { artwork: ArtworkSummary }) {
   return (
     <Link
       href={`/artworks/${artwork.slug}`}
-      className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+      className="group block rounded-2xl outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-focus-ring)]"
     >
-      <Card variant="surface" interactive padded={false} className="overflow-hidden">
-        <div
-          className="aspect-[4/5] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-          role="img"
-          aria-label={`${artwork.title} — artwork preview placeholder`}
-        />
-        <div className="space-y-2 p-5">
-          <div className="flex items-center justify-between gap-2">
-            <Eyebrow>{artwork.collection}</Eyebrow>
-            {artwork.availability ? (
-              <Badge tone={availabilityTone[artwork.availability]}>
-                {availabilityLabel[artwork.availability]}
-              </Badge>
-            ) : null}
-          </div>
-          <Heading as={3} size="md">
-            {artwork.title}
-          </Heading>
-          <Text size="sm" tone="muted">
-            {artwork.shortStory}
-          </Text>
+      <TileImage
+        src={src}
+        alt={`${artwork.title} — artwork`}
+        priority={priority}
+        {...(sizes ? { sizes } : {})}
+        badge={
+          soldOut ? (
+            <TileBadge className="bg-neutral-950/80">Sold out</TileBadge>
+          ) : artwork.limitedEdition ? (
+            <TileBadge>Limited</TileBadge>
+          ) : undefined
+        }
+      />
+      <div className="mt-4">
+        <h3 className="line-clamp-1 font-display text-sm font-bold uppercase tracking-wide text-ink">
+          {artwork.title}
+        </h3>
+        <div className="mt-1 flex items-baseline justify-between gap-2">
+          <p className="min-w-0 truncate text-xs text-muted">{artwork.collection}</p>
+          {/* Null price is not ₦0: ADR-015 puts price on the approved artwork+garment pair, so the
+              artwork response may carry none. Render nothing rather than invent a number. */}
           {artwork.startingPriceMinor !== null && artwork.currency ? (
-            <div className="flex items-center justify-between pt-2">
-              <Price
-                amountMinor={artwork.startingPriceMinor}
-                currency={artwork.currency}
-                className="text-ink"
-              />
-              <span className="text-xs text-muted">from</span>
-            </div>
+            <span className="shrink-0 font-display text-sm font-semibold text-ink">
+              <Price amountMinor={artwork.startingPriceMinor} currency={artwork.currency} />
+            </span>
           ) : null}
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }

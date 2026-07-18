@@ -2,14 +2,18 @@
 
 import { Alert, cn, Eyebrow, Heading, Price, Text } from '@tms/ui';
 import { Check, Copy, Heart, RotateCcw, ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
 import { designSignature, persistSavedDesign } from '@/lib/account';
+import { artworkImage } from '@/lib/artwork-images';
+import { dataProvider } from '@/lib/data';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import {
   buildStudioQuery,
+  EMPTY_STUDIO_CONFIG,
   findGarment,
   findPlacement,
   findVariantId,
@@ -75,22 +79,30 @@ function Section({
 
 export function DesignStudio({
   artworks,
-  options,
+  options: initialOptions,
   initialConfig,
 }: {
   artworks: ArtworkSummary[];
   options: StudioOptions;
   initialConfig: StudioConfig;
 }) {
+  // The approved options for the *currently selected* artwork. Seeded from the server for the
+  // artwork in the URL, then swapped in place when the customer picks a different one — no
+  // navigation, so the page never reloads mid-design.
+  const [options, setOptions] = useState<StudioOptions>(initialOptions);
   // Everything unapproved is dropped up front, so a shared link can never seed the picker with a
   // placement or scale this artwork was not approved for.
   const [config, setConfig] = useState<StudioConfig>(() =>
-    resolveStudioConfig(initialConfig, options),
+    resolveStudioConfig(initialConfig, initialOptions),
   );
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const [saved, setSaved] = useState(false);
+  // The artwork whose options are being fetched, so the picker can show progress and ignore a
+  // slow response that a newer click has superseded.
+  const [loadingArtwork, setLoadingArtwork] = useState<string | null>(null);
+  const latestRequest = useRef<string | null>(null);
   const { addItem } = useCart();
   const { user } = useAuth();
   const router = useRouter();
@@ -111,6 +123,10 @@ export function DesignStudio({
     [options],
   );
 
+  // Clearing the artwork cascades: with no artwork there is no garment, colour, size, placement or
+  // scale to keep, so resetting these three is enough for resolveStudioConfig to empty the rest.
+  const reset = useCallback(() => update({ artwork: null, garment: null, size: null }), [update]);
+
   const artwork = useMemo(
     () => artworks.find((a) => a.slug === config.artwork) ?? null,
     [artworks, config.artwork],
@@ -126,18 +142,54 @@ export function DesignStudio({
       ([] as string[]),
     [garment, config.colour],
   );
+  // The drawing itself, for the print preview.
+  const artworkPrint = artwork ? artworkImage(artwork.slug) : null;
   const complete = isStudioConfigComplete(config);
   const artworkOnThisView = placement && placement.area === config.view;
+  // Every section gates on the artwork (`disabled={!artwork}`), and everything else is resolved
+  // from it, so the artwork is what "something to reset" means — and what keeps the button's
+  // enabled state in step with the visible selection.
+  const dirty = Boolean(config.artwork);
 
   /**
-   * Approval is per artwork+garment pair, so a different artwork means a different set of
-   * approved canvases. Navigate so the server fetches that artwork's options rather than
-   * re-using the ones on screen.
+   * Approval is per artwork+garment pair, so a different artwork means a different set of approved
+   * canvases. This used to navigate (router.push) so the server could refetch, which reloaded the
+   * whole page and — because this client component instance survives a searchParams change — left
+   * the picker showing the old selection. Instead we fetch the new artwork's options in place and
+   * resolve a fresh config for it, so the choice takes effect immediately with no reload.
+   *
+   * `latestRequest` guards against out-of-order responses: only the most recent click wins.
    */
-  const selectArtwork = (slug: string) => {
-    if (slug === config.artwork) return;
-    router.push(`/design-studio?artwork=${encodeURIComponent(slug)}`);
-  };
+  const selectArtwork = useCallback(
+    async (slug: string) => {
+      if (slug === config.artwork || slug === loadingArtwork) return;
+      latestRequest.current = slug;
+      setLoadingArtwork(slug);
+      setCopied(false);
+      setStatus(null);
+      setAdded(false);
+      setSaved(false);
+      try {
+        const nextOptions = await dataProvider.getStudioOptions(slug);
+        if (latestRequest.current !== slug) return; // a newer selection superseded this one
+        const nextConfig = resolveStudioConfig(
+          { ...EMPTY_STUDIO_CONFIG, artwork: slug, view: config.view, quantity: config.quantity },
+          nextOptions,
+        );
+        setOptions(nextOptions);
+        setConfig(nextConfig);
+        // Keep the URL shareable/refresh-safe without a Next navigation (which would reload).
+        window.history.replaceState(null, '', `/design-studio?artwork=${encodeURIComponent(slug)}`);
+      } catch {
+        if (latestRequest.current === slug) {
+          setStatus('That artwork could not be loaded — please try again.');
+        }
+      } finally {
+        if (latestRequest.current === slug) setLoadingArtwork(null);
+      }
+    },
+    [config.artwork, config.view, config.quantity, loadingArtwork],
+  );
 
   const selectPlacement = (id: string) => {
     const next = findPlacement(garment, id);
@@ -232,10 +284,13 @@ export function DesignStudio({
   };
 
   return (
-    <div
-      data-theme="dark"
-      className="rounded-[var(--radius-xl)] border border-line bg-canvas p-4 sm:p-6"
-    >
+    /*
+     * Paper, like every other page. This used to force data-theme="dark", which made the Studio
+     * a second identity: the one screen where the site went black. The drawings live on white
+     * paper, so a dark ground turns every piece into a lightbox (docs/frontend/UI_DIRECTION.md —
+     * "one ground colour across the site; no page goes dark").
+     */
+    <div className="rounded-[var(--radius-xl)] border border-line bg-canvas-2 p-4 sm:p-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* Preview */}
         <div className="lg:sticky lg:top-20 lg:self-start">
@@ -255,23 +310,40 @@ export function DesignStudio({
               className="absolute rounded-sm border border-dashed border-white/40"
               style={{ left: '18%', top: '16%', width: '64%', height: '60%' }}
             />
-            {/* Artwork overlay */}
-            {artwork && artworkOnThisView && placement && scale ? (
-              // Position and size both come from the approved placement and preset. Nothing here
-              // is customer-authored — this is a rendering of an approved print (ADR-013).
+            {/*
+             * The print. This used to be a white box with the artwork's title typed into it — the
+             * Studio never showed the drawing you were buying.
+             *
+             * Position and size come from the approved placement and preset; nothing here is
+             * customer-authored (ADR-013).
+             *
+             * The print keeps its paper, as a panel. Dropping the paper out with `multiply` was
+             * the first attempt and it is wrong twice: the drawings are JPEGs with no alpha, and
+             * multiply against a dark garment — Black is the default colour — erases the drawing
+             * entirely. A printed panel is honest about what we hold (a drawing on paper) and
+             * reads as intentional against a brand whose own work is comic panels.
+             *
+             * This is a guide. Real per-garment mockups are approved assets from the media
+             * pipeline (MediaAssetKind.MOCKUP, TMS-B2-004) and will replace it.
+             */}
+            {artwork && artworkOnThisView && placement && scale && artworkPrint ? (
               <div
-                className="absolute overflow-hidden rounded-sm bg-gradient-to-br from-white/80 to-white/50 shadow-lg"
+                className="absolute -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[1px] shadow-sm ring-1 ring-black/10"
                 style={{
                   left: `${placement.x}%`,
                   top: `${placement.y}%`,
                   width: `${scale.widthPct}%`,
-                  aspectRatio: '4 / 5',
-                  transform: 'translate(-50%, -50%)',
                 }}
               >
-                <span className="grid size-full place-items-center px-1 text-center text-[10px] font-medium text-black/70">
-                  {artwork.title}
-                </span>
+                <Image
+                  src={artworkPrint}
+                  alt=""
+                  aria-hidden
+                  width={600}
+                  height={800}
+                  sizes="(min-width: 1024px) 25vw, 45vw"
+                  className="h-auto w-full"
+                />
               </div>
             ) : null}
             <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
@@ -312,6 +384,24 @@ export function DesignStudio({
 
         {/* Configuration */}
         <div className="space-y-8">
+          {/*
+           * The picker plus six steps make this column taller than the viewport, so the actions at
+           * the very bottom — Reset especially — used to need a long scroll to reach. This bar keeps
+           * Reset within reach from the top and pins it while you scroll the steps. It extends to the
+           * card edges (negative margins undo the card padding) and restores its own inset.
+           */}
+          <div className="sticky top-16 z-20 -mx-4 -mt-4 flex items-center justify-between gap-3 border-b border-line bg-canvas-2 px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6 lg:top-20">
+            <Eyebrow>Build your piece</Eyebrow>
+            <button
+              type="button"
+              onClick={reset}
+              disabled={!dirty}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm text-muted outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <RotateCcw className="size-4" aria-hidden /> Reset
+            </button>
+          </div>
+
           <Section step={1} title="Choose artwork">
             <ul className="grid grid-cols-3 gap-3">
               {artworks.map((a) => (
@@ -320,17 +410,43 @@ export function DesignStudio({
                     type="button"
                     onClick={() => selectArtwork(a.slug)}
                     aria-pressed={config.artwork === a.slug}
+                    aria-busy={loadingArtwork === a.slug}
                     className={cn(
-                      'block w-full overflow-hidden rounded-md border text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                      'group block w-full overflow-hidden rounded-md border text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
                       config.artwork === a.slug
                         ? 'border-[var(--color-accent-primary)] ring-2 ring-[var(--color-accent-primary)]'
                         : 'border-line-2 hover:border-line',
                     )}
                   >
-                    <span
-                      aria-hidden
-                      className="block aspect-[4/5] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-                    />
+                    {/* The drawing, not a gradient. Unchosen pieces rest in graphite and the
+                        chosen one is in colour — the same rule as the wall: colour is a reward,
+                        and here it marks what you picked. */}
+                    <span className="relative block aspect-[4/5] w-full overflow-hidden bg-canvas-2">
+                      {artworkImage(a.slug) ? (
+                        <Image
+                          src={artworkImage(a.slug) as string}
+                          alt=""
+                          aria-hidden
+                          fill
+                          sizes="120px"
+                          className={cn(
+                            'object-cover transition-[filter] duration-[var(--duration-base)] motion-reduce:transition-none',
+                            config.artwork === a.slug
+                              ? 'grayscale-0'
+                              : 'grayscale group-hover:grayscale-0 motion-reduce:grayscale-0',
+                          )}
+                        />
+                      ) : null}
+                      {loadingArtwork === a.slug ? (
+                        <span className="absolute inset-0 grid place-items-center bg-canvas/60">
+                          <span
+                            role="status"
+                            aria-label="Loading artwork"
+                            className="size-5 animate-spin rounded-full border-2 border-ink border-t-transparent motion-reduce:animate-none"
+                          />
+                        </span>
+                      ) : null}
+                    </span>
                     <span className="block truncate px-2 py-1.5 text-xs text-ink">{a.title}</span>
                   </button>
                 </li>
@@ -510,13 +626,6 @@ export function DesignStudio({
                   <Copy className="size-4" aria-hidden />
                 )}
                 {copied ? 'Link copied' : 'Copy share link'}
-              </button>
-              <button
-                type="button"
-                onClick={() => update({ artwork: null, garment: null, size: null })}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-md px-3 text-sm text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-              >
-                <RotateCcw className="size-4" aria-hidden /> Reset
               </button>
             </div>
 

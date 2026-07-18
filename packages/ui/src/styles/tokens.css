@@ -5,40 +5,53 @@
  */
 
 :root {
-  /* Backgrounds & surfaces */
-  --color-background-primary: #fafaf7;
-  --color-background-secondary: #f1f1ec;
-  --color-background-elevated: #ffffff;
-  --color-surface-primary: #ffffff;
-  --color-surface-secondary: #f1f1ec;
+  /*
+   * Paper and graphite. Every value below is sampled from the artwork in
+   * apps/storefront/public/artworks, not chosen from taste — see docs/frontend/UI_DIRECTION.md.
+   * The drawings are coloured pencil on warm cream paper, so the interface is that paper and
+   * that pencil. A cool grey-teal frame makes a hot magenta drawing look muddy; this palette
+   * exists to stop that.
+   */
 
-  /* Text */
-  --color-text-primary: #17171a;
-  --color-text-secondary: #3d4450;
-  --color-text-muted: #565e6b;
+  /* Backgrounds & surfaces — the paper. Sampled: market-day #f6f5ee, nigeria-muse-sketch
+     #eeebe1, addis-coffee-garden #e8e7df. The wall is paper; the plate is brighter paper. */
+  --color-background-primary: #f3f1e9;
+  --color-background-secondary: #e9e6da;
+  --color-background-elevated: #fbfaf5;
+  --color-surface-primary: #fbfaf5;
+  --color-surface-secondary: #eeebe1;
 
-  /* Borders */
-  --color-border-default: #e4e4dd;
-  --color-border-strong: #c7c7bc;
+  /* Text — the graphite. Sampled: market-day's darkest pencil #251e23, and the sketch's
+     mid-pencil #6a6760, which is the muted value (darkened to clear AA). Warm: R > G > B.
+     The previous #3d4450 / #565e6b were blue-grey — literally the opposite of a pencil. */
+  --color-text-primary: #241f1b;
+  --color-text-secondary: #4a443b;
+  --color-text-muted: #5e594f;
 
-  /* Accents */
-  --color-accent-primary: #2d3e4e;
-  --color-accent-secondary: #a2461f;
+  /* Borders — paper edge, never a grey rule. */
+  --color-border-default: #ddd6c6;
+  --color-border-strong: #b9b19d;
 
-  /* Status */
-  --color-success: #2e7d57;
+  /* Accents — the art's hot note is amber (market-day #faca6b, midnight-in-lagos #f9cf6f).
+     That amber is too light to carry text, so the action is its deep form. Colour is a reward:
+     this is the ONE saturated thing in the chrome. Everything else is paper and pencil. */
+  --color-accent-primary: #8a5a10;
+  --color-accent-secondary: #8c4a2f;
+
+  /* Status — semantic, not brand. Left alone: red must read as red. */
+  --color-success: #2f6b47;
   --color-warning: #8a5a00;
   --color-error: #b3261e;
   --color-information: #2d5aa0;
 
   /* Interaction */
-  --color-focus-ring: #3b6fd4;
-  --color-disabled-background: #e8e8e2;
-  --color-disabled-text: #8c8c82;
+  --color-focus-ring: #b4530f;
+  --color-disabled-background: #e6e2d5;
+  --color-disabled-text: #7d7669;
 
   /* On-accent foregrounds (text placed on accent fills) */
-  --color-on-accent-primary: #fafaf7;
-  --color-on-accent-secondary: #fafaf7;
+  --color-on-accent-primary: #fbfaf5;
+  --color-on-accent-secondary: #fbfaf5;
 
   /* Typography families. Apps inject the loaded faces via next/font as
      --font-space-grotesk / --font-ibm-plex-sans; these fall back gracefully. */
@@ -61,34 +74,41 @@
   color-scheme: light;
 }
 
+/*
+ * Dark is warm ink, not blue-black. The direction is that no page goes dark (the art lives on
+ * white paper — a dark ground turns every drawing into a lightbox), so this theme exists for
+ * surfaces that genuinely need it rather than as a second identity. If it is ever used, it must
+ * still read as the same studio: warm charcoal, paper-coloured text, the same amber.
+ */
 [data-theme='dark'] {
-  --color-background-primary: #121316;
-  --color-background-secondary: #1a1c20;
-  --color-background-elevated: #22252b;
-  --color-surface-primary: #1a1c20;
-  --color-surface-secondary: #22252b;
+  --color-background-primary: #191614;
+  --color-background-secondary: #211d19;
+  --color-background-elevated: #2a251f;
+  --color-surface-primary: #211d19;
+  --color-surface-secondary: #2a251f;
 
-  --color-text-primary: #f4f4f0;
-  --color-text-secondary: #c4c7ce;
-  --color-text-muted: #9aa0ab;
+  --color-text-primary: #f3f1e9;
+  --color-text-secondary: #ccc5b8;
+  --color-text-muted: #9d9689;
 
-  --color-border-default: #2e3238;
-  --color-border-strong: #474c55;
+  --color-border-default: #332d26;
+  --color-border-strong: #4e463c;
 
-  --color-accent-primary: #a9c4dc;
-  --color-accent-secondary: #e08a5f;
+  /* On a dark ground the amber can be its true sampled brightness. */
+  --color-accent-primary: #e8b25c;
+  --color-accent-secondary: #e0916a;
 
   --color-success: #56c596;
   --color-warning: #d6a044;
   --color-error: #ef6a63;
   --color-information: #7aa7e6;
 
-  --color-focus-ring: #6fa0ff;
-  --color-disabled-background: #24272d;
-  --color-disabled-text: #6b7079;
+  --color-focus-ring: #f0a24a;
+  --color-disabled-background: #241f1b;
+  --color-disabled-text: #6d665b;
 
-  --color-on-accent-primary: #121316;
-  --color-on-accent-secondary: #121316;
+  --color-on-accent-primary: #191614;
+  --color-on-accent-secondary: #191614;
 
   color-scheme: dark;
 }

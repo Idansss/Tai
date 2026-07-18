@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: '%s · Tai Manic Studios',
   },
   description:
-    'Original drawings, illustrations and comic-style artwork, applied to considered apparel. A premium digital gallery and interactive design studio.',
+    'Hand-drawn art from across Africa — coloured pencil and marker on paper, printed on cotton. A premium digital gallery and interactive design studio.',
   openGraph: {
     type: 'website',
     siteName: 'Tai Manic Studios',
