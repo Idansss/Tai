@@ -170,12 +170,14 @@ const collectionMeta: { slug: string; name: string; description: string }[] = [
   {
     slug: 'night-studies',
     name: 'Night Studies',
-    description: 'The city after dark in warm coloured pencil — dusk light, street life and the last colour of the day.',
+    description:
+      'The city after dark in warm coloured pencil — dusk light, street life and the last colour of the day.',
   },
   {
     slug: 'comic-line',
     name: 'Comic Line',
-    description: 'Comic-panel storytelling — gutters, speech bubbles and the recurring muse, a panel at a time.',
+    description:
+      'Comic-panel storytelling — gutters, speech bubbles and the recurring muse, a panel at a time.',
   },
   {
     slug: 'season-sketches',
@@ -185,7 +187,8 @@ const collectionMeta: { slug: string; name: string; description: string }[] = [
   {
     slug: 'city-portraits',
     name: 'City Portraits',
-    description: 'Street-level scenes across African cities — the muse at market and on the move, in full colour.',
+    description:
+      'Street-level scenes across African cities — the muse at market and on the move, in full colour.',
   },
 ];
 

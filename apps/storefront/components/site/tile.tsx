@@ -56,13 +56,7 @@ export function TileImage({
 }
 
 /** A pill badge overlaid on a tile. Default is the near-black streetwear chip. */
-export function TileBadge({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function TileBadge({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <span
       className={cn(

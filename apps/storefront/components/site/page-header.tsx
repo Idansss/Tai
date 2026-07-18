@@ -31,7 +31,9 @@ export function PageHeader({
 }) {
   const Title = as;
   const inner = (
-    <div className={cn('flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between', className)}>
+    <div
+      className={cn('flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between', className)}
+    >
       <div className="max-w-2xl">
         {eyebrow ? (
           <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted">

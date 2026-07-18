@@ -270,7 +270,10 @@ export function CheckoutFlow({ deliveryOptions }: { deliveryOptions: DeliveryOpt
                 options={stateOptions}
                 aria-invalid={err('delivery.state') ? true : undefined}
                 aria-describedby={err('delivery.state') ? 'state-error' : undefined}
-                className={cn('bg-canvas', err('delivery.state') ? 'border-error' : 'border-line-2')}
+                className={cn(
+                  'bg-canvas',
+                  err('delivery.state') ? 'border-error' : 'border-line-2',
+                )}
               />
             </Field>
           </div>

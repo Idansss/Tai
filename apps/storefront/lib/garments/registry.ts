@@ -82,7 +82,10 @@ const NAME_TO_STYLE: { test: (n: string) => boolean; style: GarmentStyle }[] = [
   { test: (n) => n.includes('oversize'), style: 'oversized-tee' },
   { test: (n) => n.includes('long') && n.includes('sleeve'), style: 'long-sleeve' },
   { test: (n) => n.includes('long-sleeve'), style: 'long-sleeve' },
-  { test: (n) => n.includes('tee') || n.includes('t-shirt') || n.includes('shirt'), style: 'classic-tee' },
+  {
+    test: (n) => n.includes('tee') || n.includes('t-shirt') || n.includes('shirt'),
+    style: 'classic-tee',
+  },
 ];
 
 export function garmentStyleFromName(name: string | null | undefined): GarmentStyle {
@@ -115,7 +118,13 @@ export interface Colourway {
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
-  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const full =
+    h.length === 3
+      ? h
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : h;
   const n = Number.parseInt(full, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }

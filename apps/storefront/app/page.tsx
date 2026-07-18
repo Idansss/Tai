@@ -51,7 +51,8 @@ export default async function HomePage() {
   );
   const collections = collectionSummaries.slice(0, 4).map((summary, i) => ({
     summary,
-    coverSlug: collectionDetails[i]?.artworks.find((a) => artworkImage(a.slug) !== null)?.slug ?? null,
+    coverSlug:
+      collectionDetails[i]?.artworks.find((a) => artworkImage(a.slug) !== null)?.slug ?? null,
   }));
 
   return (
@@ -162,7 +163,9 @@ export default async function HomePage() {
 
       {/* ── Brand marquee (STRETKAT energy) ────────────────────────────────────── */}
       <section aria-hidden className="border-y border-line bg-neutral-950 py-5 text-white">
-        <Marquee phrases={['From Africa, to you', 'Hand-drawn', 'Made to order', 'One continent']} />
+        <Marquee
+          phrases={['From Africa, to you', 'Hand-drawn', 'Made to order', 'One continent']}
+        />
       </section>
 
       {/* ── Shop by collection — arch tiles (CHICX · MEN'S essentials) ──────────── */}

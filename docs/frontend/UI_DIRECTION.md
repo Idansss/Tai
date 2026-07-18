@@ -20,7 +20,7 @@ label whose product happens to be hand-drawn African art, rather than like a qui
   (`neutral-950`), full-bleed, with the artwork behind a scrim. Colour is no longer withheld as a
   reward; the work is loud from the first screen.
 - **Type is bold, condensed and uppercase.** Space Grotesk set large, `font-bold uppercase
-  tracking-tight`, is the display voice. Confident, not quiet.
+tracking-tight`, is the display voice. Confident, not quiet.
 - **Text may sit over artwork** where a legibility scrim carries it (a deliberate, controlled use of
   the thing section 3 originally forbade — see the revised guardrails).
 - **Cards are product tiles.** Rounded image tiles with an overlaid badge (NEW / status), an

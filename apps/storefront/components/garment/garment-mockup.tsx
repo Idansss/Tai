@@ -94,10 +94,7 @@ export function GarmentMockup({
   const shadowId = `garment-shadow-${uid}`;
 
   return (
-    <div
-      className={cn('relative w-full', className)}
-      style={{ aspectRatio: `${VB_W} / ${VB_H}` }}
-    >
+    <div className={cn('relative w-full', className)} style={{ aspectRatio: `${VB_W} / ${VB_H}` }}>
       <svg
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         className="absolute inset-0 h-full w-full"
@@ -123,13 +120,7 @@ export function GarmentMockup({
             <stop offset="1" stopColor="#fff" stopOpacity="0" />
           </radialGradient>
           <filter id={shadowId} x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow
-              dx="0"
-              dy="6"
-              stdDeviation="10"
-              floodColor="#000"
-              floodOpacity="0.22"
-            />
+            <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="#000" floodOpacity="0.22" />
           </filter>
         </defs>
 
@@ -246,8 +237,7 @@ export function GarmentMockup({
               style={{
                 mixBlendMode: 'multiply',
                 opacity: isDark ? 0.35 : 0.16,
-                backgroundImage:
-                  'radial-gradient(rgba(0,0,0,0.5) 0.5px, transparent 0.6px)',
+                backgroundImage: 'radial-gradient(rgba(0,0,0,0.5) 0.5px, transparent 0.6px)',
                 backgroundSize: '3px 3px',
               }}
             />
