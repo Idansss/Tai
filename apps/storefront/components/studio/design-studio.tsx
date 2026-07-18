@@ -7,10 +7,12 @@ import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
+import { GarmentMockup } from '@/components/garment/garment-mockup';
 import { designSignature, persistSavedDesign } from '@/lib/account';
 import { artworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
+import { GARMENT_VIEWBOX, GARMENTS, garmentStyleFromName } from '@/lib/garments/registry';
 import {
   buildStudioQuery,
   EMPTY_STUDIO_CONFIG,
@@ -146,6 +148,14 @@ export function DesignStudio({
   const artworkPrint = artwork ? artworkImage(artwork.slug) : null;
   const complete = isStudioConfigComplete(config);
   const artworkOnThisView = placement && placement.area === config.view;
+  // Same silhouette the product page uses — never the old flat colour box.
+  const garmentStyle = garmentStyleFromName(garment?.title);
+  // Studio widthPct is % of the garment width; GarmentMockup scale is a fraction of the print zone.
+  const mockupScale = useMemo(() => {
+    if (!scale) return 1;
+    const zone = GARMENTS[garmentStyle].print[config.view];
+    return (scale.widthPct / 100) * (GARMENT_VIEWBOX.w / zone.maxW);
+  }, [scale, garmentStyle, config.view]);
   // Every section gates on the artwork (`disabled={!artwork}`), and everything else is resolved
   // from it, so the artwork is what "something to reset" means — and what keeps the button's
   // enabled state in step with the visible selection.
@@ -292,66 +302,41 @@ export function DesignStudio({
      */
     <div className="rounded-[var(--radius-xl)] border border-line bg-canvas-2 p-4 sm:p-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        {/* Preview */}
+        {/* Preview — the shared GarmentMockup silhouette (same as product pages), not a flat box. */}
         <div className="lg:sticky lg:top-20 lg:self-start">
           <div
-            className="relative aspect-[3/4] w-full overflow-hidden rounded-[var(--radius-lg)] border border-line"
-            style={{ backgroundColor: colour?.hex ?? 'var(--color-surface-secondary)' }}
+            className="relative w-full overflow-hidden rounded-[var(--radius-lg)] border border-line bg-canvas"
             role="img"
             aria-label={
               artwork
-                ? `${artwork.title} on ${config.colour} ${garment?.title ?? 'garment'}, ${config.view} view`
+                ? `${artwork.title} on ${config.colour ?? 'garment'} ${garment?.title ?? 'tee'}, ${config.view} view`
                 : 'Design preview — choose an artwork to begin'
             }
           >
-            {/* Print-area guide */}
-            <div
-              aria-hidden
-              className="absolute rounded-sm border border-dashed border-white/40"
-              style={{ left: '18%', top: '16%', width: '64%', height: '60%' }}
+            <GarmentMockup
+              style={garmentStyle}
+              colour={config.colour ?? colour?.hex ?? 'Bone'}
+              view={config.view}
+              artwork={
+                artworkPrint && placement && scale
+                  ? {
+                      src: artworkPrint,
+                      area: placement.area,
+                      scale: mockupScale,
+                      alt: '',
+                    }
+                  : null
+              }
+              priority
+              className="p-4 sm:p-6"
+              sizes="(min-width: 1024px) 40vw, 90vw"
             />
-            {/*
-             * The print. This used to be a white box with the artwork's title typed into it — the
-             * Studio never showed the drawing you were buying.
-             *
-             * Position and size come from the approved placement and preset; nothing here is
-             * customer-authored (ADR-013).
-             *
-             * The print keeps its paper, as a panel. Dropping the paper out with `multiply` was
-             * the first attempt and it is wrong twice: the drawings are JPEGs with no alpha, and
-             * multiply against a dark garment — Black is the default colour — erases the drawing
-             * entirely. A printed panel is honest about what we hold (a drawing on paper) and
-             * reads as intentional against a brand whose own work is comic panels.
-             *
-             * This is a guide. Real per-garment mockups are approved assets from the media
-             * pipeline (MediaAssetKind.MOCKUP, TMS-B2-004) and will replace it.
-             */}
-            {artwork && artworkOnThisView && placement && scale && artworkPrint ? (
-              <div
-                className="absolute -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[1px] shadow-sm ring-1 ring-black/10"
-                style={{
-                  left: `${placement.x}%`,
-                  top: `${placement.y}%`,
-                  width: `${scale.widthPct}%`,
-                }}
-              >
-                <Image
-                  src={artworkPrint}
-                  alt=""
-                  aria-hidden
-                  width={600}
-                  height={800}
-                  sizes="(min-width: 1024px) 25vw, 45vw"
-                  className="h-auto w-full"
-                />
-              </div>
-            ) : null}
             <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
               {config.view}
             </span>
-            {artwork && !artworkOnThisView ? (
-              <span className="absolute inset-x-0 bottom-3 text-center text-xs text-white/80">
-                Artwork is on the {placement?.area}
+            {artwork && placement && !artworkOnThisView ? (
+              <span className="absolute inset-x-0 bottom-3 text-center text-xs text-ink-2">
+                Artwork is on the {placement.area}
               </span>
             ) : null}
           </div>
@@ -378,7 +363,7 @@ export function DesignStudio({
             ))}
           </div>
           <Text size="sm" tone="muted" className="mt-2">
-            A guide preview — the final print is produced to studio standards.
+            Live garment preview — colour, placement and scale update as you build.
           </Text>
         </div>
 
