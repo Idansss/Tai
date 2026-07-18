@@ -365,12 +365,24 @@ export const CatalogueEntryUpdateInputSchema = CatalogueEntryInputSchema.partial
 export type CatalogueEntryUpdateInput = z.infer<typeof CatalogueEntryUpdateInputSchema>;
 
 export const DropInputSchema = CatalogueEntryInputSchema.extend({
+  tagline: z.string().trim().max(240).nullable().optional(),
+  earlyAccessAt: z.iso.datetime().nullable().optional(),
   startsAt: z.iso.datetime().nullable().optional(),
   endsAt: z.iso.datetime().nullable().optional(),
-}).refine((value) => !value.endsAt || (!!value.startsAt && value.endsAt > value.startsAt), {
-  message: 'A drop end time must be after its start time.',
-  path: ['endsAt'],
-});
+  /** Manual sold-out flag; made-to-order pieces do not sell out on their own (TMS-FBR-018). */
+  soldOut: z.boolean().optional(),
+})
+  .refine((value) => !value.endsAt || (!!value.startsAt && value.endsAt > value.startsAt), {
+    message: 'A drop end time must be after its start time.',
+    path: ['endsAt'],
+  })
+  .refine(
+    (value) => !value.earlyAccessAt || !value.startsAt || value.earlyAccessAt <= value.startsAt,
+    {
+      message: 'Early access must not open after the public release.',
+      path: ['earlyAccessAt'],
+    },
+  );
 export type DropInput = z.infer<typeof DropInputSchema>;
 
 export const EditionInputSchema = z
@@ -387,7 +399,7 @@ export const EditionInputSchema = z
 export type EditionInput = z.infer<typeof EditionInputSchema>;
 
 export const StoryBlockInputSchema = z.object({
-  type: z.enum(['TEXT', 'IMAGE', 'QUOTE', 'EMBED']),
+  type: z.enum(['TEXT', 'IMAGE', 'QUOTE', 'EMBED', 'SHOPPABLE']),
   content: z.record(z.string(), z.unknown()),
 });
 export const StoryInputSchema = z
@@ -395,6 +407,7 @@ export const StoryInputSchema = z
     slug: ArtworkSlugSchema,
     title: z.string().trim().min(1).max(200),
     excerpt: z.string().trim().max(500).nullable().optional(),
+    category: z.string().trim().max(80).nullable().optional(),
     artworkId: z.string().uuid().nullable().optional(),
     collectionId: z.string().uuid().nullable().optional(),
     blocks: z.array(StoryBlockInputSchema).max(100).default([]),
@@ -436,7 +449,7 @@ export interface Edition {
 export interface StoryBlock {
   id: string;
   position: number;
-  type: 'TEXT' | 'IMAGE' | 'QUOTE' | 'EMBED';
+  type: 'TEXT' | 'IMAGE' | 'QUOTE' | 'EMBED' | 'SHOPPABLE';
   content: Record<string, unknown>;
 }
 
@@ -445,10 +458,16 @@ export interface Story {
   slug: string;
   title: string;
   excerpt: string | null;
+  /** Editorial category (TMS-FBR-019). Null when uncategorised. */
+  category: string | null;
   status: ArtworkStatus;
   artworkId: string | null;
   collectionId: string | null;
   blocks: StoryBlock[];
+  /** Estimated reading time in whole minutes, derived from block text (TMS-FBR-019). */
+  readMinutes: number;
+  /** Count of SHOPPABLE blocks in the story (TMS-FBR-019). */
+  shoppableCount: number;
   publishedAt: string | null;
   archivedAt: string | null;
 }

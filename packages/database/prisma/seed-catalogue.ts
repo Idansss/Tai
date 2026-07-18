@@ -405,23 +405,34 @@ export async function seedCatalogue(prisma: PrismaClient): Promise<void> {
     artworkIdBySlug,
   );
 
-  // A live drop (started two days ago, ends in two weeks).
+  // A live drop: early access opened three days ago, public sale two days ago, ends in two weeks.
+  // The tagline and early-access window exercise TMS-FBR-018; made-to-order pieces do not sell
+  // out on their own, so `soldOut` stays false.
+  const dropStartsAt = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+  const dropEarlyAccessAt = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  const dropEndsAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
   const drop = await prisma.drop.upsert({
     where: { slug: 'harmattan-2026' },
     update: {
       status: ArtworkStatus.PUBLISHED,
       publishedAt: now,
-      startsAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-      endsAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+      tagline: 'A short dry-season run — priced for the harmattan and gone with it.',
+      earlyAccessAt: dropEarlyAccessAt,
+      startsAt: dropStartsAt,
+      endsAt: dropEndsAt,
+      soldOut: false,
     },
     create: {
       slug: 'harmattan-2026',
       title: 'Harmattan 2026',
       description: 'A short run released for the dry season.',
+      tagline: 'A short dry-season run — priced for the harmattan and gone with it.',
       status: ArtworkStatus.PUBLISHED,
       publishedAt: now,
-      startsAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-      endsAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+      earlyAccessAt: dropEarlyAccessAt,
+      startsAt: dropStartsAt,
+      endsAt: dropEndsAt,
+      soldOut: false,
       createdByUserId: admin.id,
     },
     select: { id: true },
@@ -464,6 +475,15 @@ export async function seedCatalogue(prisma: PrismaClient): Promise<void> {
           text: 'The final piece layers pattern over pattern until the eye has to keep moving, like the market itself.',
         }),
       },
+      // A shoppable block links the finished piece back to the catalogue; StorySummary.shoppableCount
+      // counts these (TMS-FBR-019).
+      {
+        type: StoryBlockType.SHOPPABLE,
+        content: json({
+          target: { kind: 'artwork', slug: 'market-day' },
+          label: 'Shop the Market Day print',
+        }),
+      },
     ];
     if (existingStory) {
       await prisma.storyBlock.deleteMany({ where: { storyId: existingStory.id } });
@@ -472,6 +492,7 @@ export async function seedCatalogue(prisma: PrismaClient): Promise<void> {
         data: {
           title: 'The Making of Market Day',
           excerpt: 'How a standing-up sketch became a wall of pattern.',
+          category: 'Process',
           status: ArtworkStatus.PUBLISHED,
           publishedAt: now,
           artworkId: marketDayId,
@@ -484,6 +505,7 @@ export async function seedCatalogue(prisma: PrismaClient): Promise<void> {
           slug: 'making-of-market-day',
           title: 'The Making of Market Day',
           excerpt: 'How a standing-up sketch became a wall of pattern.',
+          category: 'Process',
           status: ArtworkStatus.PUBLISHED,
           publishedAt: now,
           artworkId: marketDayId,

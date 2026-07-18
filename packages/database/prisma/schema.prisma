@@ -79,6 +79,7 @@ enum StoryBlockType {
   IMAGE
   QUOTE
   EMBED
+  SHOPPABLE
 }
 
 enum GarmentType {
@@ -495,9 +496,12 @@ model Drop {
   slug            String        @unique(map: "drops_slug_key") @db.VarChar(160)
   title           String        @db.VarChar(200)
   description     String?       @db.Text
+  tagline         String?       @db.VarChar(240)
   status          ArtworkStatus @default(DRAFT)
+  earlyAccessAt   DateTime?     @map("early_access_at") @db.Timestamptz(3)
   startsAt        DateTime?     @map("starts_at") @db.Timestamptz(3)
   endsAt          DateTime?     @map("ends_at") @db.Timestamptz(3)
+  soldOut         Boolean       @default(false) @map("sold_out")
   createdByUserId String        @map("created_by_user_id") @db.Uuid
   publishedAt     DateTime?     @map("published_at") @db.Timestamptz(3)
   archivedAt      DateTime?     @map("archived_at") @db.Timestamptz(3)
@@ -546,6 +550,7 @@ model Story {
   slug            String        @unique(map: "stories_slug_key") @db.VarChar(160)
   title           String        @db.VarChar(200)
   excerpt         String?       @db.VarChar(500)
+  category        String?       @db.VarChar(80)
   status          ArtworkStatus @default(DRAFT)
   artworkId       String?       @map("artwork_id") @db.Uuid
   collectionId    String?       @map("collection_id") @db.Uuid
