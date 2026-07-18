@@ -131,9 +131,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-dvh bg-canvas">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 border-r border-line bg-canvas md:block">
+    <div className="flex h-dvh overflow-hidden bg-canvas">
+      {/* Desktop sidebar — fixed in the viewport; only main content scrolls */}
+      <aside className="hidden h-dvh w-60 shrink-0 overflow-y-auto border-r border-line bg-canvas md:block">
         <div className="flex h-16 items-center gap-2 border-b border-line px-5">
           <BrandMark />
           <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
@@ -145,8 +145,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-line bg-canvas/90 px-4 backdrop-blur sm:px-5">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="z-40 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-canvas/90 px-4 backdrop-blur sm:px-5">
           <div className="flex items-center gap-2">
             <IconButton
               className="md:hidden"
@@ -184,7 +184,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-        <main id="main" className="flex-1 p-5 sm:p-8">
+        <main id="main" className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-8">
           {children}
         </main>
       </div>
