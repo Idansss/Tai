@@ -166,11 +166,6 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           </>
         )}
       </Text>
-
-      <Alert tone="info" title="Preview sign-in" className="mt-6">
-        This is a demo account stored only in your browser — no password is saved and no data leaves
-        this device. Real accounts arrive with the auth backend.
-      </Alert>
     </div>
   );
 }
