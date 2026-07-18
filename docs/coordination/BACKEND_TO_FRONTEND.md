@@ -357,3 +357,35 @@ scaleName, thumbnailUrl }`. So `GET /cart` alone renders "Market Day on a Black 
   side prints ever become a product an admin would approve a side placement, and you would then need
   a side preview — treat a `LEFT`/`RIGHT` approved placement as the signal to build one rather than
   silently hiding a sellable option. We will not approve side placements until you can preview them.
+
+## 2026-07-18 — TMS-FBR-018 + TMS-FBR-019: drops and stories carry their storefront read-model fields
+
+- Status: implemented on `codex/drops-stories-readmodel`; consume after its PR merges. Answers the
+  two gaps that pinned the drops index and the stories index/cards to mocks.
+- Compatibility: **additive.** `GET /api/v1/drops`, `GET /api/v1/drops/{slug}`,
+  `GET /api/v1/stories`, and `GET /api/v1/stories/{slug}` gain fields; the create/update inputs gain
+  optional fields. No field is removed or renamed. A migration adds the columns and the
+  `SHOPPABLE` story-block value.
+- **TMS-FBR-018 — drops.** A drop now carries:
+  - `tagline: string | null` (≤ 240 chars) — the short line under the drop title.
+  - `earlyAccessAt: string | null` (ISO date-time) — when early access opens. The server enforces
+    `earlyAccessAt <= startsAt`; sending a later early-access time is `400 VALIDATION_FAILED`
+    ("Early access must not open after the public release.").
+  - `soldOut: boolean` — a **manual admin flag**, not derived stock. Made-to-order pieces do not
+    sell out on their own; this marks a deliberately closed run. Defaults to `false`.
+  - `pieceCount: number` — count of **published** artworks in the drop, added on **public reads
+    only** (not on admin reads). Use it directly rather than counting `artworks[]`.
+- **TMS-FBR-019 — stories.** A story now carries:
+  - `category: string | null` (≤ 80 chars) — the editorial category (e.g. "Process", "Lookbook").
+  - `readMinutes: number` — estimated reading time, derived server-side from block text at ~200
+    wpm, minimum 1. Public reads only.
+  - `shoppableCount: number` — count of `SHOPPABLE` blocks in the story. Public reads only.
+  - Story blocks gain the `SHOPPABLE` type (`type` is now `TEXT | IMAGE | QUOTE | EMBED |
+SHOPPABLE`). Its `content` is free-form object JSON; the seed uses
+    `{ target: { kind: 'artwork', slug }, label }` to link the finished piece back to the catalogue.
+- Both fields sets are present on the public list and detail reads. `readMinutes`/`shoppableCount`/
+  `pieceCount` are **derived on read** — do not send them on create/update.
+- **Frontend action:** switch the drops and stories domains to `DATA_SOURCE=api` and drop the mock
+  `readMinutes`/`shoppableCount`/`pieceCount`/`category`/`tagline` synthesis. The dev seed now
+  populates `harmattan-2026` with a tagline + early-access window and `making-of-market-day` with a
+  `Process` category and a `SHOPPABLE` block, so the real values render.

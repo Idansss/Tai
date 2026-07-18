@@ -2517,23 +2517,38 @@ components:
         - $ref: '#/components/schemas/CatalogueEntryInput'
         - type: object
           properties:
+            tagline: { type: [string, 'null'], maxLength: 240 }
+            earlyAccessAt: { type: [string, 'null'], format: date-time }
             startsAt: { type: [string, 'null'], format: date-time }
             endsAt: { type: [string, 'null'], format: date-time }
+            soldOut: { type: boolean, default: false }
     DropUpdateInput:
       allOf:
         - $ref: '#/components/schemas/CatalogueEntryUpdateInput'
         - type: object
           properties:
+            tagline: { type: [string, 'null'], maxLength: 240 }
+            earlyAccessAt: { type: [string, 'null'], format: date-time }
             startsAt: { type: [string, 'null'], format: date-time }
             endsAt: { type: [string, 'null'], format: date-time }
+            soldOut: { type: boolean }
     Drop:
       allOf:
         - $ref: '#/components/schemas/CatalogueEntry'
         - type: object
-          required: [startsAt, endsAt]
+          required: [startsAt, endsAt, soldOut]
           properties:
+            tagline: { type: [string, 'null'], maxLength: 240 }
+            earlyAccessAt: { type: [string, 'null'], format: date-time }
             startsAt: { type: [string, 'null'], format: date-time }
             endsAt: { type: [string, 'null'], format: date-time }
+            soldOut:
+              type: boolean
+              description: Manual admin flag; made-to-order pieces do not sell out on their own (TMS-FBR-018).
+            pieceCount:
+              type: integer
+              minimum: 0
+              description: Count of published artworks in the drop, on public reads (TMS-FBR-018).
     EditionInput:
       type: object
       additionalProperties: false
@@ -2557,7 +2572,7 @@ components:
       additionalProperties: false
       required: [type, content]
       properties:
-        type: { type: string, enum: [TEXT, IMAGE, QUOTE, EMBED] }
+        type: { type: string, enum: [TEXT, IMAGE, QUOTE, EMBED, SHOPPABLE] }
         content: { type: object, additionalProperties: true }
     StoryBlock:
       allOf:
@@ -2575,6 +2590,7 @@ components:
         slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
         title: { type: string, minLength: 1, maxLength: 200 }
         excerpt: { type: [string, 'null'], maxLength: 500 }
+        category: { type: [string, 'null'], maxLength: 80 }
         artworkId: { type: [string, 'null'], format: uuid }
         collectionId: { type: [string, 'null'], format: uuid }
         blocks:
@@ -2586,13 +2602,21 @@ components:
       allOf:
         - $ref: '#/components/schemas/StoryInput'
         - type: object
-          required: [id, status, publishedAt, archivedAt]
+          required: [id, status, readMinutes, shoppableCount, publishedAt, archivedAt]
           properties:
             id: { type: string, format: uuid }
             status: { $ref: '#/components/schemas/ArtworkStatus' }
             blocks:
               type: array
               items: { $ref: '#/components/schemas/StoryBlock' }
+            readMinutes:
+              type: integer
+              minimum: 1
+              description: Estimated reading time in whole minutes, derived from block text (TMS-FBR-019).
+            shoppableCount:
+              type: integer
+              minimum: 0
+              description: Count of SHOPPABLE blocks in the story (TMS-FBR-019).
             publishedAt: { type: [string, 'null'], format: date-time }
             archivedAt: { type: [string, 'null'], format: date-time }
     TagResponse:
