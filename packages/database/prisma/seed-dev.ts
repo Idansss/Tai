@@ -1,6 +1,8 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { pathToFileURL } from 'node:url';
 
+import { loadDotenv } from '@tms/configuration';
+
 import { PrismaClient } from '../generated/client/client.js';
 import { seed } from './seed.js';
 import { seedCatalogue } from './seed-catalogue.js';
@@ -14,6 +16,7 @@ import { seedCatalogue } from './seed-catalogue.js';
  * dev seed.
  */
 export async function seedDev(): Promise<void> {
+  loadDotenv();
   await seed();
 
   const connectionString =

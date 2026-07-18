@@ -1,6 +1,8 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { pathToFileURL } from 'node:url';
 
+import { loadDotenv } from '@tms/configuration';
+
 import { PrismaClient } from '../generated/client/client.js';
 
 export const permissionSeeds = [
@@ -68,6 +70,7 @@ export const roleSeeds = [
 ] as const;
 
 export async function seed(): Promise<void> {
+  loadDotenv();
   const connectionString =
     process.env.DATABASE_URL ??
     'postgresql://tai:local_development_only@localhost:5432/tai_manic?schema=public';
