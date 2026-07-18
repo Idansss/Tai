@@ -26,6 +26,17 @@ function line(overrides: Partial<Cart['items'][number]> = {}): Cart['items'][num
     lineTotal: { amountMinor: 1400000, currency: 'NGN' },
     availableQuantity: 5,
     issue: null,
+    display: {
+      artworkTitle: 'Market Day',
+      artworkSlug: 'market-day',
+      garmentTitle: 'Classic T-shirt',
+      colourName: 'Black',
+      colourHex: '#000000',
+      sizeLabel: 'M',
+      placementName: 'Centre chest',
+      scaleName: 'Medium',
+      thumbnailUrl: null,
+    },
     ...overrides,
   };
 }
