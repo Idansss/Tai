@@ -15,7 +15,7 @@
 
 import type { PlacedOrder } from './order';
 import { normalizeEmail } from './auth';
-import type { StudioConfig } from './studio';
+import { IDENTITY_TRANSFORM, type StudioConfig, transformKey } from './studio';
 
 // --- Saved designs -------------------------------------------------------------
 
@@ -41,6 +41,9 @@ export function designSignature(config: StudioConfig): string {
     config.placement,
     config.scale,
     config.view,
+    // The free transform is part of what the customer made: two designs that share the approved
+    // tuple but sit/scale/crop differently are different saved designs, not one.
+    transformKey(config.transform ?? IDENTITY_TRANSFORM),
   ]
     .map((part) => (part ?? '').toString().trim().toLowerCase())
     .join('|');

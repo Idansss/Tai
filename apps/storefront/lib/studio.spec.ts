@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { StudioOptions } from './data/types';
 import {
   buildStudioQuery,
+  clampTransform,
   EMPTY_STUDIO_CONFIG,
   findVariantId,
+  IDENTITY_TRANSFORM,
+  isIdentityTransform,
   isStudioConfigComplete,
   parseStudioParams,
+  type PrintTransform,
   resolveStudioConfig,
   type StudioConfig,
 } from './studio';
@@ -17,8 +21,21 @@ const full: StudioConfig = {
   size: 'M',
   placement: 'placement-centre-chest',
   scale: 'medium',
+  transform: IDENTITY_TRANSFORM,
   view: 'back',
   quantity: 3,
+};
+
+/** A non-identity transform, for round-trip + resolve tests. */
+const moved: PrintTransform = {
+  dx: 8.5,
+  dy: -6.25,
+  scale: 1.4,
+  rotation: 12,
+  cropTop: 0.1,
+  cropRight: 0,
+  cropBottom: 0.05,
+  cropLeft: 0.2,
 };
 
 /** One artwork's approved canvases: a front and a back placement, each with its own scales. */
@@ -87,17 +104,33 @@ describe('parseStudioParams', () => {
     ).toEqual({ ...EMPTY_STUDIO_CONFIG, artwork: 'midnight-in-lagos', view: 'back', quantity: 3 });
   });
 
-  it('carries no print geometry: approved placements are the only geometry (ADR-013)', () => {
+  it('reads a free-placement transform (drag/resize/rotate/crop)', () => {
     const parsed = parseStudioParams({
       artwork: 'midnight-in-lagos',
-      printX: '47.5',
-      printY: '44',
-      printWidth: '38',
-      cropZoom: '1.4',
-      cropX: '-8',
-      cropY: '12',
+      px: '8.5',
+      py: '-6.25',
+      ps: '1.4',
+      pr: '12',
+      ct: '0.1',
+      cb: '0.05',
+      cl: '0.2',
     });
-    expect(parsed).toEqual({ ...EMPTY_STUDIO_CONFIG, artwork: 'midnight-in-lagos' });
+    expect(parsed.transform).toEqual(moved);
+  });
+
+  it('defaults to the identity transform when no geometry params are present', () => {
+    expect(parseStudioParams({ artwork: 'midnight-in-lagos' }).transform).toEqual(
+      IDENTITY_TRANSFORM,
+    );
+  });
+
+  it('clamps a hostile transform from the URL into the safe range', () => {
+    const parsed = parseStudioParams({ px: '999', ps: '50', pr: '540', ct: '0.8', cb: '0.8' });
+    expect(parsed.transform.dx).toBe(60);
+    expect(parsed.transform.scale).toBe(3);
+    expect(parsed.transform.rotation).toBe(180);
+    // Opposite crops can never together swallow more than 90% of the artwork.
+    expect(parsed.transform.cropTop + parsed.transform.cropBottom).toBeLessThanOrEqual(0.9 + 1e-9);
   });
 });
 
@@ -112,11 +145,43 @@ describe('buildStudioQuery / round-trip', () => {
     expect(parseStudioParams(params)).toEqual(full);
   });
 
-  it('shares approved ids, never percentages', () => {
-    const qs = buildStudioQuery(full);
+  it('round-trips a config with a free transform', () => {
+    const qs = buildStudioQuery({ ...full, transform: moved });
+    const params = Object.fromEntries(new URLSearchParams(qs.slice(1)));
+    expect(parseStudioParams(params)).toEqual({ ...full, transform: moved });
+  });
+
+  it('omits transform params that are at their identity value', () => {
+    const qs = buildStudioQuery({ ...full, transform: { ...IDENTITY_TRANSFORM, dx: 5 } });
+    expect(qs).toContain('px=5');
+    expect(qs).not.toMatch(/py=|ps=|pr=|ct=|cr=|cb=|cl=/);
+  });
+
+  it('shares the approved ids alongside the geometry', () => {
+    const qs = buildStudioQuery({ ...full, transform: moved });
     expect(qs).toContain('placement=placement-centre-chest');
     expect(qs).toContain('scale=medium');
-    expect(qs).not.toMatch(/printX|printY|printWidth|crop/);
+    expect(qs).toContain('px=8.5');
+  });
+});
+
+describe('clampTransform / isIdentityTransform', () => {
+  it('recognises the identity transform', () => {
+    expect(isIdentityTransform(IDENTITY_TRANSFORM)).toBe(true);
+    expect(isIdentityTransform({ ...IDENTITY_TRANSFORM, rotation: 1 })).toBe(false);
+  });
+
+  it('bounds scale, offset and rotation', () => {
+    const t = clampTransform({ ...IDENTITY_TRANSFORM, dx: -900, scale: 0.01, rotation: 200 });
+    expect(t.dx).toBe(-60);
+    expect(t.scale).toBe(0.2);
+    expect(t.rotation).toBe(-160); // 200° wraps to −160°
+  });
+
+  it('scales an over-cropped axis down proportionally rather than clipping to zero', () => {
+    const t = clampTransform({ ...IDENTITY_TRANSFORM, cropLeft: 0.6, cropRight: 0.6 });
+    expect(t.cropLeft).toBeCloseTo(0.45);
+    expect(t.cropRight).toBeCloseTo(0.45);
   });
 });
 
@@ -184,6 +249,39 @@ describe('resolveStudioConfig', () => {
     expect(resolved.view).toBe('back');
     // The print is still on the front placement; the UI says so rather than moving it.
     expect(resolved.placement).toBe('placement-centre-chest');
+  });
+
+  it('keeps the free transform when its placement and scale both survive', () => {
+    const resolved = resolveStudioConfig(
+      {
+        ...full,
+        view: 'front',
+        placement: 'placement-centre-chest',
+        scale: 'medium',
+        transform: moved,
+      },
+      options,
+    );
+    expect(resolved.transform).toEqual(moved);
+  });
+
+  it('resets the transform when the placement it was authored against is dropped', () => {
+    // The delta means nothing once we swap to a different, approved placement.
+    const resolved = resolveStudioConfig(
+      { ...full, view: 'front', placement: 'placement-from-elsewhere', transform: moved },
+      options,
+    );
+    expect(resolved.placement).toBe('placement-centre-chest');
+    expect(resolved.transform).toEqual(IDENTITY_TRANSFORM);
+  });
+
+  it('resets the transform when the scale is re-picked because the placement changed', () => {
+    const resolved = resolveStudioConfig(
+      { ...full, placement: 'placement-back', transform: moved },
+      options,
+    );
+    expect(resolved.scale).toBe('large');
+    expect(resolved.transform).toEqual(IDENTITY_TRANSFORM);
   });
 });
 

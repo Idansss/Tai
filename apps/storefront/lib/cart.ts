@@ -10,6 +10,7 @@
  * see `lib/cart-api.ts`.
  */
 import { configurationCanonicalForm, type GarmentView } from '@tms/contracts';
+import { type PrintTransform, transformKey } from './studio';
 
 /**
  * The approved tuple that identifies a configuration. Quantity is absent on purpose (ADR-014).
@@ -47,6 +48,13 @@ export interface CartItem {
    * to reconstruct it from labels.
    */
   configuration?: ApprovedConfiguration;
+  /**
+   * The free-placement transform (drag/resize/rotate/crop) when the Studio line carries one. It is
+   * part of the line's identity — two lines with the same approved tuple but different geometry are
+   * different pieces — and a server-backed add will post it alongside the tuple once the API takes
+   * free geometry (the approved-tuple canonical form has no room for it).
+   */
+  transform?: PrintTransform;
 }
 
 /** A configuration a caller wants to add — everything but the derived id. */
@@ -74,11 +82,18 @@ export function lineId(input: {
   placement?: string;
   scale?: string;
   configuration?: ApprovedConfiguration;
+  transform?: PrintTransform;
 }): string {
-  if (input.configuration) return configurationCanonicalForm(input.configuration);
-  return [input.productSlug, input.colour, input.size, input.placement ?? '', input.scale ?? '']
-    .map((part) => part.trim().toLowerCase().replace(/\s+/g, '-'))
-    .join('__');
+  // A free transform forks the line: same approved tuple, different composition → different piece.
+  // Suffixed (empty for the identity transform) so a plain approved add keeps its canonical id.
+  const suffix = input.transform ? transformKey(input.transform) : '';
+  const geom = suffix ? `##${suffix}` : '';
+  if (input.configuration) return configurationCanonicalForm(input.configuration) + geom;
+  return (
+    [input.productSlug, input.colour, input.size, input.placement ?? '', input.scale ?? '']
+      .map((part) => part.trim().toLowerCase().replace(/\s+/g, '-'))
+      .join('__') + geom
+  );
 }
 
 function clampQuantity(n: number): number {

@@ -2,7 +2,7 @@
 
 import { cn } from '@tms/ui';
 import Image from 'next/image';
-import { useId } from 'react';
+import { type CSSProperties, useId } from 'react';
 import {
   GARMENT_VIEWBOX,
   GARMENTS,
@@ -24,6 +24,21 @@ export interface GarmentArtwork {
    * scale preset; defaults to the full approved zone.
    */
   scale?: number;
+  /**
+   * Free-placement offset of the print centre from the zone centre, in percentage points of the
+   * garment viewBox. Absent/zero keeps the approved-placement position (unchanged for callers that
+   * don't offer free placement).
+   */
+  offset?: { xPct: number; yPct: number };
+  /** Rotation in degrees, clockwise. */
+  rotation?: number;
+  /** Crop insets as fractions (0–0.9) of the print box. */
+  crop?: { top: number; right: number; bottom: number; left: number };
+  /**
+   * Mask the print to the garment silhouette. Free placement can push the artwork to the edges, so
+   * the Studio sets this to keep it reading as printed on the cloth rather than floating off it.
+   */
+  clipToBody?: boolean;
   alt?: string;
 }
 
@@ -79,14 +94,80 @@ export function GarmentMockup({
   const scale = artwork?.scale ?? 1;
   const boxW = zone.maxW * scale;
   const boxH = zone.maxH * scale;
-  const printStyle = {
-    left: `${((zone.cx - boxW / 2) / VB_W) * 100}%`,
-    top: `${((zone.cy - boxH / 2) / VB_H) * 100}%`,
+  // Free-placement offset (percentage points of the viewBox) shifts the print centre off the zone.
+  const cx = zone.cx + ((artwork?.offset?.xPct ?? 0) / 100) * VB_W;
+  const cy = zone.cy + ((artwork?.offset?.yPct ?? 0) / 100) * VB_H;
+  const rotation = artwork?.rotation ?? 0;
+  const printStyle: CSSProperties = {
+    left: `${((cx - boxW / 2) / VB_W) * 100}%`,
+    top: `${((cy - boxH / 2) / VB_H) * 100}%`,
     width: `${(boxW / VB_W) * 100}%`,
     height: `${(boxH / VB_H) * 100}%`,
+    ...(rotation ? { transform: `rotate(${rotation}deg)` } : null),
   };
 
+  // Crop trims the print box (image + its fabric shading together, so they stay in register).
+  const crop = artwork?.crop;
+  const cropStyle: CSSProperties | undefined =
+    crop && (crop.top || crop.right || crop.bottom || crop.left)
+      ? {
+          clipPath: `inset(${crop.top * 100}% ${crop.right * 100}% ${crop.bottom * 100}% ${crop.left * 100}%)`,
+        }
+      : undefined;
+
   const showPrint = artwork && (artwork.area ?? view) === view;
+
+  // A silhouette mask built from the very path the body is drawn with. The component box shares the
+  // garment's aspect ratio, so an SVG mask at the same viewBox lines up exactly at any size.
+  const bodyMask = artwork?.clipToBody
+    ? `url("data:image/svg+xml,${encodeURIComponent(
+        `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${VB_W} ${VB_H}'><path d='${shape.body}' fill='#fff'/></svg>`,
+      )}")`
+    : undefined;
+
+  const print = showPrint ? (
+    <div className="pointer-events-none absolute" style={printStyle}>
+      <div className="relative h-full w-full" style={cropStyle}>
+        <Image
+          src={artwork.src}
+          alt={artwork.alt ?? ''}
+          aria-hidden={!artwork.alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          className="object-contain"
+          style={{
+            // Light fabric: multiply melts the drawing's paper into the cloth. Dark fabric:
+            // multiply would erase it, so it prints as-is and the shading below seats it.
+            mixBlendMode: isDark ? 'normal' : 'multiply',
+            filter: isDark ? 'none' : 'saturate(1.05)',
+          }}
+        />
+        {/* Fabric-aware shading over the print: an overlay-blended light-to-dark wash makes the
+            garment's folds and lighting appear to cross the artwork — printed, not pasted. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            mixBlendMode: 'overlay',
+            opacity: isDark ? 0.5 : 0.7,
+            backgroundImage:
+              'linear-gradient(103deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 22%, ' +
+              'rgba(0,0,0,0) 55%, rgba(0,0,0,0.22) 100%)',
+          }}
+        />
+        {/* A whisper of grain so the ink sits on a textured surface, not glass. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            mixBlendMode: 'multiply',
+            opacity: isDark ? 0.35 : 0.16,
+            backgroundImage: 'radial-gradient(rgba(0,0,0,0.5) 0.5px, transparent 0.6px)',
+            backgroundSize: '3px 3px',
+          }}
+        />
+      </div>
+    </div>
+  ) : null;
 
   const clipId = `garment-clip-${uid}`;
   const topLightId = `garment-toplight-${uid}`;
@@ -199,51 +280,26 @@ export function GarmentMockup({
         />
       </svg>
 
-      {/* The print. Positioned over the approved zone, contained (never stretched), with fabric
-          shading laid over it so it sinks into the cloth instead of floating above it. */}
-      {showPrint ? (
-        <div className="pointer-events-none absolute" style={printStyle}>
-          <div className="relative h-full w-full">
-            <Image
-              src={artwork.src}
-              alt={artwork.alt ?? ''}
-              aria-hidden={!artwork.alt}
-              fill
-              sizes={sizes}
-              priority={priority}
-              className="object-contain"
-              style={{
-                // Light fabric: multiply melts the drawing's paper into the cloth. Dark fabric:
-                // multiply would erase it, so it prints as-is and the shading below seats it.
-                mixBlendMode: isDark ? 'normal' : 'multiply',
-                filter: isDark ? 'none' : 'saturate(1.05)',
-              }}
-            />
-            {/* Fabric-aware shading over the print: an overlay-blended light-to-dark wash makes the
-                garment's folds and lighting appear to cross the artwork — printed, not pasted. */}
-            <div
-              className="absolute inset-0"
-              style={{
-                mixBlendMode: 'overlay',
-                opacity: isDark ? 0.5 : 0.7,
-                backgroundImage:
-                  'linear-gradient(103deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 22%, ' +
-                  'rgba(0,0,0,0) 55%, rgba(0,0,0,0.22) 100%)',
-              }}
-            />
-            {/* A whisper of grain so the ink sits on a textured surface, not glass. */}
-            <div
-              className="absolute inset-0"
-              style={{
-                mixBlendMode: 'multiply',
-                opacity: isDark ? 0.35 : 0.16,
-                backgroundImage: 'radial-gradient(rgba(0,0,0,0.5) 0.5px, transparent 0.6px)',
-                backgroundSize: '3px 3px',
-              }}
-            />
-          </div>
+      {/* The print. Positioned over the zone (optionally offset/rotated/cropped by free placement),
+          contained (never stretched), with fabric shading laid over it so it sinks into the cloth
+          instead of floating above it — and, when asked, masked to the garment silhouette. */}
+      {print && bodyMask ? (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            WebkitMaskImage: bodyMask,
+            maskImage: bodyMask,
+            WebkitMaskSize: '100% 100%',
+            maskSize: '100% 100%',
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat',
+          }}
+        >
+          {print}
         </div>
-      ) : null}
+      ) : (
+        print
+      )}
     </div>
   );
 }
