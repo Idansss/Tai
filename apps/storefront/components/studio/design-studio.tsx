@@ -385,12 +385,11 @@ export function DesignStudio({
         {/* Configuration */}
         <div className="space-y-8">
           {/*
-           * The picker plus six steps make this column taller than the viewport, so the actions at
-           * the very bottom — Reset especially — used to need a long scroll to reach. This bar keeps
-           * Reset within reach from the top and pins it while you scroll the steps. It extends to the
-           * card edges (negative margins undo the card padding) and restores its own inset.
+           * Static column header (not sticky): pinning this bar while the artwork grid scrolled
+           * made it float over the thumbnails and jitter. Negative margins undo the card padding
+           * so the rule hits the card edges.
            */}
-          <div className="sticky top-16 z-20 -mx-4 -mt-4 flex items-center justify-between gap-3 border-b border-line bg-canvas-2 px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6 lg:top-20">
+          <div className="-mx-4 -mt-4 flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6">
             <Eyebrow>Build your piece</Eyebrow>
             <button
               type="button"
