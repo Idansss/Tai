@@ -130,7 +130,7 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
         onClick={onCheckout}
         disabled={hasIssues}
         aria-describedby={hasIssues ? `${inputId}-blocked` : undefined}
-        className="inline-flex h-12 w-full items-center justify-center rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-ink disabled:hover:brightness-100"
+        className="inline-flex h-12 w-full items-center justify-center rounded-full bg-neutral-950 text-sm font-semibold uppercase tracking-[0.08em] text-white outline-none hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-ink disabled:hover:bg-disabled"
       >
         Checkout
       </button>
