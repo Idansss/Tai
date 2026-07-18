@@ -57,6 +57,10 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
       priceMinor: product.priceMinor,
       currency: product.currency,
       quantity,
+      // So the cart thumbnail shows the actual piece, not a blank garment.
+      artworkSlug: product.artworkSlug,
+      printView: 'front',
+      printScale: 0.8,
     });
     setStatus(
       `Added to your bag: ${product.artworkTitle} on ${product.garment}, ${colour}, size ${size}, ×${quantity}.`,

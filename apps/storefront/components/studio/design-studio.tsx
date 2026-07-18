@@ -107,6 +107,8 @@ export function DesignStudio({
   const [saved, setSaved] = useState(false);
   // Whether the free-placement box is in crop mode (edge handles) vs move/resize/rotate.
   const [cropMode, setCropMode] = useState(false);
+  // An optional customer note for this piece (personalisation / gift message).
+  const [note, setNote] = useState('');
   // The artwork whose options are being fetched, so the picker can show progress and ignore a
   // slow response that a newer click has superseded.
   const [loadingArtwork, setLoadingArtwork] = useState<string | null>(null);
@@ -306,6 +308,11 @@ export function DesignStudio({
       // The free adjustment, when the customer moved/resized/rotated/cropped. Undefined for an
       // untouched approved placement, so those lines keep their plain canonical identity.
       ...(customised ? { transform } : null),
+      // Enough for the cart to redraw the exact piece as a thumbnail.
+      artworkSlug: artwork.slug,
+      printView: placement.area,
+      printScale: mockupScale,
+      ...(note.trim() ? { note: note.trim() } : null),
     });
     setAdded(true);
     setStatus(
@@ -701,6 +708,31 @@ export function DesignStudio({
                 Custom placement — you’ve adjusted the artwork from the{' '}
                 {scale?.label?.toLowerCase()} {placement?.label?.toLowerCase()} start.
               </Text>
+            ) : null}
+
+            {artwork ? (
+              <div className="mt-5">
+                <label
+                  htmlFor="studio-note"
+                  className="flex items-center justify-between text-xs font-medium uppercase tracking-[0.08em] text-muted"
+                >
+                  <span>Add a note (optional)</span>
+                  <span className="tabular-nums text-muted">{note.length}/200</span>
+                </label>
+                <textarea
+                  id="studio-note"
+                  value={note}
+                  onChange={(e) => {
+                    setNote(e.target.value.slice(0, 200));
+                    setAdded(false);
+                    setSaved(false);
+                  }}
+                  rows={2}
+                  maxLength={200}
+                  placeholder="A gift message, or a note about how you’d like this printed."
+                  className="mt-2 w-full resize-y rounded-md border border-line-2 bg-canvas px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+                />
+              </div>
             ) : null}
 
             <div className="mt-5 flex flex-wrap gap-3">
