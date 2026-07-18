@@ -71,7 +71,15 @@ export async function seed(): Promise<void> {
   const connectionString =
     process.env.DATABASE_URL ??
     'postgresql://tai:local_development_only@localhost:5432/tai_manic?schema=public';
-  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  // The pg adapter ignores the URL's `?schema=` (only migrate honours it), so read it back and
+  // pass it through — otherwise the seed queries `public` while the tables live in e.g. `tai`.
+  let schema: string | undefined;
+  try {
+    schema = new URL(connectionString).searchParams.get('schema') ?? undefined;
+  } catch {
+    schema = undefined;
+  }
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }, { schema }) });
 
   try {
     await prisma.$transaction(
