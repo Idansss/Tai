@@ -22,8 +22,9 @@ export function SiteFooter() {
   return (
     <footer className="bg-neutral-950 text-white">
       <Container className="py-16">
-        <div className="grid gap-12 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
-          <div className="max-w-sm">
+        {/* Mobile: brand full-width, then nav in a 2×2 grid. Desktop: brand + four columns. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:gap-12">
+          <div className="col-span-2 max-w-sm lg:col-span-1">
             <span className="font-display text-3xl font-bold uppercase tracking-tight">
               F.A.T.U
             </span>
