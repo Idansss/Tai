@@ -4,7 +4,7 @@ import { ContentPage } from '@/components/site/content-page';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Tai Manic Studios is an art-led label where original drawings lead and the garment follows.',
+    'From Africa To You is an art-led label where original drawings lead and the garment follows.',
 };
 
 export default function Page() {
@@ -12,7 +12,7 @@ export default function Page() {
     <ContentPage
       eyebrow="Studio"
       title="About the studio"
-      intro="Tai Manic Studios is an art-led label. Every piece begins as an original drawing — the garment is simply how the work travels into the world."
+      intro="From Africa To You is an art-led label. Every piece begins as an original drawing — the garment is simply how the work travels into the world."
       sections={[
         {
           heading: 'What we make',

@@ -993,7 +993,7 @@ export const mockProvider: StorefrontDataProvider = {
     const provenance: ProvenanceEvent[] = [
       {
         label: 'Drawn in the studio',
-        detail: `${detail.title} — original drawing by the Tai Manic Studios team.`,
+        detail: `${detail.title} — original drawing by the From Africa To You team.`,
         date: release,
       },
       {
@@ -1024,7 +1024,7 @@ export const mockProvider: StorefrontDataProvider = {
       // Illustrative only — a real serial is assigned to a piece at purchase.
       serialExample: editionSize ? passportSerial(42, editionSize) : null,
       releasedOn: release,
-      issuedBy: 'Tai Manic Studios',
+      issuedBy: 'From Africa To You',
       provenance,
     });
   },

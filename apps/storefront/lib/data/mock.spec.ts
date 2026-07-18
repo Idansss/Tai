@@ -139,7 +139,7 @@ describe('mockProvider artwork passport', () => {
     expect(passport?.editionSize).toBe(100);
     expect(passport?.serialExample).toMatch(/^No\. \d+ \/ 100$/);
     expect(passport?.provenance.length).toBeGreaterThan(0);
-    expect(passport?.issuedBy).toBe('Tai Manic Studios');
+    expect(passport?.issuedBy).toBe('From Africa To You');
   });
 
   it('marks an open edition with no run size or serial', async () => {

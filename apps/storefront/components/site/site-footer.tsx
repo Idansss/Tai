@@ -25,9 +25,7 @@ export function SiteFooter() {
         <div className="grid gap-12 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div className="max-w-sm">
             <span className="font-display text-3xl font-bold uppercase tracking-tight">
-              Tai Manic
-              <br />
-              Studios
+              F.A.T.U
             </span>
             <p className="mt-4 text-sm leading-relaxed text-white/60">
               Hand-drawn art from across Africa, printed on cotton. From Africa, to you.
@@ -112,7 +110,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-2 text-xs text-white/40 sm:flex-row">
-          <span>© {new Date().getFullYear()} Tai Manic Studios. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} From Africa To You. All rights reserved.</span>
           <span className="font-display uppercase tracking-[0.12em]">Made for the artwork</span>
         </div>
       </Container>

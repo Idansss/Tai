@@ -4,7 +4,7 @@ import { ContentPage } from '@/components/site/content-page';
 export const metadata: Metadata = {
   title: 'The artist',
   description:
-    'The hand behind Tai Manic Studios — how the drawings are made and why the story matters.',
+    'The hand behind From Africa To You — how the drawings are made and why the story matters.',
 };
 
 export default function Page() {

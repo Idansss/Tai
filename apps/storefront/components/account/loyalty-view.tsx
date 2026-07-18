@@ -202,7 +202,7 @@ function ReferralCard({ profile, origin }: { profile: LoyaltyProfile; origin: st
     if (!url) return;
     if (typeof navigator.share === 'function') {
       try {
-        await navigator.share({ title: 'Tai Manic Studios', url });
+        await navigator.share({ title: 'From Africa To You', url });
         return;
       } catch {
         // fall through to copy

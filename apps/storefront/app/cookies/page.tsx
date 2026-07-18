@@ -3,7 +3,7 @@ import { ContentPage } from '@/components/site/content-page';
 
 export const metadata: Metadata = {
   title: 'Cookie policy',
-  description: 'The cookies Tai Manic Studios uses and how to control them.',
+  description: 'The cookies From Africa To You uses and how to control them.',
 };
 
 export default function Page() {

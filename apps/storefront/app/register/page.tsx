@@ -5,7 +5,7 @@ import { AuthForm } from '@/components/account/auth-form';
 
 export const metadata: Metadata = {
   title: 'Create account',
-  description: 'Create a Tai Manic Studios account.',
+  description: 'Create a From Africa To You account.',
   robots: { index: false, follow: false },
 };
 
