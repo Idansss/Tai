@@ -84,8 +84,8 @@ export function HeroSlideshow({ slides, pillars }: { slides: HeroSlide[]; pillar
             delay={160}
             className="mt-6 max-w-md text-sm leading-relaxed text-white/75 sm:text-base"
           >
-            Hand-drawn art from across Africa — printed on cotton, made to order. Own a piece of
-            the continent, positioned the way the studio approved it.
+            Hand-drawn art from across Africa — printed on cotton, made to order. Own a piece of the
+            continent, positioned the way the studio approved it.
           </Reveal>
           <Reveal delay={240} className="mt-8 flex flex-wrap items-center gap-3">
             <PillLink href="/artworks" tone="light">

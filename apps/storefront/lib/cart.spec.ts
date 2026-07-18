@@ -40,6 +40,20 @@ describe('lineId', () => {
     );
   });
 
+  it('forks the line when the printed sides differ (front-only vs both sides)', () => {
+    const frontOnly = { ...base, designSides: { front: { printScale: 0.4, placementId: 'p-fc' } } };
+    const bothSides = {
+      ...base,
+      designSides: {
+        front: { printScale: 0.4, placementId: 'p-fc' },
+        back: { printScale: 0.6, placementId: 'p-bk' },
+      },
+    };
+    expect(lineId(frontOnly)).not.toBe(lineId(bothSides));
+    // The same two-sided composition merges.
+    expect(lineId(bothSides)).toBe(lineId({ ...bothSides }));
+  });
+
   it('forks the line for a different note, and merges an identical one', () => {
     expect(lineId({ ...base, note: 'For mum' })).not.toBe(lineId(base));
     expect(lineId({ ...base, note: 'For mum' })).toBe(lineId({ ...base, note: ' for mum ' }));

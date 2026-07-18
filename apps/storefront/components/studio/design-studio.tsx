@@ -14,8 +14,10 @@ import { artworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import { GARMENT_VIEWBOX, GARMENTS, garmentStyleFromName } from '@/lib/garments/registry';
+import type { CartSideRender } from '@/lib/cart';
 import {
   buildStudioQuery,
+  collectSides,
   EMPTY_STUDIO_CONFIG,
   findGarment,
   findPlacement,
@@ -27,6 +29,7 @@ import {
   resolveStudioConfig,
   type StudioConfig,
   type StudioView,
+  switchView,
 } from '@/lib/studio';
 
 function ChipButton({
@@ -152,6 +155,29 @@ export function DesignStudio({
 
   const resetPlacement = useCallback(() => updateTransform(IDENTITY_TRANSFORM), [updateTransform]);
 
+  // Turn the garment over: the side you were editing is stashed and the other side loads, so each
+  // side keeps its own print. This is how a piece gets a design on BOTH sides.
+  const switchToView = useCallback((next: StudioView) => {
+    setCopied(false);
+    setStatus(null);
+    setAdded(false);
+    setSaved(false);
+    setConfig((c) => switchView(c, next));
+  }, []);
+
+  // Clear the print from the side currently being viewed.
+  const clearSide = useCallback(() => {
+    setCopied(false);
+    setAdded(false);
+    setSaved(false);
+    setConfig((c) =>
+      resolveStudioConfig(
+        { ...c, placement: null, scale: null, transform: IDENTITY_TRANSFORM },
+        options,
+      ),
+    );
+  }, [options]);
+
   // Clearing the artwork cascades: with no artwork there is no garment, colour, size, placement or
   // scale to keep, so resetting these three is enough for resolveStudioConfig to empty the rest.
   const reset = useCallback(() => update({ artwork: null, garment: null, size: null }), [update]);
@@ -204,6 +230,12 @@ export function DesignStudio({
   // The interactive layer is live only when a print is actually shown on the side being viewed.
   const canEdit = Boolean(artworkPrint && placement && scale && artworkOnThisView);
   const customised = !isIdentityTransform(transform);
+  // Which sides currently carry a print — drives the front/back indicators and the "this side is
+  // blank" prompt. The active side is printed when it has a placement + scale.
+  const printedAreas = useMemo(() => new Set(collectSides(config).map((s) => s.area)), [config]);
+  const activePrinted = printedAreas.has(config.view);
+  // The other side is printed too → clearing the active side still leaves a valid piece.
+  const otherPrinted = Boolean(config.otherSide);
   // Every section gates on the artwork (`disabled={!artwork}`), and everything else is resolved
   // from it, so the artwork is what "something to reset" means — and what keeps the button's
   // enabled state in step with the visible selection.
@@ -249,11 +281,9 @@ export function DesignStudio({
     [config.artwork, config.view, config.quantity, loadingArtwork],
   );
 
-  const selectPlacement = (id: string) => {
-    const next = findPlacement(garment, id);
-    // Turn the garment to the side the print is actually on.
-    update({ placement: id, ...(next ? { view: next.area } : {}) });
-  };
+  // Placement chips are already limited to the side being viewed, so this just prints the active
+  // side. (Switching sides is the garment-view toggle's job, via `switchToView`.)
+  const selectPlacement = (id: string) => update({ placement: id });
 
   const copyShareLink = useCallback(async () => {
     const url = `${window.location.origin}/design-studio${buildStudioQuery(config)}`;
@@ -278,8 +308,42 @@ export function DesignStudio({
       return;
     }
     const variantId = findVariantId(config, garment);
-    if (!variantId || !garment || !placement || !scale) {
+    if (!variantId || !garment) {
       setStatus('That combination is not available — choose a different colour or size.');
+      return;
+    }
+    // Build per-side render data for every printed side (one piece can print front AND back).
+    const designSides: Partial<Record<StudioView, CartSideRender>> = {};
+    const sideLabels: string[] = [];
+    let primary: {
+      plLabel: string;
+      scLabel: string;
+      plId: string;
+      scSlug: string;
+      area: StudioView;
+    } | null = null;
+    for (const side of collectSides(config)) {
+      const pl = garment.placements.find((p) => p.id === side.placement);
+      const sc = pl?.scalePresets.find((s) => s.slug === side.scale);
+      if (!pl || !sc) continue;
+      const zone = GARMENTS[garmentStyle].print[side.area];
+      designSides[side.area] = {
+        printScale: (sc.widthPct / 100) * (GARMENT_VIEWBOX.w / zone.maxW),
+        ...(isIdentityTransform(side.transform) ? {} : { transform: side.transform }),
+        placementId: pl.id,
+        scalePresetId: sc.slug,
+      };
+      sideLabels.push(`${side.area} (${sc.label.toLowerCase()})`);
+      primary ??= {
+        plLabel: pl.label,
+        scLabel: sc.label,
+        plId: pl.id,
+        scSlug: sc.slug,
+        area: side.area,
+      };
+    }
+    if (!primary) {
+      setStatus('Add a print to at least one side to continue.');
       return;
     }
     addItem({
@@ -292,32 +356,27 @@ export function DesignStudio({
       priceMinor: artwork.startingPriceMinor,
       currency: artwork.currency,
       quantity: Math.max(1, config.quantity),
-      placement: placement.label,
-      scale: scale.label,
-      view: config.view,
-      // The approved tuple. Carrying it means the line's identity is the contract's
-      // canonical form rather than a slug string we made up, and it is what a
-      // server-backed add will post (never a price).
+      placement: primary.plLabel,
+      scale: primary.scLabel,
+      view: primary.area,
+      // The approved tuple for the primary side — the canonical-form base for the line's identity
+      // and what a server-backed add will post (the per-side geometry rides in `designSides`).
       configuration: {
         artworkVersionId: garment.artworkVersionId,
         garmentVariantId: variantId,
-        placementId: placement.id,
-        scalePresetId: scale.slug,
-        view: config.view === 'back' ? 'BACK' : 'FRONT',
+        placementId: primary.plId,
+        scalePresetId: primary.scSlug,
+        view: primary.area === 'back' ? 'BACK' : 'FRONT',
       },
-      // The free adjustment, when the customer moved/resized/rotated/cropped. Undefined for an
-      // untouched approved placement, so those lines keep their plain canonical identity.
-      ...(customised ? { transform } : null),
-      // Enough for the cart to redraw the exact piece as a thumbnail.
+      // The exact per-side composition, so the cart redraws front and back precisely.
       artworkSlug: artwork.slug,
-      printView: placement.area,
-      printScale: mockupScale,
+      designSides,
       ...(note.trim() ? { note: note.trim() } : null),
     });
     setAdded(true);
     setStatus(
-      `Added to your bag: ${artwork.title} on ${garment.title}, ${config.colour}, size ${config.size}, ` +
-        `${placement.label.toLowerCase()} · ${scale.label.toLowerCase()}.`,
+      `Added to your bag: ${artwork.title} on ${garment.title}, ${config.colour}, size ${config.size} — ` +
+        `printed ${sideLabels.join(' + ')}.`,
     );
   };
 
@@ -422,20 +481,35 @@ export function DesignStudio({
             <div
               className="inline-flex rounded-md border border-line p-1"
               role="group"
-              aria-label="Garment view"
+              aria-label="Garment view — front and back can each carry a print"
             >
               {(['front', 'back'] as StudioView[]).map((v) => (
                 <button
                   key={v}
                   type="button"
-                  onClick={() => update({ view: v })}
+                  onClick={() => switchToView(v)}
                   aria-pressed={config.view === v}
                   className={cn(
-                    'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                    'inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
                     config.view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
                   )}
                 >
                   {v}
+                  {/* A dot marks a side that already has a print. */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'size-1.5 rounded-full',
+                      printedAreas.has(v)
+                        ? config.view === v
+                          ? 'bg-on-accent'
+                          : 'bg-[var(--color-accent-primary)]'
+                        : 'bg-transparent ring-1 ring-current',
+                    )}
+                  />
+                  <span className="sr-only">
+                    {printedAreas.has(v) ? '(has a print)' : '(blank)'}
+                  </span>
                 </button>
               ))}
             </div>
@@ -625,25 +699,41 @@ export function DesignStudio({
             </div>
           </Section>
 
-          <Section step={5} title="Placement" disabled={!garment}>
-            <div className="flex flex-wrap gap-2">
-              {/* Approved for this artwork on this garment — never a free-form position. */}
-              {(garment?.placements ?? []).map((p) => (
-                <ChipButton
-                  key={p.id}
-                  selected={config.placement === p.id}
-                  onClick={() => selectPlacement(p.id)}
+          <Section step={5} title={`Placement · ${config.view}`} disabled={!garment}>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Starting points approved for THIS side; drag/resize/crop fine-tunes from here. */}
+              {(garment?.placements ?? [])
+                .filter((p) => p.area === config.view)
+                .map((p) => (
+                  <ChipButton
+                    key={p.id}
+                    selected={config.placement === p.id}
+                    onClick={() => selectPlacement(p.id)}
+                  >
+                    {p.label}
+                  </ChipButton>
+                ))}
+              {/* Clearing is only offered when the other side keeps the piece printed. */}
+              {activePrinted && otherPrinted ? (
+                <button
+                  type="button"
+                  onClick={clearSide}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm text-muted outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
                 >
-                  {p.label}
-                </ChipButton>
-              ))}
+                  <RotateCcw className="size-4" aria-hidden /> Leave this side blank
+                </button>
+              ) : null}
             </div>
             {placement ? (
               <Text size="sm" tone="muted" className="mt-2">
-                Printed at {placement.printWidthMm} × {placement.printHeightMm} mm, positioned to
-                studio standards.
+                Printed at {placement.printWidthMm} × {placement.printHeightMm} mm on the{' '}
+                {config.view}. Turn the garment over to print the other side too.
               </Text>
-            ) : null}
+            ) : (
+              <Text size="sm" tone="muted" className="mt-2">
+                The {config.view} is blank — pick a placement above to print it, or leave it as is.
+              </Text>
+            )}
           </Section>
 
           <Section step={6} title="Scale" disabled={!placement}>
@@ -691,13 +781,21 @@ export function DesignStudio({
                     ['Garment', garment?.title ?? null],
                     ['Colour', config.colour],
                     ['Size', config.size],
-                    ['Placement', placement?.label],
-                    ['Scale', scale?.label],
+                    [
+                      'Prints',
+                      collectSides(config)
+                        .map((s) => {
+                          const pl = garment?.placements.find((p) => p.id === s.placement);
+                          const sc = pl?.scalePresets.find((x) => x.slug === s.scale);
+                          return `${s.area} · ${sc?.label ?? ''}`.trim();
+                        })
+                        .join('   ·   ') || null,
+                    ],
                   ] as const
                 ).map(([label, value]) => (
                   <div key={label} className="flex gap-2">
                     <dt className="text-muted">{label}</dt>
-                    <dd className="text-ink-2">{value ?? '—'}</dd>
+                    <dd className="capitalize text-ink-2">{value ?? '—'}</dd>
                   </div>
                 ))}
               </dl>
@@ -705,7 +803,7 @@ export function DesignStudio({
 
             {artwork && customised ? (
               <Text size="sm" tone="muted" className="mt-2">
-                Custom placement — you’ve adjusted the artwork from the{' '}
+                Custom placement — you’ve adjusted the {config.view} print from its{' '}
                 {scale?.label?.toLowerCase()} {placement?.label?.toLowerCase()} start.
               </Text>
             ) : null}

@@ -16,7 +16,7 @@
  */
 import type { Artwork, Cart, CartLine, GarmentTemplate } from '@tms/contracts';
 
-import type { CartItem, Promotion } from './cart';
+import type { CartItem, CartSideRender, Promotion } from './cart';
 import { discountMinor, estimatedTotalMinor, subtotalMinor } from './cart';
 import type { PrintTransform } from './studio';
 
@@ -40,6 +40,8 @@ export interface CartLineView {
   printView?: 'front' | 'back';
   printScale?: number;
   transform?: PrintTransform;
+  /** Per-side print data when the piece is printed on both sides (same artwork, placed per side). */
+  designSides?: Partial<Record<'front' | 'back', CartSideRender>>;
   note?: string;
   /** Server-resolved. Null when the server could not price the line. */
   unitPriceMinor: number | null;
@@ -180,6 +182,7 @@ export function toLocalCartView(items: CartItem[], promotion: Promotion | null):
       printView: item.printView,
       printScale: item.printScale,
       transform: item.transform,
+      designSides: item.designSides,
       note: item.note,
       unitPriceMinor: item.priceMinor,
       lineTotalMinor: item.priceMinor * item.quantity,

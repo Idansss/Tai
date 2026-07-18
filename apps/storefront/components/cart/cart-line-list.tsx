@@ -8,6 +8,7 @@ import { artworkImage } from '@/lib/artwork-images';
 import { MAX_LINE_QUANTITY } from '@/lib/cart';
 import { cartIssueMessage, isRecoverableByQuantity } from '@/lib/cart-api';
 import type { CartLineView } from '@/lib/cart-view';
+import { isIdentityTransform } from '@/lib/studio';
 import { useCart } from './cart-provider';
 
 /** Human summary of a line's configuration (colour · size · placement · scale). */
@@ -15,9 +16,33 @@ function lineDetail(line: CartLineView): string {
   return [line.colour, `Size ${line.size}`, line.placement, line.scale].filter(Boolean).join(' · ');
 }
 
-/** Does this line carry a print on the given side? */
-function sideHasDesign(line: CartLineView, side: 'front' | 'back'): boolean {
-  return Boolean(line.artworkSlug) && (line.printView ?? 'front') === side;
+/** True when both sides of the line carry a print. */
+function isTwoSided(line: CartLineView): boolean {
+  return Boolean(sideRender(line, 'front')) && Boolean(sideRender(line, 'back'));
+}
+
+/** True when any printed side was freely repositioned/resized/rotated/cropped. */
+function hasCustomPlacement(line: CartLineView): boolean {
+  return (['front', 'back'] as const).some((side) => {
+    const t = sideRender(line, side)?.transform;
+    return t ? !isIdentityTransform(t) : false;
+  });
+}
+
+/**
+ * The print on one side of a line, or null when that side is blank. Prefers the per-side design
+ * (two-sided pieces) and falls back to the single-side fields (one-side studio/product lines).
+ */
+function sideRender(
+  line: CartLineView,
+  side: 'front' | 'back',
+): { printScale: number; transform?: CartLineView['transform'] } | null {
+  if (!line.artworkSlug) return null;
+  const perSide = line.designSides?.[side];
+  if (perSide) return { printScale: perSide.printScale, transform: perSide.transform };
+  if ((line.printView ?? 'front') === side)
+    return { printScale: line.printScale ?? 0.8, transform: line.transform };
+  return null;
 }
 
 /**
@@ -35,9 +60,10 @@ function GarmentSide({
   side: 'front' | 'back';
   size: number;
 }) {
-  const designed = sideHasDesign(line, side);
+  const render = sideRender(line, side);
+  const designed = Boolean(render);
   const print = designed && line.artworkSlug ? artworkImage(line.artworkSlug) : null;
-  const t = designed ? line.transform : undefined;
+  const t = render?.transform;
   return (
     <div className="flex flex-col items-center gap-1">
       <div
@@ -56,7 +82,7 @@ function GarmentSide({
               ? {
                   src: print,
                   area: side,
-                  scale: (line.printScale ?? 0.8) * (t?.scale ?? 1),
+                  scale: (render?.printScale ?? 0.8) * (t?.scale ?? 1),
                   offset: t ? { xPct: t.dx, yPct: t.dy } : undefined,
                   rotation: t?.rotation ?? 0,
                   crop: t
@@ -164,7 +190,8 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
                   <p className="text-xs text-muted">{line.garment}</p>
                   <p className="mt-1 text-xs text-ink-2">
                     {lineDetail(line)}
-                    {line.transform ? ' · Custom placement' : ''}
+                    {isTwoSided(line) ? ' · Both sides' : ''}
+                    {hasCustomPlacement(line) ? ' · Custom placement' : ''}
                   </p>
                   {line.note ? (
                     <p className="mt-1 text-xs italic text-muted">“{line.note}”</p>
