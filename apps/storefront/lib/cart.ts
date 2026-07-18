@@ -3,11 +3,24 @@
  * shared between the cart drawer, the cart page and (later) checkout.
  *
  * Money is authoritative on the server (see MASTER_PRODUCT_SPEC §"server is
- * authoritative for … price, discounts, tax, shipping, and totals"). Until the
- * cart/checkout APIs exist, these helpers compute an honest *preview* subtotal
- * and a *preview* promotion discount; delivery and tax are deliberately left to
- * checkout. Backend gap tracked as TMS-FBR-003 in FRONTEND_TO_BACKEND.md.
+ * authoritative for … price, discounts, tax, shipping, and totals"). The helpers
+ * here compute an honest *preview* subtotal and a *preview* promotion discount for
+ * optimistic UI only; delivery and tax belong to checkout. Once a cart is
+ * server-backed, the cart page must render the server's numbers, not these —
+ * see `lib/cart-api.ts`.
  */
+import { configurationCanonicalForm, type GarmentView } from '@tms/contracts';
+
+/**
+ * The approved tuple that identifies a configuration. Quantity is absent on purpose (ADR-014).
+ */
+export interface ApprovedConfiguration {
+  artworkVersionId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+}
 
 export interface CartItem {
   /** Stable line id — identical configurations merge into one line. */
@@ -28,6 +41,12 @@ export interface CartItem {
   placement?: string;
   scale?: string;
   view?: string;
+  /**
+   * The approved tuple, when the line came from the Studio. Present so the line's identity is
+   * the contract's canonical form, and so a server-backed add can post the tuple without having
+   * to reconstruct it from labels.
+   */
+  configuration?: ApprovedConfiguration;
 }
 
 /** A configuration a caller wants to add — everything but the derived id. */
@@ -36,8 +55,17 @@ export type CartItemInput = Omit<CartItem, 'id' | 'quantity'> & { quantity?: num
 export const MAX_LINE_QUANTITY = 20;
 
 /**
- * Derive a stable line id from the fields that make a configuration unique.
- * Two adds with the same product/colour/size/placement/scale merge quantities.
+ * Derive a stable line id from the fields that make a configuration unique, so two adds of the
+ * same configuration merge quantities instead of making a second line.
+ *
+ * When the caller holds the approved tuple this delegates to `configurationCanonicalForm` from
+ * `@tms/contracts` — the backend's single definition of a configuration's identity, which a saved
+ * design and a cart line must agree on. Re-deriving that rule here would be a second definition
+ * free to drift from it. Quantity is deliberately excluded (ADR-014): it is cart state, not part
+ * of what the customer made, so changing it must not fork the line.
+ *
+ * The slug fallback serves the local preview cart, where a line was built from catalogue slugs
+ * and no approved ids exist yet.
  */
 export function lineId(input: {
   productSlug: string;
@@ -45,7 +73,9 @@ export function lineId(input: {
   size: string;
   placement?: string;
   scale?: string;
+  configuration?: ApprovedConfiguration;
 }): string {
+  if (input.configuration) return configurationCanonicalForm(input.configuration);
   return [input.productSlug, input.colour, input.size, input.placement ?? '', input.scale ?? '']
     .map((part) => part.trim().toLowerCase().replace(/\s+/g, '-'))
     .join('__');

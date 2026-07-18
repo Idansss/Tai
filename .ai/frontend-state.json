@@ -1,9 +1,9 @@
 {
   "agent": "Claude Code",
   "area": "frontend",
-  "currentPhase": "F5 complete → F6 next",
-  "lastVerifiedTask": "TMS-F5-010",
-  "nextRecommendedTask": "F5 (growth & AI) COMPLETE — all of 001–010 Verified. Next: F6 (hardening) — audit-and-fix + real-API cutover (several tasks depend on Codex delivering endpoints TMS-FBR-001/002/004/005/007/008/009). F0–F4 merged to main; TMS-F1-DEF-001 fixed for production.",
+  "currentPhase": "F7 API integration (in progress)",
+  "lastVerifiedTask": "TMS-F7-006b",
+  "nextRecommendedTask": "F7 on claude/f7-api-integration (PR #23). DONE: TMS-F7-001..004 (http foundation, per-domain data source, artworks+collections, nullable price), F7-005 (Studio on approved placements), F7-006a (canonical lineId + cart client), F7-006b (cart UI on the server cart: server totals, issue lines kept + reasons, hasIssues blocks checkout, promotion 422 vs 200-with-null). NEXT: TMS-F7-008 customer auth cutover (/api/v1/auth/*, opaque tms_session cookie) — it unblocks TMS-F7-007 saved designs (client + tests already done in lib/designs-api.ts) and makes the guest-cart merge real. BLOCKERS: (1) no live API locally — Postgres has only B1 identity tables and migrating it would disturb the parallel backend session, so everything is stub-verified; (2) TMS-FBR-020 — a cart line is pure ids and cannot be rendered from its own response, so lib/cart-view.ts joins labels from /artworks + /garments as an interim.",
   "completedTasks": [
     "TMS-F0-001",
     "TMS-F0-002",
@@ -47,7 +47,14 @@
     "TMS-F5-005",
     "TMS-F5-008",
     "TMS-F5-009",
-    "TMS-F5-010"
+    "TMS-F5-010",
+    "TMS-F7-001",
+    "TMS-F7-002",
+    "TMS-F7-003",
+    "TMS-F7-004",
+    "TMS-F7-005",
+    "TMS-F7-006a",
+    "TMS-F7-006b"
   ],
   "inProgressTasks": [],
   "implementedNotVerified": [],

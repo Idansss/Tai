@@ -74,8 +74,11 @@ export function SiteHeader() {
                   href={item.href}
                   aria-current={isActive(item.href) ? 'page' : undefined}
                   className={cn(
-                    'rounded-sm text-xs font-medium uppercase tracking-[0.08em] outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                    isActive(item.href) ? 'text-ink' : 'text-muted',
+                    'relative rounded-sm text-xs font-medium uppercase tracking-[0.08em] outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                    'after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:bg-accent after:transition-[width] after:duration-200 after:content-[""]',
+                    isActive(item.href)
+                      ? 'text-ink after:w-full'
+                      : 'text-muted after:w-0 hover:after:w-full',
                   )}
                 >
                   {item.label}
@@ -130,7 +133,7 @@ export function SiteHeader() {
         ref={dialogRef}
         aria-label="Site menu"
         onClick={onDialogClick}
-        className="m-0 ml-auto h-dvh max-h-none w-[min(22rem,85vw)] max-w-none bg-canvas p-0 text-ink backdrop:bg-black/40 open:flex open:flex-col"
+        className="tms-slideover m-0 ml-auto h-dvh max-h-none w-[min(22rem,85vw)] max-w-none bg-canvas p-0 text-ink open:flex open:flex-col"
       >
         <div className="flex h-16 items-center justify-between border-b border-line px-5">
           <span className="font-display text-sm font-semibold tracking-tight">Menu</span>
@@ -148,8 +151,10 @@ export function SiteHeader() {
                 onClick={close}
                 aria-current={isActive(item.href) ? 'page' : undefined}
                 className={cn(
-                  'block rounded-md px-3 py-3 text-base outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                  isActive(item.href) ? 'text-ink' : 'text-ink-2',
+                  'block rounded-md border-l-2 px-3 py-3 text-base outline-none transition-colors hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                  isActive(item.href)
+                    ? 'border-accent bg-canvas-2 font-medium text-ink'
+                    : 'border-transparent text-ink-2',
                 )}
               >
                 {item.label}

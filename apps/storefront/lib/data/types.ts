@@ -20,9 +20,14 @@ export interface ArtworkSummary {
   title: string;
   collection: string;
   shortStory: string;
-  availability: Availability;
-  startingPriceMinor: number;
-  currency: string;
+  /**
+   * Null when the source cannot state it. ADR-015 puts price on the approved artwork and
+   * garment pair, so the API's artwork response carries no price and no availability state.
+   * Null means "not known here" and must render as absent, never as ₦0 or "in stock".
+   */
+  availability: Availability | null;
+  startingPriceMinor: number | null;
+  currency: string | null;
   compatibleGarments: string[];
   limitedEdition: boolean;
 }
@@ -199,6 +204,12 @@ export interface StorySummary {
   publishedOn: string;
   /** Count of shoppable (artwork/product) hotspots across the story. */
   shoppableCount: number;
+  /**
+   * Cover drawing for the index tile, derived from the story's first artwork hotspot. Optional:
+   * a story with no artwork hotspot (or whose art has no plate yet) falls back to the dark
+   * editorial tile, and the API provider does not carry it yet (TMS-FBR-019).
+   */
+  coverImage?: string | null;
 }
 
 export interface StoryDetail extends StorySummary {
@@ -242,27 +253,70 @@ export interface ProductSummary {
   colourCount: number;
 }
 
-export interface StudioPlacement {
-  id: string;
-  label: string;
-  area: 'front' | 'back';
-  /** Centre position of the artwork on the garment, as a percentage. */
-  x: number;
-  y: number;
-}
-
+/**
+ * The Design Studio's option model, shaped by ADR-013: approved placements are the only design
+ * geometry. Everything here is something an administrator approved for one exact artwork version
+ * on one exact garment. The customer picks from these; they never author geometry.
+ *
+ * The nesting is not cosmetic, it mirrors the contract:
+ * - placements are approved per artwork+garment pair (ArtworkGarmentCompatibility), not globally;
+ * - scale presets belong to a *placement* (GarmentScalePreset.placementId), so changing placement
+ *   changes the available scales;
+ * - colours/sizes/variants belong to a garment template.
+ */
 export interface StudioScalePreset {
-  id: string;
+  /**
+   * The approved preset's slug. This is what DesignConfigurationInput.scalePreset takes — note
+   * it is a slug while the sibling ids are UUIDs, and a cart line reads it back as
+   * `scalePresetId` (TMS-FBR-017).
+   */
+  slug: string;
   label: string;
-  /** Artwork width as a percentage of the garment width. */
+  /** Rendered artwork width as a percentage of the garment. Derived; render-only. */
   widthPct: number;
 }
 
-export interface StudioOptions {
+export interface StudioPlacement {
+  /** The approved placement id. The only placement value ever sent to the server. */
+  id: string;
+  label: string;
+  area: 'front' | 'back';
+  /**
+   * Centre position of the print as a percentage of the garment. Administrator-approved and
+   * render-only: the customer cannot move it (ADR-013), we only draw it.
+   */
+  x: number;
+  y: number;
+  /** The approved print size in millimetres, for an honest "what you get" note. */
+  printWidthMm: number;
+  printHeightMm: number;
+  /** Scale presets approved for THIS placement. */
+  scalePresets: StudioScalePreset[];
+}
+
+/** One buyable garment variant: the colour+size pair the server knows by id. */
+export interface StudioVariant {
+  /** garmentVariantId — half of the approved tuple. */
+  id: string;
+  colour: string;
+  size: string;
+}
+
+export interface StudioGarment {
+  /** Garment template slug, used in the shareable URL. */
+  slug: string;
+  title: string;
+  /** The exact immutable artwork version this garment was approved against. */
+  artworkVersionId: string;
   colours: ProductColour[];
   sizes: string[];
+  variants: StudioVariant[];
   placements: StudioPlacement[];
-  scalePresets: StudioScalePreset[];
+}
+
+export interface StudioOptions {
+  /** Garments approved for this artwork. Empty means the artwork has no approved canvas. */
+  garments: StudioGarment[];
 }
 
 export interface DeliveryOption {
@@ -341,8 +395,12 @@ export interface StorefrontDataProvider {
   listProducts(): Promise<ProductSummary[]>;
   /** A product and its configurable options, or null if the slug is unknown. */
   getProduct(slug: string): Promise<ProductDetail | null>;
-  /** Approved Design Studio configuration options (colours, sizes, placements, scales). */
-  getStudioOptions(): Promise<StudioOptions>;
+  /**
+   * The garments, colours, sizes and approved placements an administrator has approved for one
+   * artwork. Artwork-scoped because approval is per artwork+garment pair (ADR-013): there is no
+   * global set of placements to offer.
+   */
+  getStudioOptions(artworkSlug: string): Promise<StudioOptions>;
   /** Available delivery methods with fees + ETAs for checkout. */
   getDeliveryOptions(): Promise<DeliveryOption[]>;
   /** Limited drops for the drops index, newest release first (TMS-F5-001). */

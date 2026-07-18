@@ -4,3 +4,85 @@
 
 /* App files are auto-detected; explicitly scan the shared UI package source. */
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
+
+/*
+ * Marquee — the moving brand ticker (the STRETKAT oversized-type energy, made honest).
+ * Two identical tracks sit side by side and translate left by exactly half the pair, so the loop
+ * is seamless. Decorative and marketing-only; it pauses on hover and stops entirely under reduced
+ * motion, where a drifting strip would be both pointless and hostile.
+ *
+ * The animation is registered through @theme (Tailwind v4's animation API) rather than as a
+ * top-level rule: unlayered custom CSS written after `@import "tailwindcss"` gets dropped from the
+ * compiled bundle here, so the track relies on the generated `animate-marquee` utility instead.
+ */
+@theme {
+  --animate-marquee: tms-marquee 32s linear infinite;
+
+  @keyframes tms-marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+/*
+ * Slide-over dialogs (cart drawer, mobile menu). A native <dialog> opened with showModal() snaps
+ * in with no transition, which reads as abrupt. This animates the panel in from the right and fades
+ * the scrim on both open AND close: @starting-style gives the entry its from-state, and the
+ * `overlay`/`display` transitions with `allow-discrete` keep the element painted through the close
+ * so it can animate out instead of vanishing. Under reduced motion it snaps, as it did before.
+ *
+ * Layered (@layer components) on purpose — unlayered rules after `@import "tailwindcss"` get
+ * dropped from the compiled bundle in this app (see the marquee note above).
+ */
+@layer components {
+  .tms-slideover {
+    transform: translateX(100%);
+    opacity: 0;
+    transition:
+      transform var(--duration-slow) var(--ease-emphasis),
+      opacity var(--duration-slow) var(--ease-emphasis),
+      overlay var(--duration-slow) var(--ease-emphasis) allow-discrete,
+      display var(--duration-slow) var(--ease-emphasis) allow-discrete;
+  }
+
+  .tms-slideover[open] {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  @starting-style {
+    .tms-slideover[open] {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  .tms-slideover::backdrop {
+    background-color: rgb(0 0 0 / 0);
+    transition:
+      background-color var(--duration-slow) var(--ease-emphasis),
+      overlay var(--duration-slow) var(--ease-emphasis) allow-discrete,
+      display var(--duration-slow) var(--ease-emphasis) allow-discrete;
+  }
+
+  .tms-slideover[open]::backdrop {
+    background-color: rgb(0 0 0 / 0.45);
+  }
+
+  @starting-style {
+    .tms-slideover[open]::backdrop {
+      background-color: rgb(0 0 0 / 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tms-slideover,
+    .tms-slideover::backdrop {
+      transition: none;
+    }
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Heading, Text, cn } from '@tms/ui';
+import { Alert, Text, cn } from '@tms/ui';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -85,10 +85,10 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <div className="mx-auto max-w-sm">
-      <Heading as={1} size="display-lg">
+      <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl">
         {isRegister ? 'Create account' : 'Sign in'}
-      </Heading>
-      <Text tone="secondary" className="mt-2">
+      </h1>
+      <Text tone="secondary" className="mt-3">
         {isRegister
           ? 'Save your designs, track orders and check out faster.'
           : 'Welcome back to the studio.'}
@@ -143,7 +143,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
         <button
           type="submit"
-          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-neutral-950 text-sm font-semibold uppercase tracking-[0.08em] text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
         >
           {isRegister ? 'Create account' : 'Sign in'}
         </button>

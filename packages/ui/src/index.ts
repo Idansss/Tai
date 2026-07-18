@@ -5,6 +5,7 @@ export { IconButton, type IconButtonProps } from './components/icon-button.js';
 export { Link, linkVariants, type LinkProps } from './components/link.js';
 export { Badge, type BadgeProps } from './components/badge.js';
 export { Card, type CardProps } from './components/card.js';
+export { Select, type SelectProps, type SelectOption } from './components/select.js';
 export { Price, type PriceProps } from './components/price.js';
 export { Skeleton, type SkeletonProps } from './components/skeleton.js';
 export { Spinner, type SpinnerProps } from './components/spinner.js';

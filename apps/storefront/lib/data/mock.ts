@@ -3,7 +3,8 @@ import { artworkVersionId, passportSerial } from '../passport';
 import { artworkMatchesQuery } from '../search';
 import { filterApproved } from '../community';
 import { summariseReviews } from '../reviews';
-import { countShoppableItems } from '../stories';
+import { artworkImage } from '../artwork-images';
+import { countShoppableItems, storyHotspotTargets } from '../stories';
 import type {
   ArtworkDetail,
   ArtworkPassport,
@@ -25,10 +26,13 @@ import type {
   ReviewCollection,
   ReviewTargetType,
   StorefrontDataProvider,
+  StoryBlock,
   StoryDetail,
   StoryHotspotTarget,
   StorySummary,
+  StudioGarment,
   StudioOptions,
+  StudioPlacement,
 } from './types';
 
 const COLOUR_PALETTE: Record<string, string> = {
@@ -166,22 +170,25 @@ const collectionMeta: { slug: string; name: string; description: string }[] = [
   {
     slug: 'night-studies',
     name: 'Night Studies',
-    description: 'Ink and neon drawn after dark, when the city is at its most honest.',
+    description:
+      'The city after dark in warm coloured pencil — dusk light, street life and the last colour of the day.',
   },
   {
     slug: 'comic-line',
     name: 'Comic Line',
-    description: 'Comic-panel storytelling, told one bold, uninterrupted line at a time.',
+    description:
+      'Comic-panel storytelling — gutters, speech bubbles and the recurring muse, a panel at a time.',
   },
   {
     slug: 'season-sketches',
     name: 'Season Sketches',
-    description: 'Quiet studies that follow the turning of the seasons.',
+    description: 'Pieces that follow the turning of the seasons — harmattan dust, rain and bloom.',
   },
   {
     slug: 'city-portraits',
     name: 'City Portraits',
-    description: 'Street-level scenes rendered in confident, tangled linework.',
+    description:
+      'Street-level scenes across African cities — the muse at market and on the move, in full colour.',
   },
 ];
 
@@ -191,7 +198,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'midnight-in-lagos',
     title: 'Midnight in Lagos',
     collection: 'Night Studies',
-    shortStory: 'Ink and neon from a restless city that never fully sleeps.',
+    shortStory: 'The muse against the Lagos skyline at dusk, in warm coloured pencil.',
     availability: 'available',
     startingPriceMinor: 1200000,
     currency: 'NGN',
@@ -203,7 +210,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'paper-tigers',
     title: 'Paper Tigers',
     collection: 'Comic Line',
-    shortStory: 'A comic-panel study of courage that is mostly bluff.',
+    shortStory: 'A comic-panel spread on courage that is mostly bluff — in full colour.',
     availability: 'limited',
     startingPriceMinor: 1500000,
     currency: 'NGN',
@@ -215,7 +222,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'harmattan-bloom',
     title: 'Harmattan Bloom',
     collection: 'Season Sketches',
-    shortStory: 'Dust-season florals drawn in a single unbroken line.',
+    shortStory: 'Harmattan-season blooms in warm coloured pencil — dust-gold and pink.',
     availability: 'available',
     startingPriceMinor: 1100000,
     currency: 'NGN',
@@ -263,7 +270,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'market-day',
     title: 'Market Day',
     collection: 'City Portraits',
-    shortStory: 'A crowded stall rendered in confident, tangled linework.',
+    shortStory: 'A crowded market stall in full sunset colour — the muse mid-haggle.',
     availability: 'limited',
     startingPriceMinor: 1400000,
     currency: 'NGN',
@@ -275,7 +282,7 @@ const artworks: ArtworkSummary[] = [
     slug: 'okada-run',
     title: 'Okada Run',
     collection: 'City Portraits',
-    shortStory: 'Motion blur on two wheels, told entirely in ink.',
+    shortStory: 'Motion blur on two wheels — an okada run through the city, in colour.',
     availability: 'available',
     startingPriceMinor: 1250000,
     currency: 'NGN',
@@ -311,7 +318,7 @@ const dropSeeds: DropSeed[] = [
     title: 'Night Market',
     tagline: 'The Night Studies drop, live now.',
     story:
-      'Four pieces pulled from the quietest hours of the city — ink, neon and the last warm light on the street. Made to order in a limited run.',
+      'Four pieces from the city after dark — dusk light, street life and the last warm colour of the day. Made to order in a limited run.',
     collection: 'Night Studies',
     earlyOffset: -2 * DAY_MS,
     releaseOffset: -1 * DAY_MS,
@@ -323,7 +330,7 @@ const dropSeeds: DropSeed[] = [
     title: 'City Portraits, Vol. 1',
     tagline: 'Early access is open for members.',
     story:
-      'Street-level scenes rendered in confident, tangled linework. Members get first access before the public release.',
+      'Street-level scenes across African cities, in full colour. Members get first access before the public release.',
     collection: 'City Portraits',
     earlyOffset: -1 * HOUR_MS,
     releaseOffset: 1 * DAY_MS,
@@ -335,7 +342,7 @@ const dropSeeds: DropSeed[] = [
     title: 'Harmattan Editions',
     tagline: 'Dust-season florals, dropping soon.',
     story:
-      'A short seasonal set drawn in single unbroken lines. Join early access to be first in the queue when it opens.',
+      'A short seasonal set in warm coloured pencil — harmattan dust and bloom. Join early access to be first in the queue when it opens.',
     collection: 'Season Sketches',
     earlyOffset: 1 * DAY_MS,
     releaseOffset: 2 * DAY_MS,
@@ -425,16 +432,16 @@ const storySeeds: StorySeed[] = [
     title: 'How Midnight in Lagos came together',
     category: 'Process',
     excerpt:
-      'From a blurred phone photo on a night bus to a single unbroken line — the making of our most-worn piece.',
+      'From a blurred phone photo on a night bus to a finished coloured-pencil drawing — the making of our most-worn piece.',
     readMinutes: 5,
     publishedOn: '2026-06-20',
     intro:
       'Every piece starts on paper. Midnight in Lagos began as a photograph taken through a bus window and ended as a drawing we could not stop returning to.',
     blocks: [
-      { kind: 'heading', text: 'From a photograph to a line' },
+      { kind: 'heading', text: 'From a photograph to a drawing' },
       {
         kind: 'paragraph',
-        text: 'The first sketches chased the neon — too much of it. Stripping the scene back to one continuous line was what finally made the city feel awake rather than lit up.',
+        text: 'The first sketches chased every light in the frame — too much of it. Building the scene up from a graphite construction and spending colour only where it mattered was what finally made the city feel awake rather than lit up.',
       },
       {
         kind: 'scene',
@@ -503,7 +510,7 @@ const storySeeds: StorySeed[] = [
       { kind: 'heading', text: 'The street, by daylight' },
       {
         kind: 'paragraph',
-        text: 'Market Day wants room to breathe, so we paired the long-sleeve with soft neutrals and let the linework do the talking.',
+        text: 'Market Day wants room to breathe, so we paired the long-sleeve with soft neutrals and let the colour do the talking.',
       },
       {
         kind: 'scene',
@@ -566,26 +573,26 @@ const storySeeds: StorySeed[] = [
     ],
   },
   {
-    slug: 'comic-line-one-unbroken-line',
-    title: 'Comic Line, one unbroken line',
+    slug: 'comic-line-telling-it-in-panels',
+    title: 'Comic Line: telling it in panels',
     category: 'Studio notes',
     excerpt:
-      'The rule behind the Comic Line collection: tell the whole story without lifting the pen.',
+      'The rule behind the Comic Line collection: tell a whole story on a single page of panels.',
     readMinutes: 6,
     publishedOn: '2026-05-15',
     intro:
-      'Comic Line is a self-imposed constraint — every panel drawn in a single continuous stroke. The constraint is the point.',
+      'Comic Line borrows the grammar of a comic page — panels, gutters and the occasional speech bubble — to tell a whole story on one sheet. The page is the point.',
     blocks: [
-      { kind: 'heading', text: 'One line, no lifting the pen' },
+      { kind: 'heading', text: 'The page is the frame' },
       {
         kind: 'paragraph',
-        text: 'Working in one unbroken line forces every decision to the front. There is no going back to fix a corner, so the corner has to be right the first time.',
+        text: 'Composing across panels forces every beat to earn its place. The gutters carry the time between them, so each panel has to land the moment it holds.',
       },
       {
         kind: 'scene',
         scene: {
-          id: 'scene-inking',
-          caption: 'Inking a Comic Line panel',
+          id: 'scene-page',
+          caption: 'Laying out a Comic Line page',
           hotspots: [
             {
               id: 'h-paper',
@@ -619,6 +626,21 @@ function toStoryDetail(seed: StorySeed): StoryDetail {
   return { ...seed, shoppableCount: countShoppableItems(seed.blocks) };
 }
 
+/**
+ * The story's index cover: the drawing behind its first artwork hotspot. Stories carry no cover
+ * field of their own, but every one leads with a piece from the gallery, so that piece is the
+ * honest tile image. Falls back to null (the dark editorial tile) if none has a plate yet.
+ */
+function storyCoverImage(blocks: StoryBlock[]): string | null {
+  for (const target of storyHotspotTargets(blocks)) {
+    if (target.kind === 'artwork') {
+      const image = artworkImage(target.slug);
+      if (image) return image;
+    }
+  }
+  return null;
+}
+
 function toStorySummary(seed: StorySeed): StorySummary {
   const { slug, title, category, excerpt, readMinutes, publishedOn } = seed;
   return {
@@ -629,6 +651,7 @@ function toStorySummary(seed: StorySeed): StorySummary {
     readMinutes,
     publishedOn,
     shoppableCount: countShoppableItems(seed.blocks),
+    coverImage: storyCoverImage(seed.blocks),
   };
 }
 
@@ -653,7 +676,7 @@ const reviewSeeds: Record<string, Review[]> = {
       id: 'rv-mil-2',
       rating: 4,
       title: 'Lovely, runs a touch large',
-      body: 'Gorgeous heavyweight cotton and the neon reads exactly like the artwork. I would size down for a classic fit.',
+      body: 'Gorgeous heavyweight cotton and the colour reads exactly like the artwork. I would size down for a classic fit.',
       author: 'Tunde A.',
       createdAt: '2026-06-15T09:30:00.000Z',
       verifiedPurchase: true,
@@ -701,7 +724,7 @@ const reviewSeeds: Record<string, Review[]> = {
     {
       id: 'rv-a-mil-2',
       rating: 4,
-      title: 'Beautiful linework',
+      title: 'Beautiful colour',
       body: 'One of my favourite pieces in the collection. Would love to see it on more garment types.',
       author: 'Zainab I.',
       createdAt: '2026-05-22T12:00:00.000Z',
@@ -721,7 +744,7 @@ const communityPhotoSeeds: CommunityPhoto[] = [
     artworkSlug: 'midnight-in-lagos',
     artworkTitle: 'Midnight in Lagos',
     handle: '@ada.wears',
-    caption: 'Caught the neon just right on the island bridge.',
+    caption: 'Caught the colour just right on the island bridge.',
     status: 'approved',
     createdAt: '2026-07-05T18:00:00.000Z',
   },
@@ -827,6 +850,106 @@ function delay<T>(value: T): Promise<T> {
   return Promise.resolve(value);
 }
 
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * The placements an administrator has "approved" in mock-land, mirroring the real model:
+ * geometry belongs to the placement, and scale presets belong to a placement rather than to the
+ * garment. Keeping the mock the same shape as the contract is what stops the UI from growing a
+ * dependency the backend would reject (ADR-013).
+ */
+const MOCK_PLACEMENTS: Array<Omit<StudioPlacement, 'id'> & { slug: string }> = [
+  {
+    slug: 'left-chest',
+    label: 'Left chest',
+    area: 'front',
+    x: 33,
+    y: 30,
+    printWidthMm: 100,
+    printHeightMm: 125,
+    scalePresets: [
+      { slug: 'small', label: 'Small', widthPct: 14 },
+      { slug: 'medium', label: 'Medium', widthPct: 20 },
+    ],
+  },
+  {
+    slug: 'centre-chest',
+    label: 'Centre chest',
+    area: 'front',
+    x: 50,
+    y: 38,
+    printWidthMm: 280,
+    printHeightMm: 350,
+    scalePresets: [
+      { slug: 'small', label: 'Small', widthPct: 30 },
+      { slug: 'medium', label: 'Medium', widthPct: 44 },
+      { slug: 'large', label: 'Large', widthPct: 56 },
+    ],
+  },
+  {
+    slug: 'full-front',
+    label: 'Full front',
+    area: 'front',
+    x: 50,
+    y: 52,
+    printWidthMm: 320,
+    printHeightMm: 400,
+    scalePresets: [
+      { slug: 'medium', label: 'Medium', widthPct: 52 },
+      { slug: 'large', label: 'Large', widthPct: 64 },
+    ],
+  },
+  {
+    slug: 'back',
+    label: 'Back',
+    area: 'back',
+    x: 50,
+    y: 42,
+    printWidthMm: 320,
+    printHeightMm: 400,
+    scalePresets: [
+      { slug: 'medium', label: 'Medium', widthPct: 48 },
+      { slug: 'large', label: 'Large', widthPct: 64 },
+    ],
+  },
+];
+
+/**
+ * Build the approved canvas for one artwork+garment pair. Ids are derived from the pair so a
+ * shared Studio URL keeps resolving across reloads, the way a real approved id would.
+ */
+function mockStudioGarment(artworkSlug: string, title: string): StudioGarment {
+  const garmentSlug = slugify(title);
+  const colours = Object.entries(COLOUR_PALETTE).map(([name, hex]) => ({
+    name,
+    hex,
+    available: true,
+  }));
+  return {
+    slug: garmentSlug,
+    title,
+    artworkVersionId: `mock-version-${artworkSlug}`,
+    colours,
+    sizes: SIZES,
+    variants: colours.flatMap((colour) =>
+      SIZES.map((size) => ({
+        id: `mock-variant-${garmentSlug}-${slugify(colour.name)}-${size.toLowerCase()}`,
+        colour: colour.name,
+        size,
+      })),
+    ),
+    placements: MOCK_PLACEMENTS.map((placement) => ({
+      ...placement,
+      id: `mock-placement-${artworkSlug}-${garmentSlug}-${placement.slug}`,
+    })),
+  };
+}
+
 /** Deterministic in-memory provider. Types match the real contract for a clean swap. */
 export const mockProvider: StorefrontDataProvider = {
   async listArtworks(params: ListArtworksParams = {}): Promise<CursorPage<ArtworkSummary>> {
@@ -850,8 +973,8 @@ export const mockProvider: StorefrontDataProvider = {
     if (!summary) return delay(null);
     return delay({
       ...summary,
-      story: `${summary.shortStory} The full piece explores line, restraint, and contrast.`,
-      inspiration: 'Street photography, comic inking, and West African textiles.',
+      story: `${summary.shortStory} The full piece is coloured pencil and marker on paper, with colour spent where it matters most.`,
+      inspiration: 'Street photography, comic-panel composition, and West African textiles.',
       edition: summary.limitedEdition ? 'Limited edition of 100' : 'Open edition',
       release: '2026',
       related: artworks.filter((a) => a.id !== summary.id).slice(0, 3),
@@ -870,7 +993,7 @@ export const mockProvider: StorefrontDataProvider = {
     const provenance: ProvenanceEvent[] = [
       {
         label: 'Drawn in the studio',
-        detail: `${detail.title} — original linework by the Tai Manic Studios team.`,
+        detail: `${detail.title} — original drawing by the Tai Manic Studios team.`,
         date: release,
       },
       {
@@ -939,25 +1062,11 @@ export const mockProvider: StorefrontDataProvider = {
     return delay(seed ? toProductDetail(seed) : null);
   },
 
-  async getStudioOptions(): Promise<StudioOptions> {
+  async getStudioOptions(artworkSlug: string): Promise<StudioOptions> {
+    const artwork = artworks.find((entry) => entry.slug === artworkSlug);
+    if (!artwork) return delay({ garments: [] });
     return delay({
-      colours: Object.entries(COLOUR_PALETTE).map(([name, hex]) => ({
-        name,
-        hex,
-        available: true,
-      })),
-      sizes: SIZES,
-      placements: [
-        { id: 'left-chest', label: 'Left chest', area: 'front', x: 33, y: 30 },
-        { id: 'centre-chest', label: 'Centre chest', area: 'front', x: 50, y: 38 },
-        { id: 'full-front', label: 'Full front', area: 'front', x: 50, y: 52 },
-        { id: 'back', label: 'Back', area: 'back', x: 50, y: 42 },
-      ],
-      scalePresets: [
-        { id: 'small', label: 'Small', widthPct: 20 },
-        { id: 'medium', label: 'Medium', widthPct: 44 },
-        { id: 'large', label: 'Large', widthPct: 64 },
-      ],
+      garments: artwork.compatibleGarments.map((title) => mockStudioGarment(artworkSlug, title)),
     });
   },
 

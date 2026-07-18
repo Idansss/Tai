@@ -53,13 +53,41 @@ describe('mockProvider products', () => {
 });
 
 describe('mockProvider studio options', () => {
-  it('returns colours, sizes, placements and scale presets', async () => {
-    const options = await mockProvider.getStudioOptions();
-    expect(options.colours.length).toBeGreaterThan(0);
-    expect(options.sizes.length).toBeGreaterThan(0);
-    expect(options.placements.some((p) => p.area === 'front')).toBe(true);
-    expect(options.placements.some((p) => p.area === 'back')).toBe(true);
-    expect(options.scalePresets.every((s) => s.widthPct > 0 && s.widthPct <= 100)).toBe(true);
+  it('returns the garments approved for the artwork, with colours, sizes and variants', async () => {
+    const { garments } = await mockProvider.getStudioOptions('midnight-in-lagos');
+    expect(garments.length).toBeGreaterThan(0);
+    const garment = garments[0]!;
+    expect(garment.colours.length).toBeGreaterThan(0);
+    expect(garment.sizes.length).toBeGreaterThan(0);
+    expect(garment.variants.length).toBe(garment.colours.length * garment.sizes.length);
+    expect(garment.artworkVersionId).toBeTruthy();
+  });
+
+  it('offers approved placements on both the front and the back', async () => {
+    const { garments } = await mockProvider.getStudioOptions('midnight-in-lagos');
+    const placements = garments[0]!.placements;
+    expect(placements.some((p) => p.area === 'front')).toBe(true);
+    expect(placements.some((p) => p.area === 'back')).toBe(true);
+    expect(placements.every((p) => p.printWidthMm > 0 && p.printHeightMm > 0)).toBe(true);
+  });
+
+  it('scopes scale presets to a placement, because a preset belongs to one', async () => {
+    const { garments } = await mockProvider.getStudioOptions('midnight-in-lagos');
+    const placements = garments[0]!.placements;
+    expect(placements.every((p) => p.scalePresets.length > 0)).toBe(true);
+    expect(
+      placements.every((p) => p.scalePresets.every((s) => s.widthPct > 0 && s.widthPct <= 100)),
+    ).toBe(true);
+    // A left chest and a full front are not offered the same scales.
+    const leftChest = placements.find((p) => p.label === 'Left chest');
+    const fullFront = placements.find((p) => p.label === 'Full front');
+    expect(leftChest?.scalePresets.map((s) => s.slug)).not.toEqual(
+      fullFront?.scalePresets.map((s) => s.slug),
+    );
+  });
+
+  it('returns no garments for an unknown artwork rather than a global set', async () => {
+    expect(await mockProvider.getStudioOptions('nope')).toEqual({ garments: [] });
   });
 });
 

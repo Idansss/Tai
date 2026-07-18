@@ -1,4 +1,4 @@
-import { buttonVariants, Container, Eyebrow, Heading, Text } from '@tms/ui';
+import { buttonVariants, Container, Heading, Text } from '@tms/ui';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
@@ -39,10 +39,12 @@ export function ContentPage({
     <Container className="py-16 sm:py-24">
       <div className="max-w-2xl">
         <header>
-          <Eyebrow>{eyebrow}</Eyebrow>
-          <Heading as={1} size="display-lg" className="mt-3">
+          <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+            {eyebrow}
+          </p>
+          <h1 className="mt-3 font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl">
             {title}
-          </Heading>
+          </h1>
           <Text size="lg" tone="secondary" className="mt-4">
             {intro}
           </Text>

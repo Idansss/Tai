@@ -8,6 +8,12 @@
       "port": 3000
     },
     {
+      "name": "storefront-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@tms/storefront", "exec", "next", "dev", "-p", "3012"],
+      "port": 3012
+    },
+    {
       "name": "admin",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@tms/admin", "dev"],

@@ -810,3 +810,105 @@ Codex delivering endpoints.
       CSP/security-header recommendations.
 - [ ] **TMS-F6-010** Staging acceptance & launch checklist — run all required journeys (§27) on
       staging, real-data smoke, sign-off, and a launch checklist.
+
+## F7 — API integration (in progress, 2026-07-17)
+
+Branch `claude/f7-api-integration`, cut from `main` after PR #9 (F5) merged.
+
+- [x] **TMS-F7-001** API client foundation — `lib/data/http.ts`: one `apiFetch` for every call, with
+      `{data,meta}` unwrapping, `{error:{code}}` → typed `ApiRequestError`, unreachable-API →
+      `ApiNetworkError` (so the UI can offer retry rather than explain a rejection that never
+      happened), `credentials: 'include'` on every request (`tms_session` + guest `tms_cart`),
+      204 handling, and `apiFetchOrNull` mapping 404 → `null` (a resource you do not own is a 404,
+      never a 403). Unit-tested in `lib/data/http.spec.ts`. **Verified:** format/lint/typecheck/
+      test/build green.
+- [x] **TMS-F7-002** Data source policy — replaced the all-or-nothing `DATA_SOURCE` switch with
+      per-domain composition in `lib/data/index.ts`; rejected the per-method mock fallback because a
+      silent fallback hides a real outage behind plausible fake data. `api` is opt-in, since SSG
+      makes `pnpm build` fetch and CI has no API. Rationale recorded in `FRONTEND_HANDOFF.md`
+      ("Data source policy"). **Verified.**
+- [x] **TMS-F7-003** Artworks + collections on the real API — `lib/data/api.ts` implements
+      `listArtworks`/`getArtwork`/`searchArtworks`/`listCollections`/`listCollectionSummaries`/
+      `getCollection` against `/api/v1/artworks` and `/api/v1/collections`. Filters the contract
+      rejects (`availability`, `sort=popular`) are deliberately not forwarded. Every other method
+      throws with the reason + its TMS-FBR id rather than returning invented data. Tested in
+      `lib/data/api.spec.ts`. **Verified** at the unit level; see the caveat below.
+- [x] **TMS-F7-004** Never fake money — `ArtworkSummary.startingPriceMinor`/`currency`/
+      `availability` are nullable, because ADR-015 puts price on the approved artwork+garment pair
+      and the artwork response carries none. Cards/detail/Studio render price and the availability
+      badge only when known; the Studio refuses to add or save a configuration with no known price
+      rather than guess one. **Verified** in-browser on the mock path (gallery renders unchanged).
+
+### Caveat on TMS-F7-003 verification
+
+Verified against stubbed responses, **not a live API**. The local Postgres (`tai-postgres-1`, host
+port 5433) only has the B1 identity tables — the B2/B3/B4 migrations (artworks, garments, carts)
+are not applied — so there is nothing for the API to serve. Applying them would change shared local
+DB state that the parallel backend session may be relying on, so it was left alone. **Before
+flipping `DATA_SOURCE=api` anywhere real, someone must exercise these calls against a migrated and
+seeded API.**
+
+### Next on this branch
+
+- [x] **TMS-F7-005** Studio rework (ADR-013) — **Verified.** `getStudioOptions(artworkSlug)` is now
+      artwork-scoped and served by `/artworks/{slug}/compatible-garments`; the picker offers only
+      approved garments, placements and scale presets. Two contract facts drove the model and were
+      previously wrong in the UI: placements are approved **per artwork+garment pair**, and scale
+      presets belong to a **placement** (`GarmentScalePreset.placementId`), so changing placement
+      changes the scales. `resolveStudioConfig` drops anything unapproved from a shared URL and
+      falls back to an approved option. Shareable URLs carry the approved placement id + preset
+      slug — never percentages. Unapproved pairs and placements on views the preview cannot draw
+      (LEFT/RIGHT) are filtered out. **Verified in-browser:** Left chest → Small/Medium @ 100×125mm
+      vs Full front → Medium/Large @ 320×400mm; a URL carrying another garment's placement,
+      `scale=enormous`, `colour=Chartreuse`, `printX` and `cropZoom` was fully sanitised.
+      **Note:** `main` never had freeform/crop controls; that work exists only on
+      `claude/f6-premium-ui-overhaul` (67bc14d) and must be dropped there. ADR-013 wins.
+- [x] **TMS-F7-006a** Cart identity + client — **Verified at unit level.** `lineId()` now delegates
+      to `configurationCanonicalForm()` from `@tms/contracts` when the approved tuple is present,
+      so a cart line and a saved design cannot disagree about identity; quantity stays out of it
+      (ADR-014). New `lib/cart-api.ts` wraps `GET /cart`, `POST /cart/items`, `PATCH|DELETE
+/cart/items/{lineId}` and promotion apply/remove. `AddCartItemInput` is the approved tuple +
+      quantity **only**, so `unitPriceMinor` cannot be sent even by accident (it is a 400).
+      `cartIssueMessage` distinguishes OUT_OF_STOCK from INSUFFICIENT_STOCK and never promises a
+      hold (ADR-017); `isRecoverableByQuantity` only offers "reduce quantity" where it would help.
+      Verified in-browser that a Studio add produces a canonical-form line id carrying the tuple.
+
+### Still to do
+
+- [x] **TMS-F7-006b** Cart UI on the real API — **Verified.** `CartProvider` now has two sources
+      behind one flag (`DATA_SOURCE`, passed from the root layout via `isCartServerBacked()` so
+      there is no `NEXT_PUBLIC_` twin). Both produce the same `CartView`, so the components never
+      branch on where the cart came from. The cart page renders **server** subtotal/total; lines
+      with an `issue` stay visible, show the reason, show no price, and are already out of the
+      server's subtotal; `hasIssues` disables Checkout. The quantity stepper is capped by
+      `availableQuantity` and only offered where changing quantity helps. No hold countdown
+      anywhere (ADR-017). Promotions: 422 is ONE message; a 200 with `promotion: null` renders as
+      "doesn't apply to this order" via `role="status"`, not as an error.
+      **Verified in-browser against a contract-shaped stub API** (scratchpad only, not committed):
+      labels joined from pure ids, subtotal ₦28,000 excluding the out-of-stock line, Checkout
+      `disabled`, and all three promotion paths. Driving it also caught a real bug the tests
+      missed — the cart page and drawer keyed their empty state off the _local_ items array, so a
+      full server cart rendered "Your bag is empty".
+- [ ] **TMS-F7-007** Saved designs — **client done, UI blocked.** `lib/designs-api.ts` +
+      `designs-api.spec.ts` cover list/save/get/update/delete/share-rotate: 201 vs 200 is surfaced
+      as `created` (a 200 is success, not an error — saving is idempotent), no quantity is ever
+      sent (ADR-014), a design you do not own returns null (404, never 403), and rotation is
+      documented as immediately breaking the old URL. **Blocked on TMS-FBR-021:** the storefront's
+      customer auth is still the client-side demo session in `lib/auth.ts`, so nothing can call
+      `/api/v1/designs` as a signed-in customer. Wiring `saved-designs-view.tsx` needs the auth
+      cutover first.
+
+### Next task
+
+- [ ] **TMS-F7-008** Customer auth cutover — replace the demo session in `lib/auth.ts` with
+      `/api/v1/auth/*` (opaque `tms_session` cookie; never read or persist it client-side). This
+      unblocks saved designs, and it is also what makes the guest-cart merge real: signing in
+      merges the guest cart on the next cart read, with no merge call to make. Recovery UI must
+      not distinguish known from unknown email addresses.
+
+### Verification debt (applies to every F7 task)
+
+Everything server-facing is verified against **stubs**, never a live API: the local Postgres has
+only the B1 identity tables, and applying the B2/B3/B4 migrations would mutate shared local DB
+state the parallel backend session is using. Before `DATA_SOURCE=api` ships anywhere real,
+somebody must run these flows against a migrated, seeded API.

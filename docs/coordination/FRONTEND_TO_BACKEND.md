@@ -282,4 +282,131 @@ lead time; pre-order production starts at the drop's release). This is a **front
 - Suggested fallback: keep `lib/fulfilment.ts` + `MadeToOrderNote` as the presentation; swap the
   computed window for the server estimate on delivery.
 
-_No further requests yet. Add here as F1+ surfaces need contracts._
+## F7 — API integration gaps (2026-07-17)
+
+Found while implementing `apps/storefront/lib/data/api.ts` against the merged endpoints. Each
+item is a place where a shipped storefront view model asks for something the contract does not
+carry. None of these are blocking the foundation, but each one pins a domain to the mock adapter
+in `lib/data/index.ts` until it closes. **We are not inventing values to fill these** — the
+adapter maps them to `null`/empty or throws.
+
+Priority order for us: **TMS-FBR-011 and -012 first** (they gate the artwork grid, our highest
+traffic surface), then -017 (gates the Studio rework), then the rest.
+
+### TMS-FBR-010 — no `/products` resource
+
+A storefront "product" is an artwork applied to a garment. There is no `/products` endpoint, so
+`listProducts`/`getProduct` have no direct source. We can compose it from `/artworks` plus
+`/artworks/{slug}/compatible-garments`, but that is one request per artwork for the shop index.
+**Ask:** either a composed `/products` read model, or confirmation that composing client-side is
+the intended design so we can build it deliberately.
+
+### TMS-FBR-011 — artwork list carries no price
+
+`ArtworkSummary` shows "from ₦X" on every gallery card. Per ADR-015 price belongs to the approved
+artwork+garment pair, so an artwork has no single price and `/artworks` returns none. Resolving it
+would need a `/garment-configurations/validate` call per artwork per garment, which is not viable
+for a grid.
+**Ask:** add `startingPrice: Money | null` to the artwork list/detail response — the server-side
+minimum across approved pairs. Until then `startingPriceMinor`/`currency` are `null` and the card
+renders no price.
+
+### TMS-FBR-012 — artwork list carries no availability
+
+The gallery has an availability filter (`available` / `limited` / `sold_out`) and each card shows a
+badge. `/artworks` exposes neither the field nor the query parameter, and we deliberately do not
+forward `availability` (it would 400). Note we understand `AVAILABLE` means "the catalogue permits
+this sale", not "in stock" — a card badge needs the derived, sellable-now view.
+**Ask:** an availability state on the artwork read model plus an `availability` filter, or tell us
+the badge/filter should be dropped from the gallery.
+
+### TMS-FBR-013 — artwork list does not embed compatible garments
+
+`ArtworkSummary.compatibleGarments` lists garment names on the card. The list response does not
+embed them and per-card resolution is an N+1.
+**Ask:** embed a compact garment summary (or names) on the artwork list response.
+
+### TMS-FBR-014 — collections do not carry an artwork count
+
+The collections index shows "N pieces". `CatalogueEntry` has no count, so we currently render 0.
+**Ask:** add `artworkCount` to the collection read model.
+
+### TMS-FBR-015 — `sort=popular` is unsupported
+
+The gallery offers "Most popular"; `/artworks` accepts `sort=newest` only, so we drop the
+parameter rather than 400.
+**Ask:** either a `popular` sort (however you define it) or confirmation to remove the control.
+
+### TMS-FBR-016 — no related-artworks endpoint
+
+The artwork detail page shows "related". We approximate it as "others in the same collection,
+limit 5". Fine as an approximation; flagging it so nobody mistakes it for a curated relationship.
+
+### TMS-FBR-017 — Studio options are artwork-scoped — RESOLVED our side; one question open
+
+**Done (2026-07-17):** `getStudioOptions(artworkSlug)` is now artwork-scoped and served by
+`/artworks/{slug}/compatible-garments`. The Studio offers only approved garments, placements and
+scale presets, and shareable URLs carry the approved placement id + preset slug. Two contract
+details drove the model, and the second is still a question for you:
+
+- **OPEN QUESTION.** `DesignConfigurationInput.scalePreset` is a **kebab-case slug**, while
+  `artworkVersionId`, `garmentVariantId` and `placementId` are **UUIDs**. A cart line then reads
+  back `scalePresetId`. So we send a slug and read an id for the same thing. We have implemented
+  it as specified, but **please confirm the asymmetry is intended** rather than an oversight — and
+  if `scalePresetId` on a cart line is the preset's UUID rather than its slug, say so explicitly,
+  because we currently round-trip the slug.
+- Placement geometry (`xPermille`/`yPermille`/`widthPermille`/`heightPermille`) is admin-approved
+  and render-only for us. Confirmed: we will never let a customer author it (ADR-013). We read the
+  permille box as top-left + size and centre the print on it — **tell us if that is wrong** and the
+  fields mean something else.
+- **A scale preset belongs to a placement** (`GarmentScalePreset.placementId`), so we scope the
+  scale options to the selected placement. Flagging it because the previous UI treated scales as
+  global, which the contract does not support.
+- We drop approved placements whose `view` is `LEFT`/`RIGHT`: the Studio preview only draws a
+  front and a back. If those views are meant to be sellable, we need a preview design for them.
+
+### TMS-FBR-018 — drops read model is thinner than the drops UI
+
+`DropSummary` needs `tagline`, `collection`, `earlyAccessAt`, `pieceCount` and a
+server-authoritative `soldOut`. The `Drop` contract carries none of these.
+**Ask:** extend the drop read model, or tell us which of these the UI should stop showing.
+
+### TMS-FBR-019 — stories read model is thinner than the stories UI
+
+`StorySummary` needs `category`, `readMinutes` and `shoppableCount`. `Story` carries
+`slug/title/excerpt/blocks` only. `readMinutes` we can derive from blocks; `category` and
+`shoppableCount` we cannot.
+**Ask:** add `category` (or a tag) and confirm whether hotspots are a block type we should count.
+
+### TMS-FBR-020 — a cart line cannot be rendered from its own response
+
+`CartLine` is entirely identifiers (`artworkId`, `garmentTemplateId`, `garmentVariantId`,
+`placementId`, `scalePresetId`) and carries no title, garment name, colour, size or image. So the
+cart response alone cannot render "Market Day on a Black Classic T-shirt, size M" — the one thing
+a bag has to say. `DesignConfigurationSummary` has the same shape and the same problem.
+
+**What we did meanwhile:** `apps/storefront/lib/cart-view.ts` joins the labels in from
+`/artworks` and `/garments` and builds a lookup once per cart, so it is two extra requests rather
+than five per line. It works, and it is verified, but it means the cart page pulls the catalogue
+to render two lines, and a line whose ids we cannot resolve renders as "Unknown".
+
+**Ask:** add a display projection to the cart line (and to a saved design) — artwork title +
+slug, garment title, colour name, size label, placement name, scale name, and a thumbnail. The
+server already has all of it at read time; every client otherwise has to rebuild this join.
+If you would rather not widen the line, an alternative is a `GET /cart?expand=display`.
+
+**Also note:** the public catalogue endpoints are addressed by **slug** (`/artworks/{slug}`,
+`/garments/{slug}`) while cart and design responses reference resources by **id**. There is no
+id-based public read, so a client cannot resolve one line without listing the catalogue. That
+asymmetry is the root of this request.
+
+### TMS-FBR-021 — saved designs need customer auth to be cut over first (frontend-owned, tracked here)
+
+`/api/v1/designs` requires a `tms_session`, but the storefront's customer auth is still the
+client-side demo session in `apps/storefront/lib/auth.ts` — there is no real session cookie, so
+nothing can call the designs endpoints as a signed-in customer yet. The designs client
+(`lib/designs-api.ts`) and its tests are done; wiring the saved-designs UI is blocked behind
+replacing the demo auth with `/api/v1/auth/*`.
+
+No backend action needed — recorded so the dependency is visible on both sides. The auth contract
+(TMS-B1-002) is already published and unchanged.

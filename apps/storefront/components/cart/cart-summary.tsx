@@ -8,24 +8,20 @@ import { useCart } from './cart-provider';
 
 /** Promotion entry + subtotal/total breakdown, shared by the drawer and page. */
 export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
-  const {
-    items,
-    subtotalMinor,
-    estimatedTotalMinor,
-    promotion,
-    promoError,
-    applyPromotion,
-    clearPromotion,
-  } = useCart();
+  const { cart, promoError, promoNotice, applyPromotion, clearPromotion } = useCart();
   const [code, setCode] = useState('');
   const inputId = useId();
-  const currency = items[0]?.currency ?? 'NGN';
-  const discount = subtotalMinor - estimatedTotalMinor;
+  // Money comes from the cart view. When that is the server's cart these are the server's
+  // numbers, and unavailable lines are already out of the subtotal — we do not re-add them up.
+  const { subtotalMinor, totalMinor, currency, hasIssues } = cart;
+  const promotion = cart.promotion;
+  const discount = promotion?.discountMinor ?? 0;
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!code.trim()) return;
-    if (applyPromotion(code)) setCode('');
+    void applyPromotion(code);
+    setCode('');
   }
 
   return (
@@ -78,6 +74,13 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
               {promoError}
             </p>
           ) : null}
+          {/* A valid code that does not qualify is information, not a failure — so it is not
+              styled or announced as an error. */}
+          {promoNotice ? (
+            <p role="status" className="text-xs text-muted">
+              {promoNotice}
+            </p>
+          ) : null}
         </form>
       )}
 
@@ -104,20 +107,38 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
         <div className="flex items-center justify-between border-t border-line pt-2 text-base font-medium">
           <dt className="text-ink">Estimated total</dt>
           <dd className="text-ink">
-            <Price amountMinor={estimatedTotalMinor} currency={currency} />
+            <Price amountMinor={totalMinor} currency={currency} />
           </dd>
         </div>
       </dl>
 
       <MadeToOrderNote />
 
+      {/* Checkout must refuse while any line has an issue. */}
+      {hasIssues ? (
+        <p
+          role="alert"
+          className="rounded-md border border-line-2 bg-canvas-2 p-3 text-xs text-ink"
+        >
+          Some items are no longer available. Remove them, or reduce the quantity where it says so,
+          to continue to checkout.
+        </p>
+      ) : null}
+
       <button
         type="button"
         onClick={onCheckout}
-        className="inline-flex h-12 w-full items-center justify-center rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+        disabled={hasIssues}
+        aria-describedby={hasIssues ? `${inputId}-blocked` : undefined}
+        className="inline-flex h-12 w-full items-center justify-center rounded-md bg-accent text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-ink disabled:hover:brightness-100"
       >
         Checkout
       </button>
+      {hasIssues ? (
+        <p id={`${inputId}-blocked`} className="sr-only">
+          Checkout is unavailable until every item in your bag can be bought.
+        </p>
+      ) : null}
       <p className="text-center text-xs text-muted">
         Secure checkout · delivery and tax confirmed before payment.
       </p>

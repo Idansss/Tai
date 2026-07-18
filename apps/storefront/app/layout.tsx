@@ -4,6 +4,7 @@ import { AuthProvider } from '@/components/account/auth-provider';
 import { WishlistProvider } from '@/components/account/wishlist-provider';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { CartProvider } from '@/components/cart/cart-provider';
+import { isCartServerBacked } from '@/lib/cart-api';
 import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
 import './globals.css';
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
     template: '%s · Tai Manic Studios',
   },
   description:
-    'Original drawings, illustrations and comic-style artwork, applied to considered apparel. A premium digital gallery and interactive design studio.',
+    'Hand-drawn art from across Africa — coloured pencil and marker on paper, printed on cotton. A premium digital gallery and interactive design studio.',
   openGraph: {
     type: 'website',
     siteName: 'Tai Manic Studios',
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <AuthProvider>
           <WishlistProvider>
-            <CartProvider>
+            <CartProvider serverBacked={isCartServerBacked()}>
               <div className="flex min-h-dvh flex-col">
                 <SiteHeader />
                 <main id="main" className="flex-1">

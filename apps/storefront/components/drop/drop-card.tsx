@@ -1,53 +1,55 @@
-import { Card, Eyebrow, Heading, Text } from '@tms/ui';
-import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { TileImage } from '@/components/site/tile';
+import { artworkImage } from '@/lib/artwork-images';
 import type { DropSummary } from '@/lib/data';
 import { dropStatus, nextMilestone } from '@/lib/drops';
 import { Countdown } from './countdown';
 import { DropStatusBadge } from './drop-status-badge';
 
-/** A drop tile for the index. `now` is shared across the grid for a consistent clock. */
-export function DropCard({ drop, now }: { drop: DropSummary; now: number }) {
+/**
+ * A drop tile for the index, in the streetwear tile language (docs/frontend/UI_DIRECTION.md §7).
+ * `now` is shared across the grid for a consistent clock; `coverSlug` is a representative artwork
+ * from the drop's pieces, supplied by the page.
+ */
+export function DropCard({
+  drop,
+  now,
+  coverSlug,
+}: {
+  drop: DropSummary;
+  now: number;
+  coverSlug?: string | null;
+}) {
   const status = dropStatus(drop, now);
   const milestone = nextMilestone(drop, now);
+  const src = coverSlug ? artworkImage(coverSlug) : null;
 
   return (
     <Link
       href={`/drops/${drop.slug}`}
-      className="group block rounded-[var(--radius-lg)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+      className="group block rounded-2xl outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-focus-ring)]"
     >
-      <Card variant="surface" interactive padded={false} className="overflow-hidden">
-        <div
-          className="relative aspect-[16/9] w-full bg-gradient-to-br from-canvas-2 to-surface-2"
-          role="img"
-          aria-label={`${drop.title} — drop cover placeholder`}
-        >
-          <div className="absolute left-4 top-4">
-            <DropStatusBadge status={status} />
-          </div>
+      <TileImage
+        src={src}
+        alt={src ? `${drop.title} — drop cover` : ''}
+        badge={<DropStatusBadge status={status} />}
+      />
+      <div className="mt-4">
+        <p className="font-display text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+          {drop.collection} · {drop.pieceCount} {drop.pieceCount === 1 ? 'piece' : 'pieces'}
+        </p>
+        <h3 className="mt-1 font-display text-lg font-bold uppercase tracking-tight text-ink">
+          {drop.title}
+        </h3>
+        <p className="mt-1 text-sm text-muted">{drop.tagline}</p>
+        <div className="mt-3">
+          {milestone.at !== null ? (
+            <Countdown target={milestone.at} label={milestone.label} />
+          ) : (
+            <p className="text-sm text-muted">{milestone.label}</p>
+          )}
         </div>
-        <div className="space-y-2 p-5">
-          <Eyebrow>
-            {drop.collection} · {drop.pieceCount} {drop.pieceCount === 1 ? 'piece' : 'pieces'}
-          </Eyebrow>
-          <Heading as={3} size="md">
-            {drop.title}
-          </Heading>
-          <Text size="sm" tone="muted">
-            {drop.tagline}
-          </Text>
-          <div className="pt-2">
-            {milestone.at !== null ? (
-              <Countdown target={milestone.at} label={milestone.label} />
-            ) : (
-              <p className="text-sm text-muted">{milestone.label}</p>
-            )}
-          </div>
-          <span className="inline-flex items-center gap-1 pt-1 text-sm text-accent group-hover:gap-2">
-            View drop <ArrowRight className="size-4" aria-hidden />
-          </span>
-        </div>
-      </Card>
+      </div>
     </Link>
   );
 }
