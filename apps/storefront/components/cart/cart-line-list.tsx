@@ -15,38 +15,81 @@ function lineDetail(line: CartLineView): string {
   return [line.colour, `Size ${line.size}`, line.placement, line.scale].filter(Boolean).join(' · ');
 }
 
+/** Does this line carry a print on the given side? */
+function sideHasDesign(line: CartLineView, side: 'front' | 'back'): boolean {
+  return Boolean(line.artworkSlug) && (line.printView ?? 'front') === side;
+}
+
 /**
- * The exact piece the customer built, as a small mockup — same renderer, same registry and the same
- * free transform as the Design Studio preview, so the cart shows precisely what they designed rather
- * than a stand-in swatch. Falls back to the plain garment silhouette when a line carries no artwork.
+ * One side of the garment as a small mockup — the exact piece the customer built (same renderer,
+ * registry and free transform as the Studio) when this side is printed, or the blank garment when
+ * it is not. Shown for both sides so the customer always sees front *and* back and which carries
+ * the artwork.
  */
-function LineThumbnail({ line }: { line: CartLineView }) {
-  const view = line.printView ?? 'front';
-  const print = line.artworkSlug ? artworkImage(line.artworkSlug) : null;
-  const t = line.transform;
+function GarmentSide({
+  line,
+  side,
+  size,
+}: {
+  line: CartLineView;
+  side: 'front' | 'back';
+  size: number;
+}) {
+  const designed = sideHasDesign(line, side);
+  const print = designed && line.artworkSlug ? artworkImage(line.artworkSlug) : null;
+  const t = designed ? line.transform : undefined;
   return (
-    <GarmentMockup
-      garment={line.garment}
-      colour={line.colour}
-      view={view}
-      artwork={
-        print
-          ? {
-              src: print,
-              area: view,
-              scale: (line.printScale ?? 0.8) * (t?.scale ?? 1),
-              offset: t ? { xPct: t.dx, yPct: t.dy } : undefined,
-              rotation: t?.rotation ?? 0,
-              crop: t
-                ? { top: t.cropTop, right: t.cropRight, bottom: t.cropBottom, left: t.cropLeft }
-                : undefined,
-              clipToBody: true,
-              alt: '',
-            }
-          : null
-      }
-      sizes="80px"
-    />
+    <div className="flex flex-col items-center gap-1">
+      <div
+        className={cn(
+          'grid place-items-center overflow-hidden rounded-md border bg-canvas',
+          designed ? 'border-line' : 'border-dashed border-line-2',
+        )}
+        style={{ width: size, height: size }}
+      >
+        <GarmentMockup
+          garment={line.garment}
+          colour={line.colour}
+          view={side}
+          artwork={
+            print
+              ? {
+                  src: print,
+                  area: side,
+                  scale: (line.printScale ?? 0.8) * (t?.scale ?? 1),
+                  offset: t ? { xPct: t.dx, yPct: t.dy } : undefined,
+                  rotation: t?.rotation ?? 0,
+                  crop: t
+                    ? { top: t.cropTop, right: t.cropRight, bottom: t.cropBottom, left: t.cropLeft }
+                    : undefined,
+                  clipToBody: true,
+                  alt: '',
+                }
+              : null
+          }
+          sizes={`${size}px`}
+        />
+      </div>
+      <span
+        className={cn(
+          'text-[10px] uppercase tracking-wide',
+          designed ? 'font-medium text-ink-2' : 'text-muted',
+        )}
+      >
+        {side} {designed ? '· art' : '· blank'}
+      </span>
+    </div>
+  );
+}
+
+/** Front and back of the configured garment, side by side. */
+function LineSides({ line, compact }: { line: CartLineView; compact: boolean }) {
+  const size = compact ? 52 : 64;
+  return (
+    <div className="flex items-start gap-2">
+      <GarmentSide line={line} side="front" size={size} />
+      <GarmentSide line={line} side="back" size={size} />
+    </div>
   );
 }
 
@@ -91,19 +134,19 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
         const unavailable = line.issue !== null;
         return (
           <li key={line.id} className={cn('flex gap-4', compact ? 'py-4' : 'py-6')}>
-            {/* The exact configured piece, drawn with the same mockup as the Studio. */}
+            {/* Both sides of the exact configured piece, drawn with the same mockup as the Studio,
+                so the customer sees front and back and which side carries the artwork. */}
             <Link
               href={href}
               aria-hidden
               tabIndex={-1}
               className={cn(
-                'grid shrink-0 place-items-center overflow-hidden rounded-md border border-line bg-canvas',
-                compact ? 'size-16' : 'size-20',
+                'shrink-0 rounded-md',
                 // Dim it, but keep the line: a line that vanishes is worse than one that explains.
                 unavailable && 'opacity-50',
               )}
             >
-              <LineThumbnail line={line} />
+              <LineSides line={line} compact={compact} />
             </Link>
 
             <div className="min-w-0 flex-1">

@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Skeleton, Text, cn } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -79,16 +80,11 @@ export function ErrorCentreView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Eyebrow>Operations</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Error centre
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Integration failures across payments, webhooks, shipping, media, email, AI and jobs — with
-          a correlation ID and resolution state. No stack traces or secrets are shown.
-        </Text>
-      </div>
+      <AdminPageHeader
+        eyebrow="Operations"
+        title="Error centre"
+        lead="Integration failures across payments, webhooks, shipping, media, email, AI and jobs — with a correlation ID and resolution state. No stack traces or secrets are shown."
+      />
 
       <Alert tone="info" title="Preview data">
         Entries are representative sample failures — the operations API isn’t connected, so

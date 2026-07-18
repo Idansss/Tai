@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Card, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Card, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { useEffect, useState } from 'react';
 import { adminDataProvider, type AdminAnalytics } from '@/lib/data';
 import { barPercent, maxOrders, maxRevenue } from '@/lib/analytics';
@@ -48,15 +49,11 @@ export function AnalyticsView() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <Eyebrow>Insights</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Analytics
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Sales trend, order mix and top performers over the last 14 days.
-        </Text>
-      </div>
+      <AdminPageHeader
+        eyebrow="Insights"
+        title="Analytics"
+        lead="Sales trend, order mix and top performers over the last 14 days."
+      />
 
       <Alert tone="info" title="Preview data">
         Figures are computed from representative sample orders — the admin analytics API isn’t
@@ -100,7 +97,12 @@ function AnalyticsContent({ data }: { data: AdminAnalytics }) {
 
       {/* Daily sales trend */}
       <section aria-labelledby="trend-heading">
-        <Heading as={2} id="trend-heading" size="md" className="mb-3">
+        <Heading
+          as={2}
+          id="trend-heading"
+          size="md"
+          className="mb-3 font-display text-sm font-bold uppercase tracking-wide"
+        >
           Daily orders
         </Heading>
         <div className="rounded-[var(--radius-lg)] border border-line bg-surface p-5">
@@ -152,7 +154,12 @@ function AnalyticsContent({ data }: { data: AdminAnalytics }) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Status breakdown */}
         <section aria-labelledby="breakdown-heading">
-          <Heading as={2} id="breakdown-heading" size="md" className="mb-3">
+          <Heading
+            as={2}
+            id="breakdown-heading"
+            size="md"
+            className="mb-3 font-display text-sm font-bold uppercase tracking-wide"
+          >
             Order status mix
           </Heading>
           <div className="space-y-3 rounded-[var(--radius-lg)] border border-line bg-surface p-5">
@@ -177,7 +184,11 @@ function AnalyticsContent({ data }: { data: AdminAnalytics }) {
         <section aria-label="Top performers" className="space-y-6">
           {[data.topArtwork, data.topGarments].map((list) => (
             <div key={list.id}>
-              <Heading as={2} size="md" className="mb-3">
+              <Heading
+                as={2}
+                size="md"
+                className="mb-3 font-display text-sm font-bold uppercase tracking-wide"
+              >
                 {list.title}
               </Heading>
               <ol className="divide-y divide-line rounded-[var(--radius-lg)] border border-line bg-surface">

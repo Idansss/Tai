@@ -19,13 +19,13 @@ const sans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'Admin · Tai Manic Studios', template: '%s · TMS Admin' },
-  description: 'Operational console for Tai Manic Studios.',
+  title: { default: 'Admin · From Africa To You', template: '%s · F.A.T.U Admin' },
+  description: 'Operational console for From Africa To You.',
   robots: { index: false, follow: false, nocache: true },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#121316',
+  themeColor: '#fafaf7',
   width: 'device-width',
   initialScale: 1,
 };
@@ -33,7 +33,7 @@ export const viewport: Viewport = {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
-      <body className="min-h-dvh bg-canvas-2 text-ink antialiased">
+      <body className="min-h-dvh bg-canvas text-ink antialiased">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent"

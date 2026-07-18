@@ -4,6 +4,7 @@ import { Alert, Badge, Heading, Skeleton, Text } from '@tms/ui';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { adminDataProvider, type AdminCustomerProfile, type CustomerStatus } from '@/lib/data';
 import { formatOrderStatus, orderStatusTone, type StatusTone } from '@/lib/order-status';
 
@@ -37,7 +38,12 @@ function Panel({ title, children, id }: { title: string; id?: string; children: 
       aria-labelledby={id}
       className="rounded-[var(--radius-lg)] border border-line bg-surface p-5"
     >
-      <Heading as={2} id={id} size="md" className="mb-4">
+      <Heading
+        as={2}
+        id={id}
+        size="md"
+        className="mb-4 font-display text-sm font-bold uppercase tracking-wide"
+      >
         {title}
       </Heading>
       {children}
@@ -90,23 +96,23 @@ export function CustomerDetailView({ id }: { id: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-2">
         <Link
           href="/customers"
-          className="inline-flex items-center gap-1 rounded-sm text-sm text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          className="inline-flex items-center gap-1 rounded-sm text-xs font-medium uppercase tracking-[0.08em] text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
         >
           <ChevronLeft className="size-4" aria-hidden />
           Customers
         </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <Heading as={1} size="display-lg">
-            {customer.name}
-          </Heading>
-          <Badge tone={STATUS_TONE[customer.status]}>{STATUS_LABEL[customer.status]}</Badge>
-        </div>
-        <Text tone="secondary" className="mt-1">
-          {customer.email}
-        </Text>
+        <AdminPageHeader
+          title={
+            <span className="inline-flex flex-wrap items-center gap-3">
+              {customer.name}
+              <Badge tone={STATUS_TONE[customer.status]}>{STATUS_LABEL[customer.status]}</Badge>
+            </span>
+          }
+          lead={customer.email}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-start">

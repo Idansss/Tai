@@ -7,6 +7,10 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // 90 backs the crisper hero slideshow (next/image only allows configured qualities).
+  images: {
+    qualities: [75, 90],
+  },
   turbopack: {
     root: path.join(dir, '..', '..'),
   },

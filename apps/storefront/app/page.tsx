@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUpRight, MapPin, Package, PencilLine, Truck } from 'lu
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { HeroSlideshow } from '@/components/site/hero-slideshow';
 import { Marquee } from '@/components/site/marquee';
 import { PillLink } from '@/components/site/pill-link';
 import { Reveal } from '@/components/site/reveal';
@@ -41,8 +42,14 @@ export default async function HomePage() {
   const hero = artworks.find((a) => a.slug === 'midnight-in-lagos') ?? artworks[0];
   const drops = artworks.filter((a) => a.slug !== hero?.slug).slice(0, 3);
   const feature = artworks.filter((a) => a.slug !== hero?.slug).slice(3, 4)[0] ?? drops[0];
-  const heroSrc = hero ? artworkImage(hero.slug) : null;
   const featureSrc = feature ? artworkImage(feature.slug) : null;
+
+  // The hero cycles through up to five drawings, in step with the 01–05 pillar row. Lead with the
+  // night piece, then fill from the rest of the catalogue — only pieces whose plate we actually hold.
+  const heroSlides = [hero, ...artworks.filter((a) => a.slug !== hero?.slug)]
+    .filter((a): a is NonNullable<typeof a> => a != null && artworkImage(a.slug) !== null)
+    .slice(0, PILLARS.length)
+    .map((a) => ({ slug: a.slug, src: artworkImage(a.slug) as string, title: a.title }));
 
   // Shop-by-collection tiles need a cover; pull each collection's pieces and take a drawing we hold.
   const collectionDetails = await Promise.all(
@@ -61,81 +68,7 @@ export default async function HomePage() {
           and a numbered pillar row across the base. The copy staggers in on load. */}
       <section className="pt-4 sm:pt-6">
         <Container>
-          <div className="relative overflow-hidden rounded-3xl bg-neutral-950 text-white">
-            {heroSrc ? (
-              <Image
-                src={heroSrc}
-                alt={hero ? `${hero.title} — artwork` : ''}
-                fill
-                priority
-                sizes="(min-width: 1536px) 1440px, 92vw"
-                className="object-cover object-center opacity-80"
-              />
-            ) : null}
-            {/* Scrim: the one place chrome sits over art, so the headline stays legible. */}
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20"
-            />
-
-            <div className="relative flex min-h-[34rem] flex-col justify-between gap-12 p-6 sm:min-h-[40rem] sm:p-10 lg:p-14">
-              <div className="max-w-2xl">
-                <Reveal
-                  as="p"
-                  className="font-display text-xs font-medium uppercase tracking-[0.22em] text-white/70"
-                >
-                  From Africa To You
-                </Reveal>
-                <Reveal
-                  as="h1"
-                  delay={80}
-                  className="mt-5 font-display text-5xl font-bold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl"
-                >
-                  From Africa,
-                  <br />
-                  to you.
-                </Reveal>
-                <Reveal
-                  as="p"
-                  delay={160}
-                  className="mt-6 max-w-md text-sm leading-relaxed text-white/75 sm:text-base"
-                >
-                  Hand-drawn art from Lagos, Addis, Accra and Cape Town — printed on cotton, made to
-                  order. Own a piece of the continent, positioned the way the studio approved it.
-                </Reveal>
-                <Reveal delay={240} className="mt-8 flex flex-wrap items-center gap-3">
-                  <PillLink href="/artworks" tone="light">
-                    Shop now
-                  </PillLink>
-                  <Link
-                    href="/design-studio"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-white outline-none transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                  >
-                    Design studio
-                  </Link>
-                </Reveal>
-              </div>
-
-              {/* Numbered pillar row — the RAWBLOX 01–05 strip; the last is "current". */}
-              <Reveal
-                as="ol"
-                delay={320}
-                className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-white/15 pt-6 sm:grid-cols-3 lg:grid-cols-5"
-              >
-                {PILLARS.map((label, i) => {
-                  const current = i === PILLARS.length - 1;
-                  return (
-                    <li key={label} className={current ? 'text-white' : 'text-white/55'}>
-                      <span className="font-display text-xs font-semibold tabular-nums">
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
-                      <p className="mt-1 text-[0.8rem] leading-snug">{label}</p>
-                    </li>
-                  );
-                })}
-              </Reveal>
-            </div>
-          </div>
+          <HeroSlideshow slides={heroSlides} pillars={PILLARS} />
         </Container>
       </section>
 

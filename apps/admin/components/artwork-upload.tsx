@@ -1,9 +1,10 @@
 'use client';
 
-import { Alert, Eyebrow, Heading, Spinner, Text, cn } from '@tms/ui';
+import { Alert, Heading, Spinner, Text, cn } from '@tms/ui';
 import { Check, ChevronLeft, FileUp } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { validateUpload, type UploadValidation } from '@/lib/artworks';
 
 type Phase = 'idle' | 'uploading' | 'processing' | 'validating' | 'done';
@@ -78,22 +79,19 @@ export function ArtworkUpload() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div>
+      <div className="space-y-2">
         <Link
           href="/artworks"
-          className="inline-flex items-center gap-1 rounded-sm text-sm text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          className="inline-flex items-center gap-1 rounded-sm text-xs font-medium uppercase tracking-[0.08em] text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
         >
           <ChevronLeft className="size-4" aria-hidden />
           Artworks
         </Link>
-        <Eyebrow className="mt-2">Catalogue</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          New artwork
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Upload a print-ready file. It’s validated, processed and turned into a draft you can
-          review and publish.
-        </Text>
+        <AdminPageHeader
+          eyebrow="Catalogue"
+          title="New artwork"
+          lead="Upload a print-ready file. It’s validated, processed and turned into a draft you can review and publish."
+        />
       </div>
 
       <Alert tone="info" title="Preview build">
@@ -185,7 +183,11 @@ export function ArtworkUpload() {
               <Check className="size-4" aria-hidden />
             </span>
             <div>
-              <Heading as={2} size="md">
+              <Heading
+                as={2}
+                size="md"
+                className="font-display text-sm font-bold uppercase tracking-wide"
+              >
                 Draft created
               </Heading>
               <Text size="sm" tone="secondary" className="mt-1">
