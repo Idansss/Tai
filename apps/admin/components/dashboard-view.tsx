@@ -1,9 +1,10 @@
 'use client';
 
-import { Alert, Badge, Card, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Card, Heading, Skeleton, Text, cn } from '@tms/ui';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { adminDataProvider, type DashboardData, type DashboardMetric } from '@/lib/data';
 import { formatOrderStatus, orderStatusTone } from '@/lib/order-status';
 
@@ -52,15 +53,11 @@ export function DashboardView() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <Eyebrow>Overview</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Dashboard
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Operational summary across payments, production and fulfilment.
-        </Text>
-      </div>
+      <AdminPageHeader
+        eyebrow="Overview"
+        title="Dashboard"
+        lead="Operational summary across payments, production and fulfilment."
+      />
 
       <Alert tone="info" title="Preview data">
         Figures below are representative sample data — the admin read endpoints aren’t connected
@@ -104,7 +101,12 @@ function DashboardContent({ data }: { data: DashboardData }) {
 
       {/* Operational queues */}
       <section aria-labelledby="queues-heading">
-        <Heading as={2} id="queues-heading" size="md" className="mb-3">
+        <Heading
+          as={2}
+          id="queues-heading"
+          size="md"
+          className="mb-3 font-display text-sm font-bold uppercase tracking-wide"
+        >
           Operational queues
         </Heading>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -138,7 +140,12 @@ function DashboardContent({ data }: { data: DashboardData }) {
         {/* Recent orders */}
         <section aria-labelledby="recent-heading">
           <div className="mb-3 flex items-center justify-between">
-            <Heading as={2} id="recent-heading" size="md">
+            <Heading
+              as={2}
+              id="recent-heading"
+              size="md"
+              className="font-display text-sm font-bold uppercase tracking-wide"
+            >
               Recent orders
             </Heading>
             <Link
@@ -195,7 +202,11 @@ function DashboardContent({ data }: { data: DashboardData }) {
         <section aria-label="Top performers" className="space-y-6">
           {data.rankedLists.map((list) => (
             <div key={list.id}>
-              <Heading as={2} size="md" className="mb-3">
+              <Heading
+                as={2}
+                size="md"
+                className="mb-3 font-display text-sm font-bold uppercase tracking-wide"
+              >
                 {list.title}
               </Heading>
               <ol className="divide-y divide-line rounded-[var(--radius-lg)] border border-line bg-surface">

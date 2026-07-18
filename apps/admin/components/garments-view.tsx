@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Skeleton, Text, cn } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -40,15 +41,11 @@ export function GarmentsView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Eyebrow>Catalogue</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Garments
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Manage garment templates, colours, sizes, media, print rules and inventory.
-        </Text>
-      </div>
+      <AdminPageHeader
+        eyebrow="Catalogue"
+        title="Garments"
+        lead="Manage garment templates, colours, sizes, media, print rules and inventory."
+      />
 
       <Alert tone="info" title="Preview data">
         Garments below are representative sample data — the admin catalogue API isn’t connected yet.

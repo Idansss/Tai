@@ -1,9 +1,10 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Skeleton, Text, cn } from '@tms/ui';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { adminDataProvider, type AdminArtworkSummary, type ArtworkStatus } from '@/lib/data';
 import { artworkStatusTone, filterArtworks, formatArtworkStatus } from '@/lib/artworks';
 
@@ -43,24 +44,20 @@ export function ArtworksView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Eyebrow>Catalogue</Eyebrow>
-          <Heading as={1} size="display-lg" className="mt-2">
-            Artworks
-          </Heading>
-          <Text tone="secondary" className="mt-2">
-            Manage artwork, versions, mockups and publishing.
-          </Text>
-        </div>
-        <Link
-          href="/artworks/new"
-          className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-        >
-          <Plus className="size-4" aria-hidden />
-          New artwork
-        </Link>
-      </div>
+      <AdminPageHeader
+        eyebrow="Catalogue"
+        title="Artworks"
+        lead="Manage artwork, versions, mockups and publishing."
+        action={
+          <Link
+            href="/artworks/new"
+            className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-xs font-semibold uppercase tracking-[0.08em] text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          >
+            <Plus className="size-4" aria-hidden />
+            New artwork
+          </Link>
+        }
+      />
 
       <Alert tone="info" title="Preview data">
         Artworks below are representative sample data — the admin catalogue API isn’t connected yet.

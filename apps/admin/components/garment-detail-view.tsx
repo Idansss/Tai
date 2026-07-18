@@ -4,6 +4,7 @@ import { Alert, Badge, Heading, Skeleton, Text, cn } from '@tms/ui';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import {
   adminDataProvider,
   type AdminGarmentDetail,
@@ -34,7 +35,12 @@ function Panel({ title, children, id }: { title: string; id?: string; children: 
       aria-labelledby={id}
       className="rounded-[var(--radius-lg)] border border-line bg-surface p-5"
     >
-      <Heading as={2} id={id} size="md" className="mb-4">
+      <Heading
+        as={2}
+        id={id}
+        size="md"
+        className="mb-4 font-display text-sm font-bold uppercase tracking-wide"
+      >
         {title}
       </Heading>
       {children}
@@ -132,44 +138,42 @@ export function GarmentDetailView({ id }: { id: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-2">
         <Link
           href="/garments"
-          className="inline-flex items-center gap-1 rounded-sm text-sm text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          className="inline-flex items-center gap-1 rounded-sm text-xs font-medium uppercase tracking-[0.08em] text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
         >
           <ChevronLeft className="size-4" aria-hidden />
           Garments
         </Link>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-3">
-              <Heading as={1} size="display-lg">
-                {garment.name}
-              </Heading>
+        <AdminPageHeader
+          title={
+            <span className="inline-flex flex-wrap items-center gap-3">
+              {garment.name}
               <Badge tone={garmentStatusTone(status)}>{formatGarmentStatus(status)}</Badge>
+            </span>
+          }
+          lead={`${garment.template} · ${formatNaira(garment.priceMinor)}`}
+          action={
+            <div className="flex flex-wrap gap-2">
+              {actions.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => runAction(a.id)}
+                  className={cn(
+                    'inline-flex h-10 items-center rounded-md px-4 text-xs font-semibold uppercase tracking-[0.08em] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                    a.primary
+                      ? 'bg-accent text-on-accent hover:brightness-110'
+                      : 'border border-line-2 text-ink hover:bg-canvas-2',
+                  )}
+                >
+                  {a.label}
+                </button>
+              ))}
             </div>
-            <Text tone="secondary" className="mt-1">
-              {garment.template} · {formatNaira(garment.priceMinor)}
-            </Text>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {actions.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => runAction(a.id)}
-                className={cn(
-                  'inline-flex h-10 items-center rounded-md px-4 text-sm font-medium outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                  a.primary
-                    ? 'bg-accent text-on-accent hover:brightness-110'
-                    : 'border border-line-2 text-ink hover:bg-canvas-2',
-                )}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-        </div>
+          }
+        />
       </div>
 
       <div aria-live="polite" className="empty:hidden">

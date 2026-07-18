@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Skeleton, Text, cn } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import type { OrderStatus } from '@tms/contracts';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
@@ -71,15 +72,11 @@ export function OrdersView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Eyebrow>Fulfilment</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Orders
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Search, filter and open orders to manage payment, production and fulfilment.
-        </Text>
-      </div>
+      <AdminPageHeader
+        eyebrow="Fulfilment"
+        title="Orders"
+        lead="Search, filter and open orders to manage payment, production and fulfilment."
+      />
 
       <Alert tone="info" title="Preview data">
         Orders below are representative sample data — the admin order API isn’t connected yet.

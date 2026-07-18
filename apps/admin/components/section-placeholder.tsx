@@ -1,4 +1,5 @@
-import { Badge, Eyebrow, Heading, Text } from '@tms/ui';
+import { Badge, Text } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 
 /**
  * Accessible placeholder for an admin section that will be built in a later F4
@@ -18,15 +19,7 @@ export function SectionPlaceholder({
 }) {
   return (
     <div className="space-y-6">
-      <div>
-        <Eyebrow>{eyebrow}</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          {title}
-        </Heading>
-        <Text tone="secondary" className="mt-2 max-w-2xl">
-          {description}
-        </Text>
-      </div>
+      <AdminPageHeader eyebrow={eyebrow} title={title} lead={description} />
       <div className="rounded-[var(--radius-lg)] border border-dashed border-line bg-surface p-6">
         <Badge tone="neutral">Coming in {task}</Badge>
         <Text size="sm" tone="muted" className="mt-3">

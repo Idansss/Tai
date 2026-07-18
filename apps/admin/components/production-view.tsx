@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { AlertTriangle, ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -87,16 +88,11 @@ export function ProductionView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Eyebrow>Operations</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Production &amp; fulfilment
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Work paid orders through printing, quality check and dispatch. Jobs are worked oldest
-          first.
-        </Text>
-      </div>
+      <AdminPageHeader
+        eyebrow="Operations"
+        title="Production & fulfilment"
+        lead="Work paid orders through printing, quality check and dispatch. Jobs are worked oldest first."
+      />
 
       <Alert tone="info" title="Preview data">
         Jobs are derived from representative sample orders — the admin fulfilment API isn’t
@@ -168,7 +164,12 @@ export function ProductionView() {
           {groups.map((group) => (
             <section key={group.stage} aria-labelledby={`lane-${group.stage}`}>
               <div className="mb-3 flex items-center gap-2">
-                <Heading as={2} id={`lane-${group.stage}`} size="md">
+                <Heading
+                  as={2}
+                  id={`lane-${group.stage}`}
+                  size="md"
+                  className="font-display text-sm font-bold uppercase tracking-wide"
+                >
                   {stageLabel(group.stage)}
                 </Heading>
                 <Badge tone={stageTone(group.stage)}>{group.jobs.length}</Badge>

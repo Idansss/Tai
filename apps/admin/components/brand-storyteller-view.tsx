@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Button, cn, Eyebrow, Heading, Skeleton, Text } from '@tms/ui';
+import { Alert, Badge, Button, cn, Heading, Skeleton, Text } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { Check, Sparkles, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { adminDataProvider, type AdminArtworkSummary } from '@/lib/data';
@@ -119,16 +120,13 @@ export function BrandStorytellerView() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header>
-        <Eyebrow>AI · Preview</Eyebrow>
-        <Heading as={1} size="lg" className="mt-2">
-          Brand Storyteller
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          Generate on-brand copy drafts for an artwork or collection. Review, edit, and approve into
-          a draft — nothing is published automatically.
-        </Text>
-        <p className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-canvas-2 px-2.5 py-1 text-xs text-muted">
+      <header className="space-y-4">
+        <AdminPageHeader
+          eyebrow="AI · Preview"
+          title="Brand Storyteller"
+          lead="Generate on-brand copy drafts for an artwork or collection. Review, edit, and approve into a draft — nothing is published automatically."
+        />
+        <p className="inline-flex items-center gap-1.5 rounded-md bg-canvas-2 px-2.5 py-1 text-xs text-muted">
           <Sparkles className="size-3.5 text-accent" aria-hidden />
           Preview — a mock generator. Output is a draft only and never goes live on its own
           (TMS-FBR-009).
@@ -140,7 +138,12 @@ export function BrandStorytellerView() {
         aria-labelledby="configure-title"
         className="mt-8 rounded-lg border border-line bg-surface p-6"
       >
-        <Heading id="configure-title" as={2} size="md">
+        <Heading
+          id="configure-title"
+          as={2}
+          size="md"
+          className="font-display text-sm font-bold uppercase tracking-wide"
+        >
           1 · Configure
         </Heading>
 
@@ -253,7 +256,12 @@ export function BrandStorytellerView() {
           className="mt-6 rounded-lg border border-line bg-surface p-6"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Heading id="compare-title" as={2} size="md">
+            <Heading
+              id="compare-title"
+              as={2}
+              size="md"
+              className="font-display text-sm font-bold uppercase tracking-wide"
+            >
               2 · Compare variants
             </Heading>
             <p className="text-xs text-muted">
@@ -292,7 +300,11 @@ export function BrandStorytellerView() {
 
           {selectedVariant ? (
             <div className="mt-6 border-t border-line pt-6">
-              <Heading as={3} size="md">
+              <Heading
+                as={3}
+                size="md"
+                className="font-display text-sm font-bold uppercase tracking-wide"
+              >
                 3 · Edit &amp; approve
               </Heading>
               <label htmlFor="edit-text" className="sr-only">
@@ -332,7 +344,12 @@ export function BrandStorytellerView() {
 
       {/* Drafts */}
       <section aria-labelledby="drafts-title" className="mt-6">
-        <Heading id="drafts-title" as={2} size="md">
+        <Heading
+          id="drafts-title"
+          as={2}
+          size="md"
+          className="font-display text-sm font-bold uppercase tracking-wide"
+        >
           Saved drafts
         </Heading>
         {drafts.length === 0 ? (

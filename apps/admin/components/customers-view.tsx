@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Eyebrow, Heading, Skeleton, Text, cn } from '@tms/ui';
+import { Alert, Badge, Skeleton, Text, cn } from '@tms/ui';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -52,15 +53,11 @@ export function CustomersView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Eyebrow>People</Eyebrow>
-        <Heading as={1} size="display-lg" className="mt-2">
-          Customers
-        </Heading>
-        <Text tone="secondary" className="mt-2">
-          The customer directory, reconciled from order history by contact email.
-        </Text>
-      </div>
+      <AdminPageHeader
+        eyebrow="People"
+        title="Customers"
+        lead="The customer directory, reconciled from order history by contact email."
+      />
 
       <Alert tone="info" title="Preview data">
         Customers are derived from representative sample orders — the admin customer API isn’t

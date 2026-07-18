@@ -4,6 +4,7 @@ import { Alert, Badge, Heading, Skeleton, Text, cn } from '@tms/ui';
 import { Check, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AdminPageHeader } from '@/components/admin-page-header';
 import { adminDataProvider, type AdminOrderDetail } from '@/lib/data';
 import { useAdminAuth } from './admin-auth-provider';
 import {
@@ -35,7 +36,12 @@ function Panel({ title, children, id }: { title: string; id?: string; children: 
       aria-labelledby={id}
       className="rounded-[var(--radius-lg)] border border-line bg-surface p-5"
     >
-      <Heading as={2} id={id} size="md" className="mb-4">
+      <Heading
+        as={2}
+        id={id}
+        size="md"
+        className="mb-4 font-display text-sm font-bold uppercase tracking-wide"
+      >
         {title}
       </Heading>
       {children}
@@ -121,34 +127,29 @@ export function OrderDetailView({ reference }: { reference: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-2">
         <Link
           href="/orders"
-          className="inline-flex items-center gap-1 rounded-sm text-sm text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          className="inline-flex items-center gap-1 rounded-sm text-xs font-medium uppercase tracking-[0.08em] text-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
         >
           <ChevronLeft className="size-4" aria-hidden />
           Orders
         </Link>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <Heading as={1} size="display-lg">
-              {order.reference}
-            </Heading>
-            <Text tone="secondary" className="mt-1">
-              Placed{' '}
-              {new Date(order.placedAt).toLocaleString(undefined, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}
-            </Text>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge tone={orderStatusTone(order.status)}>{formatOrderStatus(order.status)}</Badge>
-            <Badge tone={paymentStatusTone(order.payment.status)}>
-              {formatPaymentStatus(order.payment.status)}
-            </Badge>
-          </div>
-        </div>
+        <AdminPageHeader
+          title={order.reference}
+          lead={`Placed ${new Date(order.placedAt).toLocaleString(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          })}`}
+          action={
+            <div className="flex items-center gap-2">
+              <Badge tone={orderStatusTone(order.status)}>{formatOrderStatus(order.status)}</Badge>
+              <Badge tone={paymentStatusTone(order.payment.status)}>
+                {formatPaymentStatus(order.payment.status)}
+              </Badge>
+            </div>
+          }
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-start">

@@ -47,10 +47,10 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
               onClick={onNavigate}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                'flex items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-xs font-medium uppercase tracking-[0.08em] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
                 active
-                  ? 'bg-canvas-2 font-medium text-ink'
-                  : 'text-ink-2 hover:bg-canvas-2 hover:text-ink',
+                  ? 'border-accent bg-canvas-2 font-semibold text-ink'
+                  : 'border-transparent text-muted hover:bg-canvas-2 hover:text-ink',
               )}
             >
               <Icon className="size-4 shrink-0" aria-hidden />
@@ -60,6 +60,14 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
         );
       })}
     </ul>
+  );
+}
+
+function BrandMark({ className }: { className?: string }) {
+  return (
+    <span className={cn('font-display text-lg font-semibold tracking-tight text-ink', className)}>
+      F.A.T.U
+    </span>
   );
 }
 
@@ -105,25 +113,32 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   // The login page renders on its own, without the console chrome.
   if (isLogin) {
-    return <div className="grid min-h-dvh place-items-center p-5">{children}</div>;
+    return <div className="grid min-h-dvh place-items-center bg-canvas p-5">{children}</div>;
   }
 
   // Until the session hydrates (or while redirecting a guest), show a minimal
   // loading state rather than flashing the console.
   if (!ready || !user) {
     return (
-      <div className="grid min-h-dvh place-items-center p-5" role="status" aria-live="polite">
+      <div
+        className="grid min-h-dvh place-items-center bg-canvas p-5"
+        role="status"
+        aria-live="polite"
+      >
         <span className="text-sm text-muted">Loading…</span>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh bg-canvas">
       {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 border-r border-line bg-surface md:block">
-        <div className="flex h-16 items-center border-b border-line px-5">
-          <span className="font-display text-sm font-semibold tracking-tight">TMS Admin</span>
+      <aside className="hidden w-60 shrink-0 border-r border-line bg-canvas md:block">
+        <div className="flex h-16 items-center gap-2 border-b border-line px-5">
+          <BrandMark />
+          <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
+            Admin
+          </span>
         </div>
         <nav className="p-3" aria-label="Admin sections">
           <NavList pathname={pathname} />
@@ -131,7 +146,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-5">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-line bg-canvas/90 px-4 backdrop-blur sm:px-5">
           <div className="flex items-center gap-2">
             <IconButton
               className="md:hidden"
@@ -140,10 +155,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               onClick={open}
               aria-haspopup="dialog"
             />
-            <span className="font-display text-sm font-medium md:hidden">TMS Admin</span>
+            <div className="flex items-center gap-2 md:hidden">
+              <BrandMark className="text-base" />
+              <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
+                Admin
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-xs uppercase tracking-[0.08em] text-muted sm:inline">
+            <span className="hidden text-xs font-medium uppercase tracking-[0.08em] text-muted sm:inline">
               Operational console
             </span>
             <span className="hidden text-sm text-ink-2 sm:inline" aria-hidden>
@@ -158,7 +178,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 logout();
                 router.replace('/login');
               }}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-line-2 px-3 text-xs font-medium text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-line-2 px-3 text-xs font-medium uppercase tracking-[0.08em] text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
             >
               Sign out
             </button>
@@ -174,10 +194,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         ref={dialogRef}
         aria-label="Admin menu"
         onClick={onDialogClick}
-        className="m-0 h-dvh max-h-none w-[min(20rem,85vw)] max-w-none bg-surface p-0 text-ink backdrop:bg-black/50 open:flex open:flex-col"
+        className="m-0 h-dvh max-h-none w-[min(20rem,85vw)] max-w-none bg-canvas p-0 text-ink backdrop:bg-black/50 open:flex open:flex-col"
       >
         <div className="flex h-16 items-center justify-between border-b border-line px-5">
-          <span className="font-display text-sm font-semibold tracking-tight">TMS Admin</span>
+          <div className="flex items-center gap-2">
+            <BrandMark className="text-base" />
+            <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
+              Admin
+            </span>
+          </div>
           <IconButton
             label="Close menu"
             icon={<X className="size-5" aria-hidden />}
