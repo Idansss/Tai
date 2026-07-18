@@ -78,6 +78,8 @@ export async function provisionAdmin(
 }
 
 async function main(): Promise<void> {
+  // Loads the root .env first, so ADMIN_PROVISION_* (and DATABASE_URL) can live there too.
+  const environment = loadEnvironment();
   const email = process.env.ADMIN_PROVISION_EMAIL;
   const password = process.env.ADMIN_PROVISION_PASSWORD;
   const displayName = process.env.ADMIN_PROVISION_NAME;
@@ -86,7 +88,6 @@ async function main(): Promise<void> {
       'ADMIN_PROVISION_EMAIL, ADMIN_PROVISION_PASSWORD, and ADMIN_PROVISION_NAME are required.',
     );
   }
-  const environment = loadEnvironment();
   const database = createDatabaseClient(environment.DATABASE_URL);
   try {
     const result = await provisionAdmin(database, {

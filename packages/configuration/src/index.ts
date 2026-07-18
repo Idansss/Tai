@@ -1,3 +1,7 @@
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { z } from 'zod';
 
 const localAuthPepper = 'local-development-auth-pepper-change-me';
@@ -108,6 +112,30 @@ const EnvironmentSchema = z
 
 export type Environment = z.infer<typeof EnvironmentSchema>;
 
+let dotenvLoaded = false;
+
+/**
+ * Load the monorepo-root `.env` into `process.env`, once, for local development and one-off
+ * scripts (the API, worker, admin provisioning, and the Prisma seeds).
+ *
+ * Two properties make this safe everywhere:
+ * - **Variables already in the environment win.** `process.loadEnvFile` never overwrites a value
+ *   that is already set, so an explicit shell variable or a platform-provided secret always beats
+ *   the file. Production and CI, which supply configuration through the real environment, keep it.
+ * - **A missing file is a no-op.** No `.env` (CI, tests, most production) means nothing happens.
+ */
+export function loadDotenv(): void {
+  if (dotenvLoaded) return;
+  dotenvLoaded = true;
+  // This file lives at packages/configuration/{src,dist}; three levels up is the workspace root.
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+  const envPath = resolve(root, '.env');
+  if (existsSync(envPath)) process.loadEnvFile(envPath);
+}
+
 export function loadEnvironment(input: NodeJS.ProcessEnv = process.env): Environment {
+  // Only touch the filesystem/`process.env` on the real path; tests pass an explicit object and
+  // must stay deterministic.
+  if (input === process.env) loadDotenv();
   return EnvironmentSchema.parse(input);
 }

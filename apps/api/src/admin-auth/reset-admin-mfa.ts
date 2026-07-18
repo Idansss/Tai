@@ -43,9 +43,10 @@ export async function resetAdminMfa(database: DatabaseClient, email: string): Pr
 }
 
 async function main(): Promise<void> {
+  // Loads the root .env first, so ADMIN_MFA_RESET_EMAIL (and DATABASE_URL) can live there too.
+  const environment = loadEnvironment();
   const email = process.env.ADMIN_MFA_RESET_EMAIL;
   if (!email) throw new Error('ADMIN_MFA_RESET_EMAIL is required.');
-  const environment = loadEnvironment();
   const database = createDatabaseClient(environment.DATABASE_URL);
   try {
     const resetEmail = await resetAdminMfa(database, email);
