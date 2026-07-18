@@ -64,7 +64,7 @@ export function SiteHeader() {
             href="/"
             className="rounded-sm font-display text-lg font-semibold tracking-tight text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
           >
-            Tai Manic Studios
+            F.A.T.U
           </Link>
 
           <ul className="hidden items-center gap-8 md:flex">

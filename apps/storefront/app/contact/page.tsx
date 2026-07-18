@@ -19,10 +19,10 @@ export default function Page() {
             <p>
               For anything about an existing order, email{' '}
               <a
-                href="mailto:hello@taimanicstudios.com"
+                href="mailto:hello@fromafricatoyou.com"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
               >
-                hello@taimanicstudios.com
+                hello@fromafricatoyou.com
               </a>{' '}
               with your order reference. You’ll find your reference and live status in your{' '}
               <a
@@ -41,10 +41,10 @@ export default function Page() {
             <p>
               Interested in stocking the work or collaborating on a piece? Email{' '}
               <a
-                href="mailto:studio@taimanicstudios.com"
+                href="mailto:studio@fromafricatoyou.com"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
               >
-                studio@taimanicstudios.com
+                studio@fromafricatoyou.com
               </a>{' '}
               with a little about you and what you have in mind.
             </p>
@@ -56,10 +56,10 @@ export default function Page() {
             <p>
               For press and images, reach{' '}
               <a
-                href="mailto:press@taimanicstudios.com"
+                href="mailto:press@fromafricatoyou.com"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
               >
-                press@taimanicstudios.com
+                press@fromafricatoyou.com
               </a>
               .
             </p>

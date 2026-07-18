@@ -11,8 +11,7 @@ import { dataProvider } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Art-led apparel',
-  description:
-    'Hand-drawn art from across Africa, printed on cotton. From Africa, to you — Tai Manic Studios.',
+  description: 'Hand-drawn art from across Africa, printed on cotton. From Africa, to you.',
 };
 
 // The streetwear hero's numbered pillars — the RAWBLOX "01–05" row, written to TAI's product.
@@ -85,7 +84,7 @@ export default async function HomePage() {
                   as="p"
                   className="font-display text-xs font-medium uppercase tracking-[0.22em] text-white/70"
                 >
-                  Tai Manic Studios
+                  From Africa To You
                 </Reveal>
                 <Reveal
                   as="h1"
@@ -141,7 +140,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Feature strip (URBAN FIT · AURORA) ─────────────────────────────────── */}
-      <section aria-label="Why Tai Manic Studios">
+      <section aria-label="Why From Africa To You">
         <Container className="py-10">
           <Reveal className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4">
             {FEATURES.map(({ icon: Icon, title, sub }) => (

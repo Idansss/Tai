@@ -24,17 +24,17 @@ const sans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://taimanicstudios.com'),
+  metadataBase: new URL('https://fromafricatoyou.com'),
   title: {
-    default: 'Tai Manic Studios — Art-led apparel',
-    template: '%s · Tai Manic Studios',
+    default: 'From Africa To You — Art-led apparel',
+    template: '%s · From Africa To You',
   },
   description:
     'Hand-drawn art from across Africa — coloured pencil and marker on paper, printed on cotton. A premium digital gallery and interactive design studio.',
   openGraph: {
     type: 'website',
-    siteName: 'Tai Manic Studios',
-    title: 'Tai Manic Studios — Art-led apparel',
+    siteName: 'From Africa To You',
+    title: 'From Africa To You — Art-led apparel',
     description: 'A premium digital art gallery and interactive clothing-design experience.',
   },
   robots: { index: true, follow: true },

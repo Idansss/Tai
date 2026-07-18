@@ -3,7 +3,7 @@ import { ContentPage } from '@/components/site/content-page';
 
 export const metadata: Metadata = {
   title: 'Terms of service',
-  description: 'The terms that apply when you browse and buy from Tai Manic Studios.',
+  description: 'The terms that apply when you browse and buy from From Africa To You.',
 };
 
 export default function Page() {
@@ -19,7 +19,7 @@ export default function Page() {
           body: (
             <p>
               By browsing or ordering, you agree to use the site lawfully and not to misuse the
-              artwork or content, which remains the property of Tai Manic Studios and its artists.
+              artwork or content, which remains the property of From Africa To You and its artists.
             </p>
           ),
         },
@@ -73,10 +73,10 @@ export default function Page() {
             <p>
               Questions about these terms? Email{' '}
               <a
-                href="mailto:hello@taimanicstudios.com"
+                href="mailto:hello@fromafricatoyou.com"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
               >
-                hello@taimanicstudios.com
+                hello@fromafricatoyou.com
               </a>
               .
             </p>

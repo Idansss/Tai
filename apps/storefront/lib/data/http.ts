@@ -1,5 +1,5 @@
 /**
- * The single HTTP foundation for talking to the Tai Manic Studios API.
+ * The single HTTP foundation for talking to the From Africa To You API.
  *
  * Everything the storefront reads from the backend goes through `apiFetch`, so the
  * envelope, the error mapping and the cookie policy are defined exactly once.
@@ -116,7 +116,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     });
   } catch (cause) {
     throw new ApiNetworkError(
-      `Could not reach the Tai Manic Studios API at ${API_BASE_URL}.`,
+      `Could not reach the From Africa To You API at ${API_BASE_URL}.`,
       cause,
     );
   }

@@ -3,7 +3,7 @@ import { ContentPage } from '@/components/site/content-page';
 
 export const metadata: Metadata = {
   title: 'Privacy policy',
-  description: 'How Tai Manic Studios collects, uses and protects your personal data.',
+  description: 'How From Africa To You collects, uses and protects your personal data.',
 };
 
 export default function Page() {
@@ -52,10 +52,10 @@ export default function Page() {
               You can access, correct or delete your account data, and unsubscribe from marketing at
               any time. To make a request, email{' '}
               <a
-                href="mailto:privacy@taimanicstudios.com"
+                href="mailto:privacy@fromafricatoyou.com"
                 className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink"
               >
-                privacy@taimanicstudios.com
+                privacy@fromafricatoyou.com
               </a>
               .
             </p>
