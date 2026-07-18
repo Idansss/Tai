@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, cn } from '@tms/ui';
+import { cn } from '@tms/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { type AuthErrors, validateLogin } from '@/lib/admin-auth';
@@ -101,12 +101,6 @@ export function AdminLoginForm() {
           Sign in
         </button>
       </form>
-
-      <Alert tone="info" title="Preview console" className="mt-6">
-        This is a preview build — no staff accounts, roles or passwords exist yet. Any well-formed
-        sign-in starts a demo session stored only in your browser. Real staff auth and role-based
-        access arrive with the admin auth backend.
-      </Alert>
     </div>
   );
 }
