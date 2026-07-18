@@ -7,6 +7,7 @@ import type {
 } from '../admin-auth/admin-auth.types.js';
 import { DatabaseService } from '../database/database.service.js';
 import { ApiProblemException } from '../platform/api-problem.exception.js';
+import { deriveArtworkAvailability, deriveStartingPrice } from './artwork-read-model.js';
 import type {
   AssociationDto,
   ArtworkCatalogueQueryDto,
@@ -178,28 +179,35 @@ export class CatalogueService {
       skip: input?.cursor ? 1 : undefined,
       take: input ? input.limit + 1 : undefined,
     });
-    return input ? this.page(records, input.limit) : records;
+    const shaped = publicOnly ? records.map((record) => this.toPublicDrop(record)) : records;
+    return input ? this.page(shaped, input.limit) : shaped;
   }
-  getDrop(slug: string, publicOnly = false) {
-    return this.database.client.drop
-      .findFirst({
-        where: { slug, ...(publicOnly ? { status: ArtworkStatus.PUBLISHED } : {}) },
-        include: {
-          artworks: {
-            where: publicOnly ? { artwork: { status: ArtworkStatus.PUBLISHED } } : undefined,
-            orderBy: { position: 'asc' },
-            select: { artworkId: true, position: true },
-          },
+  async getDrop(slug: string, publicOnly = false) {
+    const value = await this.database.client.drop.findFirst({
+      where: { slug, ...(publicOnly ? { status: ArtworkStatus.PUBLISHED } : {}) },
+      include: {
+        artworks: {
+          where: publicOnly ? { artwork: { status: ArtworkStatus.PUBLISHED } } : undefined,
+          orderBy: { position: 'asc' },
+          select: { artworkId: true, position: true },
         },
-      })
-      .then((value) => value ?? Promise.reject(this.notFound()));
+      },
+    });
+    if (!value) throw this.notFound();
+    return publicOnly ? this.toPublicDrop(value) : value;
   }
   async createDrop(actor: AdminAuthenticatedSession, input: DropDto, context: AdminRequestContext) {
     this.validateDropWindow(input.startsAt, input.endsAt);
+    this.validateEarlyAccess(input.earlyAccessAt, input.startsAt);
     return this.mutate(actor, 'catalogue.drop.create', 'drop', context, () =>
       this.database.client.drop.create({
         data: {
-          ...input,
+          slug: input.slug,
+          title: input.title,
+          description: input.description,
+          tagline: input.tagline,
+          soldOut: input.soldOut ?? false,
+          earlyAccessAt: input.earlyAccessAt ? new Date(input.earlyAccessAt) : null,
           startsAt: input.startsAt ? new Date(input.startsAt) : null,
           endsAt: input.endsAt ? new Date(input.endsAt) : null,
           createdByUserId: actor.session.user.id,
@@ -215,9 +223,17 @@ export class CatalogueService {
   ) {
     const existing = await this.database.client.drop.findUnique({ where: { id } });
     if (!existing) throw this.notFound();
+    const nextStartsAt =
+      input.startsAt === undefined ? (existing.startsAt?.toISOString() ?? null) : input.startsAt;
     this.validateDropWindow(
-      input.startsAt === undefined ? (existing.startsAt?.toISOString() ?? null) : input.startsAt,
+      nextStartsAt,
       input.endsAt === undefined ? (existing.endsAt?.toISOString() ?? null) : input.endsAt,
+    );
+    this.validateEarlyAccess(
+      input.earlyAccessAt === undefined
+        ? (existing.earlyAccessAt?.toISOString() ?? null)
+        : input.earlyAccessAt,
+      nextStartsAt,
     );
     return this.mutate(actor, 'catalogue.drop.update', id, context, () =>
       this.database.client.drop.update({
@@ -226,7 +242,15 @@ export class CatalogueService {
           slug: input.slug,
           title: input.title,
           description: input.description,
+          tagline: input.tagline,
+          soldOut: input.soldOut,
           status: input.status,
+          earlyAccessAt:
+            input.earlyAccessAt === undefined
+              ? undefined
+              : input.earlyAccessAt
+                ? new Date(input.earlyAccessAt)
+                : null,
           startsAt:
             input.startsAt === undefined
               ? undefined
@@ -321,15 +345,16 @@ export class CatalogueService {
       skip: input?.cursor ? 1 : undefined,
       take: input ? input.limit + 1 : undefined,
     });
-    return input ? this.page(records, input.limit) : records;
+    const shaped = publicOnly ? records.map((record) => this.toPublicStory(record)) : records;
+    return input ? this.page(shaped, input.limit) : shaped;
   }
-  getStory(slug: string, publicOnly = false) {
-    return this.database.client.story
-      .findFirst({
-        where: { slug, ...(publicOnly ? { status: ArtworkStatus.PUBLISHED } : {}) },
-        include: { blocks: { orderBy: { position: 'asc' } } },
-      })
-      .then((value) => value ?? Promise.reject(this.notFound()));
+  async getStory(slug: string, publicOnly = false) {
+    const value = await this.database.client.story.findFirst({
+      where: { slug, ...(publicOnly ? { status: ArtworkStatus.PUBLISHED } : {}) },
+      include: { blocks: { orderBy: { position: 'asc' } } },
+    });
+    if (!value) throw this.notFound();
+    return publicOnly ? this.toPublicStory(value) : value;
   }
   async createStory(
     actor: AdminAuthenticatedSession,
@@ -343,6 +368,7 @@ export class CatalogueService {
           slug: input.slug,
           title: input.title,
           excerpt: input.excerpt,
+          category: input.category,
           artworkId: input.artworkId,
           collectionId: input.collectionId,
           createdByUserId: actor.session.user.id,
@@ -376,6 +402,7 @@ export class CatalogueService {
             slug: input.slug,
             title: input.title,
             excerpt: input.excerpt,
+            category: input.category,
             artworkId: input.artworkId,
             collectionId: input.collectionId,
             status: input.status,
@@ -400,11 +427,18 @@ export class CatalogueService {
   }
 
   async searchArtworks(input: ArtworkCatalogueQueryDto) {
+    const now = new Date();
     const tagConditions: Prisma.TagWhereInput[] = [];
     if (input.tag) tagConditions.push({ slug: input.tag });
     if (input.theme) tagConditions.push({ slug: input.theme, kind: 'THEME' });
     if (input.mood) tagConditions.push({ slug: input.mood, kind: 'MOOD' });
     if (input.colourFamily) tagConditions.push({ slug: input.colourFamily, kind: 'COLOUR_FAMILY' });
+    const andConditions: Prisma.ArtworkWhereInput[] = tagConditions.map((condition) => ({
+      tags: { some: { tag: condition } },
+    }));
+    if (input.availability) {
+      andConditions.push(this.availabilityWhere(input.availability, now));
+    }
     const records = await this.database.client.artwork.findMany({
       where: {
         status: ArtworkStatus.PUBLISHED,
@@ -427,11 +461,20 @@ export class CatalogueService {
         drops: input.drop
           ? { some: { drop: { slug: input.drop, status: ArtworkStatus.PUBLISHED } } }
           : undefined,
-        AND: tagConditions.map((condition) => ({ tags: { some: { tag: condition } } })),
+        AND: andConditions,
         editions: input.limitedEdition ? { some: { status: ArtworkStatus.PUBLISHED } } : undefined,
       },
       include: {
-        versions: { where: { status: ArtworkStatus.PUBLISHED }, take: 1 },
+        versions: {
+          where: { status: ArtworkStatus.PUBLISHED },
+          take: 1,
+          include: {
+            garmentCompatibilities: {
+              where: { status: 'APPROVED' },
+              select: { unitPriceMinor: true, currency: true },
+            },
+          },
+        },
         tags: { include: { tag: true } },
         collections: {
           where: { collection: { status: ArtworkStatus.PUBLISHED } },
@@ -456,6 +499,11 @@ export class CatalogueService {
           id: record.id,
           slug: record.slug,
           status: record.status,
+          startingPrice: deriveStartingPrice(version?.garmentCompatibilities ?? []),
+          availability: deriveArtworkAvailability(
+            record.drops.map(({ drop }) => ({ startsAt: drop.startsAt, endsAt: drop.endsAt })),
+            now,
+          ),
           publishedVersion: version
             ? {
                 id: version.id,
@@ -509,6 +557,38 @@ export class CatalogueService {
     };
   }
 
+  /**
+   * A WHERE fragment that selects artworks whose derived availability equals `state`. It must stay
+   * in exact agreement with `deriveArtworkAvailability` so a card's badge and the filter never
+   * disagree. Availability is drop-window derived only (TMS-FBR-012).
+   */
+  private availabilityWhere(
+    state: 'AVAILABLE' | 'DROP_NOT_OPEN' | 'DROP_ENDED',
+    now: Date,
+  ): Prisma.ArtworkWhereInput {
+    const publishedDrop = { drop: { status: ArtworkStatus.PUBLISHED } };
+    const anyDrop: Prisma.ArtworkWhereInput = { drops: { some: publishedDrop } };
+    const openDrop: Prisma.ArtworkWhereInput = {
+      drops: {
+        some: {
+          drop: {
+            status: ArtworkStatus.PUBLISHED,
+            AND: [
+              { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+              { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+            ],
+          },
+        },
+      },
+    };
+    const upcomingDrop: Prisma.ArtworkWhereInput = {
+      drops: { some: { drop: { status: ArtworkStatus.PUBLISHED, startsAt: { gt: now } } } },
+    };
+    if (state === 'AVAILABLE') return { OR: [{ NOT: anyDrop }, openDrop] };
+    if (state === 'DROP_NOT_OPEN') return { AND: [anyDrop, { NOT: openDrop }, upcomingDrop] };
+    return { AND: [anyDrop, { NOT: openDrop }, { NOT: upcomingDrop }] };
+  }
+
   private lifecycle(status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED') {
     const now = new Date();
     return status === 'PUBLISHED'
@@ -522,6 +602,30 @@ export class CatalogueService {
   private validateDropWindow(startsAt?: string | null, endsAt?: string | null) {
     if (endsAt && (!startsAt || new Date(endsAt) <= new Date(startsAt)))
       throw this.validation('A drop end time must be after its start time.');
+  }
+  private validateEarlyAccess(earlyAccessAt?: string | null, startsAt?: string | null) {
+    if (earlyAccessAt && startsAt && new Date(earlyAccessAt) > new Date(startsAt))
+      throw this.validation('Early access must not open after the public release.');
+  }
+  /** Public drop read model: adds the server-authoritative published piece count (TMS-FBR-018). */
+  private toPublicDrop<T extends { artworks: unknown[] }>(record: T) {
+    return { ...record, pieceCount: record.artworks.length };
+  }
+  /** Public story read model: adds reading time and shoppable count (TMS-FBR-019). */
+  private toPublicStory<T extends { blocks: Array<{ type: string; content: unknown }> }>(
+    record: T,
+  ) {
+    const words = record.blocks.reduce((total, block) => total + this.blockWordCount(block), 0);
+    return {
+      ...record,
+      readMinutes: Math.max(1, Math.round(words / 200)),
+      shoppableCount: record.blocks.filter((block) => block.type === 'SHOPPABLE').length,
+    };
+  }
+  private blockWordCount(block: { content: unknown }): number {
+    if (!block.content || typeof block.content !== 'object') return 0;
+    const text = (block.content as Record<string, unknown>).text;
+    return typeof text === 'string' ? text.trim().split(/\s+/).filter(Boolean).length : 0;
   }
   private validateEdition(input: EditionDto) {
     if (input.numbered && !input.totalQuantity)

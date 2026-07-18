@@ -79,6 +79,7 @@ enum StoryBlockType {
   IMAGE
   QUOTE
   EMBED
+  SHOPPABLE
 }
 
 enum GarmentType {
@@ -114,6 +115,40 @@ enum PromotionStatus {
   DRAFT
   ACTIVE
   DISABLED
+}
+
+/// The full order lifecycle. TMS-B4-003 drives the checkout-and-payment portion; production,
+/// dispatch, and returns transitions belong to later operations tasks against the same machine.
+enum OrderStatus {
+  DRAFT
+  AWAITING_PAYMENT
+  PAYMENT_PROCESSING
+  PAID
+  PRODUCTION_QUEUED
+  PRINTING
+  QUALITY_CHECK
+  READY_FOR_DISPATCH
+  SHIPMENT_BOOKED
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  PAYMENT_FAILED
+  PAYMENT_CANCELLED
+  CANCEL_REQUESTED
+  CANCELLED
+  REFUND_PENDING
+  PARTIALLY_REFUNDED
+  REFUNDED
+  DELIVERY_EXCEPTION
+  RETURN_REQUESTED
+  RETURN_APPROVED
+  RETURN_IN_TRANSIT
+  RETURNED
+}
+
+enum DeliveryMethod {
+  STANDARD
+  EXPRESS
 }
 
 enum InventoryMovementKind {
@@ -201,6 +236,7 @@ model User {
   garmentCompatibilitiesApproved ArtworkGarmentCompatibility[] @relation("GarmentCompatibilityApprover")
   inventoryMovements             InventoryMovement[]           @relation("InventoryMovementActor")
   cart                           Cart?                         @relation("CartOwner")
+  orders                         Order[]                       @relation("OrderCustomer")
   promotionsCreated              Promotion[]                   @relation("PromotionCreator")
   designConfigurations           DesignConfiguration[]         @relation("DesignConfigurationOwner")
   mediaAssetsCreated             ArtworkAsset[]                @relation("MediaAssetCreator")
@@ -389,6 +425,7 @@ model ArtworkVersion {
   designConfigurations   DesignConfiguration[]
   mediaAssets            ArtworkAsset[]
   cartLines              CartLine[]
+  orderItems             OrderItem[]
 
   @@unique([artworkId, versionNumber], map: "artwork_versions_artwork_version_key")
   @@index([artworkId, status, versionNumber], map: "artwork_versions_artwork_status_version_idx")
@@ -459,9 +496,12 @@ model Drop {
   slug            String        @unique(map: "drops_slug_key") @db.VarChar(160)
   title           String        @db.VarChar(200)
   description     String?       @db.Text
+  tagline         String?       @db.VarChar(240)
   status          ArtworkStatus @default(DRAFT)
+  earlyAccessAt   DateTime?     @map("early_access_at") @db.Timestamptz(3)
   startsAt        DateTime?     @map("starts_at") @db.Timestamptz(3)
   endsAt          DateTime?     @map("ends_at") @db.Timestamptz(3)
+  soldOut         Boolean       @default(false) @map("sold_out")
   createdByUserId String        @map("created_by_user_id") @db.Uuid
   publishedAt     DateTime?     @map("published_at") @db.Timestamptz(3)
   archivedAt      DateTime?     @map("archived_at") @db.Timestamptz(3)
@@ -510,6 +550,7 @@ model Story {
   slug            String        @unique(map: "stories_slug_key") @db.VarChar(160)
   title           String        @db.VarChar(200)
   excerpt         String?       @db.VarChar(500)
+  category        String?       @db.VarChar(80)
   status          ArtworkStatus @default(DRAFT)
   artworkId       String?       @map("artwork_id") @db.Uuid
   collectionId    String?       @map("collection_id") @db.Uuid
@@ -633,6 +674,7 @@ model GarmentVariant {
   inventoryItem InventoryItem?
   designConfigurations DesignConfiguration[]
   cartLines            CartLine[]
+  orderItems           OrderItem[]
 
   @@unique([templateId, colourId, sizeId], map: "garment_variants_template_colour_size_key")
   @@index([templateId, status], map: "garment_variants_template_status_idx")
@@ -662,6 +704,7 @@ model GarmentPlacement {
 
   designConfigurations DesignConfiguration[]
   cartLines            CartLine[]
+  orderItems           OrderItem[]
 
   @@unique([templateId, slug], map: "garment_placements_template_slug_key")
   @@index([templateId, status, position], map: "garment_placements_template_status_position_idx")
@@ -682,6 +725,7 @@ model GarmentScalePreset {
 
   designConfigurations DesignConfiguration[]
   cartLines            CartLine[]
+  orderItems           OrderItem[]
 
   @@unique([placementId, slug], map: "garment_scale_presets_placement_slug_key")
   @@index([placementId, status, position], map: "garment_scale_presets_placement_status_position_idx")
@@ -937,6 +981,105 @@ model Promotion {
 
   @@index([status, startsAt], map: "promotions_status_starts_idx")
   @@map("promotions")
+}
+
+/// A placed order. Every money amount is an integer copy taken at placement, never a live
+/// reference to the priced compatibility, so a later price change cannot rewrite history
+/// (ADR-015, ADR-018). A guest order has no userId and reconciles to an account by verified
+/// contact email. Status transitions run through the audited state machine only.
+model Order {
+  id                 String        @id @default(uuid()) @db.Uuid
+  reference          String        @unique(map: "orders_reference_key") @db.VarChar(20)
+  userId             String?       @map("user_id") @db.Uuid
+  status             OrderStatus   @default(AWAITING_PAYMENT)
+  /// Optional caller-supplied replay key. A retried checkout with the same key returns the
+  /// same order rather than placing a second one and draining stock twice.
+  idempotencyKey     String?       @map("idempotency_key") @db.VarChar(120)
+  contactEmail       String        @map("contact_email") @db.VarChar(320)
+  normalizedEmail    String        @map("normalized_email") @db.VarChar(320)
+  contactName        String        @map("contact_name") @db.VarChar(200)
+  contactPhone       String?       @map("contact_phone") @db.VarChar(20)
+  addressState       String        @map("address_state") @db.VarChar(100)
+  addressCity        String        @map("address_city") @db.VarChar(120)
+  addressLine1       String        @map("address_line1") @db.VarChar(200)
+  addressLine2       String?       @map("address_line2") @db.VarChar(200)
+  addressPostcode    String?       @map("address_postcode") @db.VarChar(20)
+  deliveryMethod     DeliveryMethod @map("delivery_method")
+  currency           String        @db.Char(3)
+  subtotalMinor      Int           @map("subtotal_minor")
+  discountMinor      Int           @default(0) @map("discount_minor")
+  deliveryMinor      Int           @map("delivery_minor")
+  taxMinor           Int           @map("tax_minor")
+  totalMinor         Int           @map("total_minor")
+  promotionCode      String?       @map("promotion_code") @db.VarChar(64)
+  promotionLabel     String?       @map("promotion_label") @db.VarChar(120)
+  placedAt           DateTime      @default(now()) @map("placed_at") @db.Timestamptz(3)
+  paidAt             DateTime?     @map("paid_at") @db.Timestamptz(3)
+  cancelledAt        DateTime?     @map("cancelled_at") @db.Timestamptz(3)
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user               User?         @relation("OrderCustomer", fields: [userId], references: [id], onDelete: SetNull)
+  items              OrderItem[]
+  events             OrderEvent[]
+
+  @@unique([userId, idempotencyKey], map: "orders_user_idempotency_key")
+  @@index([userId, placedAt], map: "orders_user_placed_at_idx")
+  @@index([normalizedEmail, placedAt], map: "orders_email_placed_at_idx")
+  @@index([status, placedAt], map: "orders_status_placed_at_idx")
+  @@map("orders")
+}
+
+/// An immutable snapshot of one purchased configuration. Price and every descriptive field are
+/// copied at placement; the tuple foreign keys are RESTRICT so the source configuration cannot be
+/// deleted out from under a historical order. reservationId links the inventory hold taken at
+/// checkout so it can be committed on payment or released on failure (ADR-016, ADR-017).
+model OrderItem {
+  id                String             @id @default(uuid()) @db.Uuid
+  orderId           String             @map("order_id") @db.Uuid
+  artworkVersionId  String             @map("artwork_version_id") @db.Uuid
+  garmentVariantId  String             @map("garment_variant_id") @db.Uuid
+  placementId       String             @map("placement_id") @db.Uuid
+  scalePresetId     String             @map("scale_preset_id") @db.Uuid
+  view              GarmentView
+  configurationHash String             @map("configuration_hash") @db.Char(64)
+  quantity          Int
+  unitPriceMinor    Int                @map("unit_price_minor")
+  lineTotalMinor    Int                @map("line_total_minor")
+  currency          String             @db.Char(3)
+  artworkTitle      String             @map("artwork_title") @db.VarChar(200)
+  garmentTitle      String             @map("garment_title") @db.VarChar(200)
+  colourName        String             @map("colour_name") @db.VarChar(100)
+  sizeLabel         String             @map("size_label") @db.VarChar(100)
+  sku               String             @db.VarChar(80)
+  /// The inventory reservation held for this line. Opaque, like the reservation reference.
+  reservationId     String             @map("reservation_id") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  order             Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  artworkVersion    ArtworkVersion     @relation(fields: [artworkVersionId], references: [id], onDelete: Restrict)
+  garmentVariant    GarmentVariant     @relation(fields: [garmentVariantId], references: [id], onDelete: Restrict)
+  placement         GarmentPlacement   @relation(fields: [placementId], references: [id], onDelete: Restrict)
+  scalePreset       GarmentScalePreset @relation(fields: [scalePresetId], references: [id], onDelete: Restrict)
+
+  @@index([orderId], map: "order_items_order_idx")
+  @@map("order_items")
+}
+
+/// Append-only status history. A database trigger rejects UPDATE and DELETE, so the audit trail
+/// of an order's lifecycle can be replayed but never rewritten (mirrors the inventory ledger).
+model OrderEvent {
+  id            String         @id @default(uuid()) @db.Uuid
+  orderId       String         @map("order_id") @db.Uuid
+  fromStatus    OrderStatus?   @map("from_status")
+  toStatus      OrderStatus    @map("to_status")
+  reason        String?        @db.VarChar(500)
+  actorType     AuditActorType @default(SYSTEM) @map("actor_type")
+  actorUserId   String?        @map("actor_user_id") @db.Uuid
+  correlationId String         @map("correlation_id") @db.VarChar(128)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt], map: "order_events_order_created_idx")
+  @@map("order_events")
 }
 
 model EmailVerificationToken {

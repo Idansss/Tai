@@ -227,3 +227,165 @@ Domain APIs, authentication, catalogue, cart, checkout, payment and shipping API
 - Promotions: `POST /cart/promotion` with `{ code }`. An invalid code is `422 PROMOTION_INVALID` with one message for unknown/ended/unlaunched — do not try to distinguish them in the UI. A valid code that does not qualify (below its minimum) returns `200` with `promotion: null`; say "code doesn't apply to this order" rather than showing an error.
 - `total` is `subtotal - discount`, never below zero. **Delivery and tax are deliberately absent** and belong to the checkout quote (TMS-B4-003), exactly as TMS-FBR-003 requested.
 - A line you do not own returns `404`, not `403`.
+
+## 2026-07-17 — TMS-B4-003 checkout and orders are available
+
+- Status: implemented on `codex/b4-checkout-orders`; consume after its PR is merged. This answers request TMS-FBR-004 and the order-history half of TMS-FBR-005.
+- **This replaces `apps/storefront/lib/checkout.ts` mock delivery/VAT, `lib/order.ts` local order snapshots, and the order-history part of `lib/account.ts`.** Five operations:
+  - `GET /api/v1/checkout/delivery-options?state=<state>` — server-authoritative methods and fees.
+  - `POST /api/v1/checkout/quote` — `{ address, deliveryMethodId }` → authoritative `{ subtotal, discount, delivery, tax, total, deliveryMethod, promotion }`.
+  - `POST /api/v1/orders` — `{ address, deliveryMethodId, contact }` places the order from the current cart.
+  - `GET /api/v1/orders` and `GET /api/v1/orders/{reference}` — the signed-in customer's history and one order (require `tms_session`).
+- **Checkout is guest-friendly.** `POST /orders` and `/checkout/quote` work with the same `tms_cart` guest cookie the cart uses; a signed-in customer's order is attached to their account. Always send credentials/cookies.
+- **Delivery and VAT are server-authoritative — stop mocking them.** VAT is 7.5% on the discounted goods subtotal; delivery is a fixed catalogue (`STANDARD`/`EXPRESS`, Lagos cheaper than nationwide, fees in kobo). `total = subtotal - discount + delivery + tax`, all integer minor units. Render the quote's numbers; do not recompute. A shipping provider with live rates replaces the catalogue later (TMS-B5-003) without changing the shape.
+- **The promotion comes from the cart, not the checkout.** Apply/clear codes via the cart endpoints (TMS-B4-002); the quote and order read the cart's applied promotion. There is no promotion field on the quote or order request.
+- **Checkout refuses before payment, never at it.** If any cart line has an `issue` (or the cart is empty), `POST /orders` and `/checkout/quote` return `409 CONFLICT`. Resolve the cart issues first — the customer can lose the last unit between cart and checkout (ADR-017), so re-read the cart and show the `issue` rather than failing at the card.
+- **Idempotent placement.** Send an `Idempotency-Key` header (8–120 chars) on `POST /orders`; a retry with the same key returns the same order rather than placing a second one. Generate one key per checkout attempt and reuse it across retries.
+- **The order is an immutable snapshot.** Each item carries the copied `unitPrice`, `lineTotal`, `artworkTitle`, `garmentTitle`, `colourName`, `sizeLabel`, and `sku` — a later catalogue or price change never rewrites a placed order (ADR-015/018). Render from the snapshot, not from live catalogue lookups.
+- **`status` is the shared `OrderStatus` enum; map it to customer copy, never render the raw code** (spec §17). `timeline[]` is the append-only status history (oldest first) for a fulfilment timeline. `payment` is a handoff stub in this slice: `{ status, provider: null, reference: null, redirectUrl: null }` with `status` derived from the order (`PENDING` until paid). **The real payment intent/redirect and webhook-backed status arrive in TMS-B5-001** — keep `lib/payment.ts` on the mock resolver until then, and never trust a client `?outcome=` param.
+- **Order history is auth-scoped.** `GET /orders` needs a session (`401` without). Another customer's order reference returns `404`, not `403`. A signed-in customer also sees guest orders placed with their **verified** contact email, so a guest purchase reconciles on sign-in. Reading a guest order back by reference before sign-in needs the payment return token TMS-B5-001 adds; for now use the full order returned by `POST /orders` for the confirmation page.
+
+## 2026-07-17 — A seeded, runnable dev database exists — `DATA_SOURCE=api` now works end to end
+
+- Status: implemented on `codex/dev-seed`; consume after its PR merges. This unblocks all frontend
+  verification — until now every claim about these endpoints was **stub-verified only** because
+  no seeded database existed.
+- **What changed:** a dev-only seed (`prisma/seed-dev.ts`, run by `db:seed` / `db:reset`) seeds a
+  full development catalogue (`prisma/seed-catalogue.ts`) on top of the RBAC roles. The
+  prisma-config seed (`prisma/seed.ts`, used by the integration tests) stays RBAC-only. One
+  documented command migrates and seeds a working local database. See `docs/backend/DEV_DATABASE.md`.
+- **The single command** (run from the repo root, against the local Docker Postgres on host port
+  **5433**):
+
+  ```bash
+  DATABASE_URL="postgresql://tai:local_development_only@localhost:5433/tai_dev?schema=public" \
+    pnpm --filter @tms/database db:reset
+  ```
+
+  `db:reset` runs every migration then the seed. `db:migrate` (deploy only) and `db:seed` (seed
+  only) also exist. Point the API at the same `DATABASE_URL` and it serves this data.
+
+- **Important — use `tai_dev`, not `tai_manic`.** The pre-existing `tai_manic` database in the
+  same container carries a _stale, incompatible_ Prisma migration history (`20260711_*`) from an
+  earlier iteration and would fail `migrate deploy` on drift. The seed command creates and uses a
+  clean `tai_dev`; `tai_manic` is left untouched.
+
+- **Seed contents** (mirrors the storefront):
+  - All eight artwork slugs the storefront uses — `midnight-in-lagos`, `paper-tigers`,
+    `harmattan-bloom`, `lantern-keeper`, `the-getaway`, `rainy-season`, `market-day`, `okada-run`
+    — each PUBLISHED with one published version.
+  - Three garment templates: `classic-tee` (₦14,000), `heavyweight-hoodie` (₦28,000),
+    `canvas-tote` (₦9,000), with colours, sizes, variants, front/back placements, and scale
+    presets (`standard`/`medium`/`small`). Prices are integer kobo on the approved pair (ADR-015).
+  - Approved, priced compatibilities for every artwork on the tee + hoodie (tote for `market-day`
+    and `okada-run`), each with its placement allowlist.
+  - Inventory on every variant: most healthy (40), one **low-stock** example
+    (`heavyweight-hoodie` / Ash / XL = 3, threshold 5) and one **out-of-stock** example
+    (`classic-tee` / White / XL = 0) so you can exercise `lowStock` and the `OUT_OF_STOCK` line
+    `issue`.
+  - Two collections (`lagos-nights`, `seasons`), one live drop (`harmattan-2026`), one shoppable
+    story (`making-of-market-day`), one limited edition, and two promotion codes: **`STUDIO10`**
+    (10% off) and **`WELCOME`** (₦2,000 off, min subtotal ₦10,000).
+
+- **Verified end to end against a live API** (first time these endpoints have run against a real
+  server, not a stub): `GET /artworks` → 8 items; `GET /artworks/market-day/compatible-garments`
+  → 3 priced garments with placements; `POST /cart/items` (tote ×2) → `200` with server
+  `unitPrice` 900,000 kobo and `lineTotal` 1,800,000; `GET /cart` subtotal 1,800,000;
+  `POST /cart/promotion STUDIO10` → −180,000 (total 1,620,000); an unknown code →
+  `422 PROMOTION_INVALID`.
+
+- **Frontend action:** switch the affected domains to `DATA_SOURCE=api` and re-verify against real
+  data. The seed admin account (`studio@taimanic.dev`) owns the content but has **no usable
+  password** — it is a content owner, not a login. Customer registration via `/api/v1/auth/*`
+  works against the seeded DB, so sign-in flows can be exercised for real.
+
+## 2026-07-17 — TMS-FBR-011 + TMS-FBR-012: the artwork gallery has price and availability
+
+- Status: implemented on `codex/artwork-price-availability`; consume after its PR merges. Answers
+  the two blockers that pinned the gallery to mocks.
+- Compatibility: **additive.** `GET /api/v1/artworks` and `GET /api/v1/artworks/{slug}` gain two
+  fields; the list gains one query parameter. No field is removed or renamed.
+- **TMS-FBR-011 — `startingPrice: Money | null`.** The server-side minimum approved price across
+  every garment the artwork's published version is approved on (ADR-015, integer kobo). It is
+  `null` when no approved, priced pair exists yet — render "no price" / "coming soon", not ₦0. The
+  card no longer needs a per-garment `validate` call.
+- **TMS-FBR-012 — `availability` + filter.** Each artwork carries
+  `availability: 'AVAILABLE' | 'DROP_NOT_OPEN' | 'DROP_ENDED'`, derived from its drop windows only.
+  `GET /api/v1/artworks?availability=AVAILABLE` filters to that state, and the filter agrees with
+  the per-card field exactly. **`AVAILABLE` means "the catalogue permits this sale", not "in
+  stock"** — stock is still not public, so there is deliberately **no `sold_out` value**.
+- **Map your existing control:** the gallery's `available` → `availability=AVAILABLE`; `limited` →
+  the existing `limitedEdition=true` filter; **`sold_out` has no server equivalent yet** — drop or
+  disable that option until public stock exists (a later task). `EDITION_EXHAUSTED` exists in the
+  configuration-availability enum but an artwork card never emits it (it needs per-edition sold
+  counts); it is intentionally excluded from the artwork field and filter.
+- Both fields are present on the public list and detail reads. They are absent from admin artwork
+  reads (which are not purchasable views).
+
+## 2026-07-18 — TMS-FBR-020: cart lines and saved designs carry a display projection
+
+- Status: implemented on `codex/cart-display-projection`; consume after its PR merges.
+- Compatibility: **additive.** Every `CartLine` and every saved-design summary
+  (`DesignConfiguration`) gains a required `display` object; nothing is removed.
+- **`display` renders the line without a catalogue re-join.** Fields:
+  `{ artworkTitle, artworkSlug, garmentTitle, colourName, colourHex, sizeLabel, placementName,
+scaleName, thumbnailUrl }`. So `GET /cart` alone renders "Market Day on a Black Classic T-shirt,
+  size Large" — the ids stay on the line for actions, the labels come from `display`.
+- **This deletes `apps/storefront/lib/cart-view.ts`.** The interim join against `/artworks` +
+  `/garments` is no longer needed; the cart page no longer pulls the catalogue to render two lines,
+  and there is no more "Unknown" line. The saved-designs list is likewise self-rendering.
+- `thumbnailUrl` is `null` for now — media derivatives are TMS-B2-004/B3-003 and the artwork image
+  gap (TMS-FBR-001) is still open. When a READY thumbnail exists it will populate here with no shape
+  change; keep your image fallback until then.
+
+## 2026-07-18 — TMS-FBR-017 answers (slug/id asymmetry, placement geometry, side views)
+
+- **The slug/id asymmetry is intentional.** You **send** `scalePreset` as a **kebab-case slug** on
+  the add-to-cart / save-design input; you **read back** `scalePresetId` as the preset's **UUID**
+  on a cart line and saved design. They are the same preset in two representations, by design (a
+  slug is the stable, shareable handle; the id is the resolved row). **Do not round-trip the
+  returned `scalePresetId` as if it were the slug** — to re-add or re-open a configuration, send the
+  **slug** you got from `/artworks/{slug}/compatible-garments`. For display you no longer need
+  either: use `display.scaleName`.
+- **Placement geometry — your reading is correct.** `xPermille`/`yPermille` are the **top-left
+  corner** and `widthPermille`/`heightPermille` the **size** of the approved print box on a
+  1000×1000 canvas; the artwork is rendered into that box (scaled by the chosen preset) and centred.
+  `printWidthMm`/`printHeightMm` are the physical output size of that box. You never author these —
+  they are admin-approved (ADR-013).
+- **LEFT/RIGHT views are valid in the model but nothing approves them today.** The seed and current
+  catalogue only approve `FRONT`/`BACK` placements, so **dropping `LEFT`/`RIGHT` is safe now**. If
+  side prints ever become a product an admin would approve a side placement, and you would then need
+  a side preview — treat a `LEFT`/`RIGHT` approved placement as the signal to build one rather than
+  silently hiding a sellable option. We will not approve side placements until you can preview them.
+
+## 2026-07-18 — TMS-FBR-018 + TMS-FBR-019: drops and stories carry their storefront read-model fields
+
+- Status: implemented on `codex/drops-stories-readmodel`; consume after its PR merges. Answers the
+  two gaps that pinned the drops index and the stories index/cards to mocks.
+- Compatibility: **additive.** `GET /api/v1/drops`, `GET /api/v1/drops/{slug}`,
+  `GET /api/v1/stories`, and `GET /api/v1/stories/{slug}` gain fields; the create/update inputs gain
+  optional fields. No field is removed or renamed. A migration adds the columns and the
+  `SHOPPABLE` story-block value.
+- **TMS-FBR-018 — drops.** A drop now carries:
+  - `tagline: string | null` (≤ 240 chars) — the short line under the drop title.
+  - `earlyAccessAt: string | null` (ISO date-time) — when early access opens. The server enforces
+    `earlyAccessAt <= startsAt`; sending a later early-access time is `400 VALIDATION_FAILED`
+    ("Early access must not open after the public release.").
+  - `soldOut: boolean` — a **manual admin flag**, not derived stock. Made-to-order pieces do not
+    sell out on their own; this marks a deliberately closed run. Defaults to `false`.
+  - `pieceCount: number` — count of **published** artworks in the drop, added on **public reads
+    only** (not on admin reads). Use it directly rather than counting `artworks[]`.
+- **TMS-FBR-019 — stories.** A story now carries:
+  - `category: string | null` (≤ 80 chars) — the editorial category (e.g. "Process", "Lookbook").
+  - `readMinutes: number` — estimated reading time, derived server-side from block text at ~200
+    wpm, minimum 1. Public reads only.
+  - `shoppableCount: number` — count of `SHOPPABLE` blocks in the story. Public reads only.
+  - Story blocks gain the `SHOPPABLE` type (`type` is now `TEXT | IMAGE | QUOTE | EMBED |
+SHOPPABLE`). Its `content` is free-form object JSON; the seed uses
+    `{ target: { kind: 'artwork', slug }, label }` to link the finished piece back to the catalogue.
+- Both fields sets are present on the public list and detail reads. `readMinutes`/`shoppableCount`/
+  `pieceCount` are **derived on read** — do not send them on create/update.
+- **Frontend action:** switch the drops and stories domains to `DATA_SOURCE=api` and drop the mock
+  `readMinutes`/`shoppableCount`/`pieceCount`/`category`/`tagline` synthesis. The dev seed now
+  populates `harmattan-2026` with a tagline + early-access window and `making-of-market-day` with a
+  `Process` category and a `SHOPPABLE` block, so the real values render.

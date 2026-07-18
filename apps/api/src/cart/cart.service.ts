@@ -26,7 +26,21 @@ export interface CartOwner {
 const withLines = {
   lines: {
     orderBy: { createdAt: 'asc' },
-    include: { garmentVariant: { select: { templateId: true } } },
+    include: {
+      // Display labels resolved at read time so a cart line renders without a catalogue re-join
+      // (TMS-FBR-020). Every reference is a RESTRICT foreign key, so these always resolve.
+      artworkVersion: { select: { title: true, artwork: { select: { slug: true } } } },
+      garmentVariant: {
+        select: {
+          templateId: true,
+          template: { select: { title: true } },
+          colour: { select: { name: true, hex: true } },
+          size: { select: { label: true } },
+        },
+      },
+      placement: { select: { name: true } },
+      scalePreset: { select: { slug: true, name: true } },
+    },
   },
   promotion: true,
 } as const;
@@ -302,19 +316,26 @@ export class CartService {
       scalePresetId: line.scalePresetId,
       view: line.view,
       quantity: line.quantity,
+      display: {
+        artworkTitle: line.artworkVersion.title,
+        artworkSlug: line.artworkVersion.artwork.slug,
+        garmentTitle: line.garmentVariant.template.title,
+        colourName: line.garmentVariant.colour.name,
+        colourHex: line.garmentVariant.colour.hex,
+        sizeLabel: line.garmentVariant.size.label,
+        placementName: line.placement.name,
+        scaleName: line.scalePreset.name,
+        thumbnailUrl: null,
+      },
     };
 
-    const scalePreset = await this.database.client.garmentScalePreset.findUnique({
-      where: { id: line.scalePresetId },
-      select: { slug: true },
-    });
     let validation;
     try {
       validation = await this.garments.validateConfiguration({
         artworkVersionId: line.artworkVersionId,
         garmentVariantId: line.garmentVariantId,
         placementId: line.placementId,
-        scalePreset: scalePreset?.slug ?? '',
+        scalePreset: line.scalePreset.slug,
         view: line.view,
         quantity: line.quantity,
       });

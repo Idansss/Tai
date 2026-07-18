@@ -46,6 +46,15 @@ export class ArtworkCatalogueQueryDto extends CatalogueListQueryDto {
   @IsOptional()
   @IsIn(['newest'])
   sort = 'newest' as const;
+  /**
+   * Filter by catalogue-level availability (TMS-FBR-012). `AVAILABLE` = the catalogue permits the
+   * sale now; `DROP_NOT_OPEN` / `DROP_ENDED` = gated by a drop window. Stock is not public, so
+   * there is no sold-out filter here. Values match the per-card `availability` field exactly.
+   */
+  @ApiPropertyOptional({ enum: ['AVAILABLE', 'DROP_NOT_OPEN', 'DROP_ENDED'] })
+  @IsOptional()
+  @IsIn(['AVAILABLE', 'DROP_NOT_OPEN', 'DROP_ENDED'])
+  availability?: 'AVAILABLE' | 'DROP_NOT_OPEN' | 'DROP_ENDED';
 }
 export class CatalogueEntryDto {
   @ApiProperty({ maxLength: 160 })
@@ -83,6 +92,15 @@ export class CatalogueEntryUpdateDto {
   status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 }
 export class DropDto extends CatalogueEntryDto {
+  @ApiPropertyOptional({ maxLength: 240, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  tagline?: string | null;
+  @ApiPropertyOptional({ format: 'date-time', nullable: true })
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  earlyAccessAt?: string | null;
   @ApiPropertyOptional({ format: 'date-time', nullable: true })
   @IsOptional()
   @IsISO8601({ strict: true })
@@ -91,8 +109,18 @@ export class DropDto extends CatalogueEntryDto {
   @IsOptional()
   @IsISO8601({ strict: true })
   endsAt?: string | null;
+  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() soldOut?: boolean;
 }
 export class DropUpdateDto extends CatalogueEntryUpdateDto {
+  @ApiPropertyOptional({ maxLength: 240, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  tagline?: string | null;
+  @ApiPropertyOptional({ format: 'date-time', nullable: true })
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  earlyAccessAt?: string | null;
   @ApiPropertyOptional({ format: 'date-time', nullable: true })
   @IsOptional()
   @IsISO8601({ strict: true })
@@ -101,6 +129,7 @@ export class DropUpdateDto extends CatalogueEntryUpdateDto {
   @IsOptional()
   @IsISO8601({ strict: true })
   endsAt?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() soldOut?: boolean;
 }
 export class TagDto {
   @ApiProperty({ maxLength: 100 })
@@ -127,9 +156,9 @@ export class EditionDto {
   status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 }
 export class StoryBlockDto {
-  @ApiProperty({ enum: ['TEXT', 'IMAGE', 'QUOTE', 'EMBED'] })
-  @IsIn(['TEXT', 'IMAGE', 'QUOTE', 'EMBED'])
-  type!: 'TEXT' | 'IMAGE' | 'QUOTE' | 'EMBED';
+  @ApiProperty({ enum: ['TEXT', 'IMAGE', 'QUOTE', 'EMBED', 'SHOPPABLE'] })
+  @IsIn(['TEXT', 'IMAGE', 'QUOTE', 'EMBED', 'SHOPPABLE'])
+  type!: 'TEXT' | 'IMAGE' | 'QUOTE' | 'EMBED' | 'SHOPPABLE';
   @ApiProperty({ type: 'object', additionalProperties: true }) @IsObject() content!: Record<
     string,
     unknown
@@ -140,6 +169,11 @@ export class StoryDto {
   @ApiProperty() @IsString() @MinLength(1) @MaxLength(200) title!: string;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() @MaxLength(500) excerpt?:
     string | null;
+  @ApiPropertyOptional({ nullable: true, maxLength: 80 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  category?: string | null;
   @ApiPropertyOptional({ format: 'uuid', nullable: true }) @IsOptional() @IsUUID() artworkId?:
     string | null;
   @ApiPropertyOptional({ format: 'uuid', nullable: true }) @IsOptional() @IsUUID() collectionId?:

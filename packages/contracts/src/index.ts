@@ -311,6 +311,18 @@ export interface Artwork {
   slug: string;
   status: ArtworkStatus;
   publishedVersion: ArtworkVersion | null;
+  /**
+   * The lowest approved price across every garment this artwork's published version is approved
+   * on, resolved server-side (ADR-015). `null` when no approved, priced pair exists yet, i.e. the
+   * artwork is published but not purchasable. Answers TMS-FBR-011.
+   */
+  startingPrice?: Money | null;
+  /**
+   * Whether the catalogue permits selling this artwork right now, derived from its drop windows
+   * (never from stock — stock is not public). One of `AVAILABLE`, `DROP_NOT_OPEN`, `DROP_ENDED`.
+   * Answers TMS-FBR-012. `AVAILABLE` means "the catalogue permits this sale", not "in stock".
+   */
+  availability?: AvailabilityState;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
@@ -353,12 +365,24 @@ export const CatalogueEntryUpdateInputSchema = CatalogueEntryInputSchema.partial
 export type CatalogueEntryUpdateInput = z.infer<typeof CatalogueEntryUpdateInputSchema>;
 
 export const DropInputSchema = CatalogueEntryInputSchema.extend({
+  tagline: z.string().trim().max(240).nullable().optional(),
+  earlyAccessAt: z.iso.datetime().nullable().optional(),
   startsAt: z.iso.datetime().nullable().optional(),
   endsAt: z.iso.datetime().nullable().optional(),
-}).refine((value) => !value.endsAt || (!!value.startsAt && value.endsAt > value.startsAt), {
-  message: 'A drop end time must be after its start time.',
-  path: ['endsAt'],
-});
+  /** Manual sold-out flag; made-to-order pieces do not sell out on their own (TMS-FBR-018). */
+  soldOut: z.boolean().optional(),
+})
+  .refine((value) => !value.endsAt || (!!value.startsAt && value.endsAt > value.startsAt), {
+    message: 'A drop end time must be after its start time.',
+    path: ['endsAt'],
+  })
+  .refine(
+    (value) => !value.earlyAccessAt || !value.startsAt || value.earlyAccessAt <= value.startsAt,
+    {
+      message: 'Early access must not open after the public release.',
+      path: ['earlyAccessAt'],
+    },
+  );
 export type DropInput = z.infer<typeof DropInputSchema>;
 
 export const EditionInputSchema = z
@@ -375,7 +399,7 @@ export const EditionInputSchema = z
 export type EditionInput = z.infer<typeof EditionInputSchema>;
 
 export const StoryBlockInputSchema = z.object({
-  type: z.enum(['TEXT', 'IMAGE', 'QUOTE', 'EMBED']),
+  type: z.enum(['TEXT', 'IMAGE', 'QUOTE', 'EMBED', 'SHOPPABLE']),
   content: z.record(z.string(), z.unknown()),
 });
 export const StoryInputSchema = z
@@ -383,6 +407,7 @@ export const StoryInputSchema = z
     slug: ArtworkSlugSchema,
     title: z.string().trim().min(1).max(200),
     excerpt: z.string().trim().max(500).nullable().optional(),
+    category: z.string().trim().max(80).nullable().optional(),
     artworkId: z.string().uuid().nullable().optional(),
     collectionId: z.string().uuid().nullable().optional(),
     blocks: z.array(StoryBlockInputSchema).max(100).default([]),
@@ -424,7 +449,7 @@ export interface Edition {
 export interface StoryBlock {
   id: string;
   position: number;
-  type: 'TEXT' | 'IMAGE' | 'QUOTE' | 'EMBED';
+  type: 'TEXT' | 'IMAGE' | 'QUOTE' | 'EMBED' | 'SHOPPABLE';
   content: Record<string, unknown>;
 }
 
@@ -433,10 +458,16 @@ export interface Story {
   slug: string;
   title: string;
   excerpt: string | null;
+  /** Editorial category (TMS-FBR-019). Null when uncategorised. */
+  category: string | null;
   status: ArtworkStatus;
   artworkId: string | null;
   collectionId: string | null;
   blocks: StoryBlock[];
+  /** Estimated reading time in whole minutes, derived from block text (TMS-FBR-019). */
+  readMinutes: number;
+  /** Count of SHOPPABLE blocks in the story (TMS-FBR-019). */
+  shoppableCount: number;
   publishedAt: string | null;
   archivedAt: string | null;
 }
@@ -743,6 +774,24 @@ export const UpdateDesignInputSchema = z
   });
 export type UpdateDesignInput = z.infer<typeof UpdateDesignInputSchema>;
 
+/**
+ * Human-readable labels for an approved configuration, resolved server-side so a cart line or a
+ * saved design can be rendered ("Market Day on a Black Classic T-shirt, size M") without the
+ * client re-joining the catalogue. Answers TMS-FBR-020. IDs remain on the parent for actions.
+ */
+export interface ConfigurationDisplay {
+  artworkTitle: string;
+  artworkSlug: string;
+  garmentTitle: string;
+  colourName: string;
+  colourHex: string;
+  sizeLabel: string;
+  placementName: string;
+  scaleName: string;
+  /** A READY thumbnail for the artwork version, or null until media derivatives exist. */
+  thumbnailUrl: string | null;
+}
+
 export interface DesignConfigurationSummary {
   id: string;
   artworkId: string;
@@ -758,6 +807,8 @@ export interface DesignConfigurationSummary {
   visibility: DesignVisibility;
   /** Present only while the design is UNLISTED and the owner is reading it. */
   shareToken: string | null;
+  /** Labels for rendering the design without a catalogue re-join (TMS-FBR-020). */
+  display: ConfigurationDisplay;
   createdAt: string;
   updatedAt: string;
 }
@@ -817,6 +868,8 @@ export interface CartLine {
   availableQuantity: number;
   /** Null when the line is currently purchasable. */
   issue: CartLineIssue | null;
+  /** Labels for rendering the line without a catalogue re-join (TMS-FBR-020). */
+  display: ConfigurationDisplay;
 }
 
 export interface AppliedPromotion {
@@ -835,6 +888,177 @@ export interface Cart {
   total: Money;
   /** True when any line has an issue; checkout must refuse until it is cleared. */
   hasIssues: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Checkout and orders (TMS-B4-003)
+// ---------------------------------------------------------------------------
+
+/**
+ * The full order lifecycle. TMS-B4-003 drives the checkout-and-payment portion
+ * (AWAITING_PAYMENT, PAYMENT_PROCESSING, PAID, PAYMENT_FAILED, PAYMENT_CANCELLED, CANCELLED);
+ * the production, dispatch, and returns transitions are exercised by later operations tasks
+ * against the same audited state machine.
+ */
+export const OrderStatusValues = OrderStatusSchema.options;
+
+/** Server-authoritative delivery methods. A shipping provider (TMS-B5-003) replaces this. */
+export const DeliveryMethodIdSchema = z.enum(['STANDARD', 'EXPRESS']);
+export type DeliveryMethodId = z.infer<typeof DeliveryMethodIdSchema>;
+
+/** A Nigerian delivery address. The state decides the delivery zone and fee. */
+export const CheckoutAddressInputSchema = z.object({
+  state: z.string().trim().min(1).max(100),
+  city: z.string().trim().min(1).max(120),
+  line1: z.string().trim().min(1).max(200),
+  line2: z.string().trim().min(1).max(200).nullable().optional(),
+  postcode: z.string().trim().min(1).max(20).nullable().optional(),
+});
+export type CheckoutAddressInput = z.infer<typeof CheckoutAddressInputSchema>;
+
+export const CheckoutContactInputSchema = z.object({
+  email: z.string().trim().email().max(320),
+  name: z.string().trim().min(1).max(200),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9][0-9 ()-]{6,19}$/)
+    .nullable()
+    .optional(),
+});
+export type CheckoutContactInput = z.infer<typeof CheckoutContactInputSchema>;
+
+/**
+ * A quote is a display convenience: it recomputes the authoritative delivery and tax for the
+ * current cart, an address, and a method. The promotion comes from the cart itself, applied via
+ * the cart endpoints, so there is one source of truth for it. Placing the order recomputes
+ * everything again, so the quote is never trusted as authoritative on its own.
+ */
+export const CheckoutQuoteInputSchema = z.object({
+  address: CheckoutAddressInputSchema,
+  deliveryMethodId: DeliveryMethodIdSchema,
+});
+export type CheckoutQuoteInput = z.infer<typeof CheckoutQuoteInputSchema>;
+
+export const PlaceOrderInputSchema = CheckoutQuoteInputSchema.extend({
+  contact: CheckoutContactInputSchema,
+});
+export type PlaceOrderInput = z.infer<typeof PlaceOrderInputSchema>;
+
+export interface DeliveryMethod {
+  id: DeliveryMethodId;
+  label: string;
+  description: string;
+  /** Business-day estimate range. */
+  etaDays: { min: number; max: number };
+}
+
+export interface DeliveryOption extends DeliveryMethod {
+  price: Money;
+}
+
+/**
+ * The authoritative money for a checkout. Every amount is integer minor units and totals are
+ * integer arithmetic. Tax is Nigerian VAT on the discounted goods subtotal; delivery is added
+ * after tax. The total is subtotal minus discount plus delivery plus tax.
+ */
+export interface CheckoutQuote {
+  currency: string;
+  subtotal: Money;
+  discount: Money;
+  delivery: Money;
+  tax: Money;
+  total: Money;
+  deliveryMethod: DeliveryMethod;
+  promotion: AppliedPromotion | null;
+}
+
+/**
+ * An immutable snapshot of one purchased configuration. The price and every descriptive field
+ * are COPIED at placement, never referenced live, so a later catalogue or price change can never
+ * rewrite a historical order (ADR-015, ADR-018).
+ */
+export interface OrderItem {
+  id: string;
+  artworkVersionId: string;
+  garmentVariantId: string;
+  placementId: string;
+  scalePresetId: string;
+  view: GarmentView;
+  configurationHash: string;
+  quantity: number;
+  /** Copied at placement in integer minor units. */
+  unitPrice: Money;
+  lineTotal: Money;
+  /** Descriptive snapshot copied at placement so catalogue edits never rewrite the order. */
+  artworkTitle: string;
+  garmentTitle: string;
+  colourName: string;
+  sizeLabel: string;
+  sku: string;
+}
+
+export interface OrderContact {
+  email: string;
+  name: string;
+  phone: string | null;
+}
+
+export interface OrderAddress {
+  state: string;
+  city: string;
+  line1: string;
+  line2: string | null;
+  postcode: string | null;
+}
+
+export interface OrderTimelineEntry {
+  status: OrderStatus;
+  at: string;
+  reason: string | null;
+}
+
+/**
+ * The payment handoff for an order. TMS-B4-003 always reports PENDING with no provider; the
+ * PaymentProvider (TMS-B5-001) populates the provider and reference.
+ */
+export interface OrderPaymentHandoff {
+  status: PaymentStatus;
+  provider: string | null;
+  reference: string | null;
+  /** A provider-hosted URL the browser is sent to, when the provider needs one. */
+  redirectUrl: string | null;
+}
+
+/** A row in the customer's order history. */
+export interface OrderSummary {
+  reference: string;
+  status: OrderStatus;
+  placedAt: string;
+  itemCount: number;
+  total: Money;
+  currency: string;
+}
+
+export interface Order {
+  reference: string;
+  status: OrderStatus;
+  placedAt: string;
+  updatedAt: string;
+  contact: OrderContact;
+  address: OrderAddress;
+  deliveryMethod: DeliveryMethod;
+  items: OrderItem[];
+  currency: string;
+  subtotal: Money;
+  discount: Money;
+  delivery: Money;
+  tax: Money;
+  total: Money;
+  promotion: AppliedPromotion | null;
+  payment: OrderPaymentHandoff | null;
+  /** Append-only status history, oldest first. */
+  timeline: OrderTimelineEntry[];
 }
 
 /**

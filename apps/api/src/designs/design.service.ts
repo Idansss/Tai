@@ -10,10 +10,24 @@ import { GarmentService } from '../garments/garment.service.js';
 import { ApiProblemException } from '../platform/api-problem.exception.js';
 import type { SaveDesignDto, UpdateDesignDto } from './design.dto.js';
 
-/** Every read resolves the artwork root and garment template through the stored exact IDs. */
+/**
+ * Every read resolves the artwork root and garment template through the stored exact IDs, plus the
+ * display labels so a saved design renders without a catalogue re-join (TMS-FBR-020).
+ */
 const withRelations = {
-  artworkVersion: { select: { artworkId: true } },
-  garmentVariant: { select: { templateId: true } },
+  artworkVersion: {
+    select: { artworkId: true, title: true, artwork: { select: { slug: true } } },
+  },
+  garmentVariant: {
+    select: {
+      templateId: true,
+      template: { select: { title: true } },
+      colour: { select: { name: true, hex: true } },
+      size: { select: { label: true } },
+    },
+  },
+  placement: { select: { name: true } },
+  scalePreset: { select: { name: true } },
 } as const;
 
 type DesignWithRelations = Prisma.DesignConfigurationGetPayload<{
@@ -216,6 +230,17 @@ export class DesignService {
       name: design.name,
       visibility: design.visibility,
       shareToken: includeShareToken ? design.shareToken : null,
+      display: {
+        artworkTitle: design.artworkVersion.title,
+        artworkSlug: design.artworkVersion.artwork.slug,
+        garmentTitle: design.garmentVariant.template.title,
+        colourName: design.garmentVariant.colour.name,
+        colourHex: design.garmentVariant.colour.hex,
+        sizeLabel: design.garmentVariant.size.label,
+        placementName: design.placement.name,
+        scaleName: design.scalePreset.name,
+        thumbnailUrl: null,
+      },
       createdAt: design.createdAt.toISOString(),
       updatedAt: design.updatedAt.toISOString(),
     };
