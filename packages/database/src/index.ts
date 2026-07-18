@@ -22,6 +22,7 @@ export {
   MediaJobStatus,
   MediaProcessingStatus,
   OrderStatus,
+  PaymentStatus,
   PromotionKind,
   PromotionStatus,
   Prisma,

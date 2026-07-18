@@ -290,6 +290,10 @@ describe('shared contracts', () => {
       'placeOrder',
       'listCustomerOrders',
       'getCustomerOrder',
+      'initiateOrderPayment',
+      'getOrderPayment',
+      'verifyOrderPayment',
+      'receivePaymentWebhook',
     ]) {
       expect(openApi).toContain(`operationId: ${operationId}`);
     }

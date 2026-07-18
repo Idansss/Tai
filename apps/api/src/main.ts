@@ -13,7 +13,8 @@ import { ApiExceptionFilter } from './platform/api-exception.filter.js';
 import { resolveCorrelationId } from './platform/correlation-id.js';
 
 const environment = loadEnvironment();
-const app = await NestFactory.create(AppModule, { bufferLogs: true });
+// rawBody is captured so payment webhook signatures can be verified against the exact bytes.
+const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
 
 app.useLogger(app.get(Logger));
 app.use(helmet());

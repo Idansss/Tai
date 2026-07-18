@@ -21,6 +21,14 @@ const EnvironmentSchema = z
     S3_ACCESS_KEY: z.string().min(1).default('minio'),
     S3_SECRET_KEY: z.string().min(8).default('local_development_only'),
     MEDIA_MALWARE_SCAN_URL: z.string().url().optional(),
+    PAYMENT_PROVIDER: z.enum(['mock', 'flutterwave']).default('mock'),
+    MOCK_PAYMENT_WEBHOOK_SECRET: z
+      .string()
+      .min(16)
+      .default('local-development-mock-webhook-secret'),
+    FLUTTERWAVE_BASE_URL: z.string().url().default('https://api.flutterwave.com/v3'),
+    FLUTTERWAVE_SECRET_KEY: z.string().min(1).optional(),
+    FLUTTERWAVE_WEBHOOK_HASH: z.string().min(1).optional(),
     EMAIL_FROM: z.string().email().default('no-reply@taimanic.local'),
     AUTH_TOKEN_PEPPER: z.string().min(32).default(localAuthPepper),
     AUTH_COOKIE_NAME: z
@@ -70,6 +78,31 @@ const EnvironmentSchema = z
         path: ['MEDIA_MALWARE_SCAN_URL'],
         message: 'MEDIA_MALWARE_SCAN_URL is required in production.',
       });
+    }
+    // The mock payment provider settles nothing; it must never be the production gateway.
+    if (environment.NODE_ENV === 'production' && environment.PAYMENT_PROVIDER === 'mock') {
+      context.addIssue({
+        code: 'custom',
+        path: ['PAYMENT_PROVIDER'],
+        message: 'PAYMENT_PROVIDER must be a real gateway in production, not the mock.',
+      });
+    }
+    // Flutterwave cannot verify a payment or a webhook without its credentials.
+    if (environment.PAYMENT_PROVIDER === 'flutterwave') {
+      if (!environment.FLUTTERWAVE_SECRET_KEY) {
+        context.addIssue({
+          code: 'custom',
+          path: ['FLUTTERWAVE_SECRET_KEY'],
+          message: 'FLUTTERWAVE_SECRET_KEY is required when PAYMENT_PROVIDER is flutterwave.',
+        });
+      }
+      if (!environment.FLUTTERWAVE_WEBHOOK_HASH) {
+        context.addIssue({
+          code: 'custom',
+          path: ['FLUTTERWAVE_WEBHOOK_HASH'],
+          message: 'FLUTTERWAVE_WEBHOOK_HASH is required when PAYMENT_PROVIDER is flutterwave.',
+        });
+      }
     }
   });
 

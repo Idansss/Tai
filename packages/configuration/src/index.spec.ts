@@ -18,6 +18,9 @@ describe('loadEnvironment', () => {
       S3_BUCKET: 'tai-manic-local',
       S3_ACCESS_KEY: 'minio',
       S3_SECRET_KEY: 'local_development_only',
+      PAYMENT_PROVIDER: 'mock',
+      MOCK_PAYMENT_WEBHOOK_SECRET: 'local-development-mock-webhook-secret',
+      FLUTTERWAVE_BASE_URL: 'https://api.flutterwave.com/v3',
       EMAIL_FROM: 'no-reply@taimanic.local',
       AUTH_TOKEN_PEPPER: 'local-development-auth-pepper-change-me',
       AUTH_COOKIE_NAME: 'tms_session',
@@ -60,5 +63,29 @@ describe('loadEnvironment', () => {
         ADMIN_MFA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
       }),
     ).toThrow('MEDIA_MALWARE_SCAN_URL is required in production.');
+  });
+
+  it('refuses the mock payment provider in production', () => {
+    expect(() =>
+      loadEnvironment({
+        NODE_ENV: 'production',
+        AUTH_TOKEN_PEPPER: 'a-production-authentication-pepper',
+        ADMIN_MFA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        MEDIA_MALWARE_SCAN_URL: 'https://scanner.example.com',
+      }),
+    ).toThrow('PAYMENT_PROVIDER must be a real gateway in production, not the mock.');
+  });
+
+  it('requires Flutterwave credentials when it is the selected provider', () => {
+    expect(() => loadEnvironment({ PAYMENT_PROVIDER: 'flutterwave' })).toThrow(
+      'FLUTTERWAVE_SECRET_KEY is required when PAYMENT_PROVIDER is flutterwave.',
+    );
+    expect(
+      loadEnvironment({
+        PAYMENT_PROVIDER: 'flutterwave',
+        FLUTTERWAVE_SECRET_KEY: 'FLWSECK_TEST-xxxx',
+        FLUTTERWAVE_WEBHOOK_HASH: 'a-webhook-hash',
+      }).PAYMENT_PROVIDER,
+    ).toBe('flutterwave');
   });
 });

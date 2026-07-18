@@ -14,6 +14,7 @@ import { GarmentModule } from './garments/garment.module.js';
 import { InventoryModule } from './inventory/inventory.module.js';
 import { MediaModule } from './media/media.module.js';
 import { OrderModule } from './orders/order.module.js';
+import { PaymentModule } from './payments/payment.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { OrderModule } from './orders/order.module.js';
     InventoryModule,
     MediaModule,
     OrderModule,
+    PaymentModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: loadEnvironment().LOG_LEVEL,
