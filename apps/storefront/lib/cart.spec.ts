@@ -39,6 +39,15 @@ describe('lineId', () => {
       lineId({ ...base, placement: 'left-chest' }),
     );
   });
+
+  it('forks the line for a different note, and merges an identical one', () => {
+    expect(lineId({ ...base, note: 'For mum' })).not.toBe(lineId(base));
+    expect(lineId({ ...base, note: 'For mum' })).toBe(lineId({ ...base, note: ' for mum ' }));
+  });
+
+  it('keeps a plain line id when the note is empty', () => {
+    expect(lineId({ ...base, note: '   ' })).toBe(lineId(base));
+  });
 });
 
 describe('addItem', () => {

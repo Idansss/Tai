@@ -3,6 +3,8 @@
 import { Price, cn } from '@tms/ui';
 import { Minus, Plus, Trash2, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
+import { GarmentMockup } from '@/components/garment/garment-mockup';
+import { artworkImage } from '@/lib/artwork-images';
 import { MAX_LINE_QUANTITY } from '@/lib/cart';
 import { cartIssueMessage, isRecoverableByQuantity } from '@/lib/cart-api';
 import type { CartLineView } from '@/lib/cart-view';
@@ -11,6 +13,41 @@ import { useCart } from './cart-provider';
 /** Human summary of a line's configuration (colour · size · placement · scale). */
 function lineDetail(line: CartLineView): string {
   return [line.colour, `Size ${line.size}`, line.placement, line.scale].filter(Boolean).join(' · ');
+}
+
+/**
+ * The exact piece the customer built, as a small mockup — same renderer, same registry and the same
+ * free transform as the Design Studio preview, so the cart shows precisely what they designed rather
+ * than a stand-in swatch. Falls back to the plain garment silhouette when a line carries no artwork.
+ */
+function LineThumbnail({ line }: { line: CartLineView }) {
+  const view = line.printView ?? 'front';
+  const print = line.artworkSlug ? artworkImage(line.artworkSlug) : null;
+  const t = line.transform;
+  return (
+    <GarmentMockup
+      garment={line.garment}
+      colour={line.colour}
+      view={view}
+      artwork={
+        print
+          ? {
+              src: print,
+              area: view,
+              scale: (line.printScale ?? 0.8) * (t?.scale ?? 1),
+              offset: t ? { xPct: t.dx, yPct: t.dy } : undefined,
+              rotation: t?.rotation ?? 0,
+              crop: t
+                ? { top: t.cropTop, right: t.cropRight, bottom: t.cropBottom, left: t.cropLeft }
+                : undefined,
+              clipToBody: true,
+              alt: '',
+            }
+          : null
+      }
+      sizes="80px"
+    />
+  );
 }
 
 function QuantityStepper({ line }: { line: CartLineView }) {
@@ -54,22 +91,19 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
         const unavailable = line.issue !== null;
         return (
           <li key={line.id} className={cn('flex gap-4', compact ? 'py-4' : 'py-6')}>
-            {/* Swatch stand-in for the configured garment. */}
+            {/* The exact configured piece, drawn with the same mockup as the Studio. */}
             <Link
               href={href}
               aria-hidden
               tabIndex={-1}
               className={cn(
-                'shrink-0 overflow-hidden rounded-md border border-line',
+                'grid shrink-0 place-items-center overflow-hidden rounded-md border border-line bg-canvas',
                 compact ? 'size-16' : 'size-20',
                 // Dim it, but keep the line: a line that vanishes is worse than one that explains.
                 unavailable && 'opacity-50',
               )}
             >
-              <span
-                className="block size-full"
-                style={{ backgroundColor: 'var(--color-surface-secondary)' }}
-              />
+              <LineThumbnail line={line} />
             </Link>
 
             <div className="min-w-0 flex-1">
@@ -85,7 +119,13 @@ export function CartLineList({ compact = false }: { compact?: boolean }) {
                     {line.artworkTitle}
                   </Link>
                   <p className="text-xs text-muted">{line.garment}</p>
-                  <p className="mt-1 text-xs text-ink-2">{lineDetail(line)}</p>
+                  <p className="mt-1 text-xs text-ink-2">
+                    {lineDetail(line)}
+                    {line.transform ? ' · Custom placement' : ''}
+                  </p>
+                  {line.note ? (
+                    <p className="mt-1 text-xs italic text-muted">“{line.note}”</p>
+                  ) : null}
                 </div>
                 {/* An unavailable line contributes nothing to the subtotal, so it shows no total. */}
                 {!unavailable && line.lineTotalMinor !== null ? (

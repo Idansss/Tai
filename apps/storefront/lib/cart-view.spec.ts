@@ -1,7 +1,9 @@
 import type { Artwork, Cart, CartLine, GarmentTemplate } from '@tms/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { buildCartLabelIndex, toCartLineView, toCartView } from './cart-view';
+import type { CartItem } from './cart';
+import { buildCartLabelIndex, toCartLineView, toCartView, toLocalCartView } from './cart-view';
+import { IDENTITY_TRANSFORM } from './studio';
 
 const artwork = {
   id: 'art-1',
@@ -146,5 +148,35 @@ describe('toCartView', () => {
 
   it('reports no promotion as null rather than a zero discount', () => {
     expect(toCartView({ ...cart, promotion: null }, index).promotion).toBeNull();
+  });
+});
+
+describe('toLocalCartView', () => {
+  const studioItem: CartItem = {
+    id: 'local-1',
+    productSlug: 'midnight-in-lagos-studio',
+    artworkTitle: 'Midnight in Lagos',
+    garment: 'Classic T-shirt',
+    colour: 'Black',
+    size: 'M',
+    priceMinor: 1400000,
+    currency: 'NGN',
+    quantity: 1,
+    artworkSlug: 'midnight-in-lagos',
+    printView: 'back',
+    printScale: 0.44,
+    transform: { ...IDENTITY_TRANSFORM, dx: 8, rotation: 10 },
+    note: 'Please centre it a touch higher',
+  };
+
+  it('carries the design + note through so the cart can redraw the exact piece', () => {
+    const view = toLocalCartView([studioItem], null);
+    expect(view.lines[0]).toMatchObject({
+      artworkSlug: 'midnight-in-lagos',
+      printView: 'back',
+      printScale: 0.44,
+      transform: { dx: 8, rotation: 10 },
+      note: 'Please centre it a touch higher',
+    });
   });
 });

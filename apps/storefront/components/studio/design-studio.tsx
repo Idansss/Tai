@@ -1,13 +1,14 @@
 'use client';
 
 import { Alert, cn, Eyebrow, Heading, Price, Text } from '@tms/ui';
-import { Check, Copy, Heart, RotateCcw, ShoppingBag } from 'lucide-react';
+import { Check, Copy, Crop, Heart, Move, RotateCcw, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
 import { GarmentMockup } from '@/components/garment/garment-mockup';
+import { type PlacementBox, PlacementCanvas } from '@/components/studio/placement-canvas';
 import { designSignature, persistSavedDesign } from '@/lib/account';
 import { artworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
@@ -19,7 +20,10 @@ import {
   findGarment,
   findPlacement,
   findVariantId,
+  IDENTITY_TRANSFORM,
+  isIdentityTransform,
   isStudioConfigComplete,
+  type PrintTransform,
   resolveStudioConfig,
   type StudioConfig,
   type StudioView,
@@ -101,6 +105,10 @@ export function DesignStudio({
   const [status, setStatus] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Whether the free-placement box is in crop mode (edge handles) vs move/resize/rotate.
+  const [cropMode, setCropMode] = useState(false);
+  // An optional customer note for this piece (personalisation / gift message).
+  const [note, setNote] = useState('');
   // The artwork whose options are being fetched, so the picker can show progress and ignore a
   // slow response that a newer click has superseded.
   const [loadingArtwork, setLoadingArtwork] = useState<string | null>(null);
@@ -120,10 +128,29 @@ export function DesignStudio({
       setStatus(null);
       setAdded(false);
       setSaved(false);
-      setConfig((c) => resolveStudioConfig({ ...c, ...patch }, options));
+      // Choosing a different starting point (garment/placement/scale) is a fresh canvas, so the
+      // free adjustment resets to identity — presets are starting points, not modifiers of a drag.
+      const resetsTransform =
+        'garment' in patch || 'placement' in patch || 'scale' in patch || 'artwork' in patch;
+      setConfig((c) =>
+        resolveStudioConfig(
+          { ...c, ...patch, ...(resetsTransform ? { transform: IDENTITY_TRANSFORM } : null) },
+          options,
+        ),
+      );
     },
     [options],
   );
+
+  // Live edits from the interactive canvas — a pure geometry change, so it skips the reset above.
+  const updateTransform = useCallback((transform: PrintTransform) => {
+    setCopied(false);
+    setAdded(false);
+    setSaved(false);
+    setConfig((c) => ({ ...c, transform }));
+  }, []);
+
+  const resetPlacement = useCallback(() => updateTransform(IDENTITY_TRANSFORM), [updateTransform]);
 
   // Clearing the artwork cascades: with no artwork there is no garment, colour, size, placement or
   // scale to keep, so resetting these three is enough for resolveStudioConfig to empty the rest.
@@ -156,6 +183,27 @@ export function DesignStudio({
     const zone = GARMENTS[garmentStyle].print[config.view];
     return (scale.widthPct / 100) * (GARMENT_VIEWBOX.w / zone.maxW);
   }, [scale, garmentStyle, config.view]);
+
+  const transform = config.transform;
+  // The width the mockup prints at: the approved preset, multiplied by the customer's free resize.
+  const artworkScale = mockupScale * transform.scale;
+  // The interactive box, in the garment's viewBox units — the print zone shifted by the free
+  // offset and sized by the free scale. Shared verbatim with the mockup so overlay and print agree.
+  const placementBox = useMemo<PlacementBox>(() => {
+    const zone = GARMENTS[garmentStyle].print[config.view];
+    return {
+      centerX: zone.cx + (transform.dx / 100) * GARMENT_VIEWBOX.w,
+      centerY: zone.cy + (transform.dy / 100) * GARMENT_VIEWBOX.h,
+      width: zone.maxW * artworkScale,
+      height: zone.maxH * artworkScale,
+      viewBoxW: GARMENT_VIEWBOX.w,
+      viewBoxH: GARMENT_VIEWBOX.h,
+    };
+  }, [garmentStyle, config.view, transform.dx, transform.dy, artworkScale]);
+
+  // The interactive layer is live only when a print is actually shown on the side being viewed.
+  const canEdit = Boolean(artworkPrint && placement && scale && artworkOnThisView);
+  const customised = !isIdentityTransform(transform);
   // Every section gates on the artwork (`disabled={!artwork}`), and everything else is resolved
   // from it, so the artwork is what "something to reset" means — and what keeps the button's
   // enabled state in step with the visible selection.
@@ -257,6 +305,14 @@ export function DesignStudio({
         scalePresetId: scale.slug,
         view: config.view === 'back' ? 'BACK' : 'FRONT',
       },
+      // The free adjustment, when the customer moved/resized/rotated/cropped. Undefined for an
+      // untouched approved placement, so those lines keep their plain canonical identity.
+      ...(customised ? { transform } : null),
+      // Enough for the cart to redraw the exact piece as a thumbnail.
+      artworkSlug: artwork.slug,
+      printView: placement.area,
+      printScale: mockupScale,
+      ...(note.trim() ? { note: note.trim() } : null),
     });
     setAdded(true);
     setStatus(
@@ -304,66 +360,133 @@ export function DesignStudio({
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* Preview — the shared GarmentMockup silhouette (same as product pages), not a flat box. */}
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <div
-            className="relative w-full overflow-hidden rounded-[var(--radius-lg)] border border-line bg-canvas"
-            role="img"
-            aria-label={
-              artwork
-                ? `${artwork.title} on ${config.colour ?? 'garment'} ${garment?.title ?? 'tee'}, ${config.view} view`
-                : 'Design preview — choose an artwork to begin'
-            }
-          >
-            <GarmentMockup
-              style={garmentStyle}
-              colour={config.colour ?? colour?.hex ?? 'Bone'}
-              view={config.view}
-              artwork={
-                artworkPrint && placement && scale
-                  ? {
-                      src: artworkPrint,
-                      area: placement.area,
-                      scale: mockupScale,
-                      alt: '',
-                    }
-                  : null
+          {/* Outer card carries the padding + frame; the inner box is the bare coordinate space the
+              mockup and the interactive overlay share, so their geometry lines up exactly. */}
+          <div className="rounded-[var(--radius-lg)] border border-line bg-canvas p-4 sm:p-6">
+            <div
+              className="relative w-full overflow-hidden"
+              role="img"
+              aria-label={
+                artwork
+                  ? `${artwork.title} on ${config.colour ?? 'garment'} ${garment?.title ?? 'tee'}, ${config.view} view`
+                  : 'Design preview — choose an artwork to begin'
               }
-              priority
-              className="p-4 sm:p-6"
-              sizes="(min-width: 1024px) 40vw, 90vw"
-            />
-            <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
-              {config.view}
-            </span>
-            {artwork && placement && !artworkOnThisView ? (
-              <span className="absolute inset-x-0 bottom-3 text-center text-xs text-ink-2">
-                Artwork is on the {placement.area}
+            >
+              <GarmentMockup
+                style={garmentStyle}
+                colour={config.colour ?? colour?.hex ?? 'Bone'}
+                view={config.view}
+                artwork={
+                  artworkPrint && placement && scale
+                    ? {
+                        src: artworkPrint,
+                        area: placement.area,
+                        scale: artworkScale,
+                        offset: { xPct: transform.dx, yPct: transform.dy },
+                        rotation: transform.rotation,
+                        crop: {
+                          top: transform.cropTop,
+                          right: transform.cropRight,
+                          bottom: transform.cropBottom,
+                          left: transform.cropLeft,
+                        },
+                        clipToBody: true,
+                        alt: '',
+                      }
+                    : null
+                }
+                priority
+                sizes="(min-width: 1024px) 40vw, 90vw"
+              />
+              {canEdit ? (
+                <PlacementCanvas
+                  box={placementBox}
+                  transform={transform}
+                  onChange={updateTransform}
+                  cropMode={cropMode}
+                />
+              ) : null}
+              <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
+                {config.view}
               </span>
-            ) : null}
+              {artwork && placement && !artworkOnThisView ? (
+                <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-ink-2">
+                  Artwork is on the {placement.area}
+                </span>
+              ) : null}
+            </div>
           </div>
 
-          {/* View toggle */}
-          <div
-            className="mt-3 inline-flex rounded-md border border-line p-1"
-            role="group"
-            aria-label="Garment view"
-          >
-            {(['front', 'back'] as StudioView[]).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => update({ view: v })}
-                aria-pressed={config.view === v}
-                className={cn(
-                  'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                  config.view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
-                )}
-              >
-                {v}
-              </button>
-            ))}
+          {/* Free-placement toolbar + garment view toggle. */}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div
+              className="inline-flex rounded-md border border-line p-1"
+              role="group"
+              aria-label="Garment view"
+            >
+              {(['front', 'back'] as StudioView[]).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => update({ view: v })}
+                  aria-pressed={config.view === v}
+                  className={cn(
+                    'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                    config.view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
+                  )}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+
+            {canEdit ? (
+              <>
+                <div
+                  className="inline-flex rounded-md border border-line p-1"
+                  role="group"
+                  aria-label="Placement tool"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setCropMode(false)}
+                    aria-pressed={!cropMode}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                      !cropMode ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
+                    )}
+                  >
+                    <Move className="size-4" aria-hidden /> Move
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCropMode(true)}
+                    aria-pressed={cropMode}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                      cropMode ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
+                    )}
+                  >
+                    <Crop className="size-4" aria-hidden /> Crop
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={resetPlacement}
+                  disabled={!customised}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm text-muted outline-none transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <RotateCcw className="size-4" aria-hidden /> Reset placement
+                </button>
+              </>
+            ) : null}
           </div>
           <Text size="sm" tone="muted" className="mt-2">
-            Live garment preview — colour, placement and scale update as you build.
+            {canEdit
+              ? cropMode
+                ? 'Crop: drag the edge handles inward to trim the artwork. Switch to Move to reposition.'
+                : 'Drag the artwork to move it, corner handles to resize, the top handle to rotate. Arrow keys nudge.'
+              : 'Live garment preview — colour, placement and scale update as you build.'}
           </Text>
         </div>
 
@@ -578,6 +701,38 @@ export function DesignStudio({
                   </div>
                 ))}
               </dl>
+            ) : null}
+
+            {artwork && customised ? (
+              <Text size="sm" tone="muted" className="mt-2">
+                Custom placement — you’ve adjusted the artwork from the{' '}
+                {scale?.label?.toLowerCase()} {placement?.label?.toLowerCase()} start.
+              </Text>
+            ) : null}
+
+            {artwork ? (
+              <div className="mt-5">
+                <label
+                  htmlFor="studio-note"
+                  className="flex items-center justify-between text-xs font-medium uppercase tracking-[0.08em] text-muted"
+                >
+                  <span>Add a note (optional)</span>
+                  <span className="tabular-nums text-muted">{note.length}/200</span>
+                </label>
+                <textarea
+                  id="studio-note"
+                  value={note}
+                  onChange={(e) => {
+                    setNote(e.target.value.slice(0, 200));
+                    setAdded(false);
+                    setSaved(false);
+                  }}
+                  rows={2}
+                  maxLength={200}
+                  placeholder="A gift message, or a note about how you’d like this printed."
+                  className="mt-2 w-full resize-y rounded-md border border-line-2 bg-canvas px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+                />
+              </div>
             ) : null}
 
             <div className="mt-5 flex flex-wrap gap-3">

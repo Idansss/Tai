@@ -18,6 +18,7 @@ import type { Artwork, Cart, CartLine, GarmentTemplate } from '@tms/contracts';
 
 import type { CartItem, Promotion } from './cart';
 import { discountMinor, estimatedTotalMinor, subtotalMinor } from './cart';
+import type { PrintTransform } from './studio';
 
 export interface CartLineView {
   /** The server's line id — what PATCH/DELETE address. */
@@ -31,6 +32,15 @@ export interface CartLineView {
   scale: string;
   view: string;
   quantity: number;
+  /**
+   * The bits needed to redraw the exact piece as a thumbnail: which side the print is on, its base
+   * width as a fraction of the print zone, the free transform, and a customer note. Absent on lines
+   * with no design (or a server cart that doesn't carry geometry yet), which fall back gracefully.
+   */
+  printView?: 'front' | 'back';
+  printScale?: number;
+  transform?: PrintTransform;
+  note?: string;
   /** Server-resolved. Null when the server could not price the line. */
   unitPriceMinor: number | null;
   lineTotalMinor: number | null;
@@ -108,6 +118,8 @@ export function toCartLineView(line: CartLine, index: CartLabelIndex): CartLineV
     scale: preset?.name ?? UNKNOWN,
     view: viewLabel(line.view),
     quantity: line.quantity,
+    // The server cart carries the print side; free geometry + notes arrive with TMS-FBR-020.
+    printView: line.view === 'BACK' ? 'back' : 'front',
     unitPriceMinor: line.unitPrice?.amountMinor ?? null,
     lineTotalMinor: line.lineTotal?.amountMinor ?? null,
     currency: line.unitPrice?.currency ?? line.lineTotal?.currency ?? '',
@@ -157,7 +169,7 @@ export function toLocalCartView(items: CartItem[], promotion: Promotion | null):
     lines: items.map((item) => ({
       id: item.id,
       artworkTitle: item.artworkTitle,
-      artworkSlug: null,
+      artworkSlug: item.artworkSlug ?? null,
       garment: item.garment,
       colour: item.colour,
       size: item.size,
@@ -165,6 +177,10 @@ export function toLocalCartView(items: CartItem[], promotion: Promotion | null):
       scale: item.scale ?? '',
       view: item.view ?? '',
       quantity: item.quantity,
+      printView: item.printView,
+      printScale: item.printScale,
+      transform: item.transform,
+      note: item.note,
       unitPriceMinor: item.priceMinor,
       lineTotalMinor: item.priceMinor * item.quantity,
       currency: item.currency,

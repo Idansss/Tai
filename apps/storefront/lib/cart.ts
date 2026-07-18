@@ -10,6 +10,7 @@
  * see `lib/cart-api.ts`.
  */
 import { configurationCanonicalForm, type GarmentView } from '@tms/contracts';
+import { type PrintTransform, transformKey } from './studio';
 
 /**
  * The approved tuple that identifies a configuration. Quantity is absent on purpose (ADR-014).
@@ -47,6 +48,23 @@ export interface CartItem {
    * to reconstruct it from labels.
    */
   configuration?: ApprovedConfiguration;
+  /**
+   * The free-placement transform (drag/resize/rotate/crop) when the Studio line carries one. It is
+   * part of the line's identity — two lines with the same approved tuple but different geometry are
+   * different pieces — and a server-backed add will post it alongside the tuple once the API takes
+   * free geometry (the approved-tuple canonical form has no room for it).
+   */
+  transform?: PrintTransform;
+  /**
+   * Enough to redraw the exact piece as a thumbnail: the artwork slug (for its image), the side the
+   * print is on, and the base print width as a fraction of the garment's print zone. With
+   * `transform`, the cart shows precisely what the customer composed — not a stand-in swatch.
+   */
+  artworkSlug?: string;
+  printView?: 'front' | 'back';
+  printScale?: number;
+  /** A customer note for this line (personalisation / gift message). Part of the line identity. */
+  note?: string;
 }
 
 /** A configuration a caller wants to add — everything but the derived id. */
@@ -74,11 +92,22 @@ export function lineId(input: {
   placement?: string;
   scale?: string;
   configuration?: ApprovedConfiguration;
+  transform?: PrintTransform;
+  note?: string;
 }): string {
-  if (input.configuration) return configurationCanonicalForm(input.configuration);
-  return [input.productSlug, input.colour, input.size, input.placement ?? '', input.scale ?? '']
-    .map((part) => part.trim().toLowerCase().replace(/\s+/g, '-'))
-    .join('__');
+  // A free transform or a note forks the line: same approved tuple, but a different composition or
+  // a different personal note is a different piece. Suffix is empty for a plain approved add so it
+  // keeps its canonical id.
+  const geomKey = input.transform ? transformKey(input.transform) : '';
+  const noteKey = input.note?.trim() ? input.note.trim().toLowerCase() : '';
+  const suffix = [geomKey, noteKey].filter(Boolean).join('~~');
+  const extra = suffix ? `##${suffix}` : '';
+  if (input.configuration) return configurationCanonicalForm(input.configuration) + extra;
+  return (
+    [input.productSlug, input.colour, input.size, input.placement ?? '', input.scale ?? '']
+      .map((part) => part.trim().toLowerCase().replace(/\s+/g, '-'))
+      .join('__') + extra
+  );
 }
 
 function clampQuantity(n: number): number {
