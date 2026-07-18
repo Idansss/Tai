@@ -1,10 +1,11 @@
 'use client';
 
-import { EmptyState, IconButton } from '@tms/ui';
+import { IconButton } from '@tms/ui';
 import { ShoppingBag, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
+import { PillLink } from '@/components/site/pill-link';
 import { CartLineList } from './cart-line-list';
 import { CartSummary } from './cart-summary';
 import { useCart } from './cart-provider';
@@ -69,9 +70,9 @@ export function CartDrawer() {
       onClick={onDialogClick}
       className="tms-slideover m-0 ml-auto h-dvh max-h-none w-[min(28rem,92vw)] max-w-none bg-canvas p-0 text-ink open:flex open:flex-col"
     >
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-5">
-        <h2 className="font-display text-sm font-semibold tracking-tight">
-          Your bag{count > 0 ? ` (${count})` : ''}
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-line bg-canvas/90 px-5 backdrop-blur">
+        <h2 className="font-display text-sm font-bold uppercase tracking-[0.12em] text-ink">
+          Your bag{count > 0 ? ` · ${count}` : ''}
         </h2>
         <IconButton
           label="Close bag"
@@ -81,21 +82,27 @@ export function CartDrawer() {
       </div>
 
       {cart.lines.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-6">
-          <EmptyState
-            icon={<ShoppingBag className="size-6" aria-hidden />}
-            title="Your bag is empty"
-            description="Explore the gallery or design your own piece in the studio."
-            action={
-              <Link
-                href="/design-studio"
-                onClick={closeCart}
-                className="inline-flex h-11 items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-              >
-                Open the Design Studio
-              </Link>
-            }
-          />
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+          <ShoppingBag className="size-8 text-ink" aria-hidden />
+          <div className="max-w-xs">
+            <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+              Shopping bag
+            </p>
+            <h3 className="mt-3 font-display text-3xl font-bold uppercase leading-[0.95] tracking-tight text-ink">
+              Empty for now
+            </h3>
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              Explore the gallery or design your own piece in the studio.
+            </p>
+          </div>
+          <PillLink href="/design-studio">Design studio</PillLink>
+          <Link
+            href="/artworks"
+            onClick={closeCart}
+            className="text-xs font-medium uppercase tracking-[0.08em] text-muted underline-offset-4 outline-none hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          >
+            Browse artworks
+          </Link>
         </div>
       ) : (
         <>
@@ -107,7 +114,7 @@ export function CartDrawer() {
             <Link
               href="/cart"
               onClick={closeCart}
-              className="mt-3 block rounded-sm text-center text-sm text-muted underline-offset-2 outline-none hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+              className="mt-3 block rounded-sm text-center text-xs font-medium uppercase tracking-[0.08em] text-muted underline-offset-4 outline-none hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
             >
               View full bag
             </Link>

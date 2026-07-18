@@ -1,9 +1,10 @@
 'use client';
 
-import { EmptyState, Heading, Skeleton } from '@tms/ui';
+import { Heading, Skeleton } from '@tms/ui';
 import { ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { PillLink } from '@/components/site/pill-link';
 import { CartLineList } from './cart-line-list';
 import { CartSummary } from './cart-summary';
 import { useCart } from './cart-provider';
@@ -30,27 +31,29 @@ export function CartView() {
 
   if (cart.lines.length === 0) {
     return (
-      <EmptyState
-        icon={<ShoppingBag className="size-6" aria-hidden />}
-        title="Your bag is empty"
-        description="Browse the gallery or design your own piece — everything you add is saved here."
-        action={
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link
-              href="/shop"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-line-2 px-5 text-sm font-medium text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-            >
-              Browse the shop
-            </Link>
-            <Link
-              href="/design-studio"
-              className="inline-flex h-11 items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-on-accent outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-            >
-              Open the Design Studio
-            </Link>
-          </div>
-        }
-      />
+      <div className="flex flex-col items-center justify-center gap-6 px-6 py-16 text-center">
+        <ShoppingBag className="size-8 text-ink" aria-hidden />
+        <div className="max-w-md">
+          <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+            Shopping bag
+          </p>
+          <h2 className="mt-3 font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl">
+            Empty for now
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-muted sm:text-base">
+            Browse the gallery or design your own piece — everything you add is saved here.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <PillLink href="/design-studio">Design studio</PillLink>
+          <Link
+            href="/shop"
+            className="text-xs font-medium uppercase tracking-[0.08em] text-muted underline-offset-4 outline-none hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+          >
+            Browse the shop
+          </Link>
+        </div>
+      </div>
     );
   }
 
@@ -66,7 +69,11 @@ export function CartView() {
         aria-label="Order summary"
         className="rounded-[var(--radius-lg)] border border-line bg-canvas-2 p-5 lg:sticky lg:top-24"
       >
-        <Heading as={2} size="md" className="mb-4">
+        <Heading
+          as={2}
+          size="md"
+          className="mb-4 font-display text-sm font-bold uppercase tracking-wide"
+        >
           Order summary
         </Heading>
         <CartSummary onCheckout={() => router.push('/checkout')} />

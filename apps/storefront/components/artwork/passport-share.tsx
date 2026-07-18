@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@tms/ui';
 import { Check, Share2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -38,14 +37,18 @@ export function PassportShare({ title }: { title: string }) {
 
   return (
     <div>
-      <Button type="button" variant="secondary" onClick={handleShare}>
+      <button
+        type="button"
+        onClick={handleShare}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-line-2 bg-canvas px-5 text-xs font-semibold uppercase tracking-[0.08em] text-ink outline-none hover:bg-canvas-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+      >
         {copied ? (
           <Check className="size-4" aria-hidden />
         ) : (
           <Share2 className="size-4" aria-hidden />
         )}
         {copied ? 'Link copied' : 'Share passport'}
-      </Button>
+      </button>
       <p role="status" aria-live="polite" className="mt-2 min-h-[1.25rem] text-xs text-muted">
         {status}
       </p>
