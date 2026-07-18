@@ -101,12 +101,27 @@ export function isIdentityTransform(t: PrintTransform): boolean {
   );
 }
 
+/** The print on one side of the garment: an approved placement + scale + the free transform. */
+export interface SideDesign {
+  placement: string | null;
+  scale: string | null;
+  transform: PrintTransform;
+}
+
+/** The non-active side's design, tagged with which side it is (the opposite of `view`). */
+export interface StashedSide extends SideDesign {
+  area: StudioView;
+}
+
 /**
  * A Design Studio configuration.
  *
- * `placement` is an approved placement id and `scale` an approved scale-preset slug — the starting
- * point the customer chose. `transform` is their free adjustment on top of it (see PrintTransform).
- * A shared URL carries the approved ids *and* the transform, so the exact composition round-trips.
+ * The customer can print BOTH sides of one garment (the same artwork, placed independently). The
+ * side currently being edited is `view`, and its design lives in `placement` / `scale` /
+ * `transform`. The *other* side's design, when it has one, is stashed in `otherSide` (whose `area`
+ * is the opposite of `view`). Switching sides (`switchView`) swaps the two. A shared URL carries the
+ * active side under `placement`/`scale`/`px…` and the other side under `oplacement`/`oscale`/`opx…`,
+ * so a single-sided link stays exactly as it was and a two-sided one round-trips both prints.
  */
 export interface StudioConfig {
   /** Artwork slug. */
@@ -115,12 +130,14 @@ export interface StudioConfig {
   garment: string | null;
   colour: string | null;
   size: string | null;
-  /** An approved placement id — the starting position. */
+  /** The active side's approved placement id (its area is `view`), or null when this side is blank. */
   placement: string | null;
-  /** An approved scale-preset slug, valid only within the selected placement — the starting size. */
+  /** The active side's approved scale-preset slug, valid only within its placement. */
   scale: string | null;
-  /** Free drag/resize/rotate/crop layered on top of placement + scale. */
+  /** The active side's free drag/resize/rotate/crop, layered on its placement + scale. */
   transform: PrintTransform;
+  /** The other side's design, when it carries a print. `area` is always the opposite of `view`. */
+  otherSide: StashedSide | null;
   view: StudioView;
   quantity: number;
 }
@@ -133,9 +150,22 @@ export const EMPTY_STUDIO_CONFIG: StudioConfig = {
   placement: null,
   scale: null,
   transform: IDENTITY_TRANSFORM,
+  otherSide: null,
   view: 'front',
   quantity: 1,
 };
+
+/** The side opposite the one given. */
+export function otherView(view: StudioView): StudioView {
+  return view === 'front' ? 'back' : 'front';
+}
+
+/** True when a side actually carries a print (an approved placement + scale). */
+export function sideHasPrint(
+  side: { placement: string | null; scale: string | null } | null,
+): boolean {
+  return Boolean(side && side.placement && side.scale);
+}
 
 type RawParams = Record<string, string | string[] | undefined>;
 
@@ -164,16 +194,17 @@ function round(n: number, decimals: number): number {
   return Math.round(n * f) / f;
 }
 
-function parseTransform(p: RawParams): PrintTransform {
+function parseTransform(p: RawParams, prefix = ''): PrintTransform {
+  const g = (k: string) => first(p[`${prefix}${k}`]);
   return clampTransform({
-    dx: num(first(p.px), 0),
-    dy: num(first(p.py), 0),
-    scale: num(first(p.ps), 1),
-    rotation: num(first(p.pr), 0),
-    cropTop: num(first(p.ct), 0),
-    cropRight: num(first(p.cr), 0),
-    cropBottom: num(first(p.cb), 0),
-    cropLeft: num(first(p.cl), 0),
+    dx: num(g('px'), 0),
+    dy: num(g('py'), 0),
+    scale: num(g('ps'), 1),
+    rotation: num(g('pr'), 0),
+    cropTop: num(g('ct'), 0),
+    cropRight: num(g('cr'), 0),
+    cropBottom: num(g('cb'), 0),
+    cropLeft: num(g('cl'), 0),
   });
 }
 
@@ -185,6 +216,17 @@ function parseTransform(p: RawParams): PrintTransform {
  * are in hand, and nothing parsed here is trusted enough to send anywhere.
  */
 export function parseStudioParams(searchParams: RawParams): StudioConfig {
+  const view: StudioView = first(searchParams.view) === 'back' ? 'back' : 'front';
+  // The other side (opposite `view`) is present only when it carries its own placement.
+  const otherPlacement = first(searchParams.oplacement);
+  const otherSide: StashedSide | null = otherPlacement
+    ? {
+        area: otherView(view),
+        placement: otherPlacement,
+        scale: first(searchParams.oscale),
+        transform: parseTransform(searchParams, 'o'),
+      }
+    : null;
   return {
     artwork: first(searchParams.artwork),
     garment: first(searchParams.garment),
@@ -193,7 +235,8 @@ export function parseStudioParams(searchParams: RawParams): StudioConfig {
     placement: first(searchParams.placement),
     scale: first(searchParams.scale),
     transform: parseTransform(searchParams),
-    view: first(searchParams.view) === 'back' ? 'back' : 'front',
+    otherSide,
+    view,
     quantity: clampQuantity(first(searchParams.quantity)),
   };
 }
@@ -208,19 +251,29 @@ export function buildStudioQuery(config: StudioConfig): string {
   if (config.placement) params.set('placement', config.placement);
   if (config.scale) params.set('scale', config.scale);
   // Free transform: only the parts that differ from the approved start are written.
-  const t = config.transform;
-  if (t.dx !== 0) params.set('px', String(round(t.dx, 2)));
-  if (t.dy !== 0) params.set('py', String(round(t.dy, 2)));
-  if (t.scale !== 1) params.set('ps', String(round(t.scale, 3)));
-  if (t.rotation !== 0) params.set('pr', String(round(t.rotation, 1)));
-  if (t.cropTop !== 0) params.set('ct', String(round(t.cropTop, 3)));
-  if (t.cropRight !== 0) params.set('cr', String(round(t.cropRight, 3)));
-  if (t.cropBottom !== 0) params.set('cb', String(round(t.cropBottom, 3)));
-  if (t.cropLeft !== 0) params.set('cl', String(round(t.cropLeft, 3)));
+  writeTransform(params, config.transform, '');
+  // The other side (opposite `view`), when it carries a print.
+  if (config.otherSide && config.otherSide.placement) {
+    params.set('oplacement', config.otherSide.placement);
+    if (config.otherSide.scale) params.set('oscale', config.otherSide.scale);
+    writeTransform(params, config.otherSide.transform, 'o');
+  }
   if (config.view === 'back') params.set('view', 'back');
   if (config.quantity > 1) params.set('quantity', String(config.quantity));
   const qs = params.toString();
   return qs ? `?${qs}` : '';
+}
+
+/** Write a transform's non-identity parts to the query, under an optional key prefix. */
+function writeTransform(params: URLSearchParams, t: PrintTransform, prefix: string): void {
+  if (t.dx !== 0) params.set(`${prefix}px`, String(round(t.dx, 2)));
+  if (t.dy !== 0) params.set(`${prefix}py`, String(round(t.dy, 2)));
+  if (t.scale !== 1) params.set(`${prefix}ps`, String(round(t.scale, 3)));
+  if (t.rotation !== 0) params.set(`${prefix}pr`, String(round(t.rotation, 1)));
+  if (t.cropTop !== 0) params.set(`${prefix}ct`, String(round(t.cropTop, 3)));
+  if (t.cropRight !== 0) params.set(`${prefix}cr`, String(round(t.cropRight, 3)));
+  if (t.cropBottom !== 0) params.set(`${prefix}cb`, String(round(t.cropBottom, 3)));
+  if (t.cropLeft !== 0) params.set(`${prefix}cl`, String(round(t.cropLeft, 3)));
 }
 
 export function findGarment(options: StudioOptions, slug: string | null): StudioGarment | null {
@@ -244,23 +297,40 @@ export function findPlacement(
  * garment, a scale that does not belong to the chosen placement, or a colour with no buyable
  * variant must not survive into something we send to the server.
  */
+/**
+ * Reconcile one side's raw (from-URL) design against the garment, for a specific area. Returns null
+ * when the placement is not an approved one on that side. A transform is a delta from a specific
+ * placement + scale, so it resets when the scale it was authored against does not survive.
+ */
+function resolveSide(garment: StudioGarment, raw: SideDesign, area: StudioView): SideDesign | null {
+  const placement = garment.placements.find((p) => p.id === raw.placement && p.area === area);
+  if (!placement) return null;
+  const scale =
+    placement.scalePresets.find((preset) => preset.slug === raw.scale) ??
+    placement.scalePresets[0] ??
+    null;
+  const scaleKept = scale?.slug === raw.scale;
+  return {
+    placement: placement.id,
+    scale: scale?.slug ?? null,
+    transform: scaleKept ? clampTransform(raw.transform ?? IDENTITY_TRANSFORM) : IDENTITY_TRANSFORM,
+  };
+}
+
 export function resolveStudioConfig(config: StudioConfig, options: StudioOptions): StudioConfig {
   const garment = findGarment(options, config.garment) ?? options.garments[0] ?? null;
   if (!garment) {
-    return { ...config, garment: null, colour: null, size: null, placement: null, scale: null };
+    return {
+      ...config,
+      garment: null,
+      colour: null,
+      size: null,
+      placement: null,
+      scale: null,
+      transform: IDENTITY_TRANSFORM,
+      otherSide: null,
+    };
   }
-
-  const placement =
-    findPlacement(garment, config.placement) ??
-    garment.placements.find((entry) => entry.area === config.view) ??
-    garment.placements[0] ??
-    null;
-
-  // A scale preset belongs to a placement, so it is only valid within the resolved one.
-  const scale =
-    placement?.scalePresets.find((preset) => preset.slug === config.scale) ??
-    placement?.scalePresets[0] ??
-    null;
 
   const colour = garment.colours.some((entry) => entry.name === config.colour)
     ? config.colour
@@ -273,28 +343,85 @@ export function resolveStudioConfig(config: StudioConfig, options: StudioOptions
   const size =
     config.size && sizesForColour.includes(config.size) ? config.size : (sizesForColour[0] ?? null);
 
-  // A transform is a delta from a specific placement + scale. If either was dropped as unapproved
-  // (a shared link from another garment, say), the delta no longer means anything — reset it so a
-  // stray URL can never compose a print against the wrong start.
-  const placementKept = placement?.id === config.placement;
-  const scaleKept = scale?.slug === config.scale;
-  const transform =
-    placementKept && scaleKept
-      ? clampTransform(config.transform ?? IDENTITY_TRANSFORM)
-      : IDENTITY_TRANSFORM;
+  const otherArea = otherView(config.view);
+  const activeRaw: SideDesign = {
+    placement: config.placement,
+    scale: config.scale,
+    transform: config.transform ?? IDENTITY_TRANSFORM,
+  };
+  let active = resolveSide(garment, activeRaw, config.view);
+  let other = config.otherSide ? resolveSide(garment, config.otherSide, otherArea) : null;
+
+  // An old single-sided link may carry a placement for the *other* side under the active keys
+  // (e.g. `?placement=<back>&view=back`). Migrate it to the other side rather than dropping it.
+  if (!active && config.placement && !other) {
+    other = resolveSide(garment, activeRaw, otherArea);
+  }
+
+  // Land with a print on the viewed side if the piece is entirely blank.
+  if (!sideHasPrint(active) && !sideHasPrint(other)) {
+    const seed =
+      garment.placements.find((p) => p.area === config.view) ?? garment.placements[0] ?? null;
+    active = seed
+      ? {
+          placement: seed.id,
+          scale: seed.scalePresets[0]?.slug ?? null,
+          transform: IDENTITY_TRANSFORM,
+        }
+      : null;
+  }
 
   return {
     ...config,
     garment: garment.slug,
     colour,
     size,
-    placement: placement?.id ?? null,
-    scale: scale?.slug ?? null,
-    transform,
-    // `view` is left alone on purpose: it is which side the preview shows, not part of the
-    // approved tuple's identity. Forcing it to the placement's side would fight the customer
-    // every time they turned the garment around to look at the back.
+    placement: active?.placement ?? null,
+    scale: active?.scale ?? null,
+    transform: active?.transform ?? IDENTITY_TRANSFORM,
+    otherSide: sideHasPrint(other) ? { area: otherArea, ...(other as SideDesign) } : null,
+    // `view` is left alone on purpose: it is which side the preview shows.
   };
+}
+
+/**
+ * Switch the side being edited, stashing the current side and loading the other. With only two
+ * sides, the active fields and `otherSide` simply swap.
+ */
+export function switchView(config: StudioConfig, next: StudioView): StudioConfig {
+  if (next === config.view) return config;
+  const incoming = config.otherSide?.area === next ? config.otherSide : null;
+  const stash: StashedSide = {
+    area: config.view,
+    placement: config.placement,
+    scale: config.scale,
+    transform: config.transform,
+  };
+  return {
+    ...config,
+    view: next,
+    placement: incoming?.placement ?? null,
+    scale: incoming?.scale ?? null,
+    transform: incoming?.transform ?? IDENTITY_TRANSFORM,
+    otherSide: sideHasPrint(stash) ? stash : null,
+  };
+}
+
+/** The printed sides of a configuration (0, 1, or 2), each tagged with its area. */
+export function collectSides(config: StudioConfig): Array<SideDesign & { area: StudioView }> {
+  const sides: Array<SideDesign & { area: StudioView }> = [];
+  if (sideHasPrint({ placement: config.placement, scale: config.scale })) {
+    sides.push({
+      area: config.view,
+      placement: config.placement,
+      scale: config.scale,
+      transform: config.transform,
+    });
+  }
+  if (config.otherSide && sideHasPrint(config.otherSide)) {
+    sides.push({ ...config.otherSide });
+  }
+  return sides;
 }
 
 /** The approved variant for the chosen colour+size, or null when that pair is not buyable. */
@@ -307,14 +434,13 @@ export function findVariantId(config: StudioConfig, garment: StudioGarment | nul
   );
 }
 
-/** True once the customer has made every choice the approved tuple needs. */
+/** True once the customer has chosen artwork + garment + colour + size and printed at least one side. */
 export function isStudioConfigComplete(config: StudioConfig): boolean {
   return Boolean(
     config.artwork &&
     config.garment &&
     config.colour &&
     config.size &&
-    config.placement &&
-    config.scale,
+    collectSides(config).length > 0,
   );
 }

@@ -3,6 +3,7 @@ import type { StudioOptions } from './data/types';
 import {
   buildStudioQuery,
   clampTransform,
+  collectSides,
   EMPTY_STUDIO_CONFIG,
   findVariantId,
   IDENTITY_TRANSFORM,
@@ -12,6 +13,7 @@ import {
   type PrintTransform,
   resolveStudioConfig,
   type StudioConfig,
+  switchView,
 } from './studio';
 
 const full: StudioConfig = {
@@ -22,7 +24,8 @@ const full: StudioConfig = {
   placement: 'placement-centre-chest',
   scale: 'medium',
   transform: IDENTITY_TRANSFORM,
-  view: 'back',
+  otherSide: null,
+  view: 'front',
   quantity: 3,
 };
 
@@ -163,6 +166,26 @@ describe('buildStudioQuery / round-trip', () => {
     expect(qs).toContain('scale=medium');
     expect(qs).toContain('px=8.5');
   });
+
+  it('round-trips a two-sided config (a print on each side)', () => {
+    const twoSided: StudioConfig = {
+      ...full,
+      view: 'front',
+      placement: 'placement-centre-chest',
+      scale: 'medium',
+      transform: moved,
+      otherSide: {
+        area: 'back',
+        placement: 'placement-back',
+        scale: 'large',
+        transform: { ...IDENTITY_TRANSFORM, dx: 3 },
+      },
+    };
+    const qs = buildStudioQuery(twoSided);
+    expect(qs).toContain('oplacement=placement-back');
+    const params = Object.fromEntries(new URLSearchParams(qs.slice(1)));
+    expect(parseStudioParams(params)).toEqual(twoSided);
+  });
 });
 
 describe('clampTransform / isIdentityTransform', () => {
@@ -219,7 +242,11 @@ describe('resolveStudioConfig', () => {
   });
 
   it('re-picks the scale when the placement changes, since presets belong to a placement', () => {
-    const resolved = resolveStudioConfig({ ...full, placement: 'placement-back' }, options);
+    // The back placement lives on the back, so we view that side to design it.
+    const resolved = resolveStudioConfig(
+      { ...full, view: 'back', placement: 'placement-back' },
+      options,
+    );
     expect(resolved.scale).toBe('large');
   });
 
@@ -244,11 +271,16 @@ describe('resolveStudioConfig', () => {
     expect(resolved).toMatchObject({ garment: null, colour: null, size: null, placement: null });
   });
 
-  it('leaves the view alone, so turning the garment around does not fight the customer', () => {
+  it('migrates an old single-sided link (front placement, viewing back) to the other side', () => {
+    // `?placement=<front>&view=back` predates two-sided design: keep the front print rather than
+    // dropping it, by stashing it as the other side while the viewed (back) side stays blank.
     const resolved = resolveStudioConfig({ ...full, view: 'back' }, options);
     expect(resolved.view).toBe('back');
-    // The print is still on the front placement; the UI says so rather than moving it.
-    expect(resolved.placement).toBe('placement-centre-chest');
+    expect(resolved.placement).toBeNull();
+    expect(resolved.otherSide).toMatchObject({
+      area: 'front',
+      placement: 'placement-centre-chest',
+    });
   });
 
   it('keeps the free transform when its placement and scale both survive', () => {
@@ -277,11 +309,91 @@ describe('resolveStudioConfig', () => {
 
   it('resets the transform when the scale is re-picked because the placement changed', () => {
     const resolved = resolveStudioConfig(
-      { ...full, placement: 'placement-back', transform: moved },
+      { ...full, view: 'back', placement: 'placement-back', transform: moved },
       options,
     );
     expect(resolved.scale).toBe('large');
     expect(resolved.transform).toEqual(IDENTITY_TRANSFORM);
+  });
+
+  it('keeps an approved print on the other (non-viewed) side', () => {
+    const resolved = resolveStudioConfig(
+      {
+        ...full,
+        view: 'front',
+        otherSide: { area: 'back', placement: 'placement-back', scale: 'large', transform: moved },
+      },
+      options,
+    );
+    expect(resolved.placement).toBe('placement-centre-chest');
+    expect(resolved.otherSide).toEqual({
+      area: 'back',
+      placement: 'placement-back',
+      scale: 'large',
+      transform: moved,
+    });
+  });
+
+  it('drops an other-side print whose placement is not on that side', () => {
+    const resolved = resolveStudioConfig(
+      {
+        ...full,
+        view: 'front',
+        // A front placement cannot be the back side's print.
+        otherSide: {
+          area: 'back',
+          placement: 'placement-centre-chest',
+          scale: 'medium',
+          transform: IDENTITY_TRANSFORM,
+        },
+      },
+      options,
+    );
+    expect(resolved.otherSide).toBeNull();
+  });
+});
+
+describe('switchView / collectSides', () => {
+  const twoSided: StudioConfig = {
+    ...full,
+    view: 'front',
+    placement: 'placement-centre-chest',
+    scale: 'medium',
+    transform: moved,
+    otherSide: {
+      area: 'back',
+      placement: 'placement-back',
+      scale: 'large',
+      transform: IDENTITY_TRANSFORM,
+    },
+  };
+
+  it('swaps the active and stashed sides when the view flips', () => {
+    const flipped = switchView(twoSided, 'back');
+    expect(flipped.view).toBe('back');
+    // Now editing the back print...
+    expect(flipped.placement).toBe('placement-back');
+    expect(flipped.scale).toBe('large');
+    // ...and the front print is stashed.
+    expect(flipped.otherSide).toMatchObject({ area: 'front', placement: 'placement-centre-chest' });
+  });
+
+  it('is a no-op when the view does not change', () => {
+    expect(switchView(twoSided, 'front')).toBe(twoSided);
+  });
+
+  it('drops the stash when the side being left has no print', () => {
+    const frontBlank: StudioConfig = { ...full, view: 'front', placement: null, scale: null };
+    const flipped = switchView(frontBlank, 'back');
+    expect(flipped.otherSide).toBeNull();
+  });
+
+  it('collects every printed side, tagged by area', () => {
+    expect(collectSides(twoSided)).toEqual([
+      { area: 'front', placement: 'placement-centre-chest', scale: 'medium', transform: moved },
+      { area: 'back', placement: 'placement-back', scale: 'large', transform: IDENTITY_TRANSFORM },
+    ]);
+    expect(collectSides({ ...full, placement: null, scale: null, otherSide: null })).toEqual([]);
   });
 });
 
@@ -302,5 +414,20 @@ describe('isStudioConfigComplete', () => {
     expect(isStudioConfigComplete({ ...full, placement: null })).toBe(false);
     expect(isStudioConfigComplete({ ...full, scale: null })).toBe(false);
     expect(isStudioConfigComplete(full)).toBe(true);
+  });
+
+  it('is complete when only the other side carries the print', () => {
+    const backOnly: StudioConfig = {
+      ...full,
+      placement: null,
+      scale: null,
+      otherSide: {
+        area: 'back',
+        placement: 'placement-back',
+        scale: 'large',
+        transform: IDENTITY_TRANSFORM,
+      },
+    };
+    expect(isStudioConfigComplete(backOnly)).toBe(true);
   });
 });

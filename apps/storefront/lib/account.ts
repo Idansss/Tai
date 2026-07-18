@@ -15,7 +15,7 @@
 
 import type { PlacedOrder } from './order';
 import { normalizeEmail } from './auth';
-import { IDENTITY_TRANSFORM, type StudioConfig, transformKey } from './studio';
+import { collectSides, type StudioConfig, transformKey } from './studio';
 
 // --- Saved designs -------------------------------------------------------------
 
@@ -33,18 +33,12 @@ export interface SavedDesign {
 
 /** Configuration signature — identical designs collapse to one saved entry. */
 export function designSignature(config: StudioConfig): string {
-  return [
-    config.artwork,
-    config.garment,
-    config.colour,
-    config.size,
-    config.placement,
-    config.scale,
-    config.view,
-    // The free transform is part of what the customer made: two designs that share the approved
-    // tuple but sit/scale/crop differently are different saved designs, not one.
-    transformKey(config.transform ?? IDENTITY_TRANSFORM),
-  ]
+  // Every printed side is part of what the customer made: two pieces with different sides, or the
+  // same sides placed/scaled/cropped differently, are different saved designs — not one.
+  const sidesKey = collectSides(config)
+    .map((s) => `${s.area}:${s.placement}:${s.scale}:${transformKey(s.transform)}`)
+    .join('~');
+  return [config.artwork, config.garment, config.colour, config.size, sidesKey]
     .map((part) => (part ?? '').toString().trim().toLowerCase())
     .join('|');
 }

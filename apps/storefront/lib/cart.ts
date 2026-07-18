@@ -63,8 +63,24 @@ export interface CartItem {
   artworkSlug?: string;
   printView?: 'front' | 'back';
   printScale?: number;
+  /**
+   * A piece can be printed on BOTH sides (same artwork, placed independently). When it is, each
+   * printed side is here with its own base scale + free transform, so the cart draws front and back
+   * exactly as designed. Absent for plain one-side product lines (which use the fields above).
+   */
+  designSides?: Partial<Record<'front' | 'back', CartSideRender>>;
   /** A customer note for this line (personalisation / gift message). Part of the line identity. */
   note?: string;
+}
+
+/** One printed side of a cart line, enough to both redraw it and identify it. */
+export interface CartSideRender {
+  /** Base print width as a fraction of the side's print zone. */
+  printScale: number;
+  transform?: PrintTransform;
+  /** Approved ids, for line identity + a future server-backed add. */
+  placementId?: string;
+  scalePresetId?: string;
 }
 
 /** A configuration a caller wants to add — everything but the derived id. */
@@ -85,6 +101,21 @@ export const MAX_LINE_QUANTITY = 20;
  * The slug fallback serves the local preview cart, where a line was built from catalogue slugs
  * and no approved ids exist yet.
  */
+/** A deterministic identity for the printed sides (empty when there are none). */
+function sidesKey(
+  designSides: Partial<Record<'front' | 'back', CartSideRender>> | undefined,
+): string {
+  if (!designSides) return '';
+  return (['front', 'back'] as const)
+    .filter((side) => designSides[side])
+    .map((side) => {
+      const r = designSides[side]!;
+      const tk = r.transform ? transformKey(r.transform) : '';
+      return `${side}:${r.placementId ?? ''}:${r.scalePresetId ?? ''}:${tk}`;
+    })
+    .join('|');
+}
+
 export function lineId(input: {
   productSlug: string;
   colour: string;
@@ -93,12 +124,14 @@ export function lineId(input: {
   scale?: string;
   configuration?: ApprovedConfiguration;
   transform?: PrintTransform;
+  designSides?: Partial<Record<'front' | 'back', CartSideRender>>;
   note?: string;
 }): string {
-  // A free transform or a note forks the line: same approved tuple, but a different composition or
-  // a different personal note is a different piece. Suffix is empty for a plain approved add so it
+  // A different composition (per-side geometry, or a single free transform) or a different note
+  // forks the line: same approved tuple, but a different piece. Empty for a plain approved add so it
   // keeps its canonical id.
-  const geomKey = input.transform ? transformKey(input.transform) : '';
+  const geomKey =
+    sidesKey(input.designSides) || (input.transform ? transformKey(input.transform) : '');
   const noteKey = input.note?.trim() ? input.note.trim().toLowerCase() : '';
   const suffix = [geomKey, noteKey].filter(Boolean).join('~~');
   const extra = suffix ? `##${suffix}` : '';
