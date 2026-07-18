@@ -27,7 +27,7 @@ const PILLARS = [
 // The trust/feature strip (URBAN FIT · AURORA): four honest promises, not upsell noise.
 const FEATURES = [
   { icon: PencilLine, title: 'Hand-drawn', sub: 'Every piece, by hand' },
-  { icon: MapPin, title: 'From Africa', sub: 'Lagos · Addis · Accra · Cape Town' },
+  { icon: MapPin, title: 'From Africa', sub: 'Across the continent' },
   { icon: Package, title: 'Made to order', sub: 'Printed when you buy' },
   { icon: Truck, title: 'Shipped nationwide', sub: 'Across Nigeria' },
 ];
