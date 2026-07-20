@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { type AuthErrors, validateLogin } from '@/lib/admin-auth';
 import { useAdminAuth } from './admin-auth-provider';
+import { BrandLogo } from './brand-logo';
 
 const inputClass =
   'h-11 w-full rounded-md border bg-surface px-3 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]';
@@ -33,7 +34,12 @@ export function AdminLoginForm() {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-8 text-center">
-        <span className="font-display text-lg font-semibold tracking-tight text-ink">F.A.T.U</span>
+        <BrandLogo
+          alt="F.A.T.U — From Africa To You"
+          className="mx-auto size-20"
+          priority
+          sizes="80px"
+        />
         <p className="mt-1 font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
           Admin
         </p>

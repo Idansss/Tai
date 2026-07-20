@@ -1,6 +1,7 @@
 import { Container } from '@tms/ui';
 import { ArrowRight, Instagram, Twitter } from 'lucide-react';
 import Link from 'next/link';
+import { BrandLogo } from '@/components/site/brand-logo';
 import { footerNav } from '@/lib/nav';
 
 /**
@@ -25,9 +26,12 @@ export function SiteFooter() {
         {/* Mobile: brand full-width, then nav in a 2×2 grid. Desktop: brand + four columns. */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:gap-12">
           <div className="col-span-2 max-w-sm lg:col-span-1">
-            <span className="font-display text-3xl font-bold uppercase tracking-tight">
-              F.A.T.U
-            </span>
+            <BrandLogo
+              alt="F.A.T.U — From Africa To You"
+              className="size-28"
+              inverse
+              sizes="112px"
+            />
             <p className="mt-4 text-sm leading-relaxed text-white/60">
               Hand-drawn art from across Africa, printed on cotton. From Africa, to you.
             </p>
