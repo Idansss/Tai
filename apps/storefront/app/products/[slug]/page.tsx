@@ -55,7 +55,7 @@ export default async function ProductPage({ params }: Params) {
           {product.garment}
         </p>
         <h1 className="mt-2 font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl">
-          {product.artworkTitle}
+          {product.title}
         </h1>
         <p className="mt-2 text-sm text-muted">
           From the{' '}

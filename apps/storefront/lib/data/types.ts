@@ -258,6 +258,11 @@ export interface ProductSummary {
   currency: string;
   availability: Availability;
   colourCount: number;
+  /**
+   * Optional product photograph (flat-lay / worn shot). When set, shop tiles and the product
+   * page prefer it over composing a garment mockup from the artwork plate alone.
+   */
+  image?: string | null;
 }
 
 /**
