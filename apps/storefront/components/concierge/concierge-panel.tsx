@@ -7,11 +7,11 @@ import {
   RotateCw,
   Send,
   ShieldCheck,
-  Sparkles,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useRef } from 'react';
+import { BrandLogo } from '@/components/site/brand-logo';
 import { type ConciergeMessage, useConcierge } from './concierge-provider';
 
 export function ConciergePanel() {
@@ -71,16 +71,19 @@ export function ConciergePanel() {
         )}
       >
         <header className="flex items-start gap-3 border-b border-line bg-canvas-2 p-4">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink text-canvas">
-            <Sparkles className="size-5" aria-hidden />
-          </span>
+          <BrandLogo
+            className="size-10 shrink-0 rounded-full"
+            alt=""
+            sizes="40px"
+            priority
+          />
           <div className="min-w-0 flex-1">
-            <p className="font-display text-lg text-ink">{assistantName}</p>
+            <p className="truncate font-display text-lg text-ink">{assistantName}</p>
             <p className="text-sm text-muted">
               Artwork, sizing, delivery, Design Studio, and orders — grounded in studio sources.
             </p>
           </div>
-          <div className="flex gap-1">
+          <div className="flex shrink-0 gap-1">
             <button
               type="button"
               onClick={minimise}
@@ -129,7 +132,7 @@ export function ConciergePanel() {
 
           {pending ? (
             <div className="flex items-center gap-2 text-sm text-muted" aria-label="Concierge is responding">
-              <Sparkles className="size-4 animate-pulse text-ink" aria-hidden />
+              <BrandLogo className="size-4 animate-pulse rounded-full" alt="" sizes="16px" />
               <span>Working…</span>
             </div>
           ) : null}

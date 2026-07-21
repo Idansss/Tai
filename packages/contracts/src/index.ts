@@ -1157,7 +1157,7 @@ export interface ConciergeChatTurnResult {
   citations: ConciergeCitation[];
   cards: ConciergeProductCard[];
   ticketReference?: string;
-  provider: 'openai' | 'mock' | 'fallback';
+  provider: 'openai' | 'anthropic' | 'gemini' | 'mock' | 'fallback';
   guarded: boolean;
 }
 

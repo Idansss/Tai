@@ -55,14 +55,22 @@ const EnvironmentSchema = z
       .regex(/^[A-Za-z0-9_-]{43}$/)
       .default(localMfaEncryptionKey),
     // F.A.T.U Concierge — provider keys stay server-side only (never NEXT_PUBLIC_*).
+    // AI_PROVIDER=auto tries OPENAI → ANTHROPIC → GEMINI (see AI_PROVIDER_ORDER).
     AI_ENABLED: z
       .enum(['true', 'false'])
       .default('true')
       .transform((value) => value === 'true'),
-    AI_PROVIDER: z.enum(['openai', 'mock']).default('mock'),
-    AI_MODEL: z.string().min(1).default('gpt-4.1-mini'),
+    AI_PROVIDER: z.enum(['auto', 'openai', 'anthropic', 'gemini', 'mock']).default('mock'),
+    AI_PROVIDER_ORDER: z.string().min(1).default('openai,anthropic,gemini'),
+    AI_MODEL: z.string().min(1).default('gpt-5.6'),
     AI_API_KEY: z.string().min(1).optional(),
     AI_FALLBACK_MODEL: z.string().min(1).optional(),
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    OPENAI_MODEL: z.string().min(1).default('gpt-5.6'),
+    ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    ANTHROPIC_MODEL: z.string().min(1).default('claude-sonnet-5'),
+    GEMINI_API_KEY: z.string().min(1).optional(),
+    GEMINI_MODEL: z.string().min(1).default('gemini-3.5-flash'),
     AI_MAX_DAILY_REQUESTS: z.coerce.number().int().min(1).max(1_000_000).default(2_000),
     AI_KNOWLEDGE_SYNC_SECRET: z.string().min(16).optional(),
     AI_SUPPORT_EMAIL: z.string().email().optional(),
@@ -122,12 +130,29 @@ const EnvironmentSchema = z
         });
       }
     }
-    // OpenAI-compatible provider needs a key; mock mode is the safe default for CI.
-    if (environment.AI_PROVIDER === 'openai' && !environment.AI_API_KEY) {
+    // A pinned provider needs its own key (auto mode uses whichever keys exist).
+    if (environment.AI_PROVIDER === 'openai') {
+      const key = environment.OPENAI_API_KEY ?? environment.AI_API_KEY;
+      if (!key) {
+        context.addIssue({
+          code: 'custom',
+          path: ['OPENAI_API_KEY'],
+          message: 'OPENAI_API_KEY (or AI_API_KEY) is required when AI_PROVIDER is openai.',
+        });
+      }
+    }
+    if (environment.AI_PROVIDER === 'anthropic' && !environment.ANTHROPIC_API_KEY) {
       context.addIssue({
         code: 'custom',
-        path: ['AI_API_KEY'],
-        message: 'AI_API_KEY is required when AI_PROVIDER is openai.',
+        path: ['ANTHROPIC_API_KEY'],
+        message: 'ANTHROPIC_API_KEY is required when AI_PROVIDER is anthropic.',
+      });
+    }
+    if (environment.AI_PROVIDER === 'gemini' && !environment.GEMINI_API_KEY) {
+      context.addIssue({
+        code: 'custom',
+        path: ['GEMINI_API_KEY'],
+        message: 'GEMINI_API_KEY is required when AI_PROVIDER is gemini.',
       });
     }
   });
