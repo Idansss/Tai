@@ -1081,3 +1081,126 @@ export function configurationCanonicalForm(input: {
     input.view,
   ].join('|');
 }
+
+// --- F.A.T.U Concierge contracts ---
+
+export const ConciergeIntentSchema = z.enum([
+  'greeting',
+  'brand',
+  'policy',
+  'product_discovery',
+  'design_studio',
+  'sizing',
+  'cart',
+  'order_support',
+  'payment',
+  'complaint',
+  'human_handoff',
+  'unknown',
+]);
+export type ConciergeIntent = z.infer<typeof ConciergeIntentSchema>;
+
+export const ConciergePageContextSchema = z.object({
+  pathname: z.string().max(512),
+  pageType: z.string().max(64),
+  artworkSlug: z.string().max(200).optional(),
+  collectionSlug: z.string().max(200).optional(),
+  productId: z.string().max(200).optional(),
+  selectedVariant: z.string().max(200).optional(),
+  selectedSize: z.string().max(32).optional(),
+  selectedColour: z.string().max(100).optional(),
+  designStudioSelection: z.record(z.string(), z.string()).optional(),
+  cartSummary: z
+    .object({
+      itemCount: z.number().int().min(0).max(100),
+      currency: z.string().max(8),
+      subtotalMinor: z.number().int().nullable(),
+    })
+    .optional(),
+  authenticationState: z.enum(['anonymous', 'authenticated']),
+});
+export type ConciergePageContext = z.infer<typeof ConciergePageContextSchema>;
+
+export const ConciergeChatRequestSchema = z.object({
+  conversationId: z.string().max(64).optional(),
+  message: z.string().min(1).max(4_000),
+  context: ConciergePageContextSchema,
+  clientRequestId: z.string().min(8).max(128),
+});
+export type ConciergeChatRequest = z.infer<typeof ConciergeChatRequestSchema>;
+
+export const ConciergeCitationSchema = z.object({
+  label: z.string(),
+  description: z.string(),
+  href: z.string(),
+  kind: z.enum(['studio', 'catalogue', 'support', 'policy', 'product', 'artwork']),
+});
+export type ConciergeCitation = z.infer<typeof ConciergeCitationSchema>;
+
+export const ConciergeProductCardSchema = z.object({
+  kind: z.literal('product_card'),
+  title: z.string(),
+  subtitle: z.string().optional(),
+  href: z.string(),
+  imageUrl: z.string().optional(),
+  priceMinor: z.number().int().nullable(),
+  currency: z.string().nullable(),
+  reason: z.string().optional(),
+});
+export type ConciergeProductCard = z.infer<typeof ConciergeProductCardSchema>;
+
+export interface ConciergeChatTurnResult {
+  conversationId: string;
+  requestId: string;
+  intent: ConciergeIntent;
+  text: string;
+  citations: ConciergeCitation[];
+  cards: ConciergeProductCard[];
+  ticketReference?: string;
+  provider: 'openai' | 'mock' | 'fallback';
+  guarded: boolean;
+}
+
+export const SupportTicketPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
+export type SupportTicketPriority = z.infer<typeof SupportTicketPrioritySchema>;
+
+export const SupportTicketStatusSchema = z.enum([
+  'OPEN',
+  'ASSIGNED',
+  'WAITING_CUSTOMER',
+  'RESOLVED',
+  'CLOSED',
+]);
+export type SupportTicketStatus = z.infer<typeof SupportTicketStatusSchema>;
+
+export interface SupportTicketSummary {
+  id: string;
+  reference: string;
+  category: string;
+  priority: SupportTicketPriority;
+  status: SupportTicketStatus;
+  summary: string;
+  orderReference: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiConversationSummary {
+  id: string;
+  publicId: string;
+  status: 'OPEN' | 'WAITING_HUMAN' | 'RESOLVED' | 'ARCHIVED';
+  intent: string | null;
+  pagePath: string | null;
+  feedbackScore: number | null;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+}
+
+export interface AiConciergeSettings {
+  assistantName: string;
+  enabled: boolean;
+  supportEmail: string | null;
+  retentionDays: number;
+  escalationNote: string | null;
+}
