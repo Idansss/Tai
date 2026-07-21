@@ -263,6 +263,11 @@ export interface ProductSummary {
    * page prefer it over composing a garment mockup from the artwork plate alone.
    */
   image?: string | null;
+  /**
+   * Optional back-of-garment photograph. When absent, the product page still offers a Back
+   * view via the garment mockup so every shop shirt can be inspected front and back.
+   */
+  imageBack?: string | null;
 }
 
 /**
