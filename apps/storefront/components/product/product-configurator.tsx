@@ -2,6 +2,7 @@
 
 import { Alert, Badge, Price, cn } from '@tms/ui';
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
 import { useMemo, useRef, useState } from 'react';
 import { WishlistButton } from '@/components/account/wishlist-button';
 import { Accordion } from '@/components/site/accordion';
@@ -33,6 +34,7 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
   const selectedColour = product.colours.find((c) => c.name === colour);
   const soldOut = product.availability === 'sold_out';
   const print = artworkImage(product.artworkSlug);
+  const productPhoto = product.image ?? null;
 
   function addToBag() {
     if (soldOut) return;
@@ -69,46 +71,67 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
-      {/* Preview */}
+      {/* Preview — prefer a studio product photo when one was supplied. */}
       <div>
         <div
           className="relative w-full overflow-hidden rounded-[var(--radius-lg)] border border-line bg-canvas-2"
           role="img"
-          aria-label={`${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view`}
+          aria-label={
+            productPhoto
+              ? `${product.title} product photo`
+              : `${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view`
+          }
         >
-          <GarmentMockup
-            garment={product.garment}
-            colour={colour ?? selectedColour?.hex}
-            view={view}
-            artwork={print ? { src: print, area: 'front', alt: '' } : null}
-            priority
-            className="p-4 sm:p-6"
-            sizes="(min-width: 1024px) 40vw, 90vw"
-          />
-          <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
-            {view}
-          </span>
+          {productPhoto ? (
+            <div className="relative aspect-[4/5] w-full">
+              <Image
+                src={productPhoto}
+                alt={`${product.title} — product photo`}
+                fill
+                priority
+                sizes="(min-width: 1024px) 40vw, 90vw"
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <GarmentMockup
+              garment={product.garment}
+              colour={colour ?? selectedColour?.hex}
+              view={view}
+              artwork={print ? { src: print, area: 'front', alt: '' } : null}
+              priority
+              className="p-4 sm:p-6"
+              sizes="(min-width: 1024px) 40vw, 90vw"
+            />
+          )}
+          {productPhoto ? null : (
+            <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
+              {view}
+            </span>
+          )}
         </div>
-        <div
-          className="mt-3 inline-flex rounded-md border border-line p-1"
-          role="group"
-          aria-label="Garment view"
-        >
-          {(['front', 'back'] as View[]).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              aria-pressed={view === v}
-              className={cn(
-                'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
-              )}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+        {productPhoto ? null : (
+          <div
+            className="mt-3 inline-flex rounded-md border border-line p-1"
+            role="group"
+            aria-label="Garment view"
+          >
+            {(['front', 'back'] as View[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                aria-pressed={view === v}
+                className={cn(
+                  'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                  view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Configuration */}

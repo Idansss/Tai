@@ -22,14 +22,28 @@ describe('studio-supplied catalogue media', () => {
     }
   });
 
-  it('keeps clothing photographs in Shop and links them to artwork', () => {
+  it('keeps clothing photographs in Shop as buyable products', async () => {
     expect(suppliedShopDesigns).toHaveLength(4);
 
+    const products = await mockProvider.listProducts();
+    const bySlug = new Map(products.map((p) => [p.slug, p]));
     const artworkSlugs = new Set(suppliedArtworkSeeds.map(({ slug }) => slug));
+
     for (const design of suppliedShopDesigns) {
       expect(design.image).toMatch(/^\/products\/.+\.jpg$/);
       expect(artworkSlugs.has(design.artworkSlug)).toBe(true);
       expect(existsSync(join(process.cwd(), 'public', design.image.slice(1)))).toBe(true);
+
+      const product = bySlug.get(design.slug);
+      expect(product).toBeDefined();
+      expect(product?.image).toBe(design.image);
+      expect(product?.artworkSlug).toBe(design.artworkSlug);
+      expect(product?.availability).toBe('available');
+
+      const detail = await mockProvider.getProduct(design.slug);
+      expect(detail).not.toBeNull();
+      expect(detail?.colours.length).toBeGreaterThan(0);
+      expect(detail?.sizes.some((s) => s.available)).toBe(true);
     }
   });
 
