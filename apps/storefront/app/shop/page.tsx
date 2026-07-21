@@ -14,13 +14,16 @@ export const metadata: Metadata = {
 
 export default async function ShopPage() {
   const products = await dataProvider.listProducts();
+  const designSlugs = new Set(suppliedShopDesigns.map((d) => d.slug));
+  const clothingDesigns = products.filter((p) => designSlugs.has(p.slug));
+  const availablePieces = products.filter((p) => !designSlugs.has(p.slug));
 
   return (
     <Container className="py-14">
       <PageHeader
         eyebrow="Shop"
         title="The shop"
-        lead="Clothing designs and available garments — artwork made wearable."
+        lead="Ready-to-order tees and garments — pick a piece, choose your size, and add it to your bag."
         contained={false}
       />
 
@@ -32,25 +35,30 @@ export default async function ShopPage() {
           Clothing designs
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">
-          Every supplied shirt and worn-piece image lives here in Shop, linked to the artwork it
-          carries.
+          Studio-supplied shirts you can buy as-is — open a piece to choose size, add to bag, and
+          leave a review.
         </p>
-        <ul className="mt-6 grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-6 lg:grid-cols-4">
-          {suppliedShopDesigns.map((design, i) => (
-            <li key={design.slug}>
-              <Reveal delay={Math.min(i, 3) * 60}>
-                <ShopDesignCard design={design} priority={i < 2} />
-              </Reveal>
-            </li>
-          ))}
-        </ul>
+        {clothingDesigns.length === 0 ? (
+          <div className="mt-6">
+            <EmptyState
+              title="No clothing designs yet"
+              description="New shirts are on their way."
+            />
+          </div>
+        ) : (
+          <ul className="mt-6 grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-6 lg:grid-cols-4">
+            {clothingDesigns.map((product, i) => (
+              <li key={product.id}>
+                <Reveal delay={Math.min(i, 3) * 60}>
+                  <ShopDesignCard product={product} priority={i < 2} />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
-      {products.length === 0 ? (
-        <div className="mt-10">
-          <EmptyState title="Nothing in the shop yet" description="New drops are on their way." />
-        </div>
-      ) : (
+      {availablePieces.length === 0 ? null : (
         <section className="mt-16 border-t border-line pt-12" aria-labelledby="available-title">
           <h2
             id="available-title"
@@ -59,7 +67,7 @@ export default async function ShopPage() {
             Available pieces
           </h2>
           <ul className="mt-6 grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-6 lg:grid-cols-3">
-            {products.map((product, i) => (
+            {availablePieces.map((product, i) => (
               <li key={product.id}>
                 <Reveal delay={Math.min(i, 5) * 60}>
                   <ProductCard product={product} />

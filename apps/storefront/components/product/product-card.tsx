@@ -16,7 +16,7 @@ const availabilityLabel = {
  * The image is the product's artwork (products have no photos; the drawing is the product).
  */
 export function ProductCard({ product }: { product: ProductSummary }) {
-  const src = artworkImage(product.artworkSlug);
+  const src = product.image ?? artworkImage(product.artworkSlug);
   const badge = availabilityLabel[product.availability];
 
   return (
@@ -27,7 +27,11 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       >
         <TileImage
           src={src}
-          alt={`${product.artworkTitle} on ${product.garment} — preview`}
+          alt={
+            product.image
+              ? `${product.title} — product photo`
+              : `${product.artworkTitle} on ${product.garment} — preview`
+          }
           badge={
             badge ? (
               <TileBadge className={product.availability === 'sold_out' ? 'bg-neutral-950/80' : ''}>

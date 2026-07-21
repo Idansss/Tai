@@ -5,7 +5,7 @@ import { filterApproved } from '../community';
 import { summariseReviews } from '../reviews';
 import { artworkImage } from '../artwork-images';
 import { countShoppableItems, storyHotspotTargets } from '../stories';
-import { suppliedArtworkSeeds } from './supplied-catalogue';
+import { suppliedArtworkSeeds, suppliedShopDesigns } from './supplied-catalogue';
 import type {
   ArtworkDetail,
   ArtworkPassport,
@@ -57,6 +57,10 @@ interface ProductSeed {
   colours: string[];
   unavailableColours?: string[];
   soldOutSizes?: string[];
+  /** Shop-facing title when it should differ from `artwork — garment`. */
+  displayTitle?: string;
+  /** Product photograph when the studio supplied a flat-lay / worn shot. */
+  image?: string;
 }
 
 const productSeeds: ProductSeed[] = [
@@ -124,13 +128,30 @@ const productSeeds: ProductSeed[] = [
     availability: 'available',
     colours: ['Black', 'Slate', 'Sand'],
   },
+  // Studio-supplied clothing photographs — buyable products in Shop (not Design Studio links).
+  ...suppliedShopDesigns.map<ProductSeed>((design) => {
+    const artwork = suppliedArtworkSeeds.find((a) => a.slug === design.artworkSlug);
+    const isBlack = design.garment.toLowerCase().includes('black');
+    return {
+      slug: design.slug,
+      artworkSlug: design.artworkSlug,
+      artworkTitle: suppliedArtworkTitle(design.artworkSlug),
+      collection: artwork?.collection ?? 'Africa United',
+      garment: 'Classic T-shirt',
+      displayTitle: design.title,
+      image: design.image,
+      priceMinor: 1400000,
+      availability: 'available',
+      colours: isBlack ? ['Black', 'Slate'] : ['Bone', 'Sand'],
+    };
+  }),
 ];
 
 function toProductSummary(seed: ProductSeed): ProductSummary {
   return {
     id: seed.slug,
     slug: seed.slug,
-    title: `${seed.artworkTitle} — ${seed.garment}`,
+    title: seed.displayTitle ?? `${seed.artworkTitle} — ${seed.garment}`,
     artworkSlug: seed.artworkSlug,
     artworkTitle: seed.artworkTitle,
     collection: seed.collection,
@@ -139,6 +160,7 @@ function toProductSummary(seed: ProductSeed): ProductSummary {
     currency: 'NGN',
     availability: seed.availability,
     colourCount: seed.colours.length,
+    image: seed.image ?? null,
   };
 }
 
@@ -703,6 +725,50 @@ function toStorySummary(seed: StorySeed): StorySummary {
  * read/write/moderation is server-authoritative (TMS-FBR-008).
  */
 const reviewSeeds: Record<string, Review[]> = {
+  'product:africa-united-white-tee': [
+    {
+      id: 'rv-auw-1',
+      rating: 5,
+      title: 'Wears like the studio shot',
+      body: 'Print is crisp on the white cotton and the fit is true to size. Exactly what I ordered from Shop.',
+      author: 'Amaka D.',
+      createdAt: '2026-07-12T10:00:00.000Z',
+      verifiedPurchase: true,
+    },
+  ],
+  'product:africa-united-black-tee': [
+    {
+      id: 'rv-aub-1',
+      rating: 5,
+      title: 'Black tee, loud print',
+      body: 'The duo graphic pops on black. Soft hand-feel after one wash and no fading yet.',
+      author: 'Chidi O.',
+      createdAt: '2026-07-10T15:20:00.000Z',
+      verifiedPurchase: true,
+    },
+  ],
+  'product:resilience-white-tee': [
+    {
+      id: 'rv-rw-1',
+      rating: 4,
+      title: 'Poster energy on cotton',
+      body: 'Love the type and the heritage symbols. Sized up for a looser street fit and it works.',
+      author: 'Zainab M.',
+      createdAt: '2026-07-08T09:10:00.000Z',
+      verifiedPurchase: true,
+    },
+  ],
+  'product:africa-united-model-tee': [
+    {
+      id: 'rv-aum-1',
+      rating: 5,
+      title: 'Looks like the worn photo',
+      body: 'Bought the black worn piece and it matches the shop photo. Easy add-to-bag flow, arrived in five days.',
+      author: 'Ifeanyi B.',
+      createdAt: '2026-07-14T12:40:00.000Z',
+      verifiedPurchase: true,
+    },
+  ],
   'product:midnight-in-lagos-classic-tee': [
     {
       id: 'rv-mil-1',
