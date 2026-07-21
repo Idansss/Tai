@@ -17,7 +17,7 @@ export async function getCartTool(cookie?: string): Promise<{
   }
   try {
     const cart = await fetchCart(cookie);
-      const count = cart.items.reduce((n, line) => n + line.quantity, 0);
+    const count = cart.items.reduce((n, line) => n + line.quantity, 0);
     return {
       ok: true,
       text: `Your bag has ${count} item${count === 1 ? '' : 's'}. Subtotal is resolved server-side — I will not invent a price. ${cart.hasIssues ? 'Some lines have availability issues and are excluded from checkout until fixed.' : 'No availability issues reported on the last read.'}`,
@@ -51,7 +51,12 @@ export async function addToCartTool(input: AddCartItemInput): Promise<{
       ok: false,
       text: 'I cannot add to a live bag while the catalogue is in preview mode. Open the product or Design Studio to add it yourself.',
       citations: [
-        { kind: 'studio', label: 'Design Studio', description: 'Build and add', href: '/design-studio' },
+        {
+          kind: 'studio',
+          label: 'Design Studio',
+          description: 'Build and add',
+          href: '/design-studio',
+        },
         { kind: 'catalogue', label: 'Shop', description: 'Browse products', href: '/shop' },
       ],
     };
@@ -62,7 +67,12 @@ export async function addToCartTool(input: AddCartItemInput): Promise<{
       ok: true,
       text: 'Added to your bag. Open the bag to confirm sizes and quantities before checkout.',
       citations: [
-        { kind: 'catalogue', label: 'Your bag', description: 'Confirm the addition', href: '/cart' },
+        {
+          kind: 'catalogue',
+          label: 'Your bag',
+          description: 'Confirm the addition',
+          href: '/cart',
+        },
       ],
     };
   } catch {

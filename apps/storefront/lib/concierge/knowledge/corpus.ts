@@ -2,14 +2,7 @@ import { createHash } from 'node:crypto';
 import type { ConciergeCitation } from '@tms/contracts';
 
 export type KnowledgeSourceType =
-  | 'product'
-  | 'artwork'
-  | 'collection'
-  | 'policy'
-  | 'story'
-  | 'faq'
-  | 'page'
-  | 'article';
+  'product' | 'artwork' | 'collection' | 'policy' | 'story' | 'faq' | 'page' | 'article';
 
 export interface KnowledgeRecord {
   sourceType: KnowledgeSourceType;
@@ -155,9 +148,7 @@ export const KNOWLEDGE_CORPUS: readonly KnowledgeRecord[] = [
 
 function tokenize(text: string): string[] {
   const normalized = text.toLowerCase().replace(/f\.?\s*a\.?\s*t\.?\s*u/g, 'fatu');
-  return normalized
-    .split(/[^a-z0-9₦]+/i)
-    .filter((t) => t.length > 2);
+  return normalized.split(/[^a-z0-9₦]+/i).filter((t) => t.length > 2);
 }
 
 /**

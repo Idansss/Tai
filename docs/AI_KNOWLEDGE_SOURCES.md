@@ -13,19 +13,19 @@
 
 Located in `apps/storefront/lib/concierge/knowledge/corpus.ts`.
 
-| sourceId | Type | URL | Update mechanism |
-| --- | --- | --- | --- |
-| about | page | `/about` | Manual seed + knowledge sync |
-| faq-made-to-order | faq | `/faq` | Manual seed + knowledge sync |
-| delivery | policy | `/delivery` | Manual seed + knowledge sync |
-| returns | policy | `/returns` | Manual seed + knowledge sync |
-| size-guide | policy | `/size-guide` | Manual seed + knowledge sync |
-| faq-payment | faq | `/faq` | Manual seed + knowledge sync |
-| faq-combinations | faq | `/faq` | Manual seed + knowledge sync |
-| studio-guide | page | `/design-studio` | Manual seed + knowledge sync |
-| care | page | `/care` | Manual seed + knowledge sync |
-| contact | page | `/contact` | Manual seed + knowledge sync |
-| privacy | policy | `/privacy` | Manual seed + knowledge sync |
+| sourceId          | Type   | URL              | Update mechanism             |
+| ----------------- | ------ | ---------------- | ---------------------------- |
+| about             | page   | `/about`         | Manual seed + knowledge sync |
+| faq-made-to-order | faq    | `/faq`           | Manual seed + knowledge sync |
+| delivery          | policy | `/delivery`      | Manual seed + knowledge sync |
+| returns           | policy | `/returns`       | Manual seed + knowledge sync |
+| size-guide        | policy | `/size-guide`    | Manual seed + knowledge sync |
+| faq-payment       | faq    | `/faq`           | Manual seed + knowledge sync |
+| faq-combinations  | faq    | `/faq`           | Manual seed + knowledge sync |
+| studio-guide      | page   | `/design-studio` | Manual seed + knowledge sync |
+| care              | page   | `/care`          | Manual seed + knowledge sync |
+| contact           | page   | `/contact`       | Manual seed + knowledge sync |
+| privacy           | policy | `/privacy`       | Manual seed + knowledge sync |
 
 Checksum = SHA-256 prefix of content. Obsolete sources should be unpublished via admin/API.
 

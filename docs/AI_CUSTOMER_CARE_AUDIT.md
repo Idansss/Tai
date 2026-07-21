@@ -17,21 +17,21 @@ The monorepo already contains a production-shaped commerce stack (NestJS API + P
 
 ## 2. Existing architecture
 
-| Layer | Technology | Location |
-| --- | --- | --- |
-| Package manager | pnpm 10.20 / Turbo 2.10 | root `package.json` |
-| Storefront | Next.js 16.2 App Router, React 19 | `apps/storefront` |
-| Admin | Next.js 16.2 App Router | `apps/admin` |
-| API | NestJS 11, Express, Pino | `apps/api` |
-| Worker | BullMQ consumer | `apps/worker` |
-| Database | Prisma 7 + PostgreSQL (Supabase-compatible) | `packages/database` |
-| Contracts | Shared TypeScript DTOs | `packages/contracts` |
-| UI / tokens | `@tms/ui`, Tailwind v4, Space Grotesk + IBM Plex Sans | `packages/ui` |
-| Config | Zod-validated env (`loadEnvironment`) | `packages/configuration` |
-| Payments | Flutterwave + mock provider | `apps/api/src/payments` |
-| Email | `@tms/email` | `packages/email` |
-| Analytics package | Present (lightweight) | `packages/analytics` |
-| Tests | Vitest everywhere; Playwright e2e on storefront | various |
+| Layer             | Technology                                            | Location                 |
+| ----------------- | ----------------------------------------------------- | ------------------------ |
+| Package manager   | pnpm 10.20 / Turbo 2.10                               | root `package.json`      |
+| Storefront        | Next.js 16.2 App Router, React 19                     | `apps/storefront`        |
+| Admin             | Next.js 16.2 App Router                               | `apps/admin`             |
+| API               | NestJS 11, Express, Pino                              | `apps/api`               |
+| Worker            | BullMQ consumer                                       | `apps/worker`            |
+| Database          | Prisma 7 + PostgreSQL (Supabase-compatible)           | `packages/database`      |
+| Contracts         | Shared TypeScript DTOs                                | `packages/contracts`     |
+| UI / tokens       | `@tms/ui`, Tailwind v4, Space Grotesk + IBM Plex Sans | `packages/ui`            |
+| Config            | Zod-validated env (`loadEnvironment`)                 | `packages/configuration` |
+| Payments          | Flutterwave + mock provider                           | `apps/api/src/payments`  |
+| Email             | `@tms/email`                                          | `packages/email`         |
+| Analytics package | Present (lightweight)                                 | `packages/analytics`     |
+| Tests             | Vitest everywhere; Playwright e2e on storefront       | various                  |
 
 **Data-source policy (critical):** storefront uses per-domain composition in `apps/storefront/lib/data/index.ts`. API-capable today: `artworks`, `collections`, `drops`, `stories`. Still mock: `studio`, `products`, `passport`, `reviews`, `community`, `loyalty`, `delivery`. Cart/auth/orders use separate clients and `DATA_SOURCE=api` when the API is reachable. Default builds stay on mock so CI does not require a live API.
 
@@ -39,18 +39,18 @@ The monorepo already contains a production-shaped commerce stack (NestJS API + P
 
 ## 3. Reusable systems for the Concierge
 
-| Capability | Reuse |
-| --- | --- |
-| Brand / policy copy | `/about`, `/faq`, `/delivery`, `/returns`, `/size-guide`, `/care`, `/privacy`, `/terms`, `/cookies`, `/contact`, `/studio-guide` |
-| Catalogue | `dataProvider` + NestJS catalogue/artwork/garment modules |
-| Design Studio rules | Garment compatibility APIs + storefront studio (ADR-013: approved placements only) |
-| Cart | `lib/cart-api.ts` → `POST/PATCH/DELETE /api/v1/cart/*` (never send prices) |
-| Auth | `tms_session` HttpOnly cookie; `AuthProvider` |
-| Orders / payment | NestJS order state machine + Flutterwave handoff |
-| Admin shell / RBAC | `AdminShell`, admin session + MFA + permission guards |
-| Studio Guide UX patterns | `StudioGuideChat` — identity, suggestions, references, tool-error + retry, a11y log |
-| Observability | Pino + correlation IDs; extend with concierge traces |
-| Rate limiting pattern | `AuthRateLimiterService` — mirror for chat |
+| Capability               | Reuse                                                                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Brand / policy copy      | `/about`, `/faq`, `/delivery`, `/returns`, `/size-guide`, `/care`, `/privacy`, `/terms`, `/cookies`, `/contact`, `/studio-guide` |
+| Catalogue                | `dataProvider` + NestJS catalogue/artwork/garment modules                                                                        |
+| Design Studio rules      | Garment compatibility APIs + storefront studio (ADR-013: approved placements only)                                               |
+| Cart                     | `lib/cart-api.ts` → `POST/PATCH/DELETE /api/v1/cart/*` (never send prices)                                                       |
+| Auth                     | `tms_session` HttpOnly cookie; `AuthProvider`                                                                                    |
+| Orders / payment         | NestJS order state machine + Flutterwave handoff                                                                                 |
+| Admin shell / RBAC       | `AdminShell`, admin session + MFA + permission guards                                                                            |
+| Studio Guide UX patterns | `StudioGuideChat` — identity, suggestions, references, tool-error + retry, a11y log                                              |
+| Observability            | Pino + correlation IDs; extend with concierge traces                                                                             |
+| Rate limiting pattern    | `AuthRateLimiterService` — mirror for chat                                                                                       |
 
 ---
 
@@ -73,17 +73,17 @@ The monorepo already contains a production-shaped commerce stack (NestJS API + P
 
 ## 5. Data sources (source-of-truth map)
 
-| Domain | Source of truth | Concierge access |
-| --- | --- | --- |
-| Artwork / collections / drops / stories | Postgres via API (when `DATA_SOURCE=api`) else mock seeds | Live tools; never hardcode titles/prices |
-| Products (artwork×garment) | Composed on storefront; pricing from approved pairs (ADR-015) | Tool must resolve from catalogue services |
-| Studio options | Mock until FBR studio gap closes; API has compatible-garments | Validate via real compatibility endpoints when available |
-| Cart | NestJS cart service | Mutating tools only with explicit customer intent |
-| Orders / payments | NestJS order + payment modules | Ownership-checked tools only |
-| Delivery fees / VAT | Checkout path; delivery domain still mock on storefront | Cite policy pages + checkout totals; do not invent fees |
-| Policies / FAQ | Static Next.js pages (editorial) | Indexed knowledge corpus + citations |
-| Site CMS | `packages/site-content` Prisma models exist | Prefer when admin CMS is wired; otherwise page corpus |
-| Promotions | `Promotion` model | Only when status ACTIVE |
+| Domain                                  | Source of truth                                               | Concierge access                                         |
+| --------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
+| Artwork / collections / drops / stories | Postgres via API (when `DATA_SOURCE=api`) else mock seeds     | Live tools; never hardcode titles/prices                 |
+| Products (artwork×garment)              | Composed on storefront; pricing from approved pairs (ADR-015) | Tool must resolve from catalogue services                |
+| Studio options                          | Mock until FBR studio gap closes; API has compatible-garments | Validate via real compatibility endpoints when available |
+| Cart                                    | NestJS cart service                                           | Mutating tools only with explicit customer intent        |
+| Orders / payments                       | NestJS order + payment modules                                | Ownership-checked tools only                             |
+| Delivery fees / VAT                     | Checkout path; delivery domain still mock on storefront       | Cite policy pages + checkout totals; do not invent fees  |
+| Policies / FAQ                          | Static Next.js pages (editorial)                              | Indexed knowledge corpus + citations                     |
+| Site CMS                                | `packages/site-content` Prisma models exist                   | Prefer when admin CMS is wired; otherwise page corpus    |
+| Promotions                              | `Promotion` model                                             | Only when status ACTIVE                                  |
 
 ---
 
@@ -142,22 +142,26 @@ Customer → F.A.T.U Concierge UI (storefront)
 ## 10. Exact files expected to change / add
 
 ### Documentation
+
 - `docs/AI_CUSTOMER_CARE_*.md`, `docs/AI_*.md` (this suite)
 - `docs/coordination/BACKEND_TO_FRONTEND.md` (new AI endpoints)
 - `docs/coordination/FRONTEND_TO_BACKEND.md` (TMS-FBR-009 fulfilment notes)
 - `.env.example`
 
 ### Database / contracts / config
+
 - `packages/database/prisma/schema.prisma` + migration
 - `packages/contracts/src/index.ts` (concierge DTOs)
 - `packages/configuration/src/index.ts` (`AI_*` vars)
 
 ### API
+
 - `apps/api/src/concierge/**` (module, controllers, services)
 - `apps/api/src/app.module.ts`
 - Optional worker job for knowledge sync
 
 ### Storefront
+
 - `apps/storefront/app/api/concierge/**`
 - `apps/storefront/lib/concierge/**`
 - `apps/storefront/components/concierge/**`
@@ -165,24 +169,26 @@ Customer → F.A.T.U Concierge UI (storefront)
 - Evolve `/studio-guide` to share Concierge identity
 
 ### Admin
+
 - `apps/admin/app/concierge/**`
 - `apps/admin/components/admin-shell.tsx` (nav)
 - `apps/admin/lib/concierge/**`
 
 ### Tests
+
 - Unit/integration under each app; Playwright scenarios for chat shell
 
 ---
 
 ## 11. Assumptions still requiring verification
 
-| Assumption | Status |
-| --- | --- |
-| Production `AI_API_KEY` / provider choice | **Unverified** — env placeholders only |
-| pgvector availability on Supabase | **Unverified** — lexical retrieval first |
-| Exact VAT rate / delivery fee tables | **Partial** — checkout calculates; storefront delivery domain mock |
-| Guest order OTP flow | **Missing** — design verification before claiming guest tracking |
-| Legal finalisation of privacy retention copy | **Draft** — document + admin retention setting |
+| Assumption                                          | Status                                                             |
+| --------------------------------------------------- | ------------------------------------------------------------------ |
+| Production `AI_API_KEY` / provider choice           | **Unverified** — env placeholders only                             |
+| pgvector availability on Supabase                   | **Unverified** — lexical retrieval first                           |
+| Exact VAT rate / delivery fee tables                | **Partial** — checkout calculates; storefront delivery domain mock |
+| Guest order OTP flow                                | **Missing** — design verification before claiming guest tracking   |
+| Legal finalisation of privacy retention copy        | **Draft** — document + admin retention setting                     |
 | Vercel project `tai-admin` maps 1:1 to `apps/admin` | **Likely** via monorepo; confirm in deployment docs when deploying |
 
 ---

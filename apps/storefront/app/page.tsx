@@ -57,7 +57,9 @@ export default async function HomePage() {
   // Prefer the curated order first, then fill from the catalogue — one plate per slide, no dupes.
   for (const slug of [
     ...HERO_SLUG_ORDER,
-    ...artworks.map((a) => a.slug).filter((s) => !(HERO_SLUG_ORDER as readonly string[]).includes(s)),
+    ...artworks
+      .map((a) => a.slug)
+      .filter((s) => !(HERO_SLUG_ORDER as readonly string[]).includes(s)),
   ]) {
     if (heroSlides.length >= PILLARS.length) break;
     if (HERO_EXCLUDED_SLUGS.has(slug)) continue;
