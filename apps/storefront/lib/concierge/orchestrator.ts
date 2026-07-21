@@ -67,8 +67,18 @@ export async function runConciergeTurn(
   if (intentResult.intent === 'greeting') {
     text = `I’m the ${assistantName()}. I can help you discover artwork, choose a garment and size, understand delivery, or check an order. What would you like to do?`;
     citations = [
-      { kind: 'catalogue', label: 'Artworks', description: 'Browse the gallery', href: '/artworks' },
-      { kind: 'studio', label: 'Design Studio', description: 'Build a piece', href: '/design-studio' },
+      {
+        kind: 'catalogue',
+        label: 'Artworks',
+        description: 'Browse the gallery',
+        href: '/artworks',
+      },
+      {
+        kind: 'studio',
+        label: 'Design Studio',
+        description: 'Build a piece',
+        href: '/design-studio',
+      },
       { kind: 'support', label: 'Contact', description: 'Speak to the studio', href: '/contact' },
     ];
   } else if (intentResult.intent === 'human_handoff' || allowed.has('escalate_to_human')) {
@@ -84,9 +94,7 @@ export async function runConciergeTurn(
       },
       opts.cookie,
     );
-    text = ticket.ok
-      ? `I’ll connect you with the studio team. ${ticket.text}`
-      : ticket.text;
+    text = ticket.ok ? `I’ll connect you with the studio team. ${ticket.text}` : ticket.text;
     ticketReference = ticket.ticketReference;
     citations = ticket.citations;
   } else if (intentResult.intent === 'complaint') {
@@ -133,7 +141,12 @@ export async function runConciergeTurn(
       text =
         'I can add a piece once the artwork, garment, colour, size, and placement are confirmed as an approved combination. Tell me those details, or open the Design Studio / product page to add it yourself — I will never substitute options silently.';
       citations = [
-        { kind: 'studio', label: 'Design Studio', description: 'Confirm and add', href: '/design-studio' },
+        {
+          kind: 'studio',
+          label: 'Design Studio',
+          description: 'Confirm and add',
+          href: '/design-studio',
+        },
         { kind: 'catalogue', label: 'Your bag', description: 'Review bag', href: '/cart' },
       ];
       guarded = true;
@@ -144,15 +157,16 @@ export async function runConciergeTurn(
     }
   } else if (intentResult.intent === 'design_studio') {
     const slug =
-      request.context.artworkSlug ||
-      message.match(/artwork\s+([a-z0-9-]+)/i)?.[1] ||
-      undefined;
+      request.context.artworkSlug || message.match(/artwork\s+([a-z0-9-]+)/i)?.[1] || undefined;
     const validation = validateDesignConfiguration({ artworkSlug: slug });
     const link = createDesignStudioDeepLink({ artworkSlug: slug });
     text = `${validation.text} ${link.text}`;
     citations = mergeCitations(validation.citations, link.citations);
   } else if (intentResult.intent === 'product_discovery') {
-    if (request.context.artworkSlug && /\b(this artwork|about this|tell me about)\b/i.test(message)) {
+    if (
+      request.context.artworkSlug &&
+      /\b(this artwork|about this|tell me about)\b/i.test(message)
+    ) {
       const art = await getArtworkTool(request.context.artworkSlug);
       text = art.text;
       cards = art.cards;
@@ -177,7 +191,12 @@ export async function runConciergeTurn(
       if (cards.length === 0) {
         text += ' Try a different mood, city, or budget, or browse the gallery.';
         citations = mergeCitations(citations, [
-          { kind: 'catalogue', label: 'Artworks', description: 'Browse gallery', href: '/artworks' },
+          {
+            kind: 'catalogue',
+            label: 'Artworks',
+            description: 'Browse gallery',
+            href: '/artworks',
+          },
         ]);
       }
     }
@@ -198,7 +217,10 @@ export async function runConciergeTurn(
       text = top.content;
       citations = knowledge.citations;
       // Price/stock deflection stays honest even if knowledge mentions timelines.
-      if (/\b(price|how much|in stock|sold out)\b/i.test(message) && intentResult.intent !== 'policy') {
+      if (
+        /\b(price|how much|in stock|sold out)\b/i.test(message) &&
+        intentResult.intent !== 'policy'
+      ) {
         guarded = true;
         text =
           'I only quote live prices and availability from catalogue tools or the product page — not from memory. Open the artwork or shop page for the current figure.';

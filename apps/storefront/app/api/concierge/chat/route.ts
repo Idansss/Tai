@@ -19,7 +19,12 @@ function clientKey(request: Request): string {
 export async function POST(request: Request): Promise<Response> {
   if (process.env.AI_ENABLED === 'false') {
     return Response.json(
-      { error: { code: 'INTEGRATION_UNAVAILABLE', message: 'The Concierge is temporarily unavailable.' } },
+      {
+        error: {
+          code: 'INTEGRATION_UNAVAILABLE',
+          message: 'The Concierge is temporarily unavailable.',
+        },
+      },
       { status: 503 },
     );
   }

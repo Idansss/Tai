@@ -12,14 +12,14 @@ export async function searchCatalog(query: string): Promise<{
   summary: string;
 }> {
   const q = query.trim();
-  const items = q ? await dataProvider.searchArtworks(q, 8) : (await dataProvider.listArtworks({ limit: 8 })).items;
+  const items = q
+    ? await dataProvider.searchArtworks(q, 8)
+    : (await dataProvider.listArtworks({ limit: 8 })).items;
 
   // Preference heuristics from free text (budget / mood) without inventing popularity.
   // "under 20000" / "under ₦20,000" → treat as naira major units, convert to minor.
   const budgetMatch = q.match(/under\s*₦?\s*([\d,]+)/i);
-  const budgetCeiling = budgetMatch?.[1]
-    ? Number(budgetMatch[1].replace(/,/g, '')) * 100
-    : null;
+  const budgetCeiling = budgetMatch?.[1] ? Number(budgetMatch[1].replace(/,/g, '')) * 100 : null;
 
   let filtered = items;
   if (budgetCeiling != null && !Number.isNaN(budgetCeiling)) {
@@ -161,10 +161,11 @@ export function createDesignStudioDeepLink(input: {
   };
 }
 
-export function validateDesignConfiguration(input: {
-  artworkSlug?: string;
-  garment?: string;
-}): { valid: boolean; text: string; citations: ConciergeCitation[] } {
+export function validateDesignConfiguration(input: { artworkSlug?: string; garment?: string }): {
+  valid: boolean;
+  text: string;
+  citations: ConciergeCitation[];
+} {
   // Without a live studio validation API domain, we refuse to invent validity.
   // Point the customer at the studio which only lists approved combinations.
   if (!input.artworkSlug) {

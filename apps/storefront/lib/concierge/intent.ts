@@ -47,7 +47,9 @@ export function routeIntent(message: string, context?: ConciergePageContext): In
     }
   }
 
-  if (/\b(human|agent|someone|real person|speak to|talk to (a |the )?person|escalat)\b/.test(text)) {
+  if (
+    /\b(human|agent|someone|real person|speak to|talk to (a |the )?person|escalat)\b/.test(text)
+  ) {
     return {
       intent: 'human_handoff',
       allowedTools: [TOOLS.escalate, TOOLS.ticket],
@@ -67,7 +69,9 @@ export function routeIntent(message: string, context?: ConciergePageContext): In
     };
   }
 
-  if (/\b(my order|order status|where.*(order)|track|tracking|order number|order ref)\b/.test(text)) {
+  if (
+    /\b(my order|order status|where.*(order)|track|tracking|order number|order ref)\b/.test(text)
+  ) {
     return {
       intent: 'order_support',
       allowedTools: [TOOLS.orders, TOOLS.orderStatus, TOOLS.ticket, TOOLS.knowledge],
@@ -98,7 +102,13 @@ export function routeIntent(message: string, context?: ConciergePageContext): In
     if (/\b(design studio|placement|compatible|mockup|customi[sz]e)\b/.test(text)) {
       return {
         intent: 'design_studio',
-        allowedTools: [TOOLS.studio, TOOLS.validateStudio, TOOLS.deepLink, TOOLS.artwork, TOOLS.knowledge],
+        allowedTools: [
+          TOOLS.studio,
+          TOOLS.validateStudio,
+          TOOLS.deepLink,
+          TOOLS.artwork,
+          TOOLS.knowledge,
+        ],
         confidence: 'high',
       };
     }

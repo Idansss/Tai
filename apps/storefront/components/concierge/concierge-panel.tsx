@@ -1,14 +1,7 @@
 'use client';
 
 import { buttonVariants, cn, Price } from '@tms/ui';
-import {
-  ArrowRight,
-  Minimize2,
-  RotateCw,
-  Send,
-  ShieldCheck,
-  X,
-} from 'lucide-react';
+import { ArrowRight, Minimize2, RotateCw, Send, ShieldCheck, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useRef } from 'react';
 import { BrandLogo } from '@/components/site/brand-logo';
@@ -71,12 +64,7 @@ export function ConciergePanel() {
         )}
       >
         <header className="flex items-start gap-3 border-b border-line bg-canvas-2 p-4">
-          <BrandLogo
-            className="size-10 shrink-0 rounded-full"
-            alt=""
-            sizes="40px"
-            priority
-          />
+          <BrandLogo className="size-10 shrink-0 rounded-full" alt="" sizes="40px" priority />
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-lg text-ink">{assistantName}</p>
             <p className="text-sm text-muted">
@@ -131,7 +119,10 @@ export function ConciergePanel() {
           )}
 
           {pending ? (
-            <div className="flex items-center gap-2 text-sm text-muted" aria-label="Concierge is responding">
+            <div
+              className="flex items-center gap-2 text-sm text-muted"
+              aria-label="Concierge is responding"
+            >
               <BrandLogo className="size-4 animate-pulse rounded-full" alt="" sizes="16px" />
               <span>Working…</span>
             </div>
@@ -158,13 +149,7 @@ export function ConciergePanel() {
   );
 }
 
-function AssistantBubble({
-  message,
-  onRetry,
-}: {
-  message: ConciergeMessage;
-  onRetry: () => void;
-}) {
+function AssistantBubble({ message, onRetry }: { message: ConciergeMessage; onRetry: () => void }) {
   return (
     <div className="max-w-[92%]">
       <div className="rounded-[var(--radius-md)] rounded-bl-sm bg-canvas-2 px-3 py-2.5 text-sm whitespace-pre-wrap text-ink">
@@ -195,7 +180,10 @@ function AssistantBubble({
                     </p>
                   ) : null}
                 </div>
-                <ArrowRight className="mt-0.5 size-4 shrink-0 text-ink group-hover:translate-x-0.5" aria-hidden />
+                <ArrowRight
+                  className="mt-0.5 size-4 shrink-0 text-ink group-hover:translate-x-0.5"
+                  aria-hidden
+                />
               </Link>
             </li>
           ))}

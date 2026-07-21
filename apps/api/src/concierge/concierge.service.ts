@@ -136,10 +136,7 @@ export class ConciergeService {
     intent?: string;
     pagePath?: string;
   }) {
-    const conversation = await this.ensureConversation(
-      input.conversationPublicId,
-      input.pagePath,
-    );
+    const conversation = await this.ensureConversation(input.conversationPublicId, input.pagePath);
     if (input.intent) {
       await this.database.client.aiConversation.update({
         where: { id: conversation.id },

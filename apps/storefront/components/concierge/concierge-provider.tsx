@@ -141,8 +141,7 @@ export function ConciergeProvider({
 
   const pageContext = useMemo<ConciergePageContext>(() => {
     const pageType = pageTypeFromPath(pathname);
-    const artworkSlug =
-      pageType === 'artwork' ? pathname.split('/')[2]?.split('?')[0] : undefined;
+    const artworkSlug = pageType === 'artwork' ? pathname.split('/')[2]?.split('?')[0] : undefined;
     const collectionSlug =
       pageType === 'collection' ? pathname.split('/')[2]?.split('?')[0] : undefined;
     return {
