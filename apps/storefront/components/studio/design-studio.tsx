@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, cn, Eyebrow, Heading, Price, Text } from '@tms/ui';
-import { Check, Copy, Crop, Heart, Move, RotateCcw, ShoppingBag } from 'lucide-react';
+import { Check, ChevronDown, Copy, Crop, Heart, Move, RotateCcw, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
@@ -31,6 +31,11 @@ import {
   type StudioView,
   switchView,
 } from '@/lib/studio';
+import {
+  defaultOpenStudioFolderId,
+  groupArtworksForStudio,
+  type StudioArtworkFolder,
+} from '@/lib/studio-artwork-folders';
 
 function ChipButton({
   selected,
@@ -103,6 +108,10 @@ export function DesignStudio({
   // placement or scale this artwork was not approved for.
   const [config, setConfig] = useState<StudioConfig>(() =>
     resolveStudioConfig(initialConfig, initialOptions),
+  );
+  const artworkFolders = useMemo(() => groupArtworksForStudio(artworks), [artworks]);
+  const [openFolders, setOpenFolders] = useState<Set<StudioArtworkFolder['id']>>(
+    () => new Set([defaultOpenStudioFolderId(groupArtworksForStudio(artworks), initialConfig.artwork)]),
   );
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -268,6 +277,8 @@ export function DesignStudio({
         );
         setOptions(nextOptions);
         setConfig(nextConfig);
+        const folderId = defaultOpenStudioFolderId(artworkFolders, slug);
+        setOpenFolders((prev) => new Set([...prev, folderId]));
         // Keep the URL shareable/refresh-safe without a Next navigation (which would reload).
         window.history.replaceState(null, '', `/design-studio?artwork=${encodeURIComponent(slug)}`);
       } catch {
@@ -278,7 +289,7 @@ export function DesignStudio({
         if (latestRequest.current === slug) setLoadingArtwork(null);
       }
     },
-    [config.artwork, config.view, config.quantity, loadingArtwork],
+    [config.artwork, config.view, config.quantity, loadingArtwork, artworkFolders],
   );
 
   // Placement chips are already limited to the side being viewed, so this just prints the active
@@ -584,55 +595,110 @@ export function DesignStudio({
           </div>
 
           <Section step={1} title="Choose artwork">
-            <ul className="grid grid-cols-3 gap-3">
-              {artworks.map((a) => (
-                <li key={a.slug}>
-                  <button
-                    type="button"
-                    onClick={() => selectArtwork(a.slug)}
-                    aria-pressed={config.artwork === a.slug}
-                    aria-busy={loadingArtwork === a.slug}
-                    className={cn(
-                      'group block w-full overflow-hidden rounded-md border text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                      config.artwork === a.slug
-                        ? 'border-[var(--color-accent-primary)] ring-2 ring-[var(--color-accent-primary)]'
-                        : 'border-line-2 hover:border-line',
-                    )}
-                  >
-                    {/* The drawing, not a gradient. Unchosen pieces rest in graphite and the
-                        chosen one is in colour — the same rule as the wall: colour is a reward,
-                        and here it marks what you picked. */}
-                    <span className="relative block aspect-[4/5] w-full overflow-hidden bg-canvas-2">
-                      {artworkImage(a.slug) ? (
-                        <Image
-                          src={artworkImage(a.slug) as string}
-                          alt=""
-                          aria-hidden
-                          fill
-                          sizes="120px"
-                          className={cn(
-                            'object-cover transition-[filter] duration-[var(--duration-base)] motion-reduce:transition-none',
-                            config.artwork === a.slug
-                              ? 'grayscale-0'
-                              : 'grayscale group-hover:grayscale-0 motion-reduce:grayscale-0',
-                          )}
-                        />
-                      ) : null}
-                      {loadingArtwork === a.slug ? (
-                        <span className="absolute inset-0 grid place-items-center bg-canvas/60">
-                          <span
-                            role="status"
-                            aria-label="Loading artwork"
-                            className="size-5 animate-spin rounded-full border-2 border-ink border-t-transparent motion-reduce:animate-none"
-                          />
+            <p className="mb-3 text-xs text-muted">
+              Every Collections piece, split into two folders.
+            </p>
+            <div className="space-y-2">
+              {artworkFolders.map(({ folder, artworks: folderArtworks }) => {
+                const open = openFolders.has(folder.id);
+                const regionId = `studio-folder-${folder.id}`;
+                return (
+                  <div key={folder.id} className="overflow-hidden rounded-md border border-line">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenFolders((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(folder.id)) next.delete(folder.id);
+                          else next.add(folder.id);
+                          return next;
+                        })
+                      }
+                      aria-expanded={open}
+                      aria-controls={regionId}
+                      className="flex w-full items-center justify-between gap-3 bg-canvas-2 px-3 py-2.5 text-left outline-none transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-ink">
+                          {folder.label}
+                          <span className="ml-2 font-normal normal-case tracking-normal text-muted">
+                            {folderArtworks.length}
+                          </span>
                         </span>
-                      ) : null}
-                    </span>
-                    <span className="block truncate px-2 py-1.5 text-xs text-ink">{a.title}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+                        <span className="mt-0.5 block truncate text-[0.7rem] text-muted">
+                          {folder.hint}
+                        </span>
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          'size-4 shrink-0 text-muted transition-transform duration-[var(--duration-base)] motion-reduce:transition-none',
+                          open && 'rotate-180',
+                        )}
+                        aria-hidden
+                      />
+                    </button>
+                    <div
+                      id={regionId}
+                      className={cn(
+                        'grid transition-[grid-template-rows] duration-[var(--duration-base)] motion-reduce:transition-none',
+                        open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                      )}
+                    >
+                      <div className="overflow-hidden">
+                        <ul className="grid grid-cols-3 gap-3 p-3">
+                          {folderArtworks.map((a) => (
+                            <li key={a.slug}>
+                              <button
+                                type="button"
+                                onClick={() => selectArtwork(a.slug)}
+                                aria-pressed={config.artwork === a.slug}
+                                aria-busy={loadingArtwork === a.slug}
+                                className={cn(
+                                  'group block w-full overflow-hidden rounded-md border text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                                  config.artwork === a.slug
+                                    ? 'border-[var(--color-accent-primary)] ring-2 ring-[var(--color-accent-primary)]'
+                                    : 'border-line-2 hover:border-line',
+                                )}
+                              >
+                                <span className="relative block aspect-[4/5] w-full overflow-hidden bg-canvas-2">
+                                  {artworkImage(a.slug) ? (
+                                    <Image
+                                      src={artworkImage(a.slug) as string}
+                                      alt=""
+                                      aria-hidden
+                                      fill
+                                      sizes="120px"
+                                      className={cn(
+                                        'object-cover transition-[filter] duration-[var(--duration-base)] motion-reduce:transition-none',
+                                        config.artwork === a.slug
+                                          ? 'grayscale-0'
+                                          : 'grayscale group-hover:grayscale-0 motion-reduce:grayscale-0',
+                                      )}
+                                    />
+                                  ) : null}
+                                  {loadingArtwork === a.slug ? (
+                                    <span className="absolute inset-0 grid place-items-center bg-canvas/60">
+                                      <span
+                                        role="status"
+                                        aria-label="Loading artwork"
+                                        className="size-5 animate-spin rounded-full border-2 border-ink border-t-transparent motion-reduce:animate-none"
+                                      />
+                                    </span>
+                                  ) : null}
+                                </span>
+                                <span className="block truncate px-2 py-1.5 text-xs text-ink">
+                                  {a.title}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </Section>
 
           <Section step={2} title="Garment" disabled={!artwork}>

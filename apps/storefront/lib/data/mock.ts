@@ -348,13 +348,11 @@ const artworks: ArtworkSummary[] = [
     title: suppliedArtworkTitle(seed.slug),
     collection: seed.collection,
     shortStory: `A studio-supplied piece from the ${seed.collection} collection.`,
-    availability: null,
-    startingPriceMinor: null,
-    currency: null,
-    compatibleGarments:
-      seed.slug === 'resilience-hands-high' || seed.slug.startsWith('africa-united-')
-        ? ['Classic T-shirt']
-        : [],
+    availability: 'available',
+    startingPriceMinor: 1200000,
+    currency: 'NGN',
+    // Every Collections piece is Design Studio–ready on classic and oversized tees.
+    compatibleGarments: ['Classic T-shirt', 'Oversized T-shirt'],
     limitedEdition: false,
   })),
 ];
