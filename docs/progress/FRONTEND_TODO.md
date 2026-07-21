@@ -7,6 +7,17 @@ lint, build, visual evidence, docs updated).
 
 ## Phase F0 — Reference audit & design foundation
 
+- [x] **TMS-F0-013** Canonical F.A.T.U logo system
+  - Status: **Verified** (2026-07-20)
+  - Evidence: the supplied transparent 6600×4928 master was tightly cropped and exported as an
+    optimized 1024px brand asset, 512px browser icon, 180px Apple icon, and 1200×630 social card.
+    Reusable logo components replace the storefront header/footer/mobile-menu wordmarks and the
+    admin desktop/mobile/login wordmarks. Storefront metadata now publishes branded Open Graph,
+    Twitter, icon, Apple-icon, and web-manifest entries. Responsive Playwright evidence covers
+    storefront header/footer/menu plus admin login/shell at 375px and 1440px. Storefront tests
+    289/289, admin tests 125/125, both apps lint/typecheck/build green; asset and metadata routes
+    return 200 with no browser-console errors. Branch: `codex/fatu-logo-system`; commit `af07bee`.
+
 - [x] **TMS-F0-001** Repository inspection & branch setup
   - Status: Verified
   - Evidence: main at `dd910ae9…` confirmed; branch `claude/f0-visual-foundation` from latest

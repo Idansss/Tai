@@ -4,6 +4,17 @@ All notable changes to Tai Manic Studios are documented here.
 
 The project uses a four-part release version: `major.minor.patch.micro`.
 
+## [0.1.1.0] - 2026-07-21
+
+### Added
+
+- Added the supplied F.A.T.U brand mark across the storefront and admin experience, including responsive navigation, authentication, and footer placements.
+- Added branded browser icons, an Apple touch icon, social sharing artwork, and an installable storefront manifest.
+
+### Changed
+
+- Replaced text-only F.A.T.U wordmarks with reusable, optimized logo components and documented the verified frontend handoff.
+
 ## [0.1.0.0] - 2026-07-14
 
 ### Added

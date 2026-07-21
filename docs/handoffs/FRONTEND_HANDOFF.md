@@ -1,5 +1,26 @@
 # Frontend Handoff
 
+## Canonical F.A.T.U logo system (TMS-F0-013, 2026-07-20) — VERIFIED
+
+The user-supplied transparent logo at `C:\Users\Admin\Downloads\FATU l design.png` is now the
+canonical visual mark. It was cropped to its true square artwork bounds before export; the supplied
+white-background variant is intentionally not used as a web source asset. Both apps receive their
+own optimized `/public/brand/fatu-logo.png`, `/app/icon.png`, and `/app/apple-icon.png` so they can
+deploy independently.
+
+Storefront coverage: sticky header, mobile menu, dark footer (with a warm light backing so black
+letterforms retain contrast), favicon/Apple icon, install manifest, and 1200×630 Open Graph/Twitter
+preview. Admin coverage: desktop sidebar, mobile header/drawer, sign-in screen, favicon, and Apple
+icon. `BrandLogo` components keep intrinsic dimensions, responsive `sizes`, empty alt text when a
+labelled link already supplies the accessible name, and descriptive alt text when the mark stands
+alone.
+
+Verification on `codex/fatu-logo-system` commit `af07bee`: storefront 289/289 tests, admin 125/125,
+both lint/typecheck/build green. Playwright inspected the rendered logo surfaces at 375px and 1440px;
+all asset/metadata endpoints return 200 and no console errors were emitted. Visual evidence and the
+focused design report live under
+`C:\Users\Admin\.gstack\projects\tai\designs\design-audit-20260720\`.
+
 ## Data source policy (F7, 2026-07-17) — DECIDED
 
 **The question.** `DATA_SOURCE` was one all-or-nothing switch (`api` or `mock`) chosen when no

@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
+import { BrandLogo } from '@/components/site/brand-logo';
 import { primaryNav } from '@/lib/nav';
 
 /**
@@ -62,9 +63,10 @@ export function SiteHeader() {
         <nav className="flex h-16 items-center justify-between gap-4" aria-label="Primary">
           <Link
             href="/"
-            className="rounded-sm font-display text-lg font-semibold tracking-tight text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
+            aria-label="F.A.T.U home"
+            className="inline-flex size-12 shrink-0 items-center justify-center rounded-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
           >
-            F.A.T.U
+            <BrandLogo className="size-11" priority sizes="44px" />
           </Link>
 
           <ul className="hidden items-center gap-8 md:flex">
@@ -136,7 +138,10 @@ export function SiteHeader() {
         className="tms-slideover m-0 ml-auto h-dvh max-h-none w-[min(22rem,85vw)] max-w-none bg-canvas p-0 text-ink open:flex open:flex-col"
       >
         <div className="flex h-16 items-center justify-between border-b border-line px-5">
-          <span className="font-display text-sm font-semibold tracking-tight">Menu</span>
+          <div className="flex items-center gap-2.5">
+            <BrandLogo className="size-9" sizes="36px" />
+            <span className="font-display text-sm font-semibold tracking-tight">Menu</span>
+          </div>
           <IconButton
             label="Close menu"
             icon={<X className="size-5" aria-hidden />}

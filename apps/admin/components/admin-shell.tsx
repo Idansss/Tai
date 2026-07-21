@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type MouseEvent, useCallback, useEffect, useRef } from 'react';
 import { useAdminAuth } from './admin-auth-provider';
+import { BrandLogo } from './brand-logo';
 
 const NAV = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -63,11 +64,18 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
   );
 }
 
-function BrandMark({ className }: { className?: string }) {
+function AdminBrand({ compact = false }: { compact?: boolean }) {
   return (
-    <span className={cn('font-display text-lg font-semibold tracking-tight text-ink', className)}>
-      F.A.T.U
-    </span>
+    <div className="flex items-center gap-2">
+      <BrandLogo
+        className={compact ? 'size-9' : 'size-10'}
+        priority
+        sizes={compact ? '36px' : '40px'}
+      />
+      <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
+        Admin
+      </span>
+    </div>
   );
 }
 
@@ -135,10 +143,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar — fixed in the viewport; only main content scrolls */}
       <aside className="hidden h-dvh w-60 shrink-0 overflow-y-auto border-r border-line bg-canvas md:block">
         <div className="flex h-16 items-center gap-2 border-b border-line px-5">
-          <BrandMark />
-          <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
-            Admin
-          </span>
+          <AdminBrand />
         </div>
         <nav className="p-3" aria-label="Admin sections">
           <NavList pathname={pathname} />
@@ -156,10 +161,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               aria-haspopup="dialog"
             />
             <div className="flex items-center gap-2 md:hidden">
-              <BrandMark className="text-base" />
-              <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
-                Admin
-              </span>
+              <AdminBrand compact />
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -197,12 +199,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         className="m-0 h-dvh max-h-none w-[min(20rem,85vw)] max-w-none bg-canvas p-0 text-ink backdrop:bg-black/50 open:flex open:flex-col"
       >
         <div className="flex h-16 items-center justify-between border-b border-line px-5">
-          <div className="flex items-center gap-2">
-            <BrandMark className="text-base" />
-            <span className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
-              Admin
-            </span>
-          </div>
+          <AdminBrand compact />
           <IconButton
             label="Close menu"
             icon={<X className="size-5" aria-hidden />}

@@ -19,8 +19,13 @@ const sans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
+  applicationName: 'F.A.T.U Admin',
   title: { default: 'Admin · From Africa To You', template: '%s · F.A.T.U Admin' },
   description: 'Operational console for From Africa To You.',
+  icons: {
+    icon: [{ url: '/icon.png', type: 'image/png', sizes: '512x512' }],
+    apple: [{ url: '/apple-icon.png', type: 'image/png', sizes: '180x180' }],
+  },
   robots: { index: false, follow: false, nocache: true },
 };
 

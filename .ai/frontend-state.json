@@ -2,7 +2,7 @@
   "agent": "Claude Code",
   "area": "frontend",
   "currentPhase": "F7 API integration (in progress)",
-  "lastVerifiedTask": "TMS-F7-006b",
+  "lastVerifiedTask": "TMS-F0-013",
   "nextRecommendedTask": "F7 on claude/f7-api-integration (PR #23). DONE: TMS-F7-001..004 (http foundation, per-domain data source, artworks+collections, nullable price), F7-005 (Studio on approved placements), F7-006a (canonical lineId + cart client), F7-006b (cart UI on the server cart: server totals, issue lines kept + reasons, hasIssues blocks checkout, promotion 422 vs 200-with-null). NEXT: TMS-F7-008 customer auth cutover (/api/v1/auth/*, opaque tms_session cookie) — it unblocks TMS-F7-007 saved designs (client + tests already done in lib/designs-api.ts) and makes the guest-cart merge real. BLOCKERS: (1) no live API locally — Postgres has only B1 identity tables and migrating it would disturb the parallel backend session, so everything is stub-verified; (2) TMS-FBR-020 — a cart line is pure ids and cannot be rendered from its own response, so lib/cart-view.ts joins labels from /artworks + /garments as an interim.",
   "completedTasks": [
     "TMS-F0-001",
@@ -17,6 +17,7 @@
     "TMS-F0-010",
     "TMS-F0-011",
     "TMS-F0-012",
+    "TMS-F0-013",
     "TMS-F1-001",
     "TMS-F1-002",
     "TMS-F1-003",
@@ -64,7 +65,7 @@
   ],
   "buildStatus": "passing",
   "testStatus": "passing",
-  "visualRegressionStatus": "baselines-committed (4 viewports, homepage; Windows-rendered, not in CI)",
+  "visualRegressionStatus": "TMS-F0-013 logo surfaces verified at 375px and 1440px (storefront header/footer/menu, admin login/shell); prior homepage baselines remain committed",
   "mockDependencies": [
     "storefront:home:featuredArtworks (TMS-FBR-001)",
     "storefront:/artworks listing + detail (TMS-FBR-001)",
@@ -96,7 +97,7 @@
     "storefront:studio guide (/studio-guide) — deterministic mock assistant (lib/studio-guide.ts), no LLM/live tools; guardrails deflect stock/price/delivery; order-status = tool_error + retry; real assistant endpoint + tool results are backend (TMS-FBR-009)",
     "storefront:loyalty & referrals (/account/loyalty) — illustrative email-derived points/tier + rewards + referral code (lib/loyalty.ts); redeem/share are preview-only; real ledger/earn/redeem + referral attribution are backend (TMS-FBR-008)"
   ],
-  "branch": "claude/f5-post-merge",
+  "branch": "codex/fatu-logo-system",
   "buildStatusNote": "F5 (growth & AI) COMPLETE — all of TMS-F5-001…010 Verified (pnpm check green). Storefront: 001 drops, 002 waitlist, 003 pre-order/made-to-order, 004 reviews, 005 community gallery, 006 artwork passport, 007 shoppable stories, 008 studio guide, 010 loyalty & referrals. Admin: 009 brand storyteller. F0–F4 Verified AND MERGED TO MAIN (2026-07-15). The F0→F4 PR stack (#4→#8) was merged bottom-up with merge commits (main HEAD e919e7e; merge commits 9599d35/190d8c7/d0201a1/f0de066/e919e7e) and all five phase branches deleted; pnpm check re-run green on the integrated main (13/13 build tasks, all unit tests, format/lint/typecheck/db:validate). Recovery note: PR #5 auto-closed when gh's --delete-branch removed its base (f0) before the auto-retarget fired; recovered by recreating the f0 branch, reopening #5, retargeting to main — thereafter each next PR was retargeted to main BEFORE merge and branches were deleted only as final cleanup. Only open item is defect TMS-F1-DEF-001 (soft 404, SEO-only). Admin Vitest 125 tests (was 116 — +9 storyteller); storefront 195 (was 89 — +24 drops, +6 waitlist, +10 fulfilment, +11 passport, +11 stories, +13 reviews, +12 community, +8 studio-guide, +11 loyalty). Note: pnpm audit 410 outage since F3-004 (this is the only failing CI 'quality' check — a retired npm endpoint, not a code issue); no new deps added.",
-  "lastUpdated": "2026-07-16T03:30:00Z"
+  "lastUpdated": "2026-07-20T23:40:00+01:00"
 }
