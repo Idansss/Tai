@@ -7,6 +7,7 @@ import type {
 import { routeIntent } from './intent';
 import { formatCitationLinks, retrieveKnowledge } from './knowledge/corpus';
 import { buildSystemPrompt } from './prompts/system';
+import { hasAnyLiveProvider, polishWithFallback } from './providers/fallback';
 import { redactSensitive, sanitizeModelOutput } from './security/redact';
 import { getCartTool } from './tools/cart';
 import {
@@ -223,17 +224,20 @@ export async function runConciergeTurn(
     text = `${contextBits.join(' ')}\n\n${text}`;
   }
 
-  // Optional LLM polish — never invents tools; only rephrases when configured.
-  if (process.env.AI_PROVIDER === 'openai' && process.env.AI_API_KEY) {
+  // Optional LLM polish with OpenAI → Anthropic → Gemini fallback.
+  // Never invents tools/facts — only rephrases the grounded draft.
+  if (hasAnyLiveProvider()) {
     try {
-      const polished = await polishWithOpenAI({
+      const polished = await polishWithFallback({
         system: buildSystemPrompt(assistantName()),
         user: message,
         draft: text,
       });
       if (polished) {
-        text = polished;
-        provider = 'openai';
+        text = polished.text;
+        provider = polished.provider;
+      } else {
+        provider = 'fallback';
       }
     } catch {
       provider = 'fallback';
@@ -251,36 +255,4 @@ export async function runConciergeTurn(
     provider,
     guarded,
   };
-}
-
-async function polishWithOpenAI(input: {
-  system: string;
-  user: string;
-  draft: string;
-}): Promise<string | null> {
-  const model = process.env.AI_MODEL || 'gpt-4.1-mini';
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.AI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.3,
-      messages: [
-        { role: 'system', content: input.system },
-        {
-          role: 'user',
-          content: `Customer said: ${input.user}\n\nGrounded draft (do not add facts):\n${input.draft}\n\nRewrite briefly in Concierge voice. Do not add products, prices, policies, or promises absent from the draft.`,
-        },
-      ],
-    }),
-    signal: AbortSignal.timeout(12_000),
-  });
-  if (!response.ok) return null;
-  const json = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  return json.choices?.[0]?.message?.content?.trim() || null;
 }
