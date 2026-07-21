@@ -196,7 +196,7 @@ export default async function ArtworkPassportPage({ params }: Params) {
       <div className="mt-14 flex flex-wrap items-center gap-4">
         <PillLink href={`/artworks/${passport.artworkSlug}`}>Back to artwork</PillLink>
         <Link
-          href="/design-studio"
+          href={`/design-studio?artwork=${encodeURIComponent(passport.artworkSlug)}`}
           className="text-xs font-medium uppercase tracking-[0.08em] text-muted underline-offset-4 outline-none hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
         >
           Design with this artwork
