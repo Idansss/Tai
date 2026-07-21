@@ -6,6 +6,8 @@
  * and when it does this module is the single place that changes.
  */
 
+import { suppliedArtworkSeeds } from './data/supplied-catalogue';
+
 /** Slugs we hold a drawing for. Anything else has no plate to show. */
 const ARTWORK_SLUGS = new Set([
   'harmattan-bloom',
@@ -16,6 +18,7 @@ const ARTWORK_SLUGS = new Set([
   'paper-tigers',
   'rainy-season',
   'the-getaway',
+  ...suppliedArtworkSeeds.map(({ slug }) => slug),
 ]);
 
 /**

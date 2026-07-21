@@ -5,6 +5,7 @@ import { filterApproved } from '../community';
 import { summariseReviews } from '../reviews';
 import { artworkImage } from '../artwork-images';
 import { countShoppableItems, storyHotspotTargets } from '../stories';
+import { suppliedArtworkSeeds } from './supplied-catalogue';
 import type {
   ArtworkDetail,
   ArtworkPassport,
@@ -190,7 +191,32 @@ const collectionMeta: { slug: string; name: string; description: string }[] = [
     description:
       'Street-level scenes across African cities — the muse at market and on the move, in full colour.',
   },
+  {
+    slug: 'africa-united',
+    name: 'Africa United',
+    description:
+      'Portraits of shared heritage, family and creative life, drawn through textiles, symbols and community.',
+  },
+  {
+    slug: 'resilience',
+    name: 'Resilience',
+    description:
+      'Bold poster studies celebrating origin, heritage, power and the confidence to stand tall.',
+  },
+  {
+    slug: 'studio-muses',
+    name: 'Studio Muses',
+    description:
+      'Character and styling studies from the studio — caps, colour, markets and everyday movement.',
+  },
 ];
+
+function suppliedArtworkTitle(slug: string): string {
+  return slug
+    .split('-')
+    .map((word) => (word === 'africa' ? 'Africa' : word[0]?.toUpperCase() + word.slice(1)))
+    .join(' ');
+}
 
 const artworks: ArtworkSummary[] = [
   {
@@ -289,6 +315,21 @@ const artworks: ArtworkSummary[] = [
     compatibleGarments: ['Oversized T-shirt'],
     limitedEdition: false,
   },
+  ...suppliedArtworkSeeds.map<ArtworkSummary>((seed, index) => ({
+    id: `studio-supplied-${index + 1}`,
+    slug: seed.slug,
+    title: suppliedArtworkTitle(seed.slug),
+    collection: seed.collection,
+    shortStory: `A studio-supplied piece from the ${seed.collection} collection.`,
+    availability: null,
+    startingPriceMinor: null,
+    currency: null,
+    compatibleGarments:
+      seed.slug === 'resilience-hands-high' || seed.slug.startsWith('africa-united-')
+        ? ['Classic T-shirt']
+        : [],
+    limitedEdition: false,
+  })),
 ];
 
 const HOUR_MS = 3_600_000;

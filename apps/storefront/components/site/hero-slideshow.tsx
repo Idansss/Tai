@@ -23,10 +23,10 @@ const ADVANCE_MS = 4200;
  * pillars remain clickable.
  */
 export function HeroSlideshow({ slides, pillars }: { slides: HeroSlide[]; pillars: string[] }) {
-  const steps = pillars.length;
+  // One pillar per unique slide — never wrap, so the same plate never appears twice in the loop.
+  const steps = Math.min(pillars.length, Math.max(slides.length, 1));
   const [active, setActive] = useState(0);
-  // The image shown for a step; slides cycle if there are fewer of them than pillars.
-  const shown = slides.length ? active % slides.length : 0;
+  const shown = slides.length ? Math.min(active, slides.length - 1) : 0;
 
   useEffect(() => {
     if (steps <= 1 || slides.length <= 1) return;
@@ -107,7 +107,7 @@ export function HeroSlideshow({ slides, pillars }: { slides: HeroSlide[]; pillar
           delay={320}
           className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-white/15 pt-6 sm:grid-cols-3 lg:grid-cols-5"
         >
-          {pillars.map((label, i) => {
+          {pillars.slice(0, steps).map((label, i) => {
             const current = i === active;
             return (
               <li key={label}>

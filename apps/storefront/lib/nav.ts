@@ -5,7 +5,6 @@ export interface NavItem {
 
 /** Primary navigation shown in the header and mobile menu. */
 export const primaryNav: NavItem[] = [
-  { href: '/artworks', label: 'Artworks' },
   { href: '/collections', label: 'Collections' },
   { href: '/drops', label: 'Drops' },
   { href: '/shop', label: 'Shop' },
@@ -19,7 +18,6 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
     heading: 'Explore',
     items: [
-      { href: '/artworks', label: 'Artworks' },
       { href: '/collections', label: 'Collections' },
       { href: '/drops', label: 'Drops' },
       { href: '/shop', label: 'Shop' },
