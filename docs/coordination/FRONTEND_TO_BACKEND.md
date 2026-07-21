@@ -410,3 +410,15 @@ replacing the demo auth with `/api/v1/auth/*`.
 
 No backend action needed â€” recorded so the dependency is visible on both sides. The auth contract
 (TMS-B1-002) is already published and unchanged.
+
+## Request TMS-FBR-009 — Concierge / AI customer care (fulfilled in part, 2026-07-21)
+
+- Frontend shipped: storefront Concierge BFF + UI; admin `/concierge` console; knowledge seed corpus.
+- Backend shipped on same epic: `ConciergeModule` — tickets, knowledge sync, admin list/metrics, message persistence.
+- Endpoints:
+  - `POST /api/v1/concierge/tickets`
+  - `POST /api/v1/concierge/messages`
+  - `GET /api/v1/concierge/settings`
+  - `POST /api/v1/concierge/knowledge/sync` (secret or admin)
+  - `GET /api/v1/concierge/admin/{tickets,conversations,knowledge,metrics}` (admin session)
+- Still open: guest order OTP verification; fault image upload; concierge RBAC permission seeds; Redis rate-limit; pgvector if needed.

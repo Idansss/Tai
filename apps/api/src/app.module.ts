@@ -7,6 +7,7 @@ import { ArtworkModule } from './artworks/artwork.module.js';
 import { CatalogueModule } from './catalogue/catalogue.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CartModule } from './cart/cart.module.js';
+import { ConciergeModule } from './concierge/concierge.module.js';
 import { DesignModule } from './designs/design.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
@@ -24,6 +25,7 @@ import { PaymentModule } from './payments/payment.module.js';
     CatalogueModule,
     GarmentModule,
     CartModule,
+    ConciergeModule,
     DesignModule,
     InventoryModule,
     MediaModule,

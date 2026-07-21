@@ -33,6 +33,12 @@ describe('loadEnvironment', () => {
       ADMIN_AUTH_SESSION_TTL_SECONDS: 28_800,
       ADMIN_MFA_CHALLENGE_TTL_SECONDS: 300,
       ADMIN_MFA_ENCRYPTION_KEY: 'bG9jYWwtZGV2ZWxvcG1lbnQtbWZhLWtleS0xMjM0NTY',
+      AI_ENABLED: true,
+      AI_PROVIDER: 'mock',
+      AI_MODEL: 'gpt-4.1-mini',
+      AI_MAX_DAILY_REQUESTS: 2_000,
+      AI_CHAT_RETENTION_DAYS: 90,
+      AI_ASSISTANT_NAME: 'F.A.T.U Concierge',
     });
   });
 

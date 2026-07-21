@@ -4,6 +4,7 @@ import { AuthProvider } from '@/components/account/auth-provider';
 import { WishlistProvider } from '@/components/account/wishlist-provider';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { CartProvider } from '@/components/cart/cart-provider';
+import { ConciergeRoot } from '@/components/concierge/concierge-root';
 import { isCartServerBacked } from '@/lib/cart-api';
 import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
@@ -88,6 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <SiteFooter />
               </div>
               <CartDrawer />
+              <ConciergeRoot />
             </CartProvider>
           </WishlistProvider>
         </AuthProvider>

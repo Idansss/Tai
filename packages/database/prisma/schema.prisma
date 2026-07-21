@@ -1191,3 +1191,178 @@ model AuditLog {
   @@index([occurredAt], map: "audit_logs_occurred_at_idx")
   @@map("audit_logs")
 }
+
+// --- F.A.T.U Concierge (AI customer care) ---
+
+enum AiMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum AiConversationStatus {
+  OPEN
+  WAITING_HUMAN
+  RESOLVED
+  ARCHIVED
+}
+
+enum SupportTicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SupportTicketStatus {
+  OPEN
+  ASSIGNED
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum AiKnowledgeVisibility {
+  PUBLIC
+  AUTHENTICATED
+  ADMIN
+}
+
+enum AiKnowledgeSourceType {
+  PRODUCT
+  ARTWORK
+  COLLECTION
+  POLICY
+  STORY
+  FAQ
+  PAGE
+  ARTICLE
+}
+
+model AiConversation {
+  id              String                @id @default(uuid()) @db.Uuid
+  publicId        String                @unique @map("public_id") @db.VarChar(64)
+  customerUserId  String?               @map("customer_user_id") @db.Uuid
+  guestSessionKey String?               @map("guest_session_key") @db.VarChar(128)
+  status          AiConversationStatus  @default(OPEN)
+  intent          String?               @db.VarChar(64)
+  pagePath        String?               @map("page_path") @db.VarChar(512)
+  feedbackScore   Int?                  @map("feedback_score")
+  feedbackNote    String?               @map("feedback_note") @db.VarChar(1000)
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  messages        AiMessage[]
+  tickets         SupportTicket[]
+  analyticsEvents AiAnalyticsEvent[]
+
+  @@index([customerUserId, createdAt], map: "ai_conversations_customer_created_idx")
+  @@index([status, updatedAt], map: "ai_conversations_status_updated_idx")
+  @@index([intent, createdAt], map: "ai_conversations_intent_created_idx")
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String         @id @default(uuid()) @db.Uuid
+  conversationId String         @map("conversation_id") @db.Uuid
+  role           AiMessageRole
+  content        String         @db.Text
+  citationsJson  Json?          @map("citations_json") @db.JsonB
+  toolName       String?        @map("tool_name") @db.VarChar(100)
+  tokenCount     Int?           @map("token_count")
+  latencyMs      Int?           @map("latency_ms")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt], map: "ai_messages_conversation_created_idx")
+  @@map("ai_messages")
+}
+
+model AiKnowledgeSource {
+  id           String                 @id @default(uuid()) @db.Uuid
+  sourceType   AiKnowledgeSourceType  @map("source_type")
+  sourceId     String                 @map("source_id") @db.VarChar(200)
+  title        String                 @db.VarChar(300)
+  canonicalUrl String                 @map("canonical_url") @db.VarChar(500)
+  locale       String                 @default("en-NG") @db.VarChar(16)
+  visibility   AiKnowledgeVisibility  @default(PUBLIC)
+  version      String                 @db.VarChar(64)
+  checksum     String                 @db.VarChar(128)
+  priority     Int                    @default(0)
+  published    Boolean                @default(true)
+  lastSyncedAt DateTime?              @map("last_synced_at") @db.Timestamptz(3)
+  syncError    String?                @map("sync_error") @db.VarChar(1000)
+  createdAt    DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  chunks       AiKnowledgeChunk[]
+
+  @@unique([sourceType, sourceId, locale], map: "ai_knowledge_sources_type_id_locale_uid")
+  @@index([published, priority], map: "ai_knowledge_sources_published_priority_idx")
+  @@map("ai_knowledge_sources")
+}
+
+model AiKnowledgeChunk {
+  id        String            @id @default(uuid()) @db.Uuid
+  sourceId  String            @map("source_id") @db.Uuid
+  content   String            @db.Text
+  tokenHint Int?              @map("token_hint")
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  source    AiKnowledgeSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId], map: "ai_knowledge_chunks_source_idx")
+  @@map("ai_knowledge_chunks")
+}
+
+model SupportTicket {
+  id                String                @id @default(uuid()) @db.Uuid
+  reference         String                @unique @db.VarChar(32)
+  customerUserId    String?               @map("customer_user_id") @db.Uuid
+  guestEmail        String?               @map("guest_email") @db.VarChar(320)
+  conversationId    String?               @map("conversation_id") @db.Uuid
+  orderId           String?               @map("order_id") @db.Uuid
+  orderReference    String?               @map("order_reference") @db.VarChar(64)
+  category          String                @db.VarChar(64)
+  priority          SupportTicketPriority @default(NORMAL)
+  summary           String                @db.VarChar(500)
+  customerMessage   String                @map("customer_message") @db.Text
+  aiContextSummary  String                @map("ai_context_summary") @db.Text
+  status            SupportTicketStatus   @default(OPEN)
+  assignedToUserId  String?               @map("assigned_to_user_id") @db.Uuid
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  conversation      AiConversation?       @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([status, priority, createdAt], map: "support_tickets_queue_idx")
+  @@index([customerUserId, createdAt], map: "support_tickets_customer_created_idx")
+  @@index([orderReference], map: "support_tickets_order_reference_idx")
+  @@map("support_tickets")
+}
+
+model AiAnalyticsEvent {
+  id             String          @id @default(uuid()) @db.Uuid
+  conversationId String?         @map("conversation_id") @db.Uuid
+  eventType      String          @map("event_type") @db.VarChar(64)
+  intent         String?         @db.VarChar(64)
+  attribution    String?         @db.VarChar(32)
+  metadata       Json?           @db.JsonB
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  conversation   AiConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([eventType, createdAt], map: "ai_analytics_events_type_created_idx")
+  @@index([conversationId], map: "ai_analytics_events_conversation_idx")
+  @@map("ai_analytics_events")
+}
+
+model AiConciergeSettings {
+  id                 String   @id @default(uuid()) @db.Uuid
+  assistantName      String   @default("F.A.T.U Concierge") @map("assistant_name") @db.VarChar(100)
+  enabled            Boolean  @default(true)
+  supportEmail       String?  @map("support_email") @db.VarChar(320)
+  businessHoursJson  Json?    @map("business_hours_json") @db.JsonB
+  retentionDays      Int      @default(90) @map("retention_days")
+  escalationNote     String?  @map("escalation_note") @db.VarChar(1000)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("ai_concierge_settings")
+}

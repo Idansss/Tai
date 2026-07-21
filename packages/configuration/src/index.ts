@@ -54,6 +54,20 @@ const EnvironmentSchema = z
       .string()
       .regex(/^[A-Za-z0-9_-]{43}$/)
       .default(localMfaEncryptionKey),
+    // F.A.T.U Concierge — provider keys stay server-side only (never NEXT_PUBLIC_*).
+    AI_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((value) => value === 'true'),
+    AI_PROVIDER: z.enum(['openai', 'mock']).default('mock'),
+    AI_MODEL: z.string().min(1).default('gpt-4.1-mini'),
+    AI_API_KEY: z.string().min(1).optional(),
+    AI_FALLBACK_MODEL: z.string().min(1).optional(),
+    AI_MAX_DAILY_REQUESTS: z.coerce.number().int().min(1).max(1_000_000).default(2_000),
+    AI_KNOWLEDGE_SYNC_SECRET: z.string().min(16).optional(),
+    AI_SUPPORT_EMAIL: z.string().email().optional(),
+    AI_CHAT_RETENTION_DAYS: z.coerce.number().int().min(1).max(3_650).default(90),
+    AI_ASSISTANT_NAME: z.string().min(1).max(100).default('F.A.T.U Concierge'),
   })
   .superRefine((environment, context) => {
     if (
@@ -107,6 +121,14 @@ const EnvironmentSchema = z
           message: 'FLUTTERWAVE_WEBHOOK_HASH is required when PAYMENT_PROVIDER is flutterwave.',
         });
       }
+    }
+    // OpenAI-compatible provider needs a key; mock mode is the safe default for CI.
+    if (environment.AI_PROVIDER === 'openai' && !environment.AI_API_KEY) {
+      context.addIssue({
+        code: 'custom',
+        path: ['AI_API_KEY'],
+        message: 'AI_API_KEY is required when AI_PROVIDER is openai.',
+      });
     }
   });
 
