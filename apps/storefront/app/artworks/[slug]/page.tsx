@@ -118,7 +118,10 @@ export default async function ArtworkDetailPage({ params }: Params) {
             </dl>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/design-studio" className={buttonVariants({ size: 'lg' })}>
+              <Link
+                href={`/design-studio?artwork=${encodeURIComponent(artwork.slug)}`}
+                className={buttonVariants({ size: 'lg' })}
+              >
                 Design with this artwork <ArrowRight className="size-4" aria-hidden />
               </Link>
               <Link

@@ -16,7 +16,9 @@ interface PageProps {
 
 export default async function DesignStudioPage({ searchParams }: PageProps) {
   const initialConfig = parseStudioParams(await searchParams);
-  const { items: artworks } = await dataProvider.listArtworks({ limit: 24 });
+  // Load the full catalogue so a deep-linked artwork (e.g. from “Design with this artwork”)
+  // is always present in the picker — not truncated by a page-size cap.
+  const { items: artworks } = await dataProvider.listArtworks({ limit: 100 });
 
   // Approved placements are per artwork+garment pair (ADR-013), so there is nothing to fetch
   // until an artwork is chosen. Choosing one navigates here again with ?artwork=, which is what
