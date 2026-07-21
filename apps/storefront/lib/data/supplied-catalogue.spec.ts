@@ -42,8 +42,13 @@ describe('studio-supplied catalogue media', () => {
 
       const detail = await mockProvider.getProduct(design.slug);
       expect(detail).not.toBeNull();
-      expect(detail?.colours.length).toBeGreaterThan(0);
+      expect(detail?.colours.length).toBe(1);
+      expect(detail?.colours.every((c) => c.available)).toBe(true);
       expect(detail?.sizes.some((s) => s.available)).toBe(true);
+      // Front photo is supplied; back may be a photo later, otherwise the product page
+      // falls back to the garment mockup so Front/Back is always available.
+      expect(detail?.image).toBe(design.image);
+      expect(detail?.imageBack ?? null).toBe(design.imageBack ?? null);
     }
   });
 

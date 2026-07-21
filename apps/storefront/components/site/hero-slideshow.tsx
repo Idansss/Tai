@@ -88,7 +88,7 @@ export function HeroSlideshow({ slides, pillars }: { slides: HeroSlide[]; pillar
             continent, positioned the way the studio approved it.
           </Reveal>
           <Reveal delay={240} className="mt-8 flex flex-wrap items-center gap-3">
-            <PillLink href="/artworks" tone="light">
+            <PillLink href="/shop" tone="light">
               Shop now
             </PillLink>
             <Link

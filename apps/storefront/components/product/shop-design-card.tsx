@@ -34,6 +34,9 @@ export function ShopDesignCard({
             <Price amountMinor={product.priceMinor} currency={product.currency} />
           </span>
         </div>
+        <p className="mt-1 text-[0.65rem] uppercase tracking-[0.08em] text-muted">
+          Front &amp; back views
+        </p>
         <p className="mt-2 font-semibold uppercase tracking-[0.08em] text-ink">Shop now</p>
       </div>
     </Link>

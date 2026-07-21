@@ -47,7 +47,10 @@ export interface SuppliedShopDesign {
   artworkSlug: string;
   title: string;
   garment: string;
+  /** Front product photograph. */
   image: string;
+  /** Optional back product photograph; mockup fills in when absent. */
+  imageBack?: string;
 }
 
 export const suppliedShopDesigns: SuppliedShopDesign[] = [

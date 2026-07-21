@@ -34,7 +34,12 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
   const selectedColour = product.colours.find((c) => c.name === colour);
   const soldOut = product.availability === 'sold_out';
   const print = artworkImage(product.artworkSlug);
-  const productPhoto = product.image ?? null;
+  const frontPhoto = product.image ?? null;
+  const backPhoto = product.imageBack ?? null;
+  const activePhoto = view === 'front' ? frontPhoto : backPhoto;
+  // Studio photos cover the front; when a side has no photo we fall back to the garment mockup
+  // so every shop shirt still has an inspectable Front and Back.
+  const showPhoto = Boolean(activePhoto);
 
   function addToBag() {
     if (soldOut) return;
@@ -71,24 +76,24 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
-      {/* Preview — prefer a studio product photo when one was supplied. */}
+      {/* Preview — always offers Front / Back for shop and catalogue shirts. */}
       <div>
         <div
           className="relative w-full overflow-hidden rounded-[var(--radius-lg)] border border-line bg-canvas-2"
           role="img"
           aria-label={
-            productPhoto
-              ? `${product.title} product photo`
+            showPhoto
+              ? `${product.title} ${view} product photo`
               : `${product.artworkTitle} on ${colour ?? 'garment'}, ${view} view`
           }
         >
-          {productPhoto ? (
+          {showPhoto && activePhoto ? (
             <div className="relative aspect-[4/5] w-full">
               <Image
-                src={productPhoto}
-                alt={`${product.title} — product photo`}
+                src={activePhoto}
+                alt={`${product.title} — ${view}`}
                 fill
-                priority
+                priority={view === 'front'}
                 sizes="(min-width: 1024px) 40vw, 90vw"
                 className="object-cover"
               />
@@ -98,40 +103,50 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
               garment={product.garment}
               colour={colour ?? selectedColour?.hex}
               view={view}
-              artwork={print ? { src: print, area: 'front', alt: '' } : null}
-              priority
+              artwork={
+                print && view === 'front'
+                  ? { src: print, area: 'front', alt: '' }
+                  : null
+              }
+              priority={view === 'front'}
               className="p-4 sm:p-6"
               sizes="(min-width: 1024px) 40vw, 90vw"
             />
           )}
-          {productPhoto ? null : (
-            <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
-              {view}
-            </span>
-          )}
+          <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-xs uppercase tracking-[0.08em] text-white">
+            {view}
+          </span>
         </div>
-        {productPhoto ? null : (
-          <div
-            className="mt-3 inline-flex rounded-md border border-line p-1"
-            role="group"
-            aria-label="Garment view"
-          >
-            {(['front', 'back'] as View[]).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setView(v)}
-                aria-pressed={view === v}
-                className={cn(
-                  'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
-                  view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
-                )}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-        )}
+
+        <div
+          className="mt-3 inline-flex rounded-md border border-line p-1"
+          role="group"
+          aria-label="Garment view"
+        >
+          {(['front', 'back'] as View[]).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              className={cn(
+                'rounded px-3 py-1.5 text-sm capitalize outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]',
+                view === v ? 'bg-accent text-on-accent' : 'text-ink-2 hover:text-ink',
+              )}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          {view === 'front' && frontPhoto
+            ? 'Studio front photograph.'
+            : view === 'back' && backPhoto
+              ? 'Studio back photograph.'
+              : view === 'back'
+                ? 'Back view — print sits on the front of this piece.'
+                : 'Preview of the print on the garment.'}
+        </p>
       </div>
 
       {/* Configuration */}

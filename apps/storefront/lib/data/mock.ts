@@ -61,6 +61,8 @@ interface ProductSeed {
   displayTitle?: string;
   /** Product photograph when the studio supplied a flat-lay / worn shot. */
   image?: string;
+  /** Optional back photograph for the same piece. */
+  imageBack?: string;
 }
 
 const productSeeds: ProductSeed[] = [
@@ -140,9 +142,11 @@ const productSeeds: ProductSeed[] = [
       garment: 'Classic T-shirt',
       displayTitle: design.title,
       image: design.image,
+      imageBack: design.imageBack,
       priceMinor: 1400000,
       availability: 'available',
-      colours: isBlack ? ['Black', 'Slate'] : ['Bone', 'Sand'],
+      // Only the photographed garment colour — no alternate swatches that aren't in stock.
+      colours: isBlack ? ['Black'] : ['Bone'],
     };
   }),
 ];
@@ -161,6 +165,7 @@ function toProductSummary(seed: ProductSeed): ProductSummary {
     availability: seed.availability,
     colourCount: seed.colours.length,
     image: seed.image ?? null,
+    imageBack: seed.imageBack ?? null,
   };
 }
 
