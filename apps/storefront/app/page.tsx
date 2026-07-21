@@ -32,24 +32,46 @@ const FEATURES = [
   { icon: Truck, title: 'Shipped nationwide', sub: 'Across Nigeria' },
 ];
 
+/** Preferred hero order — lead with covered streetwear, then distinct plates (no repeats). */
+const HERO_SLUG_ORDER = [
+  'okada-run',
+  'africa-united-heritage-trio',
+  'artisan-circle',
+  'lantern-keeper',
+  'rainy-season',
+] as const;
+
+/** Too revealing for the opening stage — keep it in the catalogue, just not in the hero loop. */
+const HERO_EXCLUDED_SLUGS = new Set(['midnight-in-lagos']);
+
 export default async function HomePage() {
   const [{ items: artworks }, collectionSummaries] = await Promise.all([
-    dataProvider.listArtworks({ limit: 8 }),
+    dataProvider.listArtworks({ limit: 40 }),
     dataProvider.listCollectionSummaries(),
   ]);
 
-  // The night piece opens the page: a dark, atmospheric drawing carries the dark hero.
-  const hero = artworks.find((a) => a.slug === 'midnight-in-lagos') ?? artworks[0];
+  const bySlug = new Map(artworks.map((a) => [a.slug, a]));
+  const seenSrc = new Set<string>();
+  const heroSlides: { slug: string; src: string; title: string }[] = [];
+
+  // Prefer the curated order first, then fill from the catalogue — one plate per slide, no dupes.
+  for (const slug of [
+    ...HERO_SLUG_ORDER,
+    ...artworks.map((a) => a.slug).filter((s) => !(HERO_SLUG_ORDER as readonly string[]).includes(s)),
+  ]) {
+    if (heroSlides.length >= PILLARS.length) break;
+    if (HERO_EXCLUDED_SLUGS.has(slug)) continue;
+    const artwork = bySlug.get(slug);
+    const src = artwork ? artworkImage(artwork.slug) : null;
+    if (!artwork || !src || seenSrc.has(src)) continue;
+    seenSrc.add(src);
+    heroSlides.push({ slug: artwork.slug, src, title: artwork.title });
+  }
+
+  const hero = bySlug.get(heroSlides[0]?.slug ?? '') ?? artworks[0];
   const drops = artworks.filter((a) => a.slug !== hero?.slug).slice(0, 3);
   const feature = artworks.filter((a) => a.slug !== hero?.slug).slice(3, 4)[0] ?? drops[0];
   const featureSrc = feature ? artworkImage(feature.slug) : null;
-
-  // The hero cycles through up to five drawings, in step with the 01–05 pillar row. Lead with the
-  // night piece, then fill from the rest of the catalogue — only pieces whose plate we actually hold.
-  const heroSlides = [hero, ...artworks.filter((a) => a.slug !== hero?.slug)]
-    .filter((a): a is NonNullable<typeof a> => a != null && artworkImage(a.slug) !== null)
-    .slice(0, PILLARS.length)
-    .map((a) => ({ slug: a.slug, src: artworkImage(a.slug) as string, title: a.title }));
 
   // Shop-by-collection tiles need a cover; pull each collection's pieces and take a drawing we hold.
   const collectionDetails = await Promise.all(
