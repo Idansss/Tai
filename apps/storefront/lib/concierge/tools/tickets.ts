@@ -25,7 +25,12 @@ export interface CreatedTicket {
 export async function createSupportTicketTool(
   input: CreateTicketInput,
   cookie?: string,
-): Promise<{ ok: boolean; text: string; ticketReference?: string; citations: ConciergeCitation[] }> {
+): Promise<{
+  ok: boolean;
+  text: string;
+  ticketReference?: string;
+  citations: ConciergeCitation[];
+}> {
   try {
     const ticket = await apiFetch<CreatedTicket>('/api/v1/concierge/tickets', {
       method: 'POST',
@@ -55,7 +60,12 @@ export async function createSupportTicketTool(
         ok: false,
         text: 'I could not create a support ticket right now, so I cannot claim the studio has received this yet. Please use the contact page and include your order reference if you have one.',
         citations: [
-          { kind: 'support', label: 'Contact the studio', description: 'Email the team directly', href: '/contact' },
+          {
+            kind: 'support',
+            label: 'Contact the studio',
+            description: 'Email the team directly',
+            href: '/contact',
+          },
         ],
       };
     }

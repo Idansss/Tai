@@ -31,17 +31,18 @@ describe('groupArtworksForStudio', () => {
         title: 'Africa United Heritage Duo',
         collection: 'Africa United',
       }),
-      art({ slug: 'resilience-hands-high', title: 'Resilience Hands High', collection: 'Resilience' }),
+      art({
+        slug: 'resilience-hands-high',
+        title: 'Resilience Hands High',
+        collection: 'Resilience',
+      }),
       art({ slug: 'studio-cap-muse', title: 'Studio Cap Muse', collection: 'Studio Muses' }),
     ];
 
     const groups = groupArtworksForStudio(items);
     expect(groups).toHaveLength(2);
     expect(groups.map((g) => g.folder.id)).toEqual(['signature', 'studio-collections']);
-    expect(groups[0]!.artworks.map((a) => a.slug)).toEqual([
-      'midnight-in-lagos',
-      'paper-tigers',
-    ]);
+    expect(groups[0]!.artworks.map((a) => a.slug)).toEqual(['midnight-in-lagos', 'paper-tigers']);
     expect(groups[1]!.artworks.map((a) => a.slug)).toEqual([
       'africa-united-heritage-duo',
       'resilience-hands-high',

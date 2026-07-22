@@ -20,12 +20,12 @@ Ship a production-grade customer-care and shopping concierge that:
 
 ## 2. Roles
 
-| Role | Behaviour |
-| --- | --- |
-| Customer-care agent | Policies, sizing, delivery, returns, payments, orders, escalation |
-| Shopping assistant | Preference discovery, 2–4 recommendations with reasons + cards |
-| Design Studio guide | Explain studio, validate combos, deep-link when possible |
-| Business intelligence | Anonymised intents, gaps, assisted conversion metrics |
+| Role                  | Behaviour                                                         |
+| --------------------- | ----------------------------------------------------------------- |
+| Customer-care agent   | Policies, sizing, delivery, returns, payments, orders, escalation |
+| Shopping assistant    | Preference discovery, 2–4 recommendations with reasons + cards    |
+| Design Studio guide   | Explain studio, validate combos, deep-link when possible          |
+| Business intelligence | Anonymised intents, gaps, assisted conversion metrics             |
 
 ---
 
@@ -104,7 +104,14 @@ Greeting / simple FAQ must not call expensive order or cart tools.
 
 ```ts
 {
-  sourceType: 'product' | 'artwork' | 'collection' | 'policy' | 'story' | 'faq' | 'page' | 'article';
+  sourceType: 'product' |
+    'artwork' |
+    'collection' |
+    'policy' |
+    'story' |
+    'faq' |
+    'page' |
+    'article';
   sourceId: string;
   title: string;
   canonicalUrl: string;

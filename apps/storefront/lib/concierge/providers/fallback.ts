@@ -34,9 +34,7 @@ function parseProviderOrder(): AiProviderId[] {
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
   const allowed: AiProviderId[] = ['openai', 'anthropic', 'gemini'];
-  const ordered = raw.filter((id): id is AiProviderId =>
-    (allowed as string[]).includes(id),
-  );
+  const ordered = raw.filter((id): id is AiProviderId => (allowed as string[]).includes(id));
   return ordered.length > 0 ? ordered : [...allowed];
 }
 
@@ -134,7 +132,10 @@ async function callGemini(input: PolishInput): Promise<PolishResult | null> {
   const json = (await response.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
-  const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim();
+  const text = json.candidates?.[0]?.content?.parts
+    ?.map((p) => p.text ?? '')
+    .join('')
+    .trim();
   return text ? { text, provider: 'gemini', model } : null;
 }
 

@@ -103,11 +103,7 @@ export function ProductConfigurator({ product }: { product: ProductDetail }) {
               garment={product.garment}
               colour={colour ?? selectedColour?.hex}
               view={view}
-              artwork={
-                print && view === 'front'
-                  ? { src: print, area: 'front', alt: '' }
-                  : null
-              }
+              artwork={print && view === 'front' ? { src: print, area: 'front', alt: '' } : null}
               priority={view === 'front'}
               className="p-4 sm:p-6"
               sizes="(min-width: 1024px) 40vw, 90vw"

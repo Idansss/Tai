@@ -23,7 +23,10 @@ export function ConciergeLauncher() {
       <BrandLogo className="size-8 rounded-full" alt="" sizes="32px" />
       <span className="hidden max-w-[10rem] truncate sm:inline">{assistantName}</span>
       {panel === 'minimised' ? (
-        <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-accent" aria-hidden />
+        <span
+          className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-accent"
+          aria-hidden
+        />
       ) : null}
     </button>
   );

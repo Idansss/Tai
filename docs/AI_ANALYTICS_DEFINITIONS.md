@@ -2,30 +2,30 @@
 
 ## Attribution rules
 
-| Term | Definition |
-| --- | --- |
-| **Direct** | Customer completed an action (add-to-cart, checkout) in the same conversation turn after an explicit Concierge tool confirmation |
-| **Influenced** | Customer opened Concierge within the session and later purchased; chat alone is **not** causation |
-| **Unaffected** | Purchase with no Concierge interaction in the session |
+| Term           | Definition                                                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Direct**     | Customer completed an action (add-to-cart, checkout) in the same conversation turn after an explicit Concierge tool confirmation |
+| **Influenced** | Customer opened Concierge within the session and later purchased; chat alone is **not** causation                                |
+| **Unaffected** | Purchase with no Concierge interaction in the session                                                                            |
 
 Opening the Concierge launcher never counts as causing a sale.
 
 ## Event types (`AiAnalyticsEvent.eventType`)
 
-| Event | Meaning |
-| --- | --- |
-| `conversation_started` | First message in a conversation |
-| `intent_classified` | Intent router result |
-| `recommendation_shown` | Product cards returned |
-| `recommendation_clicked` | Customer followed a card link (client beacon — future) |
-| `assisted_add_to_cart` | Cart tool returned success |
-| `assisted_checkout` | Checkout completed with prior assisted_add_to_cart in session |
-| `support_ticket_created` | Ticket persisted |
-| `human_handoff` | Escalation path taken |
-| `feedback_submitted` | Thumbs / score |
-| `provider_error` | Model/provider failure |
-| `rate_limited` | Abuse protection tripped |
-| `unanswered` | Low-confidence / escalated without answer |
+| Event                    | Meaning                                                       |
+| ------------------------ | ------------------------------------------------------------- |
+| `conversation_started`   | First message in a conversation                               |
+| `intent_classified`      | Intent router result                                          |
+| `recommendation_shown`   | Product cards returned                                        |
+| `recommendation_clicked` | Customer followed a card link (client beacon — future)        |
+| `assisted_add_to_cart`   | Cart tool returned success                                    |
+| `assisted_checkout`      | Checkout completed with prior assisted_add_to_cart in session |
+| `support_ticket_created` | Ticket persisted                                              |
+| `human_handoff`          | Escalation path taken                                         |
+| `feedback_submitted`     | Thumbs / score                                                |
+| `provider_error`         | Model/provider failure                                        |
+| `rate_limited`           | Abuse protection tripped                                      |
+| `unanswered`             | Low-confidence / escalated without answer                     |
 
 ## Core metrics
 

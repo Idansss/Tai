@@ -27,7 +27,12 @@ export async function getCustomerOrdersTool(cookie?: string): Promise<{
         ok: true,
         text: 'I do not see any orders on this signed-in account yet.',
         citations: [
-          { kind: 'support', label: 'Your orders', description: 'Account orders', href: '/account/orders' },
+          {
+            kind: 'support',
+            label: 'Your orders',
+            description: 'Account orders',
+            href: '/account/orders',
+          },
         ],
       };
     }
@@ -39,7 +44,12 @@ export async function getCustomerOrdersTool(cookie?: string): Promise<{
       ok: true,
       text: `Here are recent orders on your account:\n${lines}\nStatuses come from the order service — I will not invent tracking or dispatch dates.`,
       citations: [
-        { kind: 'support', label: 'Your orders', description: 'Full order history', href: '/account/orders' },
+        {
+          kind: 'support',
+          label: 'Your orders',
+          description: 'Full order history',
+          href: '/account/orders',
+        },
       ],
     };
   } catch (error) {
@@ -58,7 +68,12 @@ export async function getCustomerOrdersTool(cookie?: string): Promise<{
         ok: false,
         text: 'I could not reach the order service. Please try again, check Your orders, or contact the studio.',
         citations: [
-          { kind: 'support', label: 'Your orders', description: 'Account orders', href: '/account/orders' },
+          {
+            kind: 'support',
+            label: 'Your orders',
+            description: 'Account orders',
+            href: '/account/orders',
+          },
           { kind: 'support', label: 'Contact', description: 'Studio support', href: '/contact' },
         ],
       };
@@ -77,7 +92,12 @@ export async function getOrderStatusTool(
       ok: false,
       text: 'Please share a valid order reference from your confirmation email.',
       citations: [
-        { kind: 'support', label: 'Your orders', description: 'Find references', href: '/account/orders' },
+        {
+          kind: 'support',
+          label: 'Your orders',
+          description: 'Find references',
+          href: '/account/orders',
+        },
       ],
     };
   }
@@ -105,7 +125,12 @@ export async function getOrderStatusTool(
         ok: false,
         text: 'I could not find an order with that reference for this account. Double-check the reference or contact the studio.',
         citations: [
-          { kind: 'support', label: 'Your orders', description: 'Account orders', href: '/account/orders' },
+          {
+            kind: 'support',
+            label: 'Your orders',
+            description: 'Account orders',
+            href: '/account/orders',
+          },
           { kind: 'support', label: 'Contact', description: 'Studio support', href: '/contact' },
         ],
       };

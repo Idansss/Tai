@@ -19,10 +19,9 @@ export default function StudioGuidePage() {
             Studio Guide
           </Heading>
           <Text size="lg" tone="secondary" className="mt-3">
-            The site-wide{' '}
-            <strong className="font-medium text-ink">F.A.T.U Concierge</strong> (launcher on every
-            page) is the primary assistant. This page keeps the original Studio Guide preview chat.
-            For a specific order, our{' '}
+            The site-wide <strong className="font-medium text-ink">F.A.T.U Concierge</strong>{' '}
+            (launcher on every page) is the primary assistant. This page keeps the original Studio
+            Guide preview chat. For a specific order, our{' '}
             <Link
               href="/contact"
               className="rounded-sm text-accent underline underline-offset-2 hover:text-ink"

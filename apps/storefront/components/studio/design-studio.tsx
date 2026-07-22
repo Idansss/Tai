@@ -112,7 +112,8 @@ export function DesignStudio({
   );
   const artworkFolders = useMemo(() => groupArtworksForStudio(artworks), [artworks]);
   const [openFolders, setOpenFolders] = useState<Set<StudioArtworkFolder['id']>>(
-    () => new Set([defaultOpenStudioFolderId(groupArtworksForStudio(artworks), initialConfig.artwork)]),
+    () =>
+      new Set([defaultOpenStudioFolderId(groupArtworksForStudio(artworks), initialConfig.artwork)]),
   );
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
