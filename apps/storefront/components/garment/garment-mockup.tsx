@@ -13,6 +13,7 @@ import {
   shade,
 } from '@/lib/garments/registry';
 import { garmentShape } from '@/lib/garments/shapes';
+import { printBoxPercent } from '@/lib/garments/print-geometry';
 
 export interface GarmentArtwork {
   /** Image src (e.g. /artworks/slug.jpg). */
@@ -55,6 +56,14 @@ export interface GarmentMockupProps {
   className?: string;
   /** Priority for the artwork image (above-the-fold product/studio previews). */
   priority?: boolean;
+  /**
+   * Draw only the print layer, not the SVG cloth body. The Design Studio's photographic mockup
+   * (<ShirtPhotoMockup>) shows a real shirt photograph as the garment and reuses this component
+   * purely for its print placement/scale/rotate/crop/mask compositing, so the approved placement
+   * and cart/save payload behaviour stays identical to the SVG contexts. Defaults to true, so every
+   * existing caller (product page, cart, cards) is unchanged.
+   */
+  renderBody?: boolean;
 }
 
 const { w: VB_W, h: VB_H } = GARMENT_VIEWBOX;
@@ -74,6 +83,7 @@ export function GarmentMockup({
   sizes = '(min-width: 1024px) 33vw, 90vw',
   className,
   priority = false,
+  renderBody = true,
 }: GarmentMockupProps) {
   const uid = useId().replace(/:/g, '');
   const resolvedStyle: GarmentStyle = style ?? garmentStyleFromName(garment);
@@ -88,21 +98,21 @@ export function GarmentMockup({
   const collarEdge = shade(hex, isDark ? 0.26 : -0.26);
   const tape = shade(hex, isDark ? 0.18 : 0.14);
 
-  // The approved print zone → a positioned box (percentages of the viewBox). Artwork is contained
-  // in this box, so its own proportions are always preserved (requirement 5).
+  // The approved print zone → a positioned box (percentages of the viewBox), via the one shared
+  // placement helper so the preview, the drag overlay and the saved geometry can't drift. Artwork
+  // is contained in this box, so its own proportions are always preserved (requirement 5).
   const zone = def.print[view];
-  const scale = artwork?.scale ?? 1;
-  const boxW = zone.maxW * scale;
-  const boxH = zone.maxH * scale;
-  // Free-placement offset (percentage points of the viewBox) shifts the print centre off the zone.
-  const cx = zone.cx + ((artwork?.offset?.xPct ?? 0) / 100) * VB_W;
-  const cy = zone.cy + ((artwork?.offset?.yPct ?? 0) / 100) * VB_H;
+  const box = printBoxPercent(zone, {
+    scale: artwork?.scale ?? 1,
+    dxPct: artwork?.offset?.xPct ?? 0,
+    dyPct: artwork?.offset?.yPct ?? 0,
+  });
   const rotation = artwork?.rotation ?? 0;
   const printStyle: CSSProperties = {
-    left: `${((cx - boxW / 2) / VB_W) * 100}%`,
-    top: `${((cy - boxH / 2) / VB_H) * 100}%`,
-    width: `${(boxW / VB_W) * 100}%`,
-    height: `${(boxH / VB_H) * 100}%`,
+    left: `${box.leftPct}%`,
+    top: `${box.topPct}%`,
+    width: `${box.widthPct}%`,
+    height: `${box.heightPct}%`,
     ...(rotation ? { transform: `rotate(${rotation}deg)` } : null),
   };
 
@@ -176,6 +186,7 @@ export function GarmentMockup({
 
   return (
     <div className={cn('relative w-full', className)} style={{ aspectRatio: `${VB_W} / ${VB_H}` }}>
+      {renderBody ? (
       <svg
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         className="absolute inset-0 h-full w-full"
@@ -279,6 +290,7 @@ export function GarmentMockup({
           strokeWidth="1.25"
         />
       </svg>
+      ) : null}
 
       {/* The print. Positioned over the zone (optionally offset/rotated/cropped by free placement),
           contained (never stretched), with fabric shading laid over it so it sinks into the cloth

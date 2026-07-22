@@ -7,13 +7,14 @@ import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/components/account/auth-provider';
 import { useCart } from '@/components/cart/cart-provider';
-import { GarmentMockup } from '@/components/garment/garment-mockup';
+import { ShirtPhotoMockup } from '@/components/garment/shirt-photo-mockup';
 import { type PlacementBox, PlacementCanvas } from '@/components/studio/placement-canvas';
 import { designSignature, persistSavedDesign } from '@/lib/account';
 import { artworkImage } from '@/lib/artwork-images';
 import { dataProvider } from '@/lib/data';
 import type { ArtworkSummary, StudioOptions } from '@/lib/data';
 import { GARMENT_VIEWBOX, GARMENTS, garmentStyleFromName } from '@/lib/garments/registry';
+import { printBox } from '@/lib/garments/print-geometry';
 import type { CartSideRender } from '@/lib/cart';
 import {
   buildStudioQuery,
@@ -226,11 +227,14 @@ export function DesignStudio({
   // offset and sized by the free scale. Shared verbatim with the mockup so overlay and print agree.
   const placementBox = useMemo<PlacementBox>(() => {
     const zone = GARMENTS[garmentStyle].print[config.view];
+    // Same shared helper the mockup's print layer uses, so overlay and print agree by construction.
+    const box = printBox(zone, {
+      scale: artworkScale,
+      dxPct: transform.dx,
+      dyPct: transform.dy,
+    });
     return {
-      centerX: zone.cx + (transform.dx / 100) * GARMENT_VIEWBOX.w,
-      centerY: zone.cy + (transform.dy / 100) * GARMENT_VIEWBOX.h,
-      width: zone.maxW * artworkScale,
-      height: zone.maxH * artworkScale,
+      ...box,
       viewBoxW: GARMENT_VIEWBOX.w,
       viewBoxH: GARMENT_VIEWBOX.h,
     };
@@ -442,7 +446,7 @@ export function DesignStudio({
                   : 'Design preview — choose an artwork to begin'
               }
             >
-              <GarmentMockup
+              <ShirtPhotoMockup
                 style={garmentStyle}
                 colour={config.colour ?? colour?.hex ?? 'Bone'}
                 view={config.view}

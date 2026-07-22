@@ -171,7 +171,12 @@ what it is.
 - **Cool neutrals as the ground.** The browsing ground stays warm paper. Dark surfaces are
   intentional near-black stages, not a cool grey-teal wash. (The original F6 error still stands.)
 - **Stock photography / fake product shots.** Every image is a real drawing. No model photos we do
-  not have; no AI-generated garment mockups.
+  not have. _Exception (owner decision, 2026-07-21):_ the **Design Studio preview** now shows the
+  artwork on a **supplied photographic blank shirt** (front/back photos per colour, in
+  `/public/garments`, mapped by `lib/garments/photo-mockups.ts`) so a customer can see the print on
+  believable cloth. This supersedes the abandoned procedural Three.js/"Atelier" 3D attempt
+  (Direction E below). The photo is used as-is — never hue-recoloured — and the rest of the
+  storefront (cards, cart, product page) keeps the recolourable SVG `GarmentMockup`.
 - **Gimmick motion.** Anything that says "look at the website" instead of "look at the drawing".
   Hover-scale on a tile and a settling transition are fine; bounce/parallax theatre is not.
 - **Erasing the Africanness into tasteful minimalism, _or_ into generic streetwear.** The gravest
